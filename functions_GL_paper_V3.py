@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import requests
 import pypsa
-import linopy
 import pypsatopo
 import parameters_GL_paper_V3 as p
 import os
@@ -15,6 +14,7 @@ import bisect
 import dataframe_image as dfi
 import seaborn as sns
 import re
+from scipy.stats import pearsonr
 
 
 # -------TECHNO-ECONOMIC DATA & ANNUITY
@@ -26,6 +26,7 @@ def annuity(n, r):
         return r / (1. - 1. / (1. + r) ** n)
     else:
         return 1 / n
+
 
 def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
     """ This function uses, data retrived form the technology catalogue and other sources and compiles a DF used in the model
@@ -55,6 +56,7 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
     costs["fixed"] = [annuity_factor(v) * v["investment"] * Nyears for i, v in costs.iterrows()]
     return costs
 
+
 def cost_add_technology(discount_rate, tech_costs, technology, investment, lifetime, FOM):
     '''function to calculate annualized fixed cost for any technology from inpits
     and adds it to the tech_costs dataframe '''
@@ -65,28 +67,37 @@ def cost_add_technology(discount_rate, tech_costs, technology, investment, lifet
     tech_costs.at[technology, "investment"] = investment
     return tech_costs
 
+
 def add_technology_cost(tech_costs):
     """Function that adds the tehcnology costs not presente din the original cost file"""
 
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2 storage cylinders', p.CO2_cylinders_inv, tech_costs.at['CO2 storage tank', 'lifetime'], tech_costs.at['CO2 storage tank', 'FOM'])
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2_pipeline_gas', p.CO2_pipeline_inv, p.CO2_pipeline_lifetime, p.CO2_pipeline_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'H2_pipeline_gas', p.H2_pipeline_inv, p.H2_pipeline_lifetime, p.H2_pipeline_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2_compressor', p.CO2_comp_inv, p.CO2_comp_lifetime, p.CO2_comp_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'CO2 storage cylinders', p.CO2_cylinders_inv,
+                        tech_costs.at['CO2 storage tank', 'lifetime'], tech_costs.at['CO2 storage tank', 'FOM'])
+    cost_add_technology(p.discount_rate, tech_costs, 'CO2_pipeline_gas', p.CO2_pipeline_inv, p.CO2_pipeline_lifetime,
+                        p.CO2_pipeline_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'H2_pipeline_gas', p.H2_pipeline_inv, p.H2_pipeline_lifetime,
+                        p.H2_pipeline_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'CO2_compressor', p.CO2_comp_inv, p.CO2_comp_lifetime,
+                        p.CO2_comp_FOM)
     cost_add_technology(p.discount_rate, tech_costs, 'DH heat exchanger', p.DH_HEX_inv, p.DH_HEX_lifetime, p.DH_HEX_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Slow pyrolysis', p.Pyrolysis_inv, p.Pyrolysis_lifetime, p.Pyrolysis_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis small', p.Electrolysis_small_inv, p.Electrolysis_small_lifetime, p.Electrolysis_small_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis large', p.Electrolysis_large_inv, p.Electrolysis_large_lifetime, p.Electrolysis_large_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'Slow pyrolysis', p.Pyrolysis_inv, p.Pyrolysis_lifetime,
+                        p.Pyrolysis_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis small', p.Electrolysis_small_inv,
+                        p.Electrolysis_small_lifetime, p.Electrolysis_small_FOM)
+    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis large', p.Electrolysis_large_inv,
+                        p.Electrolysis_large_lifetime, p.Electrolysis_large_FOM)
 
     return tech_costs
 
 
-# ------ INPUTS PRE-PROCESSING
-'''GreenLab Inputs'''
+# ------ INPUTS PRE-PROCESSING ----
+
+
 def GL_inputs_to_eff(GL_inputs):
     ''' function that reads csv file with GreenLab energy and material flows for each plant and calcualtes the
      efficiencies for multilinks in the network'''
 
-    #NOTE: (-) refers to energy or material flow CONSUMED by the plant
+    # NOTE: (-) refers to energy or material flow CONSUMED by the plant
     #      (+) refers to energy or material flow PRODUCED by the plant
     # Calculates Efficiencies for MultiLinks
     GL_eff = GL_inputs
@@ -100,6 +111,7 @@ def GL_inputs_to_eff(GL_inputs):
         GL_eff[GL_eff == 0] = np.nan
 
     return GL_eff
+
 
 def balance_bioCH4_MeOH_demand_GL():
     ''' function preprocesses the GreenLab site input data'''
@@ -168,7 +180,9 @@ def load_input_data():
     return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
 
 
-'''Create demands for H2, MeOH and El_DK1_GLS'''
+# ---- DEMANDS for H2, MeOH and El_DK1_GLS
+
+
 def preprocess_H2_grid_demand(flh_H2, H2_size, NG_demand_DK, flag_one_delivery):
     ''' Creates the H2 demand from the grid '''
     # flh_H2 = target full load hours from the plant
@@ -236,25 +250,30 @@ def preprocess_H2_grid_demand(flh_H2, H2_size, NG_demand_DK, flag_one_delivery):
 
     return H2_demand_y
 
+
 def preprocess_methanol_demand(Methanol_demand_max, f_max_MeOH_y_demand, flag_one_delivery):
     ''' function that builds a Methnaol demand (load) for the GL network.
     The load can be on weekly basis or one single delivery at the end of the year'''
 
     # if: flag_one_delivery= True => aggregates methanol demand to one single time step in the end of the year.
-    # f_max_MeOH_y_demand = fraction (0-1) of maximum MeOH production compatible with yearly prod of CO2 from biogas plant
+    # f_max_MeOH_y_demand = fraction (0-1) of maximum MeOH production compatible with yearly prod of CO2 from biogas
     # if p.MeOH_set_demand_input == True:
-    if flag_one_delivery == True:  # yearly demand
+
+    if flag_one_delivery:  # yearly demand
         Methanol_input_demand = Methanol_demand_max.copy()
         Methanol_input_demand["Methanol demand MWh"] = 0
         Methanol_input_demand.iloc[-1, :] = np.sum(Methanol_demand_max.values) * f_max_MeOH_y_demand
-    elif flag_one_delivery == False:  # weekly demand
+    elif not flag_one_delivery:  # weekly demand
         Methanol_input_demand = Methanol_demand_max * f_max_MeOH_y_demand
 
     return Methanol_input_demand
 
-'''Energy Market data'''
+
+# ----- EXTERNAL ENERGY MARKETS
+
+
 def download_energidata(dataset_name, start_date, end_date, sort_val, filter_area):
-    ''' function that download energy data from energidataservice.dk and returns a dataframe'''
+    """ function that download energy data from energidataservice.dk and returns a dataframe"""
     if filter_area != '':
         URL = 'https://api.energidataservice.dk/dataset/%s?start=%s&end=%s&%s&%s' % (
             dataset_name, start_date, end_date, sort_val, filter_area)
@@ -268,10 +287,11 @@ def download_energidata(dataset_name, start_date, end_date, sort_val, filter_are
     downloaded_df = pd.json_normalize(records)
     return downloaded_df
 
+
 def pre_processing_energy_data():
-    ''' function that preprocess all the energy input data and saves in
+    """ function that preprocess all the energy input data and saves in
     NOTE:Some data are not always used depending on the network configuration
-    Prices from DK are downlaoded in DKK'''
+    Prices from DK are downlaoded in DKK"""
 
     '''El spot prices DK1 - input DKK/MWh or EUR/MWh'''
     dataset_name = 'Elspotprices'
@@ -331,7 +351,8 @@ def pre_processing_energy_data():
             NG_price_year = pd.concat([NG_price_year, df_temp])
 
         NG_price_year = NG_price_year.sort_index()
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro # converts to MwH and Euro
+        NG_price_year[NG_price_col_name] = NG_price_year[
+                                               NG_price_col_name] * 1000 / p.DKK_Euro  # converts to MwH and Euro
         NG_price_year.rename(columns={NG_price_col_name: NG_price_col_name_new}, inplace=True)
         NG_price_year.index.rename('HourDK', inplace=True)
         NG_price_year.index.name = None
@@ -352,22 +373,22 @@ def pre_processing_energy_data():
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasMonthlyNeutralPrice'
         sort_val = 'sort=Month%20ASC'
-        filter_area=''
+        filter_area = ''
         NG_price_year = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
 
-        NG_price_col_name='Neutral gas price ' + 'EUR' + '/MWh'
+        NG_price_col_name = 'Neutral gas price ' + 'EUR' + '/MWh'
         NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
         NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'])
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
         NG_price_year.set_index('HourDK', inplace=True)
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro # coversion to €/MWh
-        last_rows3 = pd.DataFrame({'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1,0]})
+        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro  # coversion to €/MWh
+        last_rows3 = pd.DataFrame(
+            {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)
         NG_price_year = pd.concat([NG_price_year, last_rows3])
         NG_price_year = NG_price_year.asfreq('H', method='ffill')
         NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
-
 
     ''' NG Demand (Consumption) DK '''
     # source: https://www.energidataservice.dk/tso-gas/Gasflow
@@ -452,11 +473,12 @@ def pre_processing_energy_data():
 
     return
 
+
 def build_electricity_grid_price_w_tariff(Elspotprices):
-    '''this function creates the Electricity grid price including the all the tariffs
+    """this function creates the Electricity grid price including the all the tariffs
     Note that CO2 tax is added separately
     Tariff system valid for customer conected to 60kV grid via a 60/10kV transformer
-    Tariff system in place from 2025'''
+    Tariff system in place from 2025"""
 
     # for tariff reference check the parameter file
     # Grid tariff are based on hour of the day, day of the week and season:
@@ -467,7 +489,7 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
     # Low tariff the rest of the time
 
     summer_start = str(p.En_price_year) + '-04-01T00:00'  # '2019-04-01 00:00:00+00:00' # Monday
-    summer_end = str(p.En_price_year) +'-10-01T00:00'  # '2019-10-01 00:00:00+00:00'
+    summer_end = str(p.En_price_year) + '-10-01T00:00'  # '2019-10-01 00:00:00+00:00'
     winter_1 = pd.date_range(p.start_date + 'Z', summer_start + 'Z', freq='H')
     winter_1 = winter_1.drop(winter_1[-1])
     winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='H')
@@ -519,14 +541,16 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
     return el_grid_price, el_grid_sell_price
 
 
-''' Pre-processing for PyPSA network '''
-def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, preprocess_flag):
+# ---- Pre-processing for PyPSA network
+
+
+def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
     # inputs_dict contains all in
-    '''Run preprocessing of energy data and build input file OR read input files saved'''
+    """Run preprocessing of energy data and build input file OR read input files saved"""
     if preprocess_flag:
-        pre_processing_energy_data() # download + preprocessing + save to CSV
-        balance_bioCH4_MeOH_demand_GL() # Read CSV GL + create CSV with bioCH4 and MeOH max demands
+        pre_processing_energy_data()  # download + preprocessing + save to CSV
+        balance_bioCH4_MeOH_demand_GL()  # Read CSV GL + create CSV with bioCH4 and MeOH max demands
 
     # load the inputs form CSV files
     GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand = load_input_data()
@@ -548,14 +572,14 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, preprocess_
     El_d_H2 = np.abs(
         H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
     El_d_MeOH = np.abs(Methanol_input_demand.values.sum() * (
-                (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-                    p.el_comp_H2 + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.el_comp_CO2 / GL_eff.at[
-                    'Methanol', 'Methanol plant']))
+            (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
+            p.el_comp_H2 + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.el_comp_CO2 / GL_eff.at[
+                'Methanol', 'Methanol plant']))
     El_d_y_guess_GLS = El_d_H2 + El_d_MeOH  # MWh el for H2 and MeOH
 
     # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
-    el_DK1_sale_el_RFNBO = p.el_DK1_sale_el_RFNBO
-    if el_DK1_sale_el_RFNBO <0:
+
+    if el_DK1_sale_el_RFNBO < 0:
         el_DK1_sale_el_RFNBO = 0
         print('Warning: ElDK1 demand set = 0')
 
@@ -563,7 +587,7 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, preprocess_
 
     # Distribute the available demand according to the time series of DK1 demand
     El_demand_DK1.iloc[:, 0] = El_demand_DK1.iloc[:, 0] * (
-                El_d_y_DK1 / len(p.hours_in_period)) / El_demand_DK1.values.mean()
+            El_d_y_DK1 / len(p.hours_in_period)) / El_demand_DK1.values.mean()
 
     inputs_dict = {'GL_inputs': GL_inputs,
                    'GL_eff': GL_eff,
@@ -578,12 +602,15 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, preprocess_
                    'El_demand_DK1': El_demand_DK1,
                    'DH_external_demand': DH_external_demand,
                    'H2_input_demand': H2_input_demand,
-                   'CO2 cost': CO2_cost}
+                   'CO2 cost': CO2_cost,
+                   'el_DK1_sale_el_RFNBO': el_DK1_sale_el_RFNBO,
+                   }
 
     return inputs_dict
 
+
 def en_market_prices_w_CO2(inputs_dict, tech_costs):
-    " Returns the market price of commodities adjusted for CO2 tax --> including CO2 tax there needed!"
+    """Returns the market price of commodities adjusted for CO2 tax --> including CO2 tax there needed!"""
     " returns input currency"
     CO2_cost = inputs_dict['CO2 cost']
     CO2_emiss_El = inputs_dict['CO2_emiss_El']
@@ -599,7 +626,8 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
     mk_el_grid_sell_price = el_grid_sell_price  # NOTE selling prices are negative in the model
 
     # NG grid price uneffected by CO2 tax (paid locally by the consumer)
-    mk_NG_grid_price = NG_price_year + tech_costs.at['gas','CO2 intensity'] * (CO2_cost - p.CO2_cost_ref_year) # currency / MWH
+    mk_NG_grid_price = NG_price_year + tech_costs.at['gas', 'CO2 intensity'] * (
+                CO2_cost - p.CO2_cost_ref_year)  # currency / MWH
 
     # District heating price
     DH_price = p.ref_df.copy()
@@ -608,17 +636,17 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
     en_market_prices = {'el_grid_price': np.squeeze(mk_el_grid_price),
                         'el_grid_sell_price': np.squeeze(mk_el_grid_sell_price),
                         'NG_grid_price': np.squeeze(mk_NG_grid_price),
-                        #'bioCH4_grid_sell_price': np.squeeze(mk_bioCH4_grid_sell_price),
+                        # 'bioCH4_grid_sell_price': np.squeeze(mk_bioCH4_grid_sell_price),
                         'DH_price': np.squeeze(DH_price)
                         }
 
     return en_market_prices
 
 
-# -----CONSTRAINT on GRID ELECTRICITY RFNBOs---------------
+# -----CONSTRAINTS on GRID ELECTRICITY RFNBOs---------------
 def p_max_pu_EU_renewable_el(Elspotprices, CO2_emiss_El):
-    ''' function that enables power from the grid tp be used for H2 production according to EU rules:
-    1) price below limit, 2) emissionintensity below limit'''
+    """ function that enables power from the grid tp be used for H2 production according to EU rules:
+    1) price below limit, 2) emissionintensity below limit"""
 
     idx_renw_el_p = Elspotprices[Elspotprices.values <= p.EU_renew_el_price_limit].index
     idx_renw_el_em = CO2_emiss_El[CO2_emiss_El.values <= p.EU_renew_el_emission_limit].index
@@ -659,11 +687,10 @@ def add_link_El_grid_to_H2(n, inputs_dict, tech_costs):
     return n
 
 
-
 # ------- BUILD PYPSA NETWORK-------------
 
 def network_dependencies(n_flags):
-    """Check if all required dependedvies are satisfied when building the network based on n_flags dictionary in main,
+    """Check if all required dependencies are satisfied when building the network based on n_flags dictionary in main,
     modifies n_flag dict """
     n_flags_OK = n_flags.copy()
 
@@ -677,7 +704,8 @@ def network_dependencies(n_flags):
     n_flags_OK['electrolyzer'] = n_flags['electrolyzer']
 
     # MeOH production Dependencies
-    if n_flags['meoh'] and n_flags_OK['electrolyzer'] and n_flags['SkiveBiogas'] and n_flags['symbiosis_net']:
+    if n_flags['meoh'] and n_flags['electrolyzer'] and n_flags['renewables'] and n_flags['SkiveBiogas'] and n_flags[
+        'symbiosis_net']:
         n_flags_OK['meoh'] = True
     else:
         n_flags_OK['meoh'] = False
@@ -699,8 +727,9 @@ def network_dependencies(n_flags):
 
     return n_flags_OK
 
+
 def override_components_mlinks():
-    """function required by PyPSA for overrinng link component to multiple connecitons (multilink)
+    """function required by PyPSA for overwriting link component to multiple connecitons (multilink)
     the model can take up to 5 additional buses (7 in total) but can be extended"""
 
     override_component_attrs = pypsa.descriptors.Dict(
@@ -730,16 +759,16 @@ def override_components_mlinks():
 
     return override_component_attrs
 
+
 def add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, tech_costs):
-    '''function that creates local heat buses for each plant.
+    """function that creates local heat buses for each plant.
     heat leaving the plant can be rejected to the ambient for free.
-    heat required by the plant can be supplied by symbiosys net ar added heating technologies
-    '''
+    heat required by the plant can be supplied by symbiosys net ar added heating technologies"""
 
     new_buses = ['', '', '']
 
     for i in range(len(heat_bus_list)):
-        b = heat_bus_list[i] # symbiosys net bus
+        b = heat_bus_list[i]  # symbiosys net bus
         if not math.isnan(GL_eff.loc[b, plant_name]):
             sign_eff = np.sign(
                 GL_eff.loc[b, plant_name])  # negative is consumed by  the agent, positive is produced by the agent
@@ -748,7 +777,7 @@ def add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, te
             bus_name = b + '_' + plant_name
             new_buses[i] = bus_name
 
-            n.add('Bus',bus_name,carrier='Heat', unit='MW')
+            n.add('Bus', bus_name, carrier='Heat', unit='MW')
 
             # for heat rejection add connection to Heat amb (cooling included in plant cost)
             if sign_eff > 0:
@@ -763,7 +792,7 @@ def add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, te
             # if symbiosys net is available, enable connection with heat grids and add cost (bidirectional)
             if n_flags['symbiosis_net']:
                 if b not in n.buses.index.values:
-                    n.add('Bus',b, carrier='Heat', unit='MW')
+                    n.add('Bus', b, carrier='Heat', unit='MW')
                 link_name = b + '_' + plant_name
 
                 if sign_eff > 0:
@@ -783,13 +812,14 @@ def add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, te
 
     return n, new_buses
 
+
 def add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs):
-    '''function that adds El connections for the plant
+    """function that adds El connections for the plant
     one connection to the DK1 grid.
-    one connection to the El2 bus if symbiosys net is active'''
+    one connection to the El2 bus if symbiosys net is active"""
 
     # ------ Create Local El bus
-    n.add('Bus',local_EL_bus ,carrier='AC', unit='MW')
+    n.add('Bus', local_EL_bus, carrier='AC', unit='MW')
 
     # -------EL connections------------
     link_name1 = 'DK1_to_' + local_EL_bus
@@ -808,7 +838,7 @@ def add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs):
     # internal el connection
     if n_flags['symbiosis_net']:
         if 'El2 bus' not in n.buses.index.values:
-            n.add('Bus','El2 bus', carrier='AC', unit='MW')
+            n.add('Bus', 'El2 bus', carrier='AC', unit='MW')
 
         link_name2 = 'El2_to_' + local_EL_bus
         n.add("Link",
@@ -819,7 +849,8 @@ def add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs):
               p_nom_extendable=True)
     return n
 
-def add_local_boilers(n, local_EL_bus, local_heat_bus, plant_name, tech_costs,en_market_prices):
+
+def add_local_boilers(n, local_EL_bus, local_heat_bus, plant_name, tech_costs, en_market_prices):
     """function that add a local El boiler and NG boiler for plants requiring heating but not connected to the sybiosys net.
     both boilers need connections to local buses"""
 
@@ -846,9 +877,10 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, plant_name, tech_costs,en
 
     return n
 
+
 def add_external_grids(network, inputs_dict, n_flags):
-    '''function building the external grids and loads according to n_flgas dict,
-    this function DOES NOT allocate capital or marginal costs to any component'''
+    """function building the external grids and loads according to n_flgas dict,
+    this function DOES NOT allocate capital or marginal costs to any component"""
 
     '''-----BASE NETWORK STRUCTURE - INDEPENDENT ON CONFIGURATION --------'''
     ''' these components do not have allocated capital costs'''
@@ -929,8 +961,9 @@ def add_external_grids(network, inputs_dict, n_flags):
 
     return network, new_components
 
+
 def add_biogas(n, n_flags, inputs_dict, tech_costs):
-    '''fucntion that add the biogas plant to the network and all the dependecies if not preset in the network yet'''
+    """fucntion that add the biogas plant to the network and all the dependecies if not preset in the network yet"""
 
     bioCH4_demand = inputs_dict['bioCH4_demand']
     GL_eff = inputs_dict['GL_eff']
@@ -945,7 +978,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
     n0_buses = n.buses.index.values
 
     bus_list = ['Biomass', 'Digest DM', 'ElDK1 bus', 'bioCH4', 'NG', 'CO2 sep', 'CO2 pure atm']
-    carrier_list = ['Biomass','Digest DM', 'AC', 'gas', 'gas', 'CO2 pure', 'CO2 pure']
+    carrier_list = ['Biomass', 'Digest DM', 'AC', 'gas', 'gas', 'CO2 pure', 'CO2 pure']
     unit_list = ['MW', 't/h', 'MW', 'MW', 'MW', 't/h', 't/h']
 
     if n_flags['SkiveBiogas']:
@@ -969,11 +1002,11 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=True)
 
         # ------- add EL connections------------
-        local_EL_bus='El_biogas'
+        local_EL_bus = 'El_biogas'
         n = add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs)
 
         # -----add local heat connections
-        plant_name='SkiveBiogas'
+        plant_name = 'SkiveBiogas'
         heat_bus_list = ["Heat MT", "Heat DH", "Heat LT"]
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, tech_costs)
 
@@ -982,25 +1015,23 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         # NOTE 2: REFERENCE in the study is that standard operation of the Biogas plant has a cost = 0
         # Hence there is an opportunity for revenue by NOT using the NG boiler and Grid electricity.
         # In the calculation the plant is allocated this "Revenue" as marginal cost (every hour).
-        # If in the optimal solution the Heat and El required are only from NG and Grid then the opportunity revenue canceled
-
 
         NG_opportunity_revenue = -(en_market_prices['NG_grid_price'] * np.abs(
             GL_eff.loc["Heat MT", "SkiveBiogas"]) / tech_costs.at[
-                                     'gas boiler steam', 'efficiency']) # €/(t_biomass)
+                                       'gas boiler steam', 'efficiency'])  # €/(t_biomass)
 
         EL_opportunity_revenue = -(en_market_prices['el_grid_price'] * np.abs(
-            GL_eff.loc["El2 bus", "SkiveBiogas"])) # €/(t_biomass))
+            GL_eff.loc["El2 bus", "SkiveBiogas"]))  # €/(t_biomass))
 
         n.add("Link",
               "SkiveBiogas",
               bus0="Biomass",
               bus1="bioCH4",
               bus2="CO2 sep",
-              bus3=new_heat_buses[0], #"Heat MT",
-              bus4=local_EL_bus, # 'El_biogas',
+              bus3=new_heat_buses[0],  # "Heat MT",
+              bus4=local_EL_bus,  # 'El_biogas',
               bus5='Digest DM',
-              bus6=new_heat_buses[2], #"Heat LT",
+              bus6=new_heat_buses[2],  # "Heat LT",
               efficiency=GL_eff.loc["bioCH4", "SkiveBiogas"],
               efficiency2=GL_eff.loc["CO2 pure", "SkiveBiogas"],
               efficiency3=GL_eff.loc["Heat MT", "SkiveBiogas"],
@@ -1013,13 +1044,13 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         # DM digestate  store
         n.add("Store",
-                    "Digestate",
-                    bus="Digest DM",
-                    e_nom_extendable=True,
-                    e_nom_min=0,
-                    e_nom_max=float("inf"),
-                    e_cyclic=False,
-                    capital_cost=0)
+              "Digestate",
+              bus="Digest DM",
+              e_nom_extendable=True,
+              e_nom_min=0,
+              e_nom_max=float("inf"),
+              e_cyclic=False,
+              capital_cost=0)
 
         # ---------NG boiler--------------
         # Existing NG boiler (which can supply heat to the symbiosys net)
@@ -1031,7 +1062,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
               efficiency=tech_costs.at['gas boiler steam', 'efficiency'],
               p_nom=np.abs(
                   GL_inputs.loc['Heat MT', 'SkiveBiogas'] / tech_costs.at['gas boiler steam', 'efficiency']),
-              marginal_cost= en_market_prices['NG_grid_price'] +
+              marginal_cost=en_market_prices['NG_grid_price'] +
                             tech_costs.at['gas boiler steam', 'VOM'] * p.currency_multiplier,
               p_nom_extendable=False)
 
@@ -1073,6 +1104,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         new_components = {key: [] for key in keylist}
 
     return n, new_components
+
 
 def add_renewables(n, n_flags, inputs_dict, tech_costs):
     """function that add Renewable generation (wind and PV) to the model
@@ -1133,7 +1165,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               marginal_cost=en_market_prices['el_grid_sell_price'],
               p_nom_extendable=True,
               capital_cost=tech_costs.at[
-                                     'electricity grid connection', 'fixed'] * p.currency_multiplier)
+                               'electricity grid connection', 'fixed'] * p.currency_multiplier)
 
         # new componets
         new_links = list(set(n.links.index.values) - set(n0_links))
@@ -1151,6 +1183,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
         new_components = {key: [] for key in keylist}
 
     return n, new_components
+
 
 def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
     GL_eff = inputs_dict['GL_eff']
@@ -1180,14 +1213,14 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         n = add_link_El_grid_to_H2(n, inputs_dict, tech_costs)
 
         # -----add local heat connections
-        plant_name='GreenHyScale'
+        plant_name = 'GreenHyScale'
         heat_bus_list = ['Heat MT', "Heat DH", "Heat LT"]
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, tech_costs)
 
         # -----------Electrolyzer------------------
         # cost_electrolysis dependent on scale (grid ot MeOH only)
         if H2_input_demand.iloc[:, 0].sum() > 0:
-            electrolysis_cost= tech_costs.at['Electrolysis large', 'fixed'] * p.currency_multiplier
+            electrolysis_cost = tech_costs.at['Electrolysis large', 'fixed'] * p.currency_multiplier
         else:
             electrolysis_cost = tech_costs.at['Electrolysis small', 'fixed'] * p.currency_multiplier
 
@@ -1199,7 +1232,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               efficiency=GL_eff.at['H2', 'GreenHyScale'],
               efficiency2=GL_eff.at['Heat LT', 'GreenHyScale'],
               capital_cost=electrolysis_cost,
-              marginal_cost= 0,
+              marginal_cost=0,
               p_nom_extendable=True,
               ramp_limit_up=p.ramp_limit_up_electrolyzer,
               ramp_limit_down=p.ramp_limit_down_electrolyzer)
@@ -1242,6 +1275,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
 
     return n, new_components
 
+
 def add_meoh(n, n_flags, inputs_dict, tech_costs):
     ''' function installing required MeOH facilities
     MeOH system can be supplied with own electolyzer but does not have a CO2 source
@@ -1260,10 +1294,10 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     n0_stores = n.stores.index.values
     n0_buses = n.buses.index.values
 
-    bus_list = ['ElDK1 bus', 'H2_meoh', 'H2 HP', 'CO2_meoh', 'CO2 pure HP',
+    bus_list = ['ElDK1 bus', 'El3 bus', 'H2_meoh', 'H2 HP', 'CO2_meoh', 'CO2 pure HP',
                 'Methanol', 'Heat amb']
-    carrier_list = ['AC',  'H2', 'H2', 'CO2 pure', 'CO2 pure', 'Methanol', 'Heat' ]
-    unit_list = ['MW', 'MW', 'MW', 't/h', 't/h', 'MW', 'MW']
+    carrier_list = ['AC', 'AC', 'H2', 'H2', 'CO2 pure', 'CO2 pure', 'Methanol', 'Heat']
+    unit_list = ['MW', 'MW', 'MW', 'MW', 't/h', 't/h', 'MW', 'MW']
 
     if n_flags['meoh']:
         # add required buses if not in the network
@@ -1289,79 +1323,102 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               p_set=Methanol_input_demand.iloc[:, 0])
 
         # ------- add EL connections------------
-        local_EL_bus='El_meoh'
-        n = add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs)
+        # local_EL_bus='El_meoh'
+        # n = add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs)
 
-        #--------add H2 grid connection if available -----
-        if n_flags['electrolyzer']:
-            if H2_input_demand.iloc[:, 0].sum() > 0:                    # external H2 demand
-                n.add("Link",
-                      "H2grid_to_meoh",
-                      bus0="H2 delivery",
-                      bus1='H2_meoh',
-                      efficiency=1,
-                      p_nom_extendable=True,
-                      capital_cost=tech_costs.at[
-                                       'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe * p.currency_multiplier)
+        # --------add H2 grid connection if available -----
+        # if n_flags['electrolyzer']:
+        if H2_input_demand.iloc[:, 0].sum() > 0:  # external H2 demand
+            n.add("Link",
+                  "H2grid_to_meoh",
+                  bus0="H2 delivery",
+                  bus1='H2_meoh',
+                  efficiency=1,
+                  p_nom_extendable=True,
+                  capital_cost=tech_costs.at[
+                                   'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe * p.currency_multiplier)
 
         # -----------H2 compressor -----------------------
-        n.add('Bus', 'H2 comp heat', carrier='Heat',unit='MW')
+        n.add('Bus', 'H2 comp heat', carrier='Heat', unit='MW')
         n.add("Link",
               "H2 compressor",
               bus0="H2_meoh",
               bus1="H2 HP",
-              bus2= local_EL_bus,
+              bus2='El3 bus',  # local_EL_bus,
               bus3='H2 comp heat',
               efficiency=1,
               efficiency2=-1 * p.el_comp_H2,
-              efficiency3 = 1 * p.heat_comp_H2,
+              efficiency3=1 * p.heat_comp_H2,
               p_nom_extendable=True,
               capital_cost=tech_costs.at['hydrogen storage compressor', 'fixed'] * p.currency_multiplier,
               marginal_cost=tech_costs.at['hydrogen storage compressor', 'VOM'] * p.currency_multiplier)
 
         n.add('Link',
               'H2 comp heat rejection',
-              bus0= 'H2 comp heat',
-              bus1= 'Heat amb',
-              efficiency= 1,
-              p_nom_extendable= True)
+              bus0='H2 comp heat',
+              bus1='Heat amb',
+              efficiency=1,
+              p_nom_extendable=True)
+
+        if n_flags['symbiosis_net']:
+            if 'Heat LT' not in n.buses.index.values:
+                n.add('Bus', 'Heat LT', carrier='Heat', unit='MW')
+            n.add('Link',
+                  'H2 comp heat integration',
+                  bus0='H2 comp heat',
+                  bus1='Heat LT',
+                  efficiency=1,
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier,
+                  p_nom_extendable=True)
 
         # -----------CO2 compressor -----------------------
-        n.add('Bus', 'CO2 comp heat', carrier='Heat',unit='MW')
+        n.add('Bus', 'CO2 comp heat', carrier='Heat', unit='MW')
         n.add("Link",
               "CO2 compressor",
               bus0="CO2_meoh",
               bus1="CO2 pure HP",
-              bus2=local_EL_bus,
+              bus2='El3 bus',  # local_EL_bus,
               bus3='CO2 comp heat',
-              efficiency= 1,
+              efficiency=1,
               efficiency2=-1 * p.el_comp_CO2,
-              efficiency3= 1 * p.heat_comp_CO2,
+              efficiency3=1 * p.heat_comp_CO2,
               p_nom_extendable=True,
               capital_cost=tech_costs.at['CO2_compressor', "fixed"] * p.currency_multiplier)
 
         n.add('Link',
               'CO2 comp heat rejection',
-              bus0= 'CO2 comp heat',
-              bus1= 'Heat amb',
-              efficiency= 1,
-              p_nom_extendable= True)
+              bus0='CO2 comp heat',
+              bus1='Heat amb',
+              efficiency=1,
+              p_nom_extendable=True)
+
+        if n_flags['symbiosis_net']:
+            if 'Heat LT' not in n.buses.index.values:
+                n.add('Bus', 'Heat LT', carrier='Heat', unit='MW')
+            n.add('Link',
+                  'CO2 comp heat integration',
+                  bus0='CO2 comp heat',
+                  bus1='Heat LT',
+                  efficiency=1,
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier,
+                  p_nom_extendable=True)
 
         # ----------METHANOL PLANT---------
         # add local heat connections
-        plant_name='Methanol plant'
+        plant_name = 'Methanol plant'
         heat_bus_list = ['Heat MT', "Heat DH", "Heat LT"]
-        n, new_heat_buses = add_local_heat_connections(n,heat_bus_list, GL_eff, plant_name, n_flags, tech_costs)
+        n, new_heat_buses = add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, tech_costs)
 
         if not n_flags['central_heat']:
-            add_local_boilers(n, local_EL_bus, new_heat_buses[0], plant_name, tech_costs, en_market_prices)
+            # add_local_boilers(n, local_EL_bus, new_heat_buses[0], plant_name, tech_costs, en_market_prices)
+            add_local_boilers(n, 'El3 bus', new_heat_buses[0], plant_name, tech_costs, en_market_prices)
 
         n.add("Link",
               "Methanol plant",
               bus0="CO2 pure HP",
               bus1="Methanol",
               bus2="H2 HP",
-              bus3=local_EL_bus,
+              bus3='El3 bus',  # local_EL_bus,
               bus4=new_heat_buses[0],
               bus5=new_heat_buses[1],
               efficiency=GL_eff.loc["Methanol", "Methanol plant"],
@@ -1376,22 +1433,22 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
 
         # -----------H2 HP storage cylinders ---------------
         # H2 compressed local HP Storage
-        n.add('Bus', 'H2 storage',carrier='H2',unit='MW')
+        n.add('Bus', 'H2 storage', carrier='H2', unit='MW')
 
         n.add('Link',
               'H2 storage send',
-              bus0= 'H2 HP',
-              bus1= 'H2 storage',
-              bus2= local_EL_bus,
-              efficiency= 1,
-              efficiency2= -1 * p.El_H2_storage_add,
+              bus0='H2 HP',
+              bus1='H2 storage',
+              bus2='El3 bus',  # local_EL_bus,
+              efficiency=1,
+              efficiency2=-1 * p.El_H2_storage_add,
               p_nom_extendable=True)
 
         n.add('Link',
               'H2 storage return',
-              bus0= 'H2 storage',
-              bus1= 'H2 HP',
-              efficiency= 1,
+              bus0='H2 storage',
+              bus1='H2 HP',
+              efficiency=1,
               p_nom_extendable=True)
 
         n.add("Store",
@@ -1399,7 +1456,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               bus="H2 storage",
               e_nom_extendable=True,
               capital_cost=tech_costs.at['hydrogen storage tank type 1', 'fixed'] * p.currency_multiplier,
-              marginal_cost= tech_costs.at['hydrogen storage tank type 1', 'VOM'] * p.currency_multiplier,
+              marginal_cost=tech_costs.at['hydrogen storage tank type 1', 'VOM'] * p.currency_multiplier,
               e_nom_max=p.e_nom_max_H2_HP,
               e_cyclic=True)
 
@@ -1409,7 +1466,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               'CO2 storage send',
               bus0='CO2 pure HP',
               bus1='CO2 storage',
-              bus2=local_EL_bus,
+              bus2='El3 bus',  # local_EL_bus,
               efficiency=1,
               efficiency2=-1 * p.El_CO2_storage_add,
               p_nom_extendable=True)
@@ -1438,7 +1495,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               'CO2 liq send',
               bus0='CO2_meoh',
               bus1='CO2 liq storage',
-              bus2=local_EL_bus,
+              bus2='El3 bus',  # local_EL_bus,
               bus3='CO2 liq heat LT',
               efficiency=1,
               efficiency2=-1 * p.El_CO2_liq,
@@ -1483,7 +1540,6 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               e_initial=0,
               e_cyclic=True)
 
-
         # new components
         new_links = list(set(n.links.index.values) - set(n0_links))
         new_generators = list(set(n.generators.index.values) - set(n0_generators))
@@ -1500,6 +1556,8 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         new_components = {key: [] for key in keylist}
 
     return n, new_components
+
+
 def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     '''this function adds expansion capacity for heating technology'''
 
@@ -1515,9 +1573,9 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     n0_stores = n.stores.index.values
     n0_buses = n.buses.index.values
 
-    bus_list = ['Straw Pellets', 'ElDK1 bus', 'NG']
-    carrier_list = ['Straw Pellets', 'AC',  'NG' ]
-    unit_list = ['t/h', 'MW', 'MW']
+    bus_list = ['Straw Pellets', 'ElDK1 bus', 'NG', 'biochar', 'biochar storage']
+    carrier_list = ['Straw Pellets', 'AC', 'NG', 'CO2 pure', 'CO2 pure']
+    unit_list = ['t/h', 'MW', 'MW', 't/h', 't/h']
 
     if n_flags['central_heat']:
         # add required buses if not in the network
@@ -1527,7 +1585,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             n.madd('Bus', add_buses, carrier=[carrier_list[i] for i in idx_add], unit=[unit_list[i] for i in idx_add])
 
         # ------- add EL connections------------
-        local_EL_bus='El_C_heat'
+        local_EL_bus = 'El_C_heat'
         n = add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs)
 
         # ------- add Heat MT bus ------
@@ -1543,29 +1601,54 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               marginal_cost=p.Straw_pellets_price * p.currency_multiplier)
 
         # link converting straw pellets (t(h) to equivalent Digestate pellets (t/h) for Skyclean
+        # NOTE: electricity in Skyclean is moslty for pelletization of digestate fibers,
+        # hence it is balanced (produced for free) by this link when pellets are purchased
         n.add("Link",
               "Straw to Skyclean",
               bus0="Straw Pellets",
               bus1="Digest DM",
               bus2='local_EL_bus',
-              efficiency= p.lhv_straw_pellets / p.lhv_dig_pellets,
-              efficiency2= -GL_eff.at['El2 bus', 'SkyClean'] * p.lhv_straw_pellets / p.lhv_dig_pellets,
-              p_nom_extendable=True) # TRICK: electricity in Skyclean is moslty for pelletization, hence it is balanced (produced for free) in this link when pellets are purchased
+              efficiency=p.lhv_straw_pellets / p.lhv_dig_pellets,
+              efficiency2=-GL_eff.at['El2 bus', 'SkyClean'] * p.lhv_straw_pellets / p.lhv_dig_pellets,
+              p_nom_extendable=True)
+
+        if n_flags['bioChar']:
+            biochar_cost = -CO2_cost
+        else:
+            biochar_cost = 0
 
         n.add("Link",
               "SkyClean",
               bus0='Digest DM',
               bus1='Heat MT',
               bus2=local_EL_bus,
+              bus3='biochar',
               efficiency=GL_eff.at['Heat MT', 'SkyClean'],
               efficiency2=GL_eff.at['El2 bus', 'SkyClean'],
+              efficiency3=-GL_eff.at['CO2e bus', 'SkyClean'],  # NOTE: negative sign for CO2e in the input file
               marginal_cost=(tech_costs.at[
-                  'biomass HOP', 'VOM'] + GL_eff.at['CO2e bus', 'SkyClean'] * CO2_cost)* p.currency_multiplier, # REWARD FOR NEGATIVE EMISSIONS
+                  'biomass HOP', 'VOM']) * p.currency_multiplier,
               p_nom_extendable=True,
               p_nom_max=p.p_nom_max_skyclean / p.lhv_dig_pellets,
-              capital_cost=tech_costs.at['Slow pyrolysis', "fixed"] * p.currency_multiplier) #
+              capital_cost=tech_costs.at['Slow pyrolysis', "fixed"] * p.currency_multiplier)  #
 
-        #------ OPTIONAL BIOMASS BOILER (no biochar)-------
+        n.add('Link',
+              'biochar credits',
+              bus0='biochar',
+              bus1='biochar storage',
+              efficiency=1,
+              marginal_cost=biochar_cost * p.currency_multiplier,  # REWARD FOR NEGATIVE EMISSIONS
+              p_nom_extendable=True)
+
+        n.add('Store',
+              'biochar storage',
+              bus="biochar storage",
+              e_nom_extendable=True,
+              e_nom_min=0,
+              e_nom_max=float("inf"),  # Total emission limit
+              e_cyclic=False)
+
+        # ------ OPTIONAL BIOMASS BOILER (no biochar)-------
         n.add("Link",
               "Pellets boiler",
               bus0='Digest DM',
@@ -1574,7 +1657,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               efficiency=tech_costs.at['biomass HOP', 'efficiency'] * p.lhv_dig_pellets,
               efficiency2=GL_eff.at['El2 bus', 'SkyClean'],
               marginal_cost=(tech_costs.at[
-                  'biomass HOP', 'VOM'] ) * p.currency_multiplier,
+                  'biomass HOP', 'VOM']) * p.currency_multiplier,
               p_nom_extendable=True,
               capital_cost=tech_costs.at['biomass HOP', 'fixed'] * p.currency_multiplier)
 
@@ -1616,6 +1699,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
 
     return n, new_components
 
+
 def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
     '''this function builds the simbiosys net with: Buses, Links, Storeges
      The services includes: RE, Heat MT, H2, CO2, connection to DH'''
@@ -1629,10 +1713,11 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
     n0_stores = n.stores.index.values
     n0_buses = n.buses.index.values
 
-    bus_list = ['El2 bus', 'Heat MT', 'Heat LT', 'Heat DH', 'battery', 'Heat DH storage', 'Heat MT storage', 'H2', 'H2_meoh',
-                'CO2 sep', 'CO2_meoh','Heat DH']
+    bus_list = ['El2 bus', 'Heat MT', 'Heat LT', 'Heat DH', 'battery', 'Heat DH storage', 'Heat MT storage', 'H2',
+                'H2_meoh',
+                'CO2 sep', 'CO2_meoh', 'Heat DH']
     carrier_list = ['AC', 'AC', 'Heat', 'Heat', 'Heat', 'battery', 'Heat', 'Heat', 'H2', 'H2', 'H2', 'H2', 'CO2 pure',
-                    'CO2 pure','Heat']
+                    'CO2 pure', 'Heat']
     unit_list = ['MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 'MW', 't/h', 't/h', 'MW']
 
     if n_flags['symbiosis_net']:
@@ -1705,7 +1790,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   "Heat_MT_to_amb",
                   bus0="Heat MT",
                   bus1='Heat amb',
-                  efficiency = 1,
+                  efficiency=1,
                   p_nom_extendable=True,
                   capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
 
@@ -1728,7 +1813,6 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   efficiency=1,
                   p_nom_extendable=True,
                   capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
-
 
         # HEAT INTEGRATION (heat cascade) - HEX
         n.add("Link",
@@ -1787,24 +1871,23 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               bus='Heat MT storage',
               e_nom_extendable=True,
               e_nom_min=0,
-              e_nom_max= p.e_nom_max_Heat_MT_storage,
+              e_nom_max=p.e_nom_max_Heat_MT_storage,
               e_cyclic=True,
-              capital_cost=tech_costs.at['Concrete-store','fixed'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['Concrete-store', 'fixed'] * p.currency_multiplier)
 
         n.add("Link",
               "Heat MT storage charger",
               bus0="Heat MT",
               bus1="Heat MT storage",
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['Concrete-charger','fixed'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['Concrete-charger', 'fixed'] * p.currency_multiplier)
 
         n.add("Link",
               "Heat MT storage discharger",
               bus0="Heat MT storage",
               bus1="Heat MT",
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['Concrete-discharger','fixed'] * p.currency_multiplier)
-
+              capital_cost=tech_costs.at['Concrete-discharger', 'fixed'] * p.currency_multiplier)
 
         # new componets
         new_links = list(set(n.links.index.values) - set(n0_links))
@@ -1824,7 +1907,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
     return n, new_components
 
 def add_DH(n, n_flags, inputs_dict, tech_costs):
-    '''function that adds DH infrastruture in the park and grid outside'''
+    """function that adds DH infrastruture in the park and grid outside"""
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
 
     # take a status of the network before adding componets
@@ -1834,8 +1917,8 @@ def add_DH(n, n_flags, inputs_dict, tech_costs):
     n0_stores = n.stores.index.values
     n0_buses = n.buses.index.values
 
-    bus_list = ['ElDK1 bus','Heat DH','DH grid','DH GL']
-    carrier_list = ['AC', 'Heat', 'Heat','Heat', ]
+    bus_list = ['ElDK1 bus', 'Heat DH', 'DH grid', 'DH GL']
+    carrier_list = ['AC', 'Heat', 'Heat', 'Heat', ]
     unit_list = ['MW', 'MW', 'MW', 'MW']
 
     # options for DH if selected
@@ -1848,7 +1931,7 @@ def add_DH(n, n_flags, inputs_dict, tech_costs):
             n.madd('Bus', add_buses, carrier=[carrier_list[i] for i in idx_add], unit=[unit_list[i] for i in idx_add])
 
         # ------- add EL connections------------
-        local_EL_bus='El_DH'
+        local_EL_bus = 'El_DH'
         n = add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs)
 
         # Heat pump for increasing LT heat temperature to DH temperature
@@ -1883,16 +1966,18 @@ def add_DH(n, n_flags, inputs_dict, tech_costs):
                           'generators': new_generators,
                           'loads': new_loads,
                           'stores': new_stores,
-                          'buses': bus_list}
+                          'buses': new_buses}
     else:
         keylist = ['links', 'generators', 'loads', 'stores', 'buses']
         new_components = {key: [] for key in keylist}
 
     return n, new_components
 
+
 def file_name_network(n, n_flags, inputs_dict):
-    '''function that automatically creates a file name give a network'''
-    # the netwrok name includes the agents and the indipended variables H2_d, CO2_c, MeOH_d
+    """function that automatically creates a file name give a network"""
+    # the netwrok name includes: the agents included,  the demands variables H2_d, MeOH_d, CO2 cost, bioChar credits
+    # and max fraction of electricity sold externally
     # example: Biogas_CHeat_RE_H2_MeOH_SymN_CO2c200_H2d297_MeOHd68
     CO2_cost = inputs_dict['CO2 cost']
 
@@ -1911,19 +1996,70 @@ def file_name_network(n, n_flags, inputs_dict):
     CO2_c = int(CO2_cost)  # CO2 price in currency
 
     # year
-    year= int(p.En_price_year) # energy price year
+    year = int(p.En_price_year)  # energy price year
+
+    # max El to DK1
+
+    el_DK1_sale_el_RFNBO = inputs_dict['el_DK1_sale_el_RFNBO']
 
     # agents
     file_name = n_flags['SkiveBiogas'] * 'SB_' + n_flags['central_heat'] * 'CH_' + n_flags['renewables'] * 'RE_' + \
                 n_flags['electrolyzer'] * 'H2_' + n_flags['meoh'] * 'meoh_' + n_flags['symbiosis_net'] * 'SN_' + \
                 n_flags['DH'] * 'DH_' + 'CO2c' + str(CO2_c) + '_' + 'H2d' + str(H2_d) + \
-                '_' + 'MeOHd' + str(MeOH_d) + '_' + str(year)
+                '_' + 'MeOHd' + str(MeOH_d) + '_' + str(year) + n_flags[
+                    'bioChar'] * '_bCh' + '_' + 'El2DK1' + '_' + str(el_DK1_sale_el_RFNBO)
 
     return file_name
 
+
+def network_comp_allocation_add_buses_interface(network, network_comp_allocation):
+    """function that creates the dict entry for buses for each agent and interface buses for that agent """
+
+    # correct bus list per agent
+    for key in network_comp_allocation:
+        # find all buses included in aeach agent
+        network_comp_allocation[key]['buses'] = []  # reset buses
+        bus_list_lk = []
+        bus_list_s = []
+        bus_list_g = []
+        for lk in network_comp_allocation[key]['links']:
+            b_lk = [network.links.bus0[lk], network.links.bus1[lk], network.links.bus2[lk],
+                    network.links.bus3[lk],
+                    network.links.bus4[lk], network.links.bus5[lk],
+                    network.links.bus6[lk]]  # list of buses connected to the link
+            bus_list_lk.extend(b_lk)
+
+        for s in network_comp_allocation[key]['stores']:
+            b_s = [network.stores.bus[s]]
+            bus_list_s.extend(b_s)
+
+        for g in network_comp_allocation[key]['generators']:
+            b_g = [network.generators.bus[g]]
+            bus_list_g.extend(b_g)
+
+        bus_list = list(set(bus_list_lk + bus_list_s + bus_list_g))
+
+        if '' in bus_list:
+            bus_list.remove('')
+
+        network_comp_allocation[key]['buses'] = bus_list
+
+    for key in network_comp_allocation:
+        # identify interface buses
+        network_comp_allocation[key]['interface_buses'] = []  # reset
+        other_agents = list(set([key for key in network_comp_allocation]).difference(set([key])))
+        other_buses = []
+        [other_buses.extend(network_comp_allocation[i]['buses']) for i in other_agents]
+        set1 = set(network_comp_allocation[key]['buses'])
+        set2 = set(other_buses)
+        network_comp_allocation[key]['interface_buses'] = list(set1.intersection(set2))
+
+    return network_comp_allocation
+
+
 def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
-    '''this function uses bioCH4 demand, H2 demand, and MeOH demand as input to build the PyPSA network'''
-    # OUTPUTS: 1) Pypsa network, 2) nested dictionary with componets allocations to the agents (links, generators, loads, stores)
+    """this function uses bioCH4 demand, H2 demand, and MeOH demand as input to build the PyPSA network"""
+    # OUTPUTS: 1) Pypsa network, 2) nested dictionary with componets allocations to the agents
 
     '''--------------CREATE PYPSA NETWORK------------------'''
     override_component_attrs = override_components_mlinks()
@@ -1942,9 +2078,6 @@ def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
     network, comp_symbiosis = add_symbiosis(network, n_flags, inputs_dict, tech_costs)
     network, comp_DH = add_DH(network, n_flags, inputs_dict, tech_costs)
 
-    # add prices and remove loads if required
-    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
-
     network_comp_allocation = {'external_grids': comp_external_grids,
                                'SkiveBiogas': comp_biogas,
                                'renewables': comp_renewables,
@@ -1953,6 +2086,9 @@ def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
                                'central_heat': comp_central_H,
                                'symbiosis_net': comp_symbiosis,
                                'DH': comp_DH}
+
+    # add buses per agent and interface buses per agent
+    network_comp_allocation = network_comp_allocation_add_buses_interface(network, network_comp_allocation)
 
     # save comp allocation within network
     network.network_comp_allocation = network_comp_allocation
@@ -1974,8 +2110,8 @@ def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
 # --- OPTIMIZATION-----
 
 def optimal_network_only(n_opt):
-    '''function that removes unused: buses, links, stores, generators, storage_units and loads,
-     from the plot of the optimal network'''
+    """function that removes unused: buses, links, stores, generators, storage_units and loads,
+     from the plot of the optimal network"""
     n = n_opt
 
     idx_gen_zero = n.generators.p_nom_opt[n.generators.p_nom_opt == 0].index
@@ -2002,6 +2138,7 @@ def optimal_network_only(n_opt):
             n.remove('Bus', b)
     return n
 
+
 def OLPF_network_gurobi(n, n_flags_opt, n_flags, inputs_dict):
     """Optimization of OLPF"""
     status = n.lopf(n.snapshots,
@@ -2026,15 +2163,13 @@ def OLPF_network_gurobi(n, n_flags_opt, n_flags, inputs_dict):
     return n
 
 
-# ----RESULTS SINGLE ANALYSIS----
+# ----RESULTS SINGLE OPTIMIZATION ----
 
-def shadow_prices_violinplot(n,inputs_dict, tech_costs):
-    '''function that plats a box plot from marginal prices (shadow prices) from a list of buses'''
+def shadow_prices_violinplot(n, inputs_dict, tech_costs):
+    """function that plats a box plot from marginal prices (shadow prices) from a list of buses"""
 
-    # Example of inputs
     CO2_cost = inputs_dict['CO2 cost']
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
-
 
     H2_d = 0
     meoh_d = 0
@@ -2087,7 +2222,7 @@ def shadow_prices_violinplot(n,inputs_dict, tech_costs):
 
 
 def get_capital_cost(n_opt):
-    '''function to retrive annualized capital cost for the '''
+    '''function to retrive annualized capital cost for the optimized network, for each genertor, store and link '''
     # loads do not have capital or marginal costs
     # generatars: marginal + capital cost
     # links: marginal + capital costs
@@ -2100,6 +2235,8 @@ def get_capital_cost(n_opt):
 
 
 def get_marginal_cost(n_opt):
+    """function to retrive marginal cost for the optimized network, for each genertor, store and link """
+
     # calculate the marginal cost for every store: note mc is applied only to power generated
     mc_store = []
     # stores with constant marginal costs
@@ -2134,7 +2271,7 @@ def get_marginal_cost(n_opt):
 
 
 def get_system_cost(n_opt):
-    'function that retunr total capital, marginal and system cost'
+    """function that retunr total capital, marginal and system cost"""
     # loads do not have capital or marginal costs
     # generatars: marginal + capital cost
     # links: marginal + capital costs
@@ -2159,16 +2296,15 @@ def get_system_cost(n_opt):
     return tot_cc, tot_mc, tot_sc
 
 
-def get_total_marginal_capital_cost_agents(n_opt,network_comp_allocation, plot_flag):
-    ''' function that return 2 dicitonaries with total capital and marginal costs per agent
-    it screens all the agents'''
+def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_flag):
+    """ function that return 2 dicitonaries with total capital and marginal costs per agent
+    it screens all the agents"""
     cc_stores, cc_generators, cc_links = get_capital_cost(n_opt)
     mc_stores, mc_generators, mc_links = get_marginal_cost(n_opt)
 
     agent_list_cost = []
     cc_tot_agent = {}
     mc_tot_agent = {}
-
 
     for key in network_comp_allocation:
         agent_list_cost.append(key)
@@ -2186,11 +2322,11 @@ def get_total_marginal_capital_cost_agents(n_opt,network_comp_allocation, plot_f
         # creates plots vecotrs
         cc_plot = []
         mc_plot = []
-        #totc_plot = []
+        totc_plot = []
         for a in agent_list_cost:
             cc_plot.append(cc_tot_agent[a])
             mc_plot.append(mc_tot_agent[a])
-            #totc_plot.append(mc_tot_agent[a]+ cc_tot_agent[a])
+            totc_plot.append(mc_tot_agent[a] + cc_tot_agent[a])
 
         fig, ax = plt.subplots()
 
@@ -2209,66 +2345,73 @@ def get_total_marginal_capital_cost_agents(n_opt,network_comp_allocation, plot_f
 
     return cc_tot_agent, mc_tot_agent
 
-def plot_duration_curve(ax,df_input,col_val):
-    '''plto duration curve from dataframe (df) with index being a DateTimeIndex
+
+""" PLOTS SINGLE OPTMIZATION """
+
+
+def plot_duration_curve(ax, df_input, col_val):
+    """plot duration curve from dataframe (df) with index being a DateTimeIndex
      col_val (str) indicate the name of the column with the value that must be plotted
      OUTPUTS:df_1_sorted
-      for duration curve plt: x = df_1_sorted['duration'] and y =df_1_sorted[col_val]'''
+      for duration curve plt: x = df_1_sorted['duration'] and y =df_1_sorted[col_val]"""
 
-    df_1=df_input.copy()
-    df_1['interval'] = 1 # time resolution of the index
+    df_1 = df_input.copy()
+    df_1['interval'] = 1  # time resolution of the index
     df_1_sorted = df_1.sort_values(by=[col_val], ascending=False)
     df_1_sorted['duration'] = df_1_sorted['interval'].cumsum()
     out = ax.plot(df_1_sorted['duration'], df_1_sorted[col_val])
 
     return out
 
+
 def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs):
-    '''function that plots El and Heat prices in external grids and GLS'''
+    """function that plots El and Heat prices in external grids and GLS"""
 
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
     el_grid_price_tariff, el_grid_sell_price_tariff = build_electricity_grid_price_w_tariff(inputs_dict['Elspotprices'])
 
-    legend1=['DK1 price + tariff + CO2 tax','DK1 price + tariff','DK1 spotprice','GLS El price', 'GLS El price for H2']
-    legend2=['DK NG price + CO2 tax','DK NG price','GLS Heat MT price','GLS Heat DH price']
+    legend1 = ['DK1 price + tariff + CO2 tax', 'DK1 price + tariff', 'DK1 spotprice', 'GLS El price',
+               'GLS El price for H2']
+    legend2 = ['DK NG price + CO2 tax', 'DK NG price', 'GLS Heat MT price', 'GLS Heat DH price']
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 
-    ax1.plot(p.hours_in_period, en_market_prices['el_grid_price'])#, label='DK1 price + tariff + CO2 tax')
-    ax1.plot(p.hours_in_period, el_grid_price_tariff)#, label='DK1 price + tariff')
-    ax1.plot(p.hours_in_period, inputs_dict['Elspotprices'])#, label='DK1 spotprice')
-    ax1.plot(p.hours_in_period, n_opt.buses_t.marginal_price['El2 bus'])#, label='GLS El price')
-    ax1.plot(p.hours_in_period, n_opt.buses_t.marginal_price['El3 bus'])#, label='GLS El price')
+    ax1.plot(p.hours_in_period, en_market_prices['el_grid_price'])  # , label='DK1 price + tariff + CO2 tax')
+    ax1.plot(p.hours_in_period, el_grid_price_tariff)  # , label='DK1 price + tariff')
+    ax1.plot(p.hours_in_period, inputs_dict['Elspotprices'])  # , label='DK1 spotprice')
+    # ax1.plot(p.hours_in_period, n_opt.buses_t.marginal_price['El2 bus'])#, label='GLS El price')
+    # ax1.plot(p.hours_in_period, n_opt.buses_t.marginal_price['El3 bus'])#, label='GLS El price')
     ax1.set_ylabel('€/MWh')
     ax1.grid(True)
     ax1.legend(legend1)
     ax1.set_title('El prices time series')
+    ax1.tick_params(axis='x', rotation=45)
 
-    plot_duration_curve(ax2,pd.DataFrame(en_market_prices['el_grid_price']),'SpotPrice EUR')
-    plot_duration_curve(ax2,el_grid_price_tariff,'SpotPrice EUR')
-    plot_duration_curve(ax2,inputs_dict['Elspotprices'],'SpotPrice EUR')
-    plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El2 bus']),'El2 bus')
-    plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El3 bus']),'El3 bus')
+    plot_duration_curve(ax2, pd.DataFrame(en_market_prices['el_grid_price']), 'SpotPrice EUR')
+    plot_duration_curve(ax2, el_grid_price_tariff, 'SpotPrice EUR')
+    plot_duration_curve(ax2, inputs_dict['Elspotprices'], 'SpotPrice EUR')
+    # plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El2 bus']),'El2 bus')
+    # plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El3 bus']),'El3 bus')
     ax2.set_ylabel('€/MWh')
     ax2.set_xlabel('h/y')
     ax2.legend(legend1)
     ax2.grid(True)
     ax2.set_title('El prices duration curve')
 
-    ax3.plot(p.hours_in_period, en_market_prices['NG_grid_price'])#, label='DK NG price + CO2 tax')
-    ax3.plot(p.hours_in_period, inputs_dict['NG_price_year'])#, label='DK NG price')
-    ax3.plot(p.hours_in_period, n_opt.buses_t.marginal_price['Heat MT'])#, label='GLS Heat MT price')
-    ax3.plot(p.hours_in_period, n_opt.buses_t.marginal_price['Heat DH'])#, label='GLS Heat DH price')
+    ax3.plot(p.hours_in_period, en_market_prices['NG_grid_price'])  # , label='DK NG price + CO2 tax')
+    ax3.plot(p.hours_in_period, inputs_dict['NG_price_year'])  # , label='DK NG price')
+    # ax3.plot(p.hours_in_period, n_opt.buses_t.marginal_price['Heat MT'])#, label='GLS Heat MT price')
+    # ax3.plot(p.hours_in_period, n_opt.buses_t.marginal_price['Heat DH'])#, label='GLS Heat DH price')
     ax3.set_ylabel('€/MWh')
     ax3.grid(True)
     ax3.legend(legend2)
     ax3.set_title('Heat prices time series')
+    ax3.tick_params(axis='x', rotation=45)
 
-
-    plot_duration_curve(ax4,pd.DataFrame(en_market_prices['NG_grid_price']),'Neutral gas price EUR/MWh')
-    plot_duration_curve(ax4,inputs_dict['NG_price_year'],'Neutral gas price EUR/MWh')
-    plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat MT']),'Heat MT')
-    plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat DH']),'Heat DH')
+    plot_duration_curve(ax4, pd.DataFrame(en_market_prices['NG_grid_price']), 'Neutral gas price EUR/MWh')
+    plot_duration_curve(ax4, inputs_dict['NG_price_year'], 'Neutral gas price EUR/MWh')
+    # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat MT']),'Heat MT')
+    # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat DH']),'Heat DH')
     ax4.set_ylabel('€/MWh')
     ax4.set_xlabel('h/y')
     ax4.legend(legend2)
@@ -2280,6 +2423,7 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs):
 
     return
 
+
 def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date):
     '''function that plots shadow prices for the buses involved in the production of H2 and MeOH'''
     ''' period of time defined by the user '''
@@ -2288,9 +2432,9 @@ def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date):
 
     time_ok = pd.date_range(start_date + 'Z', end_date + 'Z', freq='H')
 
-    fig, (ax1, ax2)= plt.subplots(2, 1)
+    fig, (ax1, ax2) = plt.subplots(2, 1)
     for b in bus_list:
-        df_data= n_opt.buses_t.marginal_price.copy()
+        df_data = n_opt.buses_t.marginal_price.copy()
         df_plot = df_data.loc[time_ok, :]
         # df_plot = df_data.loc[(df_data.index >= pd.Timestamp(start_date)) & (df_data.index <= pd.Timestamp(end_date))]
         ax1.plot(df_plot[b])
@@ -2307,22 +2451,24 @@ def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date):
     ax2.legend(legend)
     ax2.set_title('duration curves')
 
-    #folder = p.print_folder_Opt
-    #fig.savefig(folder + 't_int_shadow_prices.png')
+    # folder = p.print_folder_Opt
+    # fig.savefig(folder + 't_int_shadow_prices.png')
 
     return
 
-def print_opt_components_table(n_opt,network_comp_allocation, flag_png ):
 
-    "function that creates and saves as png a DF with all the components in the optimal nework, including their capacities and annualized capital costs"
+def print_opt_components_table(n_opt, network_comp_allocation, file_path):
+    """function that creates and saves as png a DF with all the components in the optimal nework, including their
+    capacities and annualized capital costs"""
 
-    df_opt_componets= pd.DataFrame()
+    df_opt_componets = pd.DataFrame()
 
     agent_list_cost = []
 
     for key in network_comp_allocation:
         df_agent = pd.DataFrame(data=0, index=[],
-                                columns=['Fixed cost (€/y)', 'capacity', 'component', 'reference inlet', 'unit', 'agent'])
+                                columns=['Fixed cost (€/y)', 'capacity', 'component', 'reference inlet', 'unit',
+                                         'agent'])
 
         agent_list_cost.append(key)
         agent_generators_n_opt = list(
@@ -2346,38 +2492,36 @@ def print_opt_components_table(n_opt,network_comp_allocation, flag_png ):
             df_agent.at[l, 'agent'] = key
             df_agent.at[l, 'component'] = 'link'
 
-
         for s in agent_stores_n_opt:
             df_agent.at[s, 'Fixed cost (€/y)'] = n_opt.stores.capital_cost[s] * n_opt.stores.e_nom_opt[s]
             df_agent.at[s, 'capacity'] = n_opt.stores.e_nom_opt[s]
-            df_agent.at[s,'reference inlet'] = n_opt.stores.bus[s]
+            df_agent.at[s, 'reference inlet'] = n_opt.stores.bus[s]
             df_agent.at[s, 'unit'] = n_opt.buses.unit[n_opt.stores.bus[s]]
             df_agent.at[s, 'agent'] = key
             df_agent.at[s, 'component'] = 'store'
 
-        df_opt_componets = pd.concat([df_opt_componets,df_agent])
+        df_opt_componets = pd.concat([df_opt_componets, df_agent])
 
     "save to png"
-    if flag_png:
-        folder = p.print_folder_Opt
-        dfi.export(df_opt_componets, folder+'components_n_opt.png')
+    dfi.export(df_opt_componets, file_path + '.png')
 
     return df_opt_componets
 
-def plot_heat_map_single_comp(df_time_serie):
 
+def plot_heat_map_single_comp(df_time_serie):
     "plot heat map for any time serie based on normalized value for week of the yeat and hour in a week"
     # input example : df_time_serie = pd.DataFrame(network_opt.stores_t.e['H2 HP']) - must be a DF!
     col_name = str(df_time_serie.columns.values.squeeze())
-    df_2= df_time_serie.index.isocalendar()
-    df_data=pd.concat([df_time_serie, df_2], axis= 1)
-    df_data['hour of week'] =  ((df_data['day'] * 24 + 24) - (24 - df_data.index.hour))
+    df_2 = df_time_serie.index.isocalendar()
+    df_data = pd.concat([df_time_serie, df_2], axis=1)
+    df_data['hour of week'] = (df_data['day'] - 1) * 24 + (df_data.index.hour + 1)
+    df_data.rename(columns={'week': 'week of the year'}, inplace=True)
 
     new_df = df_data.copy()
     new_df = new_df.drop('day', axis=1)
     new_df = new_df.drop('year', axis=1)
-    new_df = new_df.set_index('week')
-    new_df = new_df.pivot_table(index='week', columns="hour of week", values=col_name)
+    new_df = new_df.set_index('week of the year')
+    new_df = new_df.pivot_table(index='week of the year', columns="hour of week", values=col_name)
 
     fig = sns.heatmap(new_df, cmap='YlGn', vmin=0, cbar=True).set(title=col_name)
 
@@ -2409,7 +2553,354 @@ def heat_map_CF(network_opt, key_comp_dict):
         plot_heat_map_single_comp(df_time_serie)
 
     plt.subplots_adjust(hspace=0.7, wspace=0.5)
-    fig.savefig(p.print_folder_Opt + 'heat_map_CF.png')
 
     return
+
+# -------- SENSITIVITY ANALYSIS
+
+
+def results_df_plot_build(data_folder, dataset_flags, results_flags, network_comp_allocation, capacity_list):
+    '''Function that reads all optimization runs in data_folder, selected by dataset_flags and
+    import the variables selected in results_flags to the dataframe df_results.
+    The dictionary results_plot contains the names of the variables with units to be used in the plots,
+     it uses the same keys of results_flags'''
+
+    _, GL_eff, _, _, bioCH4_prod, _, _, _, _, _, _, _ = load_input_data()
+
+    ''' Build list of files to import '''
+    name_files = []
+    for f in os.listdir(data_folder):
+        if f.endswith('.nc'):
+
+            # check if CO2 cost in the file is among the selected ones
+            m = re.search('CO2c(\d+)', f)
+            m_co2 = int(m.group(1))
+
+            # check if H2 demand in the file is among the selected ones
+            m = re.search('H2d(\d+)', f)
+            m_h2 = int(m.group(1)) * 1000 / p.H2_output
+
+            # check if fC_MeOH in the file is among the selected ones
+            m = re.search('MeOHd(\d+)', f)
+            MeOH_y_d = int(m.group(1)) * 1000  # demand in GWh/y
+            bioCH4_y_d = bioCH4_prod.values.sum()
+            CO2_MeOH_plant = 1 / GL_eff.at['Methanol', 'Methanol plant']  # bus0 = CO2, bus1 = Methanol
+            bioCH4_CO2plant = GL_eff.at['bioCH4', 'SkiveBiogas'] / GL_eff.at['CO2 pure', 'SkiveBiogas']
+            fC_MeOH_value = round((MeOH_y_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2)
+            fC_MeOH = min(dataset_flags['fC_MeOH'], key=lambda x: abs(x - fC_MeOH_value))
+
+            # check if DH in the file is among the selected ones
+            cond_DH = np.sign(f.find('DH') + 1) in dataset_flags['DH']
+
+            # check if En_year in the file is among the selected ones
+            y_list = [str(y) for y in dataset_flags['En_year_price']]
+            cond_En_y = any(ele in f for ele in y_list)
+
+            # check if bioChar in the file name is among selected ones
+            cond_bioChar = np.sign(f.find('bCh') + 1) in dataset_flags['bioChar']
+
+            # check if el_DK1_sale_el_RFNBO in the file name is among selected ones
+            m = re.search('El2DK1_(\d+(\.\d*)?)', f)
+            m_El2DK1 = float(m.group(1))
+
+            # append files names to file list
+            if (m_co2 in dataset_flags['CO2_cost']) and (m_h2 in dataset_flags['d_H2']) and (
+                    fC_MeOH in dataset_flags['fC_MeOH']) and cond_DH and cond_En_y and (
+                    m_El2DK1 in dataset_flags['el_DK1_sale_el_RFNBO']):
+                name_files.append(f)
+
+    ''' Units per variable '''
+    results_units = {
+        'CO2_cost': '(€/t)',  # input parameter
+        'fC_MeOH': '(% CO2 sep)',  # input parameter
+        'd_H2': '(GWh/y)',  # input parameter
+        'En_year_price': '(y)',  # input parameter
+        'DH': '(-)',  # input parameter
+        'el_DK1_sale_el_RFNBO': '(% El PtX)',  # input parameter
+        'bioChar': '(-)',  # input parameter
+        'DH_y': '(GWh/y)',  # output variable
+        'RE_y': '(GWh/y)',  # output variable
+        'MeOH_y': '(GWh/y)',  # output variable
+        'mu_H2': '(€/MWh)',  # output variable
+        'mu_MeOH': '(€/MWh)',  # output variable
+        'mu_el_GLS': '(€/MWh)',  # output variable
+        'mu_heat_MT': '(€/MWh)',  # output variable
+        'mu_heat_DH': '(€/MWh)',  # output variable
+        'mu_heat_LT': '(€/MWh)',  # output variable
+        'mu_CO2': '(€/t)',  # output variable
+        'mu_bioCH4': '(€/MWh)',  # output variable
+        'H2_sales': '(€/y)',  # output variable
+        'MeOH_sales': '(€/y)',  # output variable
+        'RE_sales': '(€/y)',  # output variable
+        'DH_sales': '(€/y)',  # output variable
+        'BECS_sales': '(€/y)',  # output variable
+        'bioCH4_sales': '(€/y)',  # output variable
+        'tot_sys_cost': '(€/y)',  # output variable
+        'tot_cap_cost': '(€/y)',  # output variable
+        'tot_mar_cost': '(€/y)',  # output variable
+    }
+    agent_dict3 = dict((key + '_cc', '(€/y)') for key in network_comp_allocation)
+    agent_dict4 = dict((key + '_mc', '(€/y)') for key in network_comp_allocation)
+    results_units.update(agent_dict3)
+    results_units.update(agent_dict4)
+
+    '''Plot name per variable '''
+    results_plot_name = {
+        'CO2_cost': 'CO2 tax',
+        'fC_MeOH': 'fCO2 to MeOH',
+        'd_H2': 'H2 to Grid',
+        'En_year_price': 'Energy year',
+        'DH': 'DH',
+        'el_DK1_sale_el_RFNBO': 'max RE to grid',
+        'bioChar': 'biochar credits',
+        'DH_y': 'DH production',
+        'RE_y': 'RE production',
+        'MeOH_y': 'MeOH prod',
+        'mu_H2': r"$\lambda$" + ' H2',
+        'mu_MeOH': r"$\lambda$" + ' MeOH',
+        'mu_el_GLS': r"$\lambda$" + ' El GLS',
+        'mu_heat_MT': r"$\lambda$" + ' heat MT',
+        'mu_heat_DH': r"$\lambda$" + ' heat DH',
+        'mu_heat_LT': r"$\lambda$" + ' heat LT',
+        'mu_CO2': r"$\lambda$" + ' CO2',
+        'mu_bioCH4': r"$\lambda$" + ' bioCH4',
+        'H2_sales': 'H2_sales',
+        'MeOH_sales': 'MeOH_sales',
+        'RE_sales': 'RE sales',
+        'DH_sales': 'DH sales',
+        'bioCH4_sales': 'bioCH4 sales',
+        'BECS_sales': 'biochar sales',
+        'tot_sys_cost': 'tot system cost',
+        'tot_cap_cost': 'tot capital cost',
+        'tot_mar_cost': 'tot marginal cost',
+        'external_grids_cc': 'external grids cap. cost',
+        'SkiveBiogas_cc': 'SkiveBiogas cap. cost',
+        'renewables_cc': 'renewables cap. cost',
+        'electrolyzer_cc': 'electrolyzer cap. cost',
+        'meoh_cc': 'MeOH cap. cost',
+        'central_heat_cc': 'central heating cap. cost',
+        'symbiosis_net_cc': 'symbiosis net cap. cost',
+        'DH_cc': 'DH cap. cost',
+        'external_grids_mc': 'external grids mar. cost',
+        'SkiveBiogas_mc': 'SkiveBiogas mar. cost',
+        'renewables_mc': 'renewables mar. cost',
+        'electrolyzer_mc': 'electrolyzer mar. cost',
+        'meoh_mc': 'MeOH mar. cost',
+        'central_heat_mc': 'central heating mar. cost',
+        'symbiosis_net_mc': 'symbiosis net mar. cost',
+        'DH_mc': 'DH mar. cost',
+    }
+
+    ''' Build dictionary with plot names and units'''
+    results_plot = {}
+    for key in results_flags:
+        if results_flags[key]:
+            results_plot[key] = results_plot_name[key] + '\n' + results_units[key]
+            # results_plot[key] = results_plot_name[key] + results_units[key]
+
+    '''Load networks and retrive variables'''
+    # define Results Data Frame
+    results_columns = []
+    for key in results_flags:
+        if results_flags[key]:
+            results_columns.append(key)
+
+    # Data frame for results
+    df_results = pd.DataFrame(0, index=name_files, columns=results_columns)
+
+    # Load results according to
+    for name in name_files:
+        # import network
+        n_name = 'n_' + 'name'  # network name
+        n_name = pypsa.Network(os.path.join(data_folder, name))
+
+        # Independent parameters
+        if results_flags['CO2_cost']:
+            m = re.search('CO2c(\d+)', name)
+            df_results.at[name, 'CO2_cost'] = int(m.group(1))
+
+        if results_flags['CO2_cost']:
+            MeOH_y_d = n_name.loads_t.p_set['Methanol'].sum()
+            bioCH4_y_d = n_name.loads_t.p_set['bioCH4'].sum()
+            CO2_MeOH_plant = 1 / n_name.links.efficiency['Methanol plant']  # bus0 = CO2, bus1 = Methanol
+            bioCH4_CO2plant = n_name.links.efficiency['SkiveBiogas'] / n_name.links.efficiency2[
+                'SkiveBiogas']  # bus0 = biomass, bus1= bioCH4, bus2=CO2
+            fC_MeOH = round((MeOH_y_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2)
+            df_results.at[name, 'fC_MeOH'] = fC_MeOH
+
+        if results_flags['d_H2']:
+            m = re.search('H2d(\d+)', name)
+            df_results.at[name, 'd_H2'] = int(m.group(1))
+
+        if results_flags['En_year_price']:
+            if '2019' in name:
+                df_results.at[name, 'En_year_price'] = 2019
+            elif '2022' in name:
+                df_results.at[name, 'En_year_price'] = 2022
+
+        if results_flags['DH']:
+            if 'DH' in name:
+                df_results.at[name, 'DH'] = 1
+            else:
+                df_results.at[name, 'DH'] = 0
+
+        if results_flags['el_DK1_sale_el_RFNBO']:
+            m = re.search('El2DK1_(\d+(\.\d*)?)', name)
+            m_El2DK1 = float(m.group(1))
+            df_results.at[name, 'el_DK1_sale_el_RFNBO'] = m_El2DK1
+
+        if results_flags['bioChar']:
+            if 'bCh' in name:
+                df_results.at[name, 'bioChar'] = 1
+                df_results.at[name, 'BECS_sales'] = (
+                        n_name.links_t.p0['biochar credits'] * n_name.links.marginal_cost['biochar credits']).sum()
+            else:
+                df_results.at[name, 'bioChar'] = 0
+                df_results.at[name, 'BECS_sales'] = 0
+
+        # Output variables
+        # DH y production
+        if results_flags['DH_y']:
+            if 'DH' in name:
+                df_results.at[name, 'DH_y'] = int(n_name.links_t.p0['DH GL_to_DH grid'].sum() // 1000)
+            else:
+                df_results.at[name, 'DH_y'] = 0
+        if results_flags['DH_sales']:
+            if 'DH' in name:
+                df_results.at[name, 'DH_sales'] = df_results.at[name, 'DH_y'] * np.mean(
+                    n_name.links.marginal_cost['DH GL_to_DH grid'])
+            else:
+                df_results.at[name, 'DH_sales'] = 0
+
+        if results_flags['RE_y']:
+            df_results.at[name, 'RE_y'] = int(n_name.links_t.p0['El3_to_DK1'].sum() // 1000)
+        if results_flags['RE_sales']:
+            df_results.at[name, 'RE_sales'] = int(
+                (n_name.links_t.p0['El3_to_DK1'] * n_name.links_t.marginal_cost['El3_to_DK1']).sum())
+
+        if results_flags['MeOH_y']:
+            df_results.at[name, 'MeOH_y'] = int(n_name.loads_t.p_set['Methanol'].sum() // 1000)
+
+        if results_flags['mu_H2']:
+            m = re.search('H2d(\d+)', name)
+            d_H2 = int(m.group(1))
+            if d_H2 == 0:
+                df_results.at[name, 'mu_H2'] = np.mean(n_name.buses_t.marginal_price['H2_meoh'])  # * p.lhv_h2 /1000
+            else:
+                df_results.at[name, 'mu_H2'] = np.mean(
+                    n_name.buses_t.marginal_price['H2 delivery'])  # * p.lhv_h2 / 1000
+            df_results.at[name, 'H2_sales'] = df_results.at[name, 'mu_H2'] * df_results.at[name, 'd_H2']
+
+        if results_flags['mu_MeOH']:
+            df_results.at[name, 'mu_MeOH'] = np.mean(n_name.buses_t.marginal_price['Methanol'])  # * p.lhv_meoh
+            df_results.at[name, 'MeOH_sales'] = df_results.at[name, 'mu_MeOH'] * df_results.at[name, 'MeOH_y']
+
+        # bioCH4 revenues (NOTE: it is a DELTA from standard operation)
+        if results_flags['mu_bioCH4']:
+            df_results.at[name, 'mu_bioCH4'] = np.mean(n_name.buses_t.marginal_price['bioCH4'])
+            df_results.at[name, 'bioCH4_sales'] = bioCH4_y_d * df_results.at[name, 'mu_bioCH4']
+
+        # El GL cost
+        if results_flags['mu_el_GLS']:
+            el_GL_bus = 'El2 bus'  # chose the representative El bus for a company at GLS. Note MeOH is connected to El3 bus
+            df_results.at[name, 'mu_el_GLS'] = np.mean(n_name.buses_t.marginal_price['El2 bus'])
+
+        # Heat MT GL cost
+        if results_flags['mu_heat_MT']:
+            if 'Heat MT' in n_name.buses.index.values:
+                df_results.at[name, 'mu_heat_MT'] = np.mean(n_name.buses_t.marginal_price['Heat MT'])
+            else:
+                df_results.at[name, 'mu_heat_MT'] = 0
+
+        # Heat DH GL cost
+        if results_flags['mu_heat_DH']:
+            if 'Heat DH' in n_name.buses.index.values:
+                df_results.at[name, 'mu_heat_DH'] = np.mean(n_name.buses_t.marginal_price['Heat DH'])
+            else:
+                df_results.at[name, 'mu_heat_DH'] = 0
+
+        # Heat LT GL cost
+        if results_flags['mu_heat_DH']:
+            if 'Heat LT' in n_name.buses.index.values:
+                df_results.at[name, 'mu_heat_LT'] = np.mean(n_name.buses_t.marginal_price['Heat LT'])
+            else:
+                df_results.at[name, 'mu_heat_LT'] = 0
+
+        # CO2 price GL sold by Biogas plant (LP)
+        if results_flags['mu_CO2']:
+            df_results.at[name, 'mu_CO2'] = np.mean(n_name.buses_t.marginal_price['CO2 sep'])
+
+        # total system , capital and marginal cost
+        tot_cc, tot_mc, tot_sc = get_system_cost(n_name)
+        if results_flags['tot_sys_cost']:
+            df_results.at[name, 'tot_sys_cost'] = np.sum(tot_sc)
+        if results_flags['tot_cap_cost']:
+            df_results.at[name, 'tot_cap_cost'] = np.sum(tot_cc)
+        if results_flags['tot_mar_cost']:
+            df_results.at[name, 'tot_mar_cost'] = np.sum(tot_mc)
+
+        # total capital and marginal costs, by agents
+        cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(n_name, network_comp_allocation, False)
+        for key in cc_tot_agent:
+            if results_flags[key + '_cc']:
+                df_results.at[name, key + '_cc'] = cc_tot_agent[key]
+            if results_flags[key + '_mc']:
+                df_results.at[name, key + '_mc'] = mc_tot_agent[key]
+
+        # import capacities
+        # capacity_list = ['solar', 'onshorewind', 'Electrolyzer', 'El3_to_El2', 'El3_to_DK1', 'Methanol plant', 'SkyClean', 'Heat pump', 'CO2 compressor', 'H2 compressor', 'battery', 'Heat DH storage', 'Concrete Heat MT storage', 'H2 HP', 'CO2 pure HP', 'CO2 Liq']
+
+        for c in capacity_list:
+
+            if c == 'Methanol plant':
+                f = GL_eff.at['Methanol', 'Methanol plant']
+            elif c == 'H2 compressor':
+                f = p.el_comp_H2
+            elif c == 'CO2 compressor':
+                f = p.el_comp_CO2
+            else:
+                f = 1
+
+            if c in n_name.generators.p_nom_opt.index:
+                df_results.at[name, c] = n_name.generators.p_nom_opt[c] * f
+            elif c in n_name.links.p_nom_opt.index:
+                df_results.at[name, c] = n_name.links.p_nom_opt[c] * f
+            elif c in n_name.stores.e_nom_opt.index:
+                df_results.at[name, c] = n_name.stores.e_nom_opt[c] * f
+            else:
+                df_results.at[name, c] = 0
+
+    return df_results, results_plot
+
+
+def reg_coef(x, y, label=None, color=None, hue=None, **kwargs):
+    ''' function that calculates the pearson correlation conefficient (r) for plotting in PairGrid'''
+    ax = plt.gca()
+    r, p = pearsonr(x, y)
+    ax.annotate('r = {:.2f}'.format(r), xy=(0.5, 0.5), xycoords='axes fraction', ha='center')
+    ax.set_axis_off()
+    return
+
+
+def create_local_input_dict(year):
+    NG_price_year_input_file = p.folder_model_inputs + '/Inputs_' + str(year) + '/NG_price_year_input.csv'
+    NG_price_year = pd.read_csv(NG_price_year_input_file, sep=';', index_col=0)  # MWh/h y
+    NG_price_year = NG_price_year.set_axis(p.hours_in_period)
+    El_price_input_file = p.folder_model_inputs + '/Inputs_' + str(year) + '/Elspotprices_input.csv'
+    Elspotprices = pd.read_csv(El_price_input_file, sep=';', index_col=0)  # currency/MWh
+    Elspotprices = Elspotprices.set_axis(p.hours_in_period)
+    CO2emis_input_file = p.folder_model_inputs + '/Inputs_' + str(year) + '/CO2emis_input.csv'
+    CO2_emiss_El = pd.read_csv(CO2emis_input_file, sep=';', index_col=0)  # kg/MWh CO2
+    CO2_emiss_El = CO2_emiss_El.set_axis(p.hours_in_period)
+
+    inputs_dict = {'Elspotprices': Elspotprices,
+                   'CO2_emiss_El': CO2_emiss_El,
+                   'NG_price_year': NG_price_year
+                   }
+
+    return inputs_dict
+
+
+
+
 

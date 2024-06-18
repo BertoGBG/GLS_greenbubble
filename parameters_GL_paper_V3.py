@@ -1,30 +1,31 @@
-import numpy as np
 import pandas as pd
 
 # --------------------------------------
 ''' MAIN SENSITIVITY PARAMETERS'''
 # MeOH demand
 MeOH_one_delivery = True  # True means one single delivery at the end of the year, otherwise deliveries are done weekly
-# f_max_MeOH_y_demand = 0.7 # fraction of CO2 recovered from the biogas upgrading
 
 # H2 demand
 h2_demand_flag = 'constant'  # 'profile'
 H2_one_delivery = True  # True means one single delivery at the end of the year, otherwise deliveries are done monthly
 H2_output= 68 # MW H2 <-> 100 MW el
-# flh_H2 = 0 # full load hours of a 100 MWe plant
 
 # CO2 tax
-# CO2_cost = 0 # Euros/ton
 CO2_cost_ref_year = 0  # €/ton (CO2 tax for electricity production in year of energy prices)
 
 # Energy prices
-En_price_year= 2019 # alternative : 2022
+En_price_year= 2022 # alternative : 2022
 
 # Biogas plants
 f_FLH_Biogas = 4 / 5  # fraction of maximum capacity that the Biogas plant is operated
 
-# Ratio between the el_DK1 demand and the RE used in the RFNBOs production
-el_DK1_sale_el_RFNBO = 0.10 # must be >0  (MWh_y/MWh_y)
+'''sensitivity analysis parameters'''
+CO2_cost_list = [0, 150, 250]  # €/t (CO2_cost)
+H2_demand_list = [0, 4000]  # flh at 100 MW (flh_H2)
+MeOH_rec_list = [0.8, 0.85, 0.9, 0.95, 0.99]  # % of CO2 from (f_max_MeOH_y_demand)
+DH_flag_list = [False, True]  # true false
+bioCh_credits_list =[False, True] #
+el_DK1_sale_el_RFNBO_list = [0.1, 0.5, 1]
 
 # --------------------------------------
 '''CSV files as input to the model'''
@@ -51,8 +52,8 @@ print_folder_NOpt = 'outputs/single_analysis/'
 print_folder_Opt = 'outputs/single_analysis/'
 
 # Folders for sensitivity analysis
-# print_folder_Opt = 'outputs/sensitivity_analysis/Results_OptNetworkV2/'
-# print_folder_NOpt = 'outputs/sensitivity_analysis/testing_NotOptNetworkV2/'
+#print_folder_Opt = 'outputs/sensitivity_analysis'
+#print_folder_NOpt = 'outputs/sensitivity_analysis'
 
 # --------------------------------------
 '''ECONOMICS AND COST ASSUMPTIONS'''
@@ -62,7 +63,7 @@ cost_file = "technology-data-master/outputs/costs_2030.csv"
 USD_to_EUR = 1
 DKK_Euro = 7.46  # ratio avg 2019
 discount_rate = 0.07  #
-Nyears = 1  # for myoptic optimization (parameter not used but needed for some functions)
+Nyears = 1  # for myoptic optimization (parameter not used but needed in some functions)
 lifetime = 25  # of the plant
 
 '''SET Currency of Cost Optimization: DKK or EUR'''
@@ -114,6 +115,11 @@ Biomass_price = 0  # (€/t) Set to 0 as only the Delta in bioCH4 prod costs are
 '''District Heating price'''
 DH_price = 400 / DKK_Euro * currency_multiplier  #
 
+'''Fossil Methanol'''
+methanol_price_2023 = 360  # €/ton
+CO2_intensity_MeOH_life = 110 / 1000000 * 3600 # (110 gCO2/MJ meoh) --> tCO2e/MWh
+lhv_meoh= 5.54  # kWh/kg = MWh/ton
+
 '''Electricity tariffs'''
 #
 # Purchased Electricity
@@ -128,8 +134,7 @@ el_net_tariff_high = 4.49 / 100 * 1000 / DKK_Euro * currency_multiplier
 el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro * currency_multiplier
 
 # Selling tariff
-el_tariff_sell = ((
-                              0.9 + 0.16) / 100 * 1000) / DKK_Euro * currency_multiplier  # (Ore/kWh) *100/1000 = DKK
+el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro * currency_multiplier  # (Ore/kWh) *100/1000 = DKK
 # / MWH includes transmission and system tariff
 
 '''post 2030: EU rules for renewable el for H2'''
@@ -159,7 +164,7 @@ ramp_limit_down_Heat_MT_storage = 1/6
 '''Technology inputs'''
 # Compressors
 el_comp_CO2 = 0.096  # MWe/(t/h)
-el_comp_H2 = 0.340  # MWe/MWh2
+el_comp_H2 = 0.340 / lhv_h2 # MWe/MWh2
 heat_comp_CO2 = el_comp_CO2 * 0.2/0.7  # MWth/(t/h) available at 135-80 C
 heat_comp_H2 = el_comp_H2 * 0.2/0.7  # MWth/MWh2 available at 135-80 C
 CO2_comp_inv = 1516 # kEuro/(t/h)
@@ -169,13 +174,14 @@ CO2_comp_lifetime = 15 # years
 # CO2 liquefaction
 El_CO2_liq = 0.061 # MWh/t CO2
 Heat_CO2_liq_DH = 0.166 # water heat 80 C from refrigeration cycle
-CO2_evap_annualized_cost= 3765 # k€/(t/h)/y from internal information (Foulum) of rental of 16 bara CO2 evaporator #TODO CHECK cost
+CO2_evap_annualized_cost= 3765 # k€/(t/h)/y
+
 # H2 cylinders storage
-El_H2_storage_add = 0.30 # MWh/MWh2
+El_H2_storage_add = el_comp_H2 * 0.2 # MWh/MWh2
 
 # CO2 cylinders storage
 El_CO2_storage_add = 0.01 # MWh/t CO2
-ro_H2_80bar = 6.3112 # density at 20 C (supercritical) in kg/m3 NIST Chemistry WebBook
+ro_H2_80bar = 6.3112 # density at 20 C (supercritical) in kg/m3  source: NIST Chemistry WebBook
 CO2_cylinders_inv = 77000 # €/t  includes control systems
 
 # Ramp up limits (added assumptions)
@@ -195,24 +201,24 @@ capital_cost_PHW = 25000 * currency_multiplier  # €/MW/km
 heat_loss_PHW = 0.02  # MW/MW
 
 ''' Technologies not included in Catalogue '''
-DH_HEX_inv = 100000 # €/MW
-DH_HEX_FOM = 0.05 # (%inv/Y)
-DH_HEX_lifetime = 25 # (Y)
-CO2_pipeline_inv = 130000 # €/(t/h)/km
-CO2_pipeline_FOM = 20/CO2_pipeline_inv *100 # €/(t/h)/km / year
+DH_HEX_inv = 100000  # €/MW
+DH_HEX_FOM = 0.05  # (%inv/Y)
+DH_HEX_lifetime = 25  # (Y)
+CO2_pipeline_inv = 130000  # €/(t/h)/km
+CO2_pipeline_FOM = 20/CO2_pipeline_inv * 100  # €/(t/h)/km / year
 CO2_pipeline_lifetime = 50 # years
-H2_pipeline_inv = 3800 # €/MW/km
+H2_pipeline_inv = 3800  # €/MW/km
 H2_pipeline_FOM = 0.27/H2_pipeline_inv *100  #
 H2_pipeline_lifetime = 50  # years
-Pyrolysis_inv = 1.5 * 10**6  # € MWlhv from DEA tehcnology catalogue for renewable fuels
+Pyrolysis_inv = 1.5 * 10**6  # € MWlhv from DEA technology catalogue for renewable fuels
 Pyrolysis_FOM = 0.048/1.5  # %inv/y
 Pyrolysis_lifetime = 25  #
-Electrolysis_small_inv = 875 *10**3 # €/MW 1-10MW
-Electrolysis_small_FOM = 4 # %inv/y
-Electrolysis_small_lifetime = 25 # Y
-Electrolysis_large_inv = 550 * 10**3 # €/MWe 100MW
-Electrolysis_large_FOM = 4 # %inv/y
-Electrolysis_large_lifetime = 25# Y
+Electrolysis_small_inv = 875 * 10 ** 3  # €/MW 1-10MW
+Electrolysis_small_FOM = 4   # %inv/y
+Electrolysis_small_lifetime = 25  # Y
+Electrolysis_large_inv = 550 * 10**3  # €/MWe 100MW
+Electrolysis_large_FOM = 4  # %inv/y
+Electrolysis_large_lifetime = 25  # Y
 
 # --------------------------------------
 ''' ENERGY INPUTS soruces'''
@@ -227,4 +233,5 @@ Electrolysis_large_lifetime = 25# Y
 # El demand DK1 https://data.open-power-system-data.org/time_series/
 # CO2 tax DK source: https://www.pwc.dk/da/artikler/2022/06/co2-afgift-realitet.html#:~:text=Afgiften%20for%20kvoteomfattede%20virksomheder%20udg%C3%B8r,2030%20(2022%2Dsatser).
 # EL TSO tariff : https://energinet.dk/el/elmarkedet/tariffer/aktuelle-tariffer/
-# EL DSO Tariff
+# EL DSO Tariff : https://n1.dk/priser-og-vilkaar/timetariffer
+# MeOH fossil price: https://www.methanol.org/wp-content/uploads/2022/01/CARBON-FOOTPRINT-OF-METHANOL-PAPER_1-31-22.pdf
