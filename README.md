@@ -6,7 +6,7 @@ GLS greenbubble is a open model of the PtX section of the GreenLab Skive industr
 
 **Structure of the repository:**
 1) input data from open sources, located within the folder "data". references are available in the paper or in the end of the file "parameters"
-2) input data for technology cost and performance parameters: "Technology-data-master". Which is a branch from https://github.com/BertoGBG/technology-data
+2) input data for technology cost and performance parameters: "Technology-data-master". Which is a branch from https://github.com/PyPSA/technology-data.
 3) file with all the input paramaters: "parameters_GL_paper_V3" 
 4) all functions for the model formulaiton in the file: "functions_GL_paper"
 5) main file for running a single optimization analysis: "main_GL_paper_V3"
