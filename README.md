@@ -55,7 +55,7 @@ In the file main_GL_paper_analaysis the following variables are changed:
 * District heating
 * biochar credits
 
-The full results for the multiple runs are not available in this repository due to large size of the directory. A limited set is provided in the folder outputs/sensitivity_analysis
+The results for the optimization runs are not available in this repository due to size constraints, hence they must be generated locally. 
 
   
 
