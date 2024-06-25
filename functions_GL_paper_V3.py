@@ -543,6 +543,15 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
 
 # ---- Pre-processing for PyPSA network
 
+def n_flags_to_preprocess (n_flags_OK, flh_H2, f_max_MeOH_y_demand):
+    flh_H2_OK = flh_H2
+    f_max_MeOH_y_demand_OK = f_max_MeOH_y_demand
+    if not n_flags_OK['electrolyzer']:
+        flh_H2_OK = 0
+    if not n_flags_OK['meoh']:
+        f_max_MeOH_y_demand_OK = 0
+
+    return flh_H2_OK, f_max_MeOH_y_demand_OK
 
 def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
@@ -1573,9 +1582,9 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     n0_stores = n.stores.index.values
     n0_buses = n.buses.index.values
 
-    bus_list = ['Straw Pellets', 'ElDK1 bus', 'NG', 'biochar', 'biochar storage']
-    carrier_list = ['Straw Pellets', 'AC', 'NG', 'CO2 pure', 'CO2 pure']
-    unit_list = ['t/h', 'MW', 'MW', 't/h', 't/h']
+    bus_list = ['Straw Pellets', 'Digest DM', 'ElDK1 bus', 'NG', 'biochar', 'biochar storage']
+    carrier_list = ['Straw Pellets', 'Digest DM', 'AC', 'NG', 'CO2 pure', 'CO2 pure']
+    unit_list = ['t/h', 't/h', 'MW', 'MW', 't/h', 't/h']
 
     if n_flags['central_heat']:
         # add required buses if not in the network
