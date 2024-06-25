@@ -57,6 +57,9 @@ In the file main_GL_paper_analaysis the following variables are changed:
 
 The results for the optimization runs are not available in this repository due to size constraints, hence they must be generated locally. 
 
-  
+
+For visualization of model it is suggested to install the package pypsatopo 
+from: https://github.com/ricnogfer/pypsatopo
+via # pip install pypsatopo
 
   
