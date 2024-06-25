@@ -30,11 +30,6 @@ for ia in CO2_cost_list:
                 for ie in DH_flag_list:
                     for ig in el_DK1_sale_el_RFNBO_list:
                         el_DK1_sale_el_RFNBO = ig
-                        '''Pre_process of all input data'''
-                        # This function takes all the variables in the sensitivity analysis except the n_flags
-                        preprocess_flag = False
-                        inputs_dict = pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO,
-                                                                preprocess_flag)
 
                         n_flags = {'SkiveBiogas': True,
                                    'central_heat': True,
@@ -49,6 +44,13 @@ for ia in CO2_cost_list:
 
                         ''' check dependecies for correct optimization '''
                         n_flags_OK = network_dependencies(n_flags)
+
+                        '''Pre_process of all input data'''
+                        preprocess_flag = False
+                        flh_H2_OK, f_max_MeOH_y_demand_OK = n_flags_to_preprocess(n_flags_OK, flh_H2,
+                                                                                  f_max_MeOH_y_demand)
+                        inputs_dict = pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO,
+                                                                preprocess_flag)
 
                         ''' Build the PyPSA network'''
                         network = build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict,

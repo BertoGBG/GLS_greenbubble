@@ -10,14 +10,7 @@ el_DK1_sale_el_RFNBO = 0.5  # max electricity during the year could be sold to E
 tech_costs = prepare_costs(p.cost_file, p.USD_to_EUR, p.discount_rate, 1, p.lifetime)
 tech_costs = add_technology_cost(tech_costs)
 
-'''Pre_process of all input data'''
-# if preprocess_flag is False the input data are loaded from csv files, if True the input data are downloaded
-# from internet, saved as CSV files and loaded
-preprocess_flag = False
-inputs_dict = pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag)
-
-'''Build the network based on agents'''
-
+'''Input the network configuration'''
 n_flags = {'SkiveBiogas': True,
            'central_heat': True,
            'renewables': True,
@@ -31,6 +24,15 @@ n_flags = {'SkiveBiogas': True,
 
 ''' check dependecies for correct optimization '''
 n_flags_OK = network_dependencies(n_flags)
+
+'''Pre_process of all input data'''
+# if preprocess_flag is False the input data are loaded from csv files, if True the input data are downloaded
+# from internet, saved as CSV files and loaded
+preprocess_flag = False
+# adjust H2 and MeOH demand based on n_flags_OK
+flh_H2_OK, f_max_MeOH_y_demand_OK = n_flags_to_preprocess (n_flags_OK, flh_H2, f_max_MeOH_y_demand)
+# pre-process all inputs
+inputs_dict = pre_processing_all_inputs(flh_H2_OK, f_max_MeOH_y_demand_OK, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag)
 
 ''' Build the PyPSA network'''
 network = build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags_OK)
@@ -75,7 +77,7 @@ plot_bus_list_shadow_prices(network_opt, bus_list2, legend2, d_start, d_end)
 # print and save list of componets at png
 folder = p.print_folder_Opt
 file_path=folder + 'table_capacities'
-df_opt_componets = print_opt_components_table(network_opt, network_comp_allocation, 'table_capacities' )
+df_opt_componets = print_opt_components_table(network_opt, network_comp_allocation, file_path )
 
 # heat map of weekly utilization of key plants
 # Dict with components that if present in the network_opt are plotted
