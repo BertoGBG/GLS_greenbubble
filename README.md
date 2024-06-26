@@ -2,6 +2,9 @@
 
 GLS greenbubble is a open model of the PtX section of the GreenLab Skive industrial hub, developped in the PyPSA framework https://github.com/PyPSA/pypsa. This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://arxiv.org/abs/2406.00442.
 
+**Installation**
+pip install -r requirements.txt
+
 ![PYPSA schematics_V4_colors](https://github.com/BertoGBG/GLS_greenbubble/assets/99412005/61a5d328-c28b-4b25-b129-1396315c3d0e)
 
 **Structure of the repository:**
@@ -17,7 +20,7 @@ GLS greenbubble is a open model of the PtX section of the GreenLab Skive industr
 9) requirements to run this project in the file requirements.txt
 
 **Indipendent variables for single optimization**
-The following variable are set indipendendlty in a signle optimization run in the file "main_GL_paper_V3":
+The following variable are set indipendendtly in a single optimization run in the file "main_GL_paper_V3":
 
 
 The _n_flags_ dictionary contains binary variables which allows for enabling part of the PtX hub in the solution: 
