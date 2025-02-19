@@ -109,7 +109,7 @@ examples are:
 - H2 demand (annual profile): for H2 with weekly or monthly delivery, the amount for each delivery can follow the profile of the NG demand in DK (set H2_profile_flag = True). default = 'False'
 - CO2 tax on the reference year prices (var: CO2_cost_ref_year): it is automatically applied to energy prices for reference energy year. default = 0
 - prices for other commodities traded with external energy systems: DH, pellets (note 'biomass' refers to biogas feedstock)
-- taxes on electricity (TSO an DSO): default values from DK! and Skive in 2022
+- taxes on electricity (TSO an DSO): default values from DK1 and Skive in 2022
 - techno-economic inputs for technolgies not presents in technology-data
 
 
