@@ -5,6 +5,7 @@ GLS greenbubble is a open model of the PtX section of the GreenLab Skive industr
 <img width="1184" alt="Screenshot 2025-02-19 at 12 31 24" src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" />
 
 
+
 **Installation**
 Clone this repository to your destination folder:
 
@@ -16,14 +17,20 @@ We recommend using the package manager and environment management system conda t
 To create the virtual environment: 
 
 .../greenbubble % conda env create -f environment.yaml
+
 .../greenbubble % conda activate technology-data
+
 
 
 **Reference**
 please cite as: https://doi.org/10.1016/j.enconman.2024.119175
 
+
+
 **What can the model do**
 gurobi abd highspy
+
+
 
 **Structure of the Repository:**
 The three main files to run a single optimization are:
@@ -33,15 +40,15 @@ The three main files to run a single optimization are:
 
 The other files were used inthe paper to produce results of various sensitivity analysis.
 
-main.py (not executable from terminal) : 
+_main.py_ (not executable from terminal) : 
    - set the main paramaters in the analysis
    - sets the pypsa netowrk configuration options
    - execute the workflow (load input data, create pypsa network, optimize network, plot basic results)
 
-paramaters.py : contains all the other paramaters and assumption used in the model. 
+_paramaters.py_ : contains all the other paramaters and assumption used in the model. 
    - pre-processign paramaters:
 
-functions.py : contains all functions developped for this model (and extra plotting functions) 
+_functions.py_ : contains all functions developped for this model (and extra plotting functions) 
 
 
 
