@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import requests
 import pypsa
+import linopy
 import pypsatopo
 import parameters_GL_paper_V3 as p
 import os
@@ -11,10 +12,17 @@ import pickle as pkl
 import math
 import itertools
 import bisect
-import dataframe_image as dfi
 import seaborn as sns
 import re
 from scipy.stats import pearsonr
+from io import StringIO
+import json
+import urllib
+from pathlib import Path
+import hashlib
+from entsoe import EntsoePandasClient
+from datetime import datetime, timedelta
+import pytz
 
 
 # -------TECHNO-ECONOMIC DATA & ANNUITY
@@ -35,6 +43,8 @@ def prepare_costs(cost_file, USD_to_EUR, discount_rate, Nyears, lifetime):
 
     # Nyear = nyear in the interval for myoptic optimization--> set to 1 for annual optimization
     # set all asset costs and other parameters
+
+
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
     # correct units to MW and EUR
@@ -68,24 +78,14 @@ def cost_add_technology(discount_rate, tech_costs, technology, investment, lifet
     return tech_costs
 
 
-def add_technology_cost(tech_costs):
+def add_technology_cost(tech_costs, other_tech_costs):
     """Function that adds the tehcnology costs not presente din the original cost file"""
 
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2 storage cylinders', p.CO2_cylinders_inv,
-                        tech_costs.at['CO2 storage tank', 'lifetime'], tech_costs.at['CO2 storage tank', 'FOM'])
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2_pipeline_gas', p.CO2_pipeline_inv, p.CO2_pipeline_lifetime,
-                        p.CO2_pipeline_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'H2_pipeline_gas', p.H2_pipeline_inv, p.H2_pipeline_lifetime,
-                        p.H2_pipeline_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'CO2_compressor', p.CO2_comp_inv, p.CO2_comp_lifetime,
-                        p.CO2_comp_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'DH heat exchanger', p.DH_HEX_inv, p.DH_HEX_lifetime, p.DH_HEX_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Slow pyrolysis', p.Pyrolysis_inv, p.Pyrolysis_lifetime,
-                        p.Pyrolysis_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis small', p.Electrolysis_small_inv,
-                        p.Electrolysis_small_lifetime, p.Electrolysis_small_FOM)
-    cost_add_technology(p.discount_rate, tech_costs, 'Electrolysis large', p.Electrolysis_large_inv,
-                        p.Electrolysis_large_lifetime, p.Electrolysis_large_FOM)
+    for idx in other_tech_costs.index.values:
+        investment = other_tech_costs.at[idx, 'investment']
+        FOM = other_tech_costs.at[idx, 'FOM']
+        lifetime = other_tech_costs.at[idx, 'lifetime']
+        cost_add_technology(p.discount_rate, tech_costs, idx, investment, lifetime, FOM)
 
     return tech_costs
 
@@ -94,7 +94,7 @@ def add_technology_cost(tech_costs):
 
 
 def GL_inputs_to_eff(GL_inputs):
-    ''' function that reads csv file with GreenLab energy and material flows for each plant and calcualtes the
+    ''' function that reads csv file with GreenLab energy and material flows for each plant and calculates
      efficiencies for multilinks in the network'''
 
     # NOTE: (-) refers to energy or material flow CONSUMED by the plant
@@ -114,7 +114,7 @@ def GL_inputs_to_eff(GL_inputs):
 
 
 def balance_bioCH4_MeOH_demand_GL():
-    ''' function preprocesses the GreenLab site input data'''
+    ''' function preprocesses the GreenLab site input data creting MeOH and bioCH4 demands'''
 
     '''Load GreenLab inputs'''
     GL_inputs = pd.read_excel(p.GL_input_file, sheet_name='Overview_2', index_col=0)
@@ -134,21 +134,24 @@ def balance_bioCH4_MeOH_demand_GL():
 
     # Create Randomized weekly delivery
     # Time series demand (hourly)
-    f_delivery = 24 * 7  # frequency of delivery in (h)
+    f_delivery = 24 * 365 // p.MeOH_delivery_frequency  # frequency of delivery in (h)
     n_delivery = len(p.hours_in_period) // f_delivery
-    # Delivery amount profile
-    KK = np.random.uniform(low=0.0, high=1.0, size=n_delivery)
-    q_delivery = KK * Methanol_demand_y_max / np.sum(KK)  # quantity for each delivery
+    # Delivery constant amount profile
+    q_delivery = Methanol_demand_y_max / n_delivery
     empty_v = np.zeros(len(p.hours_in_period))
     delivery = pd.DataFrame({'a': empty_v})
-    Methanol_demand_max = p.ref_df.copy()
-    Methanol_demand_max.rename(columns={p.ref_col_name: 'Methanol demand MWh'}, inplace=True)
+    Methanol_demand = p.ref_df.copy()
+    Methanol_demand.rename(columns={p.ref_col_name: 'Methanol demand MWh'}, inplace=True)
 
     for i in range(n_delivery):
         delivery_ind = (i + 1) * f_delivery - 10  # Delivery at 14:00
-        delivery.iloc[delivery_ind] = q_delivery[i]
-    Methanol_demand_max['Methanol demand MWh'] = delivery['a'].values
-    Methanol_demand_max.to_csv(p.Methanol_demand_max_input_file, sep=';')  # t/h
+        #delivery.iloc[delivery_ind] = q_delivery[i]
+        delivery.iloc[delivery_ind] = q_delivery
+
+    Methanol_demand['Methanol demand MWh'] = delivery['a'].values
+
+    Methanol_demand.to_csv(p.Methanol_demand_input_file, sep=';')  # t/h
+
     return
 
 
@@ -168,10 +171,10 @@ def load_input_data():
     CF_solar = CF_solar.set_axis(p.hours_in_period)
     NG_price_year = pd.read_csv(p.NG_price_year_input_file, sep=';', index_col=0)  # MWh/h y
     NG_price_year = NG_price_year.set_axis(p.hours_in_period)
-    Methanol_demand_max = pd.read_csv(p.Methanol_demand_max_input_file, sep=';', index_col=0)  # MWh/h y Methanol
+    Methanol_demand_max = pd.read_csv(p.Methanol_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
     Methanol_demand_max = Methanol_demand_max.set_axis(p.hours_in_period)
     NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
-    NG_demand_DK = NG_demand_DK.set_axis(p.hours_in_period)
+    #NG_demand_DK = NG_demand_DK.set_axis(p.hours_in_period) # different time scale
     El_demand_DK1 = pd.read_csv(p.El_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
     El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
     DH_external_demand = pd.read_csv(p.DH_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
@@ -183,97 +186,113 @@ def load_input_data():
 # ---- DEMANDS for H2, MeOH and El_DK1_GLS
 
 
-def preprocess_H2_grid_demand(flh_H2, H2_size, NG_demand_DK, flag_one_delivery):
-    ''' Creates the H2 demand from the grid '''
-    # flh_H2 = target full load hours from the plant
-    # H2 size = plant size in MW of H2 produced
-    # IF: flag_one_delivery == True -> single delivery at the end of the year
-    # IF: flag_one_delivery == False -> monthly delivery follows the same profile of the NG demand
+def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
+    """
+    Calculate H2 demand distribution over a given number of intervals (n),
+    ensuring deliveries align with the last hour of each interval.
 
+    Parameters:
+    - H2_size: Hydrogen capacity size
+    - flh_H2: Full load hours of H2 system
+    - NG_demand_DK: DataFrame containing natural gas demand data
+    - col_name: Column name for storing H2 demand
+    - profile_flag: Boolean flag for profile-based allocation
+    - n: Number of intervals (default: 12 for months, 52 for weeks, 1 for single year-end delivery)
+
+    Returns:
+    - H2_demand_y: DataFrame aligned with p.ref_df, with deliveries at correct timestamps
+    """
+
+    # Initialize output DataFrame with the same structure and index as p.ref_df
     H2_demand_y = p.ref_df.copy()
-    col_name = 'H2_demand' + ' MWh/month'
-    H2_demand_y.rename(columns={p.ref_col_name: col_name}, inplace=True)
-    h2_demand_flag = p.h2_demand_flag
+    col_name= 'H2_demand_MWh'
+    H2_demand_y.rename(columns={'ref col': col_name}, inplace=True)
+    H2_demand_y[col_name] = 0
 
-    n = 12  # numebr of intervals (months)
-    for i in range(1, n + 1):
-        if i < 9:
-            st_time1 = p.start_date[0:5] + '0%d' + p.start_date[7:]
-            end_time1 = p.start_date[0:5] + '0%d' + p.start_date[7:]
-            st_time = st_time1 % i
-            end_time = end_time1 % (i + 1)
-            if h2_demand_flag == 'profile':
-                H2_val = np.sum(NG_demand_DK.loc[st_time:end_time, :].values) / np.sum(
-                    NG_demand_DK.values) * H2_size * flh_H2
-                H2_demand_y.at[end_time, col_name] = H2_val
-            else:
-                H2_demand_y.at[end_time, col_name] = H2_size * flh_H2 / n
-        elif i == 9:
-            st_time1 = p.start_date[0:5] + '0%d' + p.start_date[7:]
-            end_time1 = p.start_date[0:5] + '%d' + p.start_date[7:]
-            st_time = st_time1 % i
-            end_time = end_time1 % (i + 1)
-            if h2_demand_flag == 'profile':
-                H2_val = np.sum(NG_demand_DK.loc[st_time:end_time, :].values) / np.sum(
-                    NG_demand_DK.values) * H2_size * flh_H2
-                H2_demand_y.at[end_time, col_name] = H2_val
-            else:
-                H2_demand_y.at[end_time, col_name] = H2_size * flh_H2 / n
-        elif i == n:
-            st_time1 = p.start_date[0:5] + '%d' + p.start_date[7:]
-            st_time = st_time1 % i
-            end_time = p.end_date
-            if h2_demand_flag == 'profile':
-                H2_val = np.sum(NG_demand_DK.loc[st_time:end_time, :].values) / np.sum(
-                    NG_demand_DK.values) * H2_size * flh_H2
-                H2_demand_y.at[end_time, col_name] = H2_val
-            else:
-                H2_demand_y.at[end_time, col_name] = H2_size * flh_H2 / n
+    # Convert start_date and end_date from ISO 8601 format
+    timezone = pytz.utc  # keeping UTC timestamps
+    start_date = datetime.strptime(p.start_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
+    end_date = datetime.strptime(p.end_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
+
+    # NG_demand_DK align timestamp
+    NG_demand_DK_2 = NG_demand_DK.copy()
+    NG_demand_DK_2.index = pd.to_datetime(NG_demand_DK_2.index)
+    NG_demand_DK_2.index = NG_demand_DK_2.index.map(lambda x: x.replace(year=start_date.year))
+
+    # Determine the time step based on n (monthly or weekly)
+    if n == 12:
+        step = timedelta(days=30)  # Approximate monthly step
+    elif n == 52:
+        step = timedelta(weeks=1)  # Weekly step
+    elif n == 1:
+        step = end_date - start_date  # Single delivery at the end of the year
+    else:
+        raise ValueError("Invalid value for n. Use 1 (yearly), 12 (monthly), or 52 (weekly).")
+
+    # Generate delivery timestamps
+    delivery_dates = []
+    current_time = start_date
+
+    for i in range(n):
+        # Calculate next delivery time
+        if n == 1:
+            next_time = end_date  # One delivery at year-end
         else:
-            st_time1 = p.start_date[0:5] + '%d' + p.start_date[7:]
-            end_time1 = p.start_date[0:5] + '%d' + p.start_date[7:]
-            st_time = st_time1 % i
-            end_time = end_time1 % (i + 1)
-            if h2_demand_flag == 'profile':
-                H2_val = np.sum(NG_demand_DK.loc[st_time:end_time, :].values) / np.sum(
-                    NG_demand_DK.values) * H2_size * flh_H2
-                H2_demand_y.at[end_time, col_name] = H2_val
+            next_time = (current_time + step).replace(hour=23, minute=0, second=0)  # Last hour of the interval
+
+        if next_time > end_date or i == n - 1:  # Ensure last delivery is exactly at year-end
+            next_time = end_date.replace(hour=23, minute=0, second=0)
+
+        # Convert to UTC datetime
+        next_time = next_time.astimezone(pytz.utc)
+
+        # Find the last available hour within the reference DataFrame index
+        valid_times = H2_demand_y.index[H2_demand_y.index <= next_time]
+        if valid_times.empty:
+            continue
+        last_hour = valid_times[-1]  # Ensures delivery at the last available hour
+
+        delivery_dates.append(last_hour)
+        current_time = next_time  # Move to next interval start
+
+    # Assign H2 demand values at the correct timestamps
+    for i in range(len(delivery_dates)):
+        end_time = delivery_dates[i]
+        st_time = delivery_dates[i - 1] if i > 0 else start_date  # Ensure first interval starts from start_date
+
+        if profile_flag:
+            # Compute H2_val based only on NG demand within the current interval
+            period_data = NG_demand_DK_2.loc[st_time:end_time, :].values
+            total_demand = np.sum(NG_demand_DK_2.loc[start_date:end_date, :].values)  # Total demand for normalization
+
+            if total_demand > 0:  # Avoid division by zero
+                H2_val = np.sum(period_data) / total_demand * H2_size * flh_H2
             else:
-                H2_demand_y.at[end_time, col_name] = H2_size * flh_H2 / n
+                H2_val = 0  # If there's no demand data, keep it zero
+        else:
+            H2_val = H2_size * flh_H2 / n  # Equal division among intervals
 
-    if flag_one_delivery:
-        delivery = H2_demand_y.iloc[:, 0].sum()
-        H2_demand_y = p.ref_df.copy()
-        H2_demand_y.iloc[-1, 0] = delivery
+        # Assign H2 demand value at the correct timestamp
+        H2_demand_y.at[end_time, col_name] = H2_val
 
-    H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')  # currency/ton
+    H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')
 
     return H2_demand_y
 
-
-def preprocess_methanol_demand(Methanol_demand_max, f_max_MeOH_y_demand, flag_one_delivery):
-    ''' function that builds a Methnaol demand (load) for the GL network.
-    The load can be on weekly basis or one single delivery at the end of the year'''
-
-    # if: flag_one_delivery= True => aggregates methanol demand to one single time step in the end of the year.
-    # f_max_MeOH_y_demand = fraction (0-1) of maximum MeOH production compatible with yearly prod of CO2 from biogas
-    # if p.MeOH_set_demand_input == True:
-
-    if flag_one_delivery:  # yearly demand
-        Methanol_input_demand = Methanol_demand_max.copy()
-        Methanol_input_demand["Methanol demand MWh"] = 0
-        Methanol_input_demand.iloc[-1, :] = np.sum(Methanol_demand_max.values) * f_max_MeOH_y_demand
-    elif not flag_one_delivery:  # weekly demand
-        Methanol_input_demand = Methanol_demand_max * f_max_MeOH_y_demand
-
-    return Methanol_input_demand
-
-
 # ----- EXTERNAL ENERGY MARKETS
+
+def remove_feb_29(df):
+    # Function to remove February 29 if it's a leap year, works on df and series
+    # Check if the year is a leap year
+    if any((df.index.month == 2) & (df.index.day == 29)):
+        # Remove rows where the date is February 29
+        df = df[~((df.index.month == 2) & (df.index.day == 29))]
+    return df
 
 
 def download_energidata(dataset_name, start_date, end_date, sort_val, filter_area):
     """ function that download energy data from energidataservice.dk and returns a dataframe"""
+    # start_date and end_data in the format '2019-01-01'
     if filter_area != '':
         URL = 'https://api.energidataservice.dk/dataset/%s?start=%s&end=%s&%s&%s' % (
             dataset_name, start_date, end_date, sort_val, filter_area)
@@ -288,6 +307,73 @@ def download_energidata(dataset_name, start_date, end_date, sort_val, filter_are
     return downloaded_df
 
 
+def retrieve_renewable_capacity_factors(token, start_date, end_date, latitude, longitude):
+    """Retrieve capacity factors for wind and solar (fixed mount) from Renewable Ninjas based on latitude and longitude.
+    documentation: https://www.renewables.ninja/documentation/api"""
+    api_base = 'https://www.renewables.ninja/api/'
+    s = requests.session()
+    s.headers = {'Authorization': 'Token ' + token}
+
+    # Solar PV request
+    url = api_base + 'data/pv'
+    optimal_tilt = latitude * 0.87 + 3.1  #  simple optimal tilt expression
+
+    args = {
+        'lat': latitude,
+        'lon': longitude,
+        'date_from': start_date,
+        'date_to': end_date,
+        'dataset': 'merra2',
+        'capacity': 1.0,
+        'system_loss': 0.1,
+        'tracking': 0,
+        'tilt': optimal_tilt,
+        'azim': 180,
+        'format': 'json'
+    }
+
+    r = s.get(url, params=args)
+    r.raise_for_status()  # Raise an error if request fails
+    parsed_response = json.loads(r.text)
+    CF_solar = pd.read_json(StringIO(json.dumps(parsed_response['data'])), orient='index')
+    CF_solar.rename(columns={CF_solar.columns.values[0] : 'CF solar'}, inplace=True)
+
+    # Wind power request
+    url = api_base + 'data/wind'
+    args = {
+        'lat': latitude,
+        'lon': longitude,
+        'date_from': start_date,
+        'date_to': end_date,
+        'capacity': 1.0,
+        'height': 100,
+        'turbine': 'Vestas V80 2000',
+        'format': 'json'
+    }
+
+    r = s.get(url, params=args)
+    r.raise_for_status()
+    parsed_response = json.loads(r.text)
+    CF_wind = pd.read_json(StringIO(json.dumps(parsed_response['data'])), orient='index')
+    CF_wind.rename(columns={CF_wind.columns.values[0] : 'CF wind'}, inplace=True)
+
+    return CF_solar, CF_wind
+
+
+def retrive_entsoe_el_demand(API_KEY, start_day, end_day, country_code):
+    """function that retrives historical el demand with hourly resolution from a specific bidding zone"""
+    # NOTE: list of country codes available here: https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py
+
+    client = EntsoePandasClient(api_key= API_KEY)
+
+    start = pd.Timestamp(start_day, tz='Europe/Brussels')
+    end = pd.Timestamp(end_day, tz='Europe/Brussels')
+
+    ts = client.query_load(country_code, start=start, end=end)
+
+    return ts
+
+
 def pre_processing_energy_data():
     """ function that preprocess all the energy input data and saves in
     NOTE:Some data are not always used depending on the network configuration
@@ -296,86 +382,57 @@ def pre_processing_energy_data():
     '''El spot prices DK1 - input DKK/MWh or EUR/MWh'''
     dataset_name = 'Elspotprices'
     sort_val = 'sort=HourDK%20asc'
-    filter_area = r'filter={"PriceArea":"DK1"}'
-    Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
+    #filter_area = r'filter={"PriceArea":"DK1"}'
+    Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
     Elspotprices = Elspotprices_data[['HourDK', 'SpotPrice' + p.currency]].copy()
     Elspotprices.rename(columns={'SpotPrice' + p.currency: 'SpotPrice ' + p.currency}, inplace=True)
     Elspotprices['HourDK'] = pd.to_datetime(Elspotprices['HourDK'], infer_datetime_format=True)
     Elspotprices.set_index('HourDK', inplace=True)
+    Elspotprices = remove_feb_29(Elspotprices)
     Elspotprices.index.name = None
     Elspotprices.to_csv(p.El_price_input_file, sep=';')  # currency/MWh
 
     '''CO2 emission from El Grid DK1'''
-    dataset_name = 'DeclarationEmissionHour'
     sort_val = 'sort=HourDK%20asc'
-    filter_area = r'filter={"PriceArea":"DK1"}'
-    CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)  # g/kWh = kg/MWh
-    CO2_emiss_El = CO2emis_data[['HourDK', 'CO2PerkWh']].copy()
+    # filter_area = r'filter={"PriceArea":"DK1"}'
+    if p.En_price_year <= 2022:
+        dataset_name = 'DeclarationEmissionHour'
+        CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
+                                           p.filter_area)  # g/kWh = kg/MWh
+        CO2_emiss_El = CO2emis_data[['HourDK', 'CO2PerkWh']].copy()
+
+    elif p.En_price_year > 2022:
+        dataset_name = 'DeclarationGridEmission'
+        CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
+                                           p.filter_area)  # g/kWh = kg/MWh
+        CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
+
     CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
     CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
     CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'], infer_datetime_format=True)
     CO2_emiss_El.set_index('HourDK', inplace=True)
-    CO2_emiss_El.index.name = None
+    CO2_emiss_El = remove_feb_29(CO2_emiss_El)
     CO2_emiss_El.to_csv(p.CO2emis_input_file, sep=';')  # kg/MWh
 
     '''El Demand DK1'''
+    El_demand_DK1 = retrive_entsoe_el_demand(p.entsoe_api, p.start_date.replace("-",""), p.end_date.replace("-",""), p.bidding_zone)
     # source https://data.open-power-system-data.org/time_series/
-    El_demand_DK1 = pd.read_csv('data/time_series_60min_singleindex_filtered_DK1_2019.csv', index_col=0,
-                                usecols=['cet_cest_timestamp', 'DK_1_load_actual_entsoe_transparency'])
-    El_demand_DK1.rename(columns={'DK_1_load_actual_entsoe_transparency': 'DK_1_load_actual_entsoe_transparency MWh'},
+    # El_demand_DK1 = pd.read_csv('data/time_series_60min_singleindex_filtered_DK1_2019.csv', index_col=0,
+    #                            usecols=['cet_cest_timestamp', 'DK_1_load_actual_entsoe_transparency'])
+    El_demand_DK1.rename(columns={'Actual Load': 'DK_1_load_actual_entsoe_transparency MWh'},
                          inplace=True)
+    El_demand_DK1 = remove_feb_29(El_demand_DK1)
     El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
-    El_demand_DK1 = El_demand_DK1
     El_demand_DK1.to_csv(p.El_external_demand_input_file, sep=';')  # MWh/h
 
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
-
-    if p.En_price_year == 2019:
-        # due to different structure of Energinet dataset for the year 2019 and 2022
-        data_folder = p.NG_price_data_folder  # prices in DKK/kWh or EUR/kWH
-        name_files = os.listdir(data_folder)
-        NG_price_year = pd.DataFrame()
-        NG_price_col_name = 'Neutral gas price ' + 'DKK' + '/kWh'
-        NG_price_col_name_new = 'Neutral gas price ' + 'EUR' + '/MWh'
-
-        for name in name_files:
-            # print(name)
-            df_temp = pd.read_csv(os.path.join(data_folder, name),
-                                  skiprows=[0, 1, 2], sep=';', index_col=0,
-                                  usecols=['Delivery date', NG_price_col_name])
-            df_temp.index = pd.to_datetime(df_temp.index, dayfirst=True).strftime("%Y-%m-%dT%H:%M:%S+000")
-
-            if df_temp[NG_price_col_name].dtype != 'float64':
-                df_temp[NG_price_col_name] = df_temp[NG_price_col_name].str.replace(',', '.').astype(float)
-            NG_price_year = pd.concat([NG_price_year, df_temp])
-
-        NG_price_year = NG_price_year.sort_index()
-        NG_price_year[NG_price_col_name] = NG_price_year[
-                                               NG_price_col_name] * 1000 / p.DKK_Euro  # converts to MwH and Euro
-        NG_price_year.rename(columns={NG_price_col_name: NG_price_col_name_new}, inplace=True)
-        NG_price_year.index.rename('HourDK', inplace=True)
-        NG_price_year.index.name = None
-
-        # Up-sampling to hour resolution
-        NG_price_year.index = pd.to_datetime(NG_price_year.index)
-        NG_price_year = NG_price_year.asfreq('H', method='ffill')
-        # add last 23h
-        last_rows_time = p.hours_in_period[-23:len(p.hours_in_period)]
-        last_rows_val = np.ones(len(last_rows_time)) * NG_price_year.iloc[-1, 0]
-        last_rows = pd.DataFrame({'Delivery date': last_rows_time, NG_price_col_name_new: last_rows_val})
-        last_rows = last_rows.set_index('Delivery date')
-        last_rows.index = pd.to_datetime(last_rows.index)
-        NG_price_year = pd.concat([NG_price_year, last_rows])
-        NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
-
-    elif p.En_price_year == 2022:
+    if p.En_price_year <= 2022:
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasMonthlyNeutralPrice'
         sort_val = 'sort=Month%20ASC'
         filter_area = ''
         NG_price_year = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
-
         NG_price_col_name = 'Neutral gas price ' + 'EUR' + '/MWh'
         NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
         NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
@@ -387,33 +444,48 @@ def pre_processing_energy_data():
             {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)
         NG_price_year = pd.concat([NG_price_year, last_rows3])
-        NG_price_year = NG_price_year.asfreq('H', method='ffill')
-        NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
+        NG_price_year = NG_price_year.asfreq('h', method='ffill')
 
-    ''' NG Demand (Consumption) DK '''
+    elif p.En_price_year > 2022:
+        # due to different structure of Energinet dataset for the year 2019 and 2022
+        dataset_name = 'GasDailyBalancingPrice'
+        sort_val = 'sort=GasDay%20ASC'
+        filter_area = ''
+
+        THE_daily_NG_prices = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
+        THE_daily_NG_prices['THE_NG_pricesEUR_MWh'] = THE_daily_NG_prices['THEPriceDKK_kWh'] * 1000 / \
+                                                      THE_daily_NG_prices['ExchangeRateEUR_DKK'] * 100
+        THE_daily_NG_prices.rename(columns={'GasDay': 'HourDK'}, inplace=True)
+        THE_daily_NG_prices['HourDK'] = pd.to_datetime(THE_daily_NG_prices['HourDK'])
+        THE_daily_NG_prices['HourDK'] = pd.to_datetime(THE_daily_NG_prices['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+        THE_daily_NG_prices.set_index('HourDK', inplace=True)
+        last_rows3 = pd.DataFrame(
+            {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], 'THE_NG_pricesEUR_MWh': THE_daily_NG_prices.iloc[-1, 0]})
+        last_rows3.set_index('HourDK', inplace=True)
+        THE_daily_NG_prices = pd.concat([THE_daily_NG_prices, last_rows3])
+        THE_daily_NG_prices = THE_daily_NG_prices.asfreq('h', method='ffill')
+        NG_price_year = THE_daily_NG_prices[['THE_NG_pricesEUR_MWh']].copy()
+
+    NG_price_year = remove_feb_29(NG_price_year)
+    NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
+
+    '''  Estimated NG Demand DK '''
     # source: https://www.energidataservice.dk/tso-gas/Gasflow
+    # used to create a profile for H2 demand - if required.
     dataset_name = 'Gasflow'
     sort_val = 'sort=GasDay'
     filter_area = ''
-    NG_demand_DK_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
+    start_date = str(p.NG_demand_year) + p.start_date[4:]
+    end_date = str(p.NG_demand_year+1) + p.end_date[4:]
+    NG_demand_DK_data = download_energidata(dataset_name, start_date, end_date, sort_val, filter_area)
     NG_demand_DK = NG_demand_DK_data[['GasDay', 'KWhToDenmark']].copy()
     NG_demand_DK['KWhToDenmark'] = NG_demand_DK['KWhToDenmark'] / -1000  # kWh-> MWh
     NG_demand_DK.rename(columns={'KWhToDenmark': 'NG Demand DK MWh'}, inplace=True)
-    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'], infer_datetime_format=True)
+    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'])
+    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
     NG_demand_DK.set_index('GasDay', inplace=True)
-    NG_demand_DK = NG_demand_DK.asfreq('H', method='ffill')
-    NG_demand_DK.rename_axis(index='HourDK', inplace=True)
-
-    # add last 23h
-    last_rows_time2 = p.hours_in_period[-23:len(p.hours_in_period)]
-    last_rows_val2 = np.ones(len(last_rows_time2)) * NG_demand_DK.iloc[-1, 0]
-    last_rows2 = pd.DataFrame({'HourDK': last_rows_time2, 'NG Demand DK MWh': last_rows_val2})
-    last_rows2 = last_rows2.set_index('HourDK')
-    last_rows2.index = pd.to_datetime(last_rows2.index)
-    NG_demand_DK = pd.concat([NG_demand_DK, last_rows2])
-    NG_demand_DK['NG Demand DK MWh'] = NG_demand_DK['NG Demand DK MWh'] / 24
-    NG_demand_DK = NG_demand_DK.set_index(p.hours_in_period)
-    NG_demand_DK.to_csv(p.NG_demand_input_file, sep=';')  # MWh/h
+    NG_demand_DK = remove_feb_29(NG_demand_DK)
+    NG_demand_DK.to_csv(p.NG_demand_input_file, sep=';')  # €/MWh
 
     '''District heating data'''
     # Download weather data near Skive (Mejrup)
@@ -425,7 +497,6 @@ def pre_processing_energy_data():
     for name in name_files:
         df_temp_2 = pd.read_csv(os.path.join(data_folder, name), sep=';', usecols=['DateTime', 'Middeltemperatur'])
         DH_Skive = pd.concat([DH_Skive, df_temp_2])
-        # print(name)
 
     DH_Skive = DH_Skive.drop_duplicates(subset='DateTime', keep='first')
     DH_Skive = DH_Skive.sort_values(by=['DateTime'], ascending=True)
@@ -449,26 +520,16 @@ def pre_processing_energy_data():
     DH_Skive['Capacity Factor DH'] = DH_Skive['Capacity Factor DH'] + DH_CFbase_load
     DH_Skive['DH demand MWh'] = DH_Skive[
                                     'Capacity Factor DH'] * DH_Skive_Capacity  # estimated demand for DH in Skive municipality
-    DH_Skive.to_csv(p.DH_external_demand_input_file, sep=';')  # MWh/h
+    DH_Skive = remove_feb_29(DH_Skive)
     DH_Skive = DH_Skive.set_axis(p.hours_in_period)
+    DH_Skive.to_csv(p.DH_external_demand_input_file, sep=';')  # MWh/h
 
-    '''Onshore Wind Capacity Factor DK1'''
-    # from 2017
-    hours_in_2017 = pd.date_range('2017-01-01T00:00Z', '2017-12-31T23:00Z', freq='H')
-    df_onshorewind = pd.read_csv('data/onshore_wind_1979-2017.csv', sep=';', index_col=0)
-    df_onshorewind.index = pd.to_datetime(df_onshorewind.index)
-    CF_wind = pd.DataFrame(df_onshorewind['DNK'][[hour.strftime("%Y-%m-%d %H:%M:%S+00:00") for hour in hours_in_2017]])
-    CF_wind.rename(columns={'DNK': 'Capacity Factor Wind Onshore DK1'}, inplace=True)
-    CF_wind = CF_wind.set_axis(p.hours_in_period)
+    '''Onshore Wind and Solar Capacity Factors'''
+    # Download CF for wind and solar corresponding to the energy year
+    CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, p.hours_in_period[0].strftime('%Y-%m-%d'), p.hours_in_period[-1].strftime('%Y-%m-%d'), p.latitude, p.longitude)
+    CF_wind = remove_feb_29(CF_wind)
+    CF_solar = remove_feb_29(CF_solar)
     CF_wind.to_csv(p.CF_wind_input_file, sep=';')  # kg/MWh
-
-    '''Solar Capacity Factor DK'''
-    # add solar PV generator
-    df_solar = pd.read_csv('data/pv_optimal.csv', sep=';', index_col=0)
-    df_solar.index = pd.to_datetime(df_solar.index)
-    CF_solar = pd.DataFrame(df_solar['DNK'][[hour.strftime("%Y-%m-%dT%H:%M:%S+00:00") for hour in hours_in_2017]])
-    CF_solar.rename(columns={'DNK': 'Capacity Factor Solar DK'}, inplace=True)
-    CF_solar = CF_solar.set_axis(p.hours_in_period)
     CF_solar.to_csv(p.CF_solar_input_file, sep=';')  # kg/MWh
 
     return
@@ -495,6 +556,7 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
     winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='H')
     winter_2 = winter_2.drop(winter_2[-1])
     winter = winter_1.append(winter_2)
+    winter = winter[~((winter.month == 2) & (winter.day == 29))]
     summer = pd.date_range(summer_start + 'Z', summer_end + 'Z', freq='H')
     summer = summer.drop(summer[-1])
 
@@ -512,37 +574,42 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
     for h in winter:
         day = h.weekday()
         hour = h.hour
-        if day in [6, 7]:  # weekends
+        net_tariff = 0  # Default value
+
+        if day in [5, 6]:  # weekends
             if hour in high_hours_weekend_winter:
                 net_tariff = p.el_net_tariff_high
             else:
                 net_tariff = p.el_net_tariff_low
-        elif day in range(1, 6):  # weekdays
+        elif day in range(0, 5):  # weekdays
             if hour in peak_hours:
                 net_tariff = p.el_net_tariff_peak
             elif hour in high_hours_weekday_winter:
                 net_tariff = p.el_net_tariff_high
             else:
                 net_tariff = p.el_net_tariff_low
+
         el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
 
     for h in summer:
         day = h.weekday()
         hour = h.hour
-        if day in [6, 7]:  # weekends
+        net_tariff = 0  # Default value
+
+        if day in [5, 6]:  # weekends
             net_tariff = p.el_net_tariff_low
-        elif day in range(1, 6):  # weekdays
+        elif day in range(0, 5):  # weekdays
             if hour in high_hours_weekday_summer:
                 net_tariff = p.el_net_tariff_high
             else:
                 net_tariff = p.el_net_tariff_low
+
         el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
 
     return el_grid_price, el_grid_sell_price
 
 
 # ---- Pre-processing for PyPSA network
-
 def n_flags_to_preprocess (n_flags_OK, flh_H2, f_max_MeOH_y_demand):
     flh_H2_OK = flh_H2
     f_max_MeOH_y_demand_OK = f_max_MeOH_y_demand
@@ -553,10 +620,11 @@ def n_flags_to_preprocess (n_flags_OK, flh_H2, f_max_MeOH_y_demand):
 
     return flh_H2_OK, f_max_MeOH_y_demand_OK
 
+
 def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
-    # inputs_dict contains all in
-    """Run preprocessing of energy data and build input file OR read input files saved"""
+    # returns: inputs_dict which contains all inputs for the pypsa network
+
     if preprocess_flag:
         pre_processing_energy_data()  # download + preprocessing + save to CSV
         balance_bioCH4_MeOH_demand_GL()  # Read CSV GL + create CSV with bioCH4 and MeOH max demands
@@ -565,19 +633,15 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale
     GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand = load_input_data()
 
     ''' create H2 grid demand'''
-    # H2_input_demand = preprocess_H2_grid_demand(flh_H2, np.abs(GL_inputs.at['H2', 'GreenHyScale']), NG_demand_DK,
-    #                                            p.H2_one_delivery)
-
-    H2_input_demand = preprocess_H2_grid_demand(flh_H2, p.H2_output, NG_demand_DK,
-                                                p.H2_one_delivery)
+    H2_input_demand = preprocess_H2_grid_demand(p.H2_output, flh_H2, NG_demand_DK, profile_flag=p.H2_profile_flag, n=p.H2_delivery_frequency)
 
     ''' create  Methanol demand'''
-    Methanol_input_demand = preprocess_methanol_demand(Methanol_demand_max, f_max_MeOH_y_demand, p.MeOH_one_delivery)
+    Methanol_input_demand = Methanol_demand_max * f_max_MeOH_y_demand
 
     """ return the yearly el demand for the DK1 which is avaibale sale of RE form GLS,
     it is estimated in proportion to the El in GLS needed for producing RFNBOs """
 
-    # Guess of  the RE EL demand yearly in GLS based on H2 and MeOH demand
+    # Guess of the RE EL demand yearly in GLS based on H2 and MeOH demand
     El_d_H2 = np.abs(
         H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
     El_d_MeOH = np.abs(Methanol_input_demand.values.sum() * (
@@ -587,14 +651,13 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale
     El_d_y_guess_GLS = El_d_H2 + El_d_MeOH  # MWh el for H2 and MeOH
 
     # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
-
     if el_DK1_sale_el_RFNBO < 0:
         el_DK1_sale_el_RFNBO = 0
         print('Warning: ElDK1 demand set = 0')
 
     El_d_y_DK1 = El_d_y_guess_GLS * el_DK1_sale_el_RFNBO
 
-    # Distribute the available demand according to the time series of DK1 demand
+    # Distribute the external el demand according to the time series of DK1 demand
     El_demand_DK1.iloc[:, 0] = El_demand_DK1.iloc[:, 0] * (
             El_d_y_DK1 / len(p.hours_in_period)) / El_demand_DK1.values.mean()
 
@@ -619,7 +682,7 @@ def pre_processing_all_inputs(flh_H2, f_max_MeOH_y_demand, CO2_cost, el_DK1_sale
 
 
 def en_market_prices_w_CO2(inputs_dict, tech_costs):
-    """Returns the market price of commodities adjusted for CO2 tax --> including CO2 tax there needed!"""
+    """Returns the market price of extrenally traded commodities adjusted for CO2 tax"""
     " returns input currency"
     CO2_cost = inputs_dict['CO2 cost']
     CO2_emiss_El = inputs_dict['CO2_emiss_El']
@@ -652,6 +715,77 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
     return en_market_prices
 
 
+def retrieve_technology_data(file_name, local_folder, base_url):
+    """
+    Downloads a specific .CSV cost file from the PyPSA technology-data GitHub repository
+    and saves it in a specified local folder. If the file already exists locally, it checks
+    if the remote file is different before downloading.
+
+    Parameters:
+    - file_name (str): The name of the CSV file to download (e.g., "costs.csv").
+    - local_folder (str): The local directory where the file will be saved.
+
+    Returns:
+    - str: Path to the downloaded file if successful, None if skipped.
+    """
+
+    # GitHub raw file URL
+    # base_url = "https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/"
+    file_url = base_url + file_name
+
+    # Create the local folder if it does not exist
+    os.makedirs(local_folder, exist_ok=True)
+
+    # Local file path
+    local_file_path = os.path.join(local_folder, file_name)
+
+    # Function to compute file hash
+    def compute_file_hash(file_path):
+        hasher = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    # Function to get GitHub file hash
+    def get_github_file_hash(url):
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            hasher = hashlib.sha256()
+            for chunk in response.iter_content(chunk_size=8192):
+                hasher.update(chunk)
+            return hasher.hexdigest()
+        except requests.exceptions.RequestException as e:
+            print(f" Error checking GitHub file hash: {e}")
+            return None
+
+    # Check if file exists locally
+    if os.path.exists(local_file_path):
+        local_hash = compute_file_hash(local_file_path)
+        github_hash = get_github_file_hash(file_url)
+
+        if github_hash and local_hash == github_hash:
+            print(f"{file_name} is already up-to-date. Skipping download.")
+            return None  # File is unchanged, no need to download
+
+    # Download the file
+    try:
+        response = requests.get(file_url, stream=True)
+        response.raise_for_status()
+
+        with open(local_file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+
+        print(f"Technology-data updated: {file_name}")
+        return local_file_path
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading {file_name}: {e}")
+        return None
+
+
 # -----CONSTRAINTS on GRID ELECTRICITY RFNBOs---------------
 def p_max_pu_EU_renewable_el(Elspotprices, CO2_emiss_El):
     """ function that enables power from the grid tp be used for H2 production according to EU rules:
@@ -668,7 +802,7 @@ def p_max_pu_EU_renewable_el(Elspotprices, CO2_emiss_El):
 
 
 def add_link_El_grid_to_H2(n, inputs_dict, tech_costs):
-    """ sets condition for use of electricity formthe grid - depending on the year_EU and the legislation
+    """ sets condition for use of electricity form the grid - depending on the year_EU and the legislation
     it is limiting the use of electricity form the grid after 2030 withouth installaiton of additional renewables"""
 
     Elspotprices = inputs_dict['Elspotprices']
@@ -1151,7 +1285,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               carrier="onshorewind",
               capital_cost=tech_costs.at['onwind', 'fixed'] * p.currency_multiplier,
               marginal_cost=tech_costs.at['onwind', 'VOM'] * p.currency_multiplier,
-              p_max_pu=CF_wind['Capacity Factor Wind Onshore DK1'])
+              p_max_pu=CF_wind['CF wind'])
 
         # add PV utility generators
         n.add("Carrier", "solar")
@@ -1163,7 +1297,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               carrier="solar",
               capital_cost=tech_costs.at['solar', 'fixed'] * p.currency_multiplier,
               marginal_cost=tech_costs.at['solar', 'VOM'] * p.currency_multiplier,
-              p_max_pu=CF_solar['Capacity Factor Solar DK'])
+              p_max_pu=CF_solar['CF solar'])
 
         # add link to sell power to the external El grid
         n.add("Link",
@@ -1229,9 +1363,9 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         # -----------Electrolyzer------------------
         # cost_electrolysis dependent on scale (grid ot MeOH only)
         if H2_input_demand.iloc[:, 0].sum() > 0:
-            electrolysis_cost = tech_costs.at['Electrolysis large', 'fixed'] * p.currency_multiplier
+            electrolysis_cost = tech_costs.at['electrolysis', 'fixed'] * p.currency_multiplier
         else:
-            electrolysis_cost = tech_costs.at['Electrolysis small', 'fixed'] * p.currency_multiplier
+            electrolysis_cost = tech_costs.at['electrolysis small', 'fixed'] * p.currency_multiplier
 
         n.add("Link",
               "Electrolyzer",
@@ -1616,7 +1750,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               "Straw to Skyclean",
               bus0="Straw Pellets",
               bus1="Digest DM",
-              bus2='local_EL_bus',
+              bus2=local_EL_bus,
               efficiency=p.lhv_straw_pellets / p.lhv_dig_pellets,
               efficiency2=-GL_eff.at['El2 bus', 'SkyClean'] * p.lhv_straw_pellets / p.lhv_dig_pellets,
               p_nom_extendable=True)
@@ -1639,7 +1773,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                   'biomass HOP', 'VOM']) * p.currency_multiplier,
               p_nom_extendable=True,
               p_nom_max=p.p_nom_max_skyclean / p.lhv_dig_pellets,
-              capital_cost=tech_costs.at['Slow pyrolysis', "fixed"] * p.currency_multiplier)  #
+              capital_cost=tech_costs.at['biochar pyrolysis', "fixed"] * p.currency_multiplier)  #
 
         n.add('Link',
               'biochar credits',
@@ -1848,7 +1982,6 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=True,
               capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
 
-        # TODO introduce piping cost for Mt, DH, LT
 
         # Thermal energy storage
         # water tank on Heat DH
@@ -1997,7 +2130,7 @@ def file_name_network(n, n_flags, inputs_dict):
         H2_d = 0
 
     if 'Methanol' in n.loads.index.values:
-        MeOH_d = int(n.loads_t.p_set['Methanol'].sum() // 1000)  # yearly prodcution of MeOH in GWh
+        MeOH_d = int(n.loads_t.p_set['Methanol'].sum() // 1000)  # yearly production of MeOH in GWh
     else:
         MeOH_d = 0
 
@@ -2008,7 +2141,6 @@ def file_name_network(n, n_flags, inputs_dict):
     year = int(p.En_price_year)  # energy price year
 
     # max El to DK1
-
     el_DK1_sale_el_RFNBO = inputs_dict['el_DK1_sale_el_RFNBO']
 
     # agents
@@ -2066,7 +2198,7 @@ def network_comp_allocation_add_buses_interface(network, network_comp_allocation
     return network_comp_allocation
 
 
-def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
+def build_network(tech_costs, inputs_dict, n_flags):
     """this function uses bioCH4 demand, H2 demand, and MeOH demand as input to build the PyPSA network"""
     # OUTPUTS: 1) Pypsa network, 2) nested dictionary with componets allocations to the agents
 
@@ -2117,7 +2249,6 @@ def build_PyPSA_network_H2d_bioCH4d_MeOHd_V1(tech_costs, inputs_dict, n_flags):
 
 
 # --- OPTIMIZATION-----
-
 def optimal_network_only(n_opt):
     """function that removes unused: buses, links, stores, generators, storage_units and loads,
      from the plot of the optimal network"""
@@ -2148,18 +2279,9 @@ def optimal_network_only(n_opt):
     return n
 
 
-def OLPF_network_gurobi(n, n_flags_opt, n_flags, inputs_dict):
-    """Optimization of OLPF"""
-    status = n.lopf(n.snapshots,
-                    pyomo=False,
-                    solver_name='gurobi',
-                    solver_options={'BarHomogeneous': 1})
-
-    if status[0] != "ok":
-        print("The solver did not reach a solution (infeasible or unbounded)!")
-        sys.exit(-1)  # exit unsuccessfully
-
-    # File name if print or export are True
+def export_print_network(n, n_flags_opt, n_flags, inputs_dict):
+    # Define file name
+    # export network and print layout using pypsatopo
     file_name = file_name_network(n, n_flags, inputs_dict)
 
     if n_flags_opt['print']:
@@ -2169,12 +2291,11 @@ def OLPF_network_gurobi(n, n_flags_opt, n_flags, inputs_dict):
         pypsatopo.generate(n_plot, file_output=file_name_topology, negative_efficiency=False, carrier_color=True)
     if n_flags_opt['export']:
         n.export_to_netcdf(p.print_folder_Opt + file_name + '_OPT' + '.nc')
-    return n
+    return
 
 
 # ----RESULTS SINGLE OPTIMIZATION ----
-
-def shadow_prices_violinplot(n, inputs_dict, tech_costs):
+def shadow_prices_violinplot(n, inputs_dict, tech_costs, folder):
     """function that plats a box plot from marginal prices (shadow prices) from a list of buses"""
 
     CO2_cost = inputs_dict['CO2 cost']
@@ -2224,7 +2345,7 @@ def shadow_prices_violinplot(n, inputs_dict, tech_costs):
     plt.tight_layout()
     plt.show()
 
-    folder = p.print_folder_Opt
+    #folder = p.print_folder_Opt
     fig.savefig(folder + 'shd_prices_violin.png')
 
     return
@@ -2305,7 +2426,7 @@ def get_system_cost(n_opt):
     return tot_cc, tot_mc, tot_sc
 
 
-def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_flag):
+def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_flag, folder):
     """ function that return 2 dicitonaries with total capital and marginal costs per agent
     it screens all the agents"""
     cc_stores, cc_generators, cc_links = get_capital_cost(n_opt)
@@ -2340,17 +2461,17 @@ def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_
         fig, ax = plt.subplots()
 
         ax.bar(agent_list_cost, cc_plot)
-        ax.bar(agent_list_cost, mc_plot)
-        ax.set_xlabel('agents')
+        # ax.bar(agent_list_cost, mc_plot)
+        # ax.set_xlabel('agents')
         ax.set_ylabel('€/y')
-        ax.legend(['fixed costs', 'operational costs'])
+        ax.legend(['fixed costs (investment & FOM)'])
+        # ax.legend(['fixed costs', 'operational costs'])
         ax.set_xticks(range(0, len(agent_list_cost)), agent_list_cost, rotation=60)
-        ax.set_title('Total  system cost by agent')
+        ax.set_title('Total  system cost by plant')
         plt.tight_layout()
         plt.show()
 
-        folder = p.print_folder_Opt
-        fig.savefig(folder + 'cc_cm_agents.png')
+        fig.savefig(folder + 'cc_cm_plants.png')
 
     return cc_tot_agent, mc_tot_agent
 
@@ -2373,7 +2494,7 @@ def plot_duration_curve(ax, df_input, col_val):
     return out
 
 
-def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs):
+def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs, folder):
     """function that plots El and Heat prices in external grids and GLS"""
 
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
@@ -2417,8 +2538,8 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs):
     ax3.set_title('Heat prices time series')
     ax3.tick_params(axis='x', rotation=45)
 
-    plot_duration_curve(ax4, pd.DataFrame(en_market_prices['NG_grid_price']), 'Neutral gas price EUR/MWh')
-    plot_duration_curve(ax4, inputs_dict['NG_price_year'], 'Neutral gas price EUR/MWh')
+    plot_duration_curve(ax4, pd.DataFrame(en_market_prices['NG_grid_price']), 'THE_NG_pricesEUR_MWh')
+    plot_duration_curve(ax4, inputs_dict['NG_price_year'], 'THE_NG_pricesEUR_MWh')
     # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat MT']),'Heat MT')
     # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat DH']),'Heat DH')
     ax4.set_ylabel('€/MWh')
@@ -2427,19 +2548,18 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs):
     ax4.grid(True)
     ax4.set_title('Heat prices durnation curves')
 
-    folder = p.print_folder_Opt
+    # folder = p.print_folder_Opt
     fig.savefig(folder + 'el_heat_prices.png')
 
     return
 
 
-def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date):
+def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date, folder):
     '''function that plots shadow prices for the buses involved in the production of H2 and MeOH'''
     ''' period of time defined by the user '''
 
     # date format : '2022-01-01T00:00'
-
-    time_ok = pd.date_range(start_date + 'Z', end_date + 'Z', freq='H')
+    time_ok = p.hours_in_period[(p.hours_in_period >= start_date) & (p.hours_in_period <= end_date)]
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     for b in bus_list:
@@ -2461,12 +2581,12 @@ def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date):
     ax2.set_title('duration curves')
 
     # folder = p.print_folder_Opt
-    # fig.savefig(folder + 't_int_shadow_prices.png')
+    fig.savefig(folder + 't_int_shadow_prices.png')
 
     return
 
 
-def print_opt_components_table(n_opt, network_comp_allocation, file_path):
+def save_opt_capacity_components(n_opt, network_comp_allocation, file_path):
     """function that creates and saves as png a DF with all the components in the optimal nework, including their
     capacities and annualized capital costs"""
 
@@ -2511,8 +2631,8 @@ def print_opt_components_table(n_opt, network_comp_allocation, file_path):
 
         df_opt_componets = pd.concat([df_opt_componets, df_agent])
 
-    "save to png"
-    dfi.export(df_opt_componets, file_path + '.png')
+    "save to csv"
+    df_opt_componets.to_csv(file_path + '.csv')
 
     return df_opt_componets
 
@@ -2535,7 +2655,7 @@ def plot_heat_map_single_comp(df_time_serie):
     fig = sns.heatmap(new_df, cmap='YlGn', vmin=0, cbar=True).set(title=col_name)
 
 
-def heat_map_CF(network_opt, key_comp_dict):
+def heat_map_CF(network_opt, key_comp_dict, folder):
     heat_map_comp_list = {
         'generators': list(set(key_comp_dict['generators']).intersection(set(network_opt.generators.index))),
         'links': list(set(key_comp_dict['links']).intersection(set(network_opt.links.index))),
@@ -2562,7 +2682,8 @@ def heat_map_CF(network_opt, key_comp_dict):
         plot_heat_map_single_comp(df_time_serie)
 
     plt.subplots_adjust(hspace=0.7, wspace=0.5)
-
+    plt.tight_layout()
+    fig.savefig(folder + 'heat_map.png')
     return
 
 # -------- SENSITIVITY ANALYSIS
@@ -2910,6 +3031,13 @@ def create_local_input_dict(year):
     return inputs_dict
 
 
-
-
+def create_folder_if_not_exists(path, folder_name):
+    # general function for storing plots
+    folder_path = os.path.join(path, folder_name)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Folder created: {folder_path}")
+    else:
+        print(f"Folder already exists: {folder_path}")
+    return folder_path  # Return the full path of the folder
 
