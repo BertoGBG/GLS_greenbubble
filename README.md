@@ -28,8 +28,7 @@ please cite as: https://doi.org/10.1016/j.enconman.2024.119175
 
 
 **What can the model do**
-gurobi abd highspy
-
+The model calcualtes the optimal capacities and operation of the plants and components forming the PtX hub. The modle optimizes all teh content of the "GreenBubble" in the figure, while the external energy systems is modelled as exogenously set inputs. Production cost for H2 and MeOH are estimated as well as prices for internally traded commodities.
 
 
 **Structure of the Repository:**
@@ -89,7 +88,7 @@ paramaters.py and set  preprocess_flag = True in main.py
               'export': False}             # OPTION: saves network before optimization
 
 4) retrive techno-economic
-   GLS specific data are retrive from the file: GreenLab_Input_file_xlxs
+   GLS specific data are retrive from the file: GreenLab_Input_file.xlxs
    general database for techno-economic data of varous technolgies: [technology-data](https://technology-data.readthedocs.io/en/latest/)
  
 5) solve network
