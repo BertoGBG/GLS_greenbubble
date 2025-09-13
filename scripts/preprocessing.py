@@ -562,7 +562,7 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
 
 # ---- Pre-processing for PyPSA network
 
-def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Methanation_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag):
+def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Methanation_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
     # returns: inputs_dict which contains all inputs for the pypsa network
 
@@ -598,9 +598,11 @@ def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Met
         H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
     El_d_MeOH = np.abs(Methanol_input_demand.values.sum() * (
             (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-            p.el_comp_H2 + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.el_comp_CO2 / GL_eff.at[
+            p.H2_comp_dict['el_demand'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.H2_comp_dict['el_demand'] / GL_eff.at[
                 'Methanol', 'Methanol plant']))
-    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH  # MWh el for H2 and MeOH
+    El_d_methanation = np.abs(Methanation_input_demand.values.sum() / (tech_costs.at['biogas plus hydrogen', "Methane Output"] - tech_costs.at['biogas plus hydrogen', "Biogas Input"]))
+
+    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH + El_d_methanation # MWh el for H2 and MeOH
 
     # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
     if el_DK1_sale_el_RFNBO < 0:

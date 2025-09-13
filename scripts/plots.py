@@ -62,7 +62,7 @@ def shadow_prices_violinplot(
         bioCH4_y_d = n.loads_t.p_set['bioCH4'].sum()
         CO2_MeOH_plant = 1 / n.links.efficiency['Methanol plant']
         bioCH4_CO2plant = n.links.efficiency['SkiveBiogas'] / n.links.efficiency2['SkiveBiogas']
-        fC_MeOH = round((meoh_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2)
+        fC_MeOH = round((meoh_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2) #TODO fix this when biomethanation is in the model
 
     # Collect series (list of pd.Series)
     data, x_ticks_plot = [], []
@@ -144,7 +144,7 @@ def shadow_prices_violinplot(
 
 
 
-""" PLOTS SINGLE OPTMIZATION """
+""" PLOTS SINGLE OPTIMIZATION """
 
 def plot_duration_curve(ax, df_input, col_val):
     """plot duration curve from dataframe (df) with index being a DateTimeIndex
@@ -391,6 +391,9 @@ def plot_heat_map_single_comp(df_time_serie, ax=None, label_freq_days=14, vmin=0
 
     # Plot on provided axes (no plt.figure/plt.show here)
     hm = sns.heatmap(heat_df, cmap="YlGn", vmin=vmin, vmax=vmax, cbar=True, ax=ax)
+
+    # Remove the default x-axis label 'day_of_year'
+    ax.set_xlabel("")
 
     # Titles & labels
     ax.set_title(title or col_name, fontsize=10)
@@ -795,3 +798,47 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
                 df_results.at[name, c] = 0
 
     return df_results, results_plot
+
+
+def single_opt_plots(network_opt, network_comp_allocation, inputs_dict, tech_costs, plots_folder ):
+
+    # Costs by plant
+    cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(
+        network_opt, network_comp_allocation, True, plots_folder
+    )
+
+    # Violin of shadow prices (with clipping + note box from your updated function)
+    shadow_prices_violinplot(
+        network_opt, inputs_dict, tech_costs, plots_folder,
+        handle_spikes="clip", quantile_hi=0.98, quantile_lo=0.02
+    )
+
+    # Internal electricity & heat prices
+    plot_El_Heat_prices(network_opt, inputs_dict, tech_costs, plots_folder)
+
+    # Demo Partial time series for shadow prices
+    d_start = f"{p.En_price_year}-01-01"
+    d_end = f"{p.En_price_year}-03-31"
+
+    bus_list = ['El3 bus', 'H2 delivery', 'Heat LT', 'Methanol', 'H2_distribution',
+                'CO2_distribution', 'El2 bus', 'methanation']
+    legend = ['El internal', 'LCOE H2 ', 'Heat LT ', 'LCOE MeOH', 'CO2 internal' , 'methanation']
+
+    plot_bus_list_shadow_prices(
+        network_opt, bus_list, legend, d_start, d_end, plots_folder,
+        handle_spikes='clip', quantile=0.95
+    )
+
+    # Save optimal capacities
+    file_path = Path(plots_folder) / 'table_capacities'
+    df_opt_components = save_opt_capacity_components(network_opt, network_comp_allocation, str(file_path))
+
+    # Heat map demo
+    key_comp_dict = {
+        'generators': ['onshorewind', 'solar'],
+        'links': ['DK1_to_El3', 'El3_to_DK1', 'Electrolyzer', 'Methanol plant', 'biomethanation_biogas', 'biomethanation_co2'],
+        'stores': ['H2 HP', 'CO2 pure HP', 'CO2 Liq', 'battery']
+    }
+    heat_map_CF(network_opt, key_comp_dict, plots_folder)
+
+    return

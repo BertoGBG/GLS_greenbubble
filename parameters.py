@@ -12,7 +12,7 @@ f_max_Methanation_y_demand = 0.45 # # % of CO2 from biogas upgrading converted t
 el_DK1_sale_el_RFNBO = 0.1  # max electricity during the year that can be sold to ElDK1 (unit: fraction of El for RFNBOs)
 
 '''Energy & Weather year'''
-En_price_year = 2019  # # Year for historical Energy prices
+En_price_year = 2021  # # Year for historical Energy prices
 
 '''Input the network configuration'''
 n_flags = {'SkiveBiogas': True,
@@ -29,7 +29,7 @@ n_flags = {'SkiveBiogas': True,
 
 # if preprocess_flag is False the input data are loaded from csv files, if True the input data are downloaded
 # and saved as CSV files
-preprocess_flag = False #
+preprocess_flag = True #
 
 # --------------------------------------
 ''' Demand Flexibility (H2 and MeOH'''
@@ -56,11 +56,11 @@ f_FLH_Biogas = 4 / 5  # fraction of maximum capacity that the Biogas plant is op
 # token to download  factors from Renewable Ninjas
 # obtain your own token from : https://www.renewables.ninja/documentation/api
 RN_token = ""  #
-entsoe_api = ""  #
+entsoe_api = ""   #
 latitude = 56.566 # Skive (DK)
 longitude = 9.033 # Skive (DK)
 
-""" Crete adn external NG demand"""
+""" Crete an external NG demand"""
 NG_demand_year = 2019 # year for NG demand
 
 # --------------------------------------
@@ -116,7 +116,7 @@ rfnbos_dict= {'limit' : 'emissions', # it can be set to 'emissions', 'price' or 
               'price_threshold' : 20 * currency_multiplier, # (Eur/MWh) : electricity is renewable if price is below 20€/MWh
               'emission_threshold' : 18 * 3.6 / 1000} # (gCO2e/MJ) --> tCO2e/MWh
 # --------------------------------------
-''' Other constants'''
+''' Constants'''
 FLH_y = 8760  # full load hours equivalent  in a year for MeOH
 lhv_meoh= 5.54  # kWh/kg = MWh/ton
 lhv_h2= 33.33 # MWh/t
@@ -126,13 +126,9 @@ lhv_dig_pellets = 16/3.6 # MWh/t
 density_H2_1atm = 0.0827 # kg/m3
 density_CO2_1atm = 1.98 # kg/m3
 density_CH4_1atm = 0.716 # kg/m3
-# 6kWh/Nm3
-# 13.9 kWh /kg * 0.716 kg/m3 = 9.952 kWh /m3
-# baloon: 5.971 kWh /m3
-# cost 100 €/ m3
-# cost = 100/ 9.71 = 16.75 € /kWh
+
 # --------------------------------------
-''' PARAMETERS FOR PRE PROCESSING'''
+''' PARAMETERS FOR REVTRIEVING AND PRE PROCESSING'''
 '''Time Period in DK'''
 start_day= str(En_price_year)+'-01-01'
 start_date = start_day+'T00:00' # keep the format 'YYYY-MM-DDThh:mm' when selecting start and end time
@@ -157,6 +153,7 @@ ref_df[ref_col_name] = 0
 '''set area to DK1 (for data pre-processing, where applicable)'''
 filter_area = r'filter={"PriceArea":"DK1"}' # for energidata
 bidding_zone = 'DK_1' # for entsoe
+
 # --------------------------------
 '''District heating assumptions'''
 DH_Skive_Capacity = 59  # MW district heating capacity in Skive
@@ -166,7 +163,7 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 # --------------------------------------
 ''' ASSUMPTIONS ON ENERGY PRICES'''
 ''' Biogenic Feedstocks '''
-Straw_pellets_price = 380 / lhv_straw_pellets  # (€/t) / (MWh/t)
+Straw_pellets_price = 250  # (€/t)
 Dig_biomass_price = 0  # (€/t) (Manure) Set to 0 as only the Delta in bioCH4 prod costs are considered.
 
 '''District Heating price'''
@@ -192,63 +189,59 @@ el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro * currency_multiplier
 el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro * currency_multiplier  # (Ore/kWh) *100/1000 = DKK
 # / MWH includes transmission and system tariff
 
-# --------------------------------------
-''' CAPACITY EXPANSION LIMITS'''
-p_nom_max_wind = float("inf") #
-p_nom_max_solar = float("inf") #
-battery_max_cap = float('inf')  # MWh battery storage capacity on site
-e_nom_max_H2_HP = float('inf')  # supplier info indicate that it can be max 5t
-e_nom_max_CO2_HP = float('inf')  # t_CO2 # HP CO2 storage
-e_nom_max_biogas_storage = 200  # MWh at standard atm and 65%v CH4
-p_nom_max_skyclean = float('inf') # 50 MW pellets input according to Stiesdal
-
-'''Heat network expansion'''
-e_nom_max_Heat_DH_storage = float('inf')  # MWH
-ramp_limit_up_Heat_DH_storage = 1/2  # assumptions but it could be increased by larger heat exchanger
-ramp_limit_down_Heat_DH_storage = 1/2 # assumptions but it could be increased by larger heat exchanger
-e_nom_min_Heat_MT_storage = 1.5 # MWH
-e_nom_max_Heat_MT_storage = float('inf')
-ramp_limit_up_Heat_MT_storage = 1/6
-ramp_limit_down_Heat_MT_storage = 1/6
+# H2 grid tarif
+H2_grid_purchase = False # enables purchasing of H2 from external grid
+H2_tariff = 0.04 * 1000 /lhv_h2 # (€/kg) * 10000 / MWh/t
 
 #--------------------------------------
 '''Technology inputs'''
-# Compressors
-el_comp_CO2 = 0.096  # MWe/(t/h)
-el_comp_H2 = 0.340 / lhv_h2 # MWe/MWh2
-heat_comp_CO2 = el_comp_CO2 * 0.2/0.7  # MWth/(t/h) available at 135-80 C
-heat_comp_H2 = el_comp_H2 * 0.2/0.7  # MWth/MWh2 available at 135-80 C
-CO2_comp_inv = 1516 # kEuro/(t/h)
-CO2_comp_FOM = 4.0 # (%inv/Y)
-CO2_comp_lifetime = 15 # years
+# General Capacity expansion limits
+cap_nom_max = {'onwind' : float("inf"),
+               'solar': float("inf"),
+               'battery' : float("inf"),
+               'CO2 HP' : float("inf"),
+               'pyrolysis' : float("inf")
+               }
 
 # CO2 liquefaction - internal data source (BCE-AU)
-El_CO2_liq = 0.061 # MWh/t CO2
-Heat_CO2_liq_DH = 0.166 # water heat 80 C from refrigeration cycle
-CO2_evap_annualized_cost= 3765 # k€/(t/h)/y
+CO2_Liq_dict ={'el_demand' : 0.061, # MWh/t CO2
+                'heat_out' : 0.166, # # water heat 80 C from refrigeration cycle
+                'cost_factor' : 1,
+                'e_nom_max' : float("inf"),
+                'annualized_evaparator_cost' : 3765 } #k€/(t/h)/y
 
+# CO2 HP cylinders storage (source: AU Foulum)
+CO2_HP_dict= {'e_nom_max' : float('inf'),
+              'el_extra' : 0.01, # MWh/t CO2
+              'investment' : 77000, # €/t  includes control systems
+              'FOM' : 1.0, # % inv/y
+              'lifetime' : 25} # years
+
+# CO2 compressor
+CO2_comp_dict ={'el_demand' : 0.096, # MWe/(t/h)
+                'heat_out' : 0.096 * 0.2/0.7, # MWth/(t/h) available at 135-80 C
+                'cost_factor' : 1}
+# H2 compressor
+H2_comp_dict ={'el_demand' : 0.340 / lhv_h2, # MWe/(t/h)
+                'heat_out' : 0.340 / lhv_h2 * 0.2/0.7, # MWth/(t/h) available at 135-80 C
+                'cost_factor' : 1}
 # H2 vessels storage
-El_H2_storage_add = el_comp_H2 * 0.2 # MWh/MWh2
-
-# CO2 cylinders storage
-El_CO2_storage_add = 0.01 # MWh/t CO2
-ro_H2_80bar = 6.3112 # density at 20 C (supercritical) in kg/m3  source: NIST Chemistry WebBook
-CO2_cylinders_inv = 77000 # €/t  includes control systems
-CO2_cylinders_FOM = 1.0 # %inv
-CO2_cylinders_lifetime =25
+H2_storage_dict = {'el_extra' : H2_comp_dict['el_demand'] * 0.2, #  additional compression for storage MWh/MWh2
+                   'e_nom_max' : float("inf"),
+                   'cost_factor' : 1}
 
 # Methanol (CO2 hydrogenation)
 meoh_dict = {
     "ramp_limit_up": 1/12,
     "ramp_limit_down": 1/12,
-    "p_min_pu": 0.2,
+    "p_min_pu": 0.15,
     "cost_factor" : 1}
 
 # electrolysis
 electrolysis_dict = {
     "ramp_limit_up": 1,
     "ramp_limit_down": 1,
-    "p_min_pu": 0.1,
+    "p_min_pu": 0,
     "cost_factor" : 1}
 
 # biomethanation
@@ -269,9 +262,25 @@ catmeth_dict = {
 
 # HT heat storage
 TES_conc_dict = {
-    "standing_loss" : 0.02,
-    "cost_factor" : 1.5, #  assumption due to reference cost based on 100 MWh
-    "active" : True }
+    "standing_loss" : 0.02, # per unit of heat stored per time step
+    "cost_factor" : 1.5, #   assumption due to reference cost based on 100 MWh
+    "active" : True ,
+    "e_nom_min" : 1.5,
+    "e_nom_max" : float('inf')} # MWh (not technically relevant below this size)
+
+# DH heat storage
+TES_DH_dict = {
+    "standing_loss" : 0.002, # per unit of heat stored per time step
+    "cost_factor" : 1, #   assumption due to reference cost based on 100 MWh
+    "active" : True ,
+    "e_nom_max" : float('inf')} # MWh (not technically relevant below this size)
+
+# biogas storage
+biogas_storage_dict ={'lifetime': 15,
+                      'investment' : 16750,
+                      'FOM' : 0,
+                      'e_nom_max' : 200} # € /MWh CH4 (biogas at 60%v)
+
 
 # Estimated lenght of Local H2, CO2 and Pressurized Hot Water
 dist_H2_pipe = 1  # km Estimated piping distance in the site--> for cost estimation
@@ -280,7 +289,7 @@ dist_PWH_pipe = 5  # km Estimated piping distance in the site--> for cost estima
 capital_cost_PHW = 25000 * currency_multiplier  # €/MW/km
 heat_loss_PHW = 0.02  # MW/MW
 
-''' Technologies not included in Catalogue, source: DEA '''
+''' Technologies not included in technology-data with source: DEA '''
 DH_HEX_inv = 100000  # €/MW
 DH_HEX_FOM = 0.05  # (%inv/Y)
 DH_HEX_lifetime = 25  # (Y)
@@ -290,15 +299,13 @@ CO2_pipeline_lifetime = 40 # years
 H2_pipeline_inv = 3800  # €/MW/km
 H2_pipeline_FOM = 0.27/H2_pipeline_inv *100  #
 H2_pipeline_lifetime = 40  # years
-biogas_storage_lifetime = 15
-biogas_storage_inv = 16750 # EUR/MWh_CH4
-biogas_storage_FOM = 0 #
+
 
 other_DEA_technologies = ['DH heat exchanger', 'CO2_pipeline_gas', 'H2_pipeline_gas', 'biogas storage']
 data_dict = {
-    "investment": [DH_HEX_inv, CO2_pipeline_inv, H2_pipeline_inv,biogas_storage_inv ],
-    "FOM": [DH_HEX_FOM, CO2_pipeline_FOM, H2_pipeline_FOM, 0],
-    "lifetime": [DH_HEX_lifetime, CO2_pipeline_lifetime, H2_pipeline_lifetime, biogas_storage_lifetime],
+    "investment": [DH_HEX_inv, CO2_pipeline_inv, H2_pipeline_inv, biogas_storage_dict['investment']],
+    "FOM": [DH_HEX_FOM, CO2_pipeline_FOM, H2_pipeline_FOM, biogas_storage_dict['FOM']],
+    "lifetime": [DH_HEX_lifetime, CO2_pipeline_lifetime, H2_pipeline_lifetime, biogas_storage_dict['lifetime'] ],
     "VOM": [0.00, 0.00, 0.00, 0.00]
 }
 other_tech_costs = pd.DataFrame(data_dict, index=other_DEA_technologies)

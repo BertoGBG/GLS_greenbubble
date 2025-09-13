@@ -1,0 +1,62 @@
+,Fixed cost (€/y),capacity,component,reference inlet,unit,agent,plant
+Grid gen,0.0,7.77108050222,generator,ElDK1 bus,MW,,external_grids
+DH gen,0.0,46.643931248,generator,DH grid,MW,,external_grids
+NG grid,0.0,2.22594040639853,generator,NG,MW,,external_grids
+Heat amb,0.0,10037.557050912837,store,Heat amb,MW,,external_grids
+Dig_biomass,0.0,46.6329961709676,generator,Dig_biomass,MW,,SkiveBiogas
+Heat MT_SkiveBiogas,19414.26998498395,2.2493515981776,link,Heat MT,MW,,SkiveBiogas
+El2_to_El_biogas,0.0,0.4465482447339516,link,El2 bus,MW,,SkiveBiogas
+SkiveBiogas,0.0,57.077625570776256,link,Dig_biomass,MW,,SkiveBiogas
+Digestate,0.0,6776.072591513749,store,Digest DM,t/h,,SkiveBiogas
+onshorewind,21340426.95510426,209.95239328401013,generator,El3 bus,MW,,renewables
+solar,3581215.3783675535,69.74559852957731,generator,El3 bus,MW,,renewables
+El3_to_DK1,99307.45744916929,7.05524165585,link,El3 bus,MW,,renewables
+Heat LT_GreenHyScale,93766.58518427388,10.863865517633933,link,Heat LT_GreenHyScale,MW,,electrolyzer
+H2_to_delivery,0.0,53.722676600362234,link,H2,MW,,electrolyzer
+Heat LT_GreenHyScale_amb,0.0,12.42678072657832,link,Heat LT_GreenHyScale,MW,,electrolyzer
+Electrolyzer,16062531.273273466,85.11493648341316,link,El3 bus,MW,,electrolyzer
+H2 delivery,0.0,271962.6684780773,store,H2 delivery,MW,,electrolyzer
+CO2 compressor,0.0,2.1396838777703264,link,CO2_distribution,t/h,,meoh
+Heat DH_Methanol plant,1027.6041701942263,0.11905897488332787,link,Heat DH_Methanol plant,MW,,meoh
+CO2 comp heat integration,250.0083041078075,0.028966145976002472,link,CO2 comp heat,t/h,,meoh
+H2 comp heat rejection,0.0,0.014065564375241427,link,H2 comp heat,MW,,meoh
+H2 comp heat integration,121.40061362276559,0.014065564375241427,link,H2 comp heat,MW,,meoh
+CO2 storage send,0.0,1.3345191103938756,link,CO2 pure HP,t/h,,meoh
+Heat MT_Methanol plant,3776.1670932944644,0.4375094965124742,link,Heat MT,MW,,meoh
+El2_to_El_CO2_compressor,0.0,0.2187548433698901,link,El2 bus,MW,,meoh
+H2 storage send,0.0,3.6994752740577983,link,H2 HP,MW,,meoh
+Methanol plant,92445.77787900883,1.0560574053742096,link,CO2 pure HP,t/h,,meoh
+El2_to_El_H2_compressor,0.0,0.05677715964084811,link,El2 bus,MW,,meoh
+CO2 storage return,0.0,1.0560574053742096,link,CO2 storage,t/h,,meoh
+H2 compressor,63391.04380995299,4.825936506457146,link,H2_distribution,MW,,meoh
+CO2 comp heat rejection,0.0,0.058688472076047236,link,CO2 comp heat,t/h,,meoh
+H2 storage return,0.0,3.7817476272690462,link,H2 storage,MW,,meoh
+H2 HP,9215.631528345528,5.967496399228043,store,H2 storage,MW,,meoh
+Methanol prod,0.0,33372.872106881594,store,Methanol,MW,,meoh
+CO2 pure HP,0.0,1132.4202379082371,store,CO2 storage,t/h,,meoh
+methanation_to_NG,0.0,6.379531836630248,link,methanation,MW,,methanation
+biomethanation_biogas,66943.3006802134,0.4049640751424222,link,H2_distribution,MW,,methanation
+methanation,0.0,6650.6012625949725,store,methanation,MW,,methanation
+Straw Pellets,0.0,0.5567695091017522,generator,Straw Pellets,t/h,,central_heat
+biochar credits,0.0,0.2841506887902306,link,biochar,t/h,,central_heat
+Pellets boiler,368981.42062360904,2.9215436150493277,link,Digest DM,t/h,,central_heat
+El2_to_El_C_heat,0.0,1.178256783132791,link,El2 bus,MW,,central_heat
+Straw to Skyclean,0.0,0.5567695091017522,link,Straw Pellets,t/h,,central_heat
+SkyClean,343203.7420444846,0.31998951440341283,link,Digest DM,t/h,,central_heat
+biochar storage,0.0,2487.455129670004,store,biochar storage,t/h,,central_heat
+Heat DH storage charger,21192.495588743757,2.4553781243787483,link,Heat DH,MW,,symbiosis_net
+Heat storage discharger,0.0,5.756260330493017,link,Heat DH storage,MW,,symbiosis_net
+Heat_MT_to_DH,20164.891418549298,2.3363191494953934,link,Heat MT,MW,,symbiosis_net
+El3_to_El2,197662.0582540188,14.042788155044727,link,El3 bus,MW,,symbiosis_net
+Heat_MT_to_LT,80653.65830340146,9.34459216565676,link,Heat MT,MW,,symbiosis_net
+battery charger,1559.4970292194807,0.06319341326386038,link,El2 bus,MW,,symbiosis_net
+CO2_pipe,20907.253544884337,2.1396838777703264,link,CO2 sep,t/h,,symbiosis_net
+battery discharger,0.0,0.4853254138664477,link,battery,MW,,symbiosis_net
+H2_pipe,1492.4006661621852,5.230900581599568,link,H2,MW,,symbiosis_net
+Heat_DH_to_LT,49836.72126369433,5.7741191767255176,link,Heat DH,MW,,symbiosis_net
+Water tank DH storage,37528.60293419062,153.5318654297849,store,Heat DH storage,MW,,symbiosis_net
+battery,6258.044029261798,0.4853254138664477,store,battery,MW,,symbiosis_net
+Concrete Heat MT storage,4357.281590442127,1.5,store,Heat MT storage,MW,,symbiosis_net
+DH GL_to_DH grid,0.0,31.6257494298,link,DH GL,MW,,DH
+El2_to_El_DH,0.0,11.713240529555554,link,El2 bus,MW,,DH
+Heat pump,877366.3674740139,11.713240529555554,link,El_DH,MW,,DH
