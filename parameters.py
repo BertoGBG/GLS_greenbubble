@@ -1,8 +1,38 @@
 import pandas as pd
 import os
+# ------------------------------------
+'''configuration parameters'''
+CO2_cost = 150  # €/t (CO2_cost)
+'''Demands'''
+flh_H2 = 4000  # set hydrogen demand, flh for 100 MW plant (flh_H2)
+f_max_MeOH_y_demand = 0.45  # % of CO2 from biogas upgrading converted to MeOG (sets MeOH demand)
+f_max_Methanation_y_demand = 0.45 # # % of CO2 from biogas upgrading converted to extra biomethane (sets biomethanation demand)
+
+'''Sales of Electricity '''
+el_DK1_sale_el_RFNBO = 0.1  # max electricity during the year that can be sold to ElDK1 (unit: fraction of El for RFNBOs)
+
+'''Energy & Weather year'''
+En_price_year = 2019  # # Year for historical Energy prices
+
+'''Input the network configuration'''
+n_flags = {'SkiveBiogas': True,
+           'central_heat': True,
+           'renewables': True,
+           'electrolyzer': True,
+           'meoh': True,
+           'symbiosis_net': True,
+           'DH': True,
+           'methanation': True,
+           'bioChar' : True,            # True if biochar credits have value (== to CO2 tax)
+           'print': False,              # saves svg of network before optimization
+           'export': False}             # saves network before optimization
+
+# if preprocess_flag is False the input data are loaded from csv files, if True the input data are downloaded
+# and saved as CSV files
+preprocess_flag = False #
 
 # --------------------------------------
-''' MAIN SENSITIVITY PARAMETERS'''
+''' Demand Flexibility (H2 and MeOH'''
 # MeOH demand
 MeOH_delivery_frequency = 1  # 1: Single delivery at the end of the 'Year'. 12 : 'Month', 52: 'Week'
 
@@ -13,33 +43,26 @@ MeOH_delivery_frequency = 1  # 1: Single delivery at the end of the 'Year'. 12 :
 H2_profile_flag = False  # 'True': the demand follows NG demand profile: 'False' it is constant during year
 H2_delivery_frequency = 1  # 1: Single delivery at the end of the 'Year'. 12 : 'Month', 52: 'Week'
 H2_output= 68 # MW H2 <-> 100 MW el
-NG_demand_year = 2019 # year for NG demand
 
-# CO2 tax - to be coupled with historical el prices if they include CO2 tax
+'''Others'''
+# CO2 tax - to be coupled with historical el prices if they include CO2 tax (future)
 CO2_cost_ref_year = 0  # €/ton (CO2 tax in the reference year of energy prices)
 
-# Year for historical Energy prices
-En_price_year = 2019  #
-
 # Biogas plants
-f_FLH_Biogas = 4 / 5  # fraction of maximum capacity that the Biogas plant is operated
-
-'''sensitivity analysis parameters'''
-# CO2_cost_list = [0, 150, 250]  # €/t (CO2_cost)
-# H2_demand_list = [0, 4000]  # flh at 100 MW (flh_H2)
-# MeOH_rec_list = [0.8, 0.85, 0.9, 0.95, 0.99]  # % of CO2 from (f_max_MeOH_y_demand)
-# DH_flag_list = [False, True]  # true false
-# bioCh_credits_list =[False, True] #
-# el_DK1_sale_el_RFNBO_list = [0.1, 0.5, 1]
-# electrolyzer_cost_m_list =[1+2/3] # [1-1/3, 1, 1+1/3, 1+2/3]
+f_FLH_Biogas = 4 / 5  # fraction of maximum capacity that the Biogas plant is operated (only for GLS purposes)
 
 #---------------------------------------
-# token to download  factors fron Renewable Ninjas
+"""Retrive data"""
+# token to download  factors from Renewable Ninjas
 # obtain your own token from : https://www.renewables.ninja/documentation/api
-RN_token = ''
-entsoe_api = '' #
+RN_token = ""  #
+entsoe_api = ""  #
 latitude = 56.566 # Skive (DK)
 longitude = 9.033 # Skive (DK)
+
+""" Crete adn external NG demand"""
+NG_demand_year = 2019 # year for NG demand
+
 # --------------------------------------
 '''CSV files as input to the model'''
 folder_model_inputs='data' # folder where csv files for model input are saved after the pre-processing
@@ -66,22 +89,19 @@ DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/
 print_folder_NOpt = 'outputs/single_analysis/'
 print_folder_Opt = 'outputs/single_analysis/'
 
-# Folders for sensitivity analysis
-# print_folder_Opt = 'outputs/sensitivity_analysis/electrolyzer_cost/'
-# print_folder_NOpt = 'outputs/sensitivity_analysis/electrolyzer_cost/'
-
 # --------------------------------------
 '''ECONOMICS AND COST ASSUMPTIONS'''
 '''Technology Data Economic Parameters'''
-technology_data_url = "https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/"
-year_EU = 2030  # invesment year
+#technology_data_url = "https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/"
+technology_data_url = "https://raw.githubusercontent.com/BertoGBG/technology-data/master/outputs/"
+year_EU = 2030  # investment year
 cost_folder = "data/technology-data/outputs"
 cost_file = "costs_" + str(year_EU) + ".csv"
 USD_to_EUR = 1
-DKK_Euro = 7.46  # ratio 2019
+DKK_Euro = 7.46  #
 discount_rate = 0.07  #
-Nyears = 1  # for myopic optimization (parameter not used but needed in some functions)
-lifetime = 25  # of the plant
+Nyears = 1  # for myopic optimization (not used but needed in some functions)
+lifetime = 25  #
 
 '''set Currency of Cost Optimization: DKK or EUR'''
 currency = 'EUR'
@@ -91,13 +111,26 @@ elif currency == 'EUR':
     currency_multiplier = 1
 
 # --------------------------------------
+""" post 2030: EU rules for renewable el for H2' (RFNBOs) """
+rfnbos_dict= {'limit' : 'emissions', # it can be set to 'emissions', 'price' or 'None' (RFNBOs legislation not active)
+              'price_threshold' : 20 * currency_multiplier, # (Eur/MWh) : electricity is renewable if price is below 20€/MWh
+              'emission_threshold' : 18 * 3.6 / 1000} # (gCO2e/MJ) --> tCO2e/MWh
+# --------------------------------------
 ''' Other constants'''
-FLH_y = 8760  # full load hours in a year
+FLH_y = 8760  # full load hours equivalent  in a year for MeOH
 lhv_meoh= 5.54  # kWh/kg = MWh/ton
 lhv_h2= 33.33 # MWh/t
+lhv_ch4 = 13.9 # MWh/t
 lhv_straw_pellets = 14.5/3.6 # MWh/t
 lhv_dig_pellets = 16/3.6 # MWh/t
-
+density_H2_1atm = 0.0827 # kg/m3
+density_CO2_1atm = 1.98 # kg/m3
+density_CH4_1atm = 0.716 # kg/m3
+# 6kWh/Nm3
+# 13.9 kWh /kg * 0.716 kg/m3 = 9.952 kWh /m3
+# baloon: 5.971 kWh /m3
+# cost 100 €/ m3
+# cost = 100/ 9.71 = 16.75 € /kWh
 # --------------------------------------
 ''' PARAMETERS FOR PRE PROCESSING'''
 '''Time Period in DK'''
@@ -133,8 +166,8 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 # --------------------------------------
 ''' ASSUMPTIONS ON ENERGY PRICES'''
 ''' Biogenic Feedstocks '''
-Straw_pellets_price = 380 # €/t
-Biomass_price = 0  # (€/t) Set to 0 as only the Delta in bioCH4 prod costs are considered.
+Straw_pellets_price = 380 / lhv_straw_pellets  # (€/t) / (MWh/t)
+Dig_biomass_price = 0  # (€/t) (Manure) Set to 0 as only the Delta in bioCH4 prod costs are considered.
 
 '''District Heating price'''
 DH_price = 400 / DKK_Euro * currency_multiplier  #
@@ -142,7 +175,6 @@ DH_price = 400 / DKK_Euro * currency_multiplier  #
 '''Fossil Methanol'''
 methanol_price_2023 = 360  # €/ton
 CO2_intensity_MeOH_life = 110 / 1000000 * 3600 # (110 gCO2/MJ meoh) --> tCO2e/MWh
-lhv_meoh= 5.54  # kWh/kg = MWh/ton
 
 '''Electricity tariffs'''
 # Purchased Electricity
@@ -160,19 +192,15 @@ el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro * currency_multiplier
 el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro * currency_multiplier  # (Ore/kWh) *100/1000 = DKK
 # / MWH includes transmission and system tariff
 
-'''post 2030: EU rules for renewable el for H2'''
-EU_renew_el_price_limit = 20 * currency_multiplier  # (Eur/MWh) : electricity is renewable if price is below 20€/MWh
-EU_renew_el_emission_limit = 18 * 3.6 / 1000  # (gCO2e/MJ) --> tCO2e/MWh
-
 # --------------------------------------
 ''' CAPACITY EXPANSION LIMITS'''
-electrolyzer_p_nom_max = float("inf") #
 p_nom_max_wind = float("inf") #
 p_nom_max_solar = float("inf") #
 battery_max_cap = float('inf')  # MWh battery storage capacity on site
-e_nom_max_H2_HP = float('inf')  # float('inf') # MWh # it can be max 5t according to information from suppliers
+e_nom_max_H2_HP = float('inf')  # supplier info indicate that it can be max 5t
 e_nom_max_CO2_HP = float('inf')  # t_CO2 # HP CO2 storage
-p_nom_max_skyclean = 50 # MW pellets input according to Stiesdal
+e_nom_max_biogas_storage = 200  # MWh at standard atm and 65%v CH4
+p_nom_max_skyclean = float('inf') # 50 MW pellets input according to Stiesdal
 
 '''Heat network expansion'''
 e_nom_max_Heat_DH_storage = float('inf')  # MWH
@@ -199,7 +227,7 @@ El_CO2_liq = 0.061 # MWh/t CO2
 Heat_CO2_liq_DH = 0.166 # water heat 80 C from refrigeration cycle
 CO2_evap_annualized_cost= 3765 # k€/(t/h)/y
 
-# H2 cylinders storage
+# H2 vessels storage
 El_H2_storage_add = el_comp_H2 * 0.2 # MWh/MWh2
 
 # CO2 cylinders storage
@@ -209,14 +237,41 @@ CO2_cylinders_inv = 77000 # €/t  includes control systems
 CO2_cylinders_FOM = 1.0 # %inv
 CO2_cylinders_lifetime =25
 
-# Ramp up limits
-ramp_limit_up_MeOH = 1 / 48  # 48 hours needed to reach full operation # NEEDS A REFERENCE
-ramp_limit_down_MeOH = 1 / 48
-p_min_pu_meoh=0.2
+# Methanol (CO2 hydrogenation)
+meoh_dict = {
+    "ramp_limit_up": 1/12,
+    "ramp_limit_down": 1/12,
+    "p_min_pu": 0.2,
+    "cost_factor" : 1}
 
 # electrolysis
-ramp_limit_up_electrolyzer = 1/2   # 2 hour needed to reach full power
-ramp_limit_down_electrolyzer = 1/2
+electrolysis_dict = {
+    "ramp_limit_up": 1,
+    "ramp_limit_down": 1,
+    "p_min_pu": 0.1,
+    "cost_factor" : 1}
+
+# biomethanation
+biometh_dict = {
+    "ramp_limit_up": 1,
+    "ramp_limit_down": 1,
+    "p_min_pu": 0,
+    "cost_factor" : 1,
+    "active" : True } # NOTE  at least one between biometh or catmeth must be active if  n_flags['methanation] is True
+
+# catalytic methanation
+catmeth_dict = {
+    "ramp_limit_up": 1/12,
+    "ramp_limit_down": 1/12,
+    "p_min_pu": 0.20,
+    "cost_factor" : 1,
+    "active" : False} # NOTE  at least one between biometh or catmeth must be active if  n_flags['methanation] is True
+
+# HT heat storage
+TES_conc_dict = {
+    "standing_loss" : 0.02,
+    "cost_factor" : 1.5, #  assumption due to reference cost based on 100 MWh
+    "active" : True }
 
 # Estimated lenght of Local H2, CO2 and Pressurized Hot Water
 dist_H2_pipe = 1  # km Estimated piping distance in the site--> for cost estimation
@@ -235,14 +290,16 @@ CO2_pipeline_lifetime = 40 # years
 H2_pipeline_inv = 3800  # €/MW/km
 H2_pipeline_FOM = 0.27/H2_pipeline_inv *100  #
 H2_pipeline_lifetime = 40  # years
+biogas_storage_lifetime = 15
+biogas_storage_inv = 16750 # EUR/MWh_CH4
+biogas_storage_FOM = 0 #
 
-
-other_DEA_technologies = ['DH heat exchanger', 'CO2_pipeline_gas', 'H2_pipeline_gas', 'CO2_compressor', 'CO2 storage cylinders']
+other_DEA_technologies = ['DH heat exchanger', 'CO2_pipeline_gas', 'H2_pipeline_gas', 'biogas storage']
 data_dict = {
-    "investment": [DH_HEX_inv, CO2_pipeline_inv, H2_pipeline_inv, CO2_comp_inv, CO2_cylinders_inv],
-    "FOM": [DH_HEX_FOM, CO2_pipeline_FOM, H2_pipeline_FOM, CO2_comp_FOM, CO2_cylinders_FOM],
-    "lifetime": [DH_HEX_lifetime, CO2_pipeline_lifetime, H2_pipeline_lifetime, CO2_comp_lifetime, CO2_cylinders_lifetime],
-    "VOM": [0.00, 0.00, 0.00, 0.00, 0.00]
+    "investment": [DH_HEX_inv, CO2_pipeline_inv, H2_pipeline_inv,biogas_storage_inv ],
+    "FOM": [DH_HEX_FOM, CO2_pipeline_FOM, H2_pipeline_FOM, 0],
+    "lifetime": [DH_HEX_lifetime, CO2_pipeline_lifetime, H2_pipeline_lifetime, biogas_storage_lifetime],
+    "VOM": [0.00, 0.00, 0.00, 0.00]
 }
 other_tech_costs = pd.DataFrame(data_dict, index=other_DEA_technologies)
 

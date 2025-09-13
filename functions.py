@@ -23,6 +23,8 @@ import hashlib
 from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 import pytz
+import matplotlib as mpl
+from matplotlib.patches import Patch
 
 
 # -------TECHNO-ECONOMIC DATA & ANNUITY
@@ -1377,6 +1379,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               capital_cost=electrolysis_cost,
               marginal_cost=0,
               p_nom_extendable=True,
+              p_min_pu =p.p_min_pu_h2,
               ramp_limit_up=p.ramp_limit_up_electrolyzer,
               ramp_limit_down=p.ramp_limit_down_electrolyzer)
 
@@ -1570,6 +1573,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               efficiency4=GL_eff.at['Heat MT', 'Methanol plant'],
               efficiency5=GL_eff.at['Heat DH', 'Methanol plant'],
               p_nom_extendable=True,
+              p_min_pu = p.p_min_pu_meoh,
               capital_cost=tech_costs.at['methanolisation', "fixed"] * p.currency_multiplier,
               ramp_limit_up=p.ramp_limit_up_MeOH,
               ramp_limit_down=p.ramp_limit_down_MeOH)
@@ -2279,75 +2283,129 @@ def optimal_network_only(n_opt):
     return n
 
 
-def export_print_network(n, n_flags_opt, n_flags, inputs_dict):
+def export_print_network(n, n_flags_opt, folder, file_name):
     # Define file name
     # export network and print layout using pypsatopo
-    file_name = file_name_network(n, n_flags, inputs_dict)
+    file_name = file_name + '_OPT'
 
     if n_flags_opt['print']:
         n_plot = optimal_network_only(n)
-        file_name_topology = p.print_folder_Opt + file_name + '_OPT' + '.svg'
-        pypsatopo.NETWORK_NAME = file_name + '_OPT'
-        pypsatopo.generate(n_plot, file_output=file_name_topology, negative_efficiency=False, carrier_color=True)
+        filename = file_name + '_OPT.svg'
+        full_path = os.path.join(folder, filename)
+        pypsatopo.generate(n_plot, file_output=full_path, negative_efficiency=False, carrier_color=True)
     if n_flags_opt['export']:
-        n.export_to_netcdf(p.print_folder_Opt + file_name + '_OPT' + '.nc')
+        filename = file_name + '_OPT.nc'
+        full_path = os.path.join(folder, filename)
+        n.export_to_netcdf(full_path)
     return
 
-
-# ----RESULTS SINGLE OPTIMIZATION ----
-def shadow_prices_violinplot(n, inputs_dict, tech_costs, folder):
-    """function that plats a box plot from marginal prices (shadow prices) from a list of buses"""
+def shadow_prices_violinplot(
+    n,
+    inputs_dict,
+    tech_costs,
+    folder,
+    handle_spikes="clip",      # 'clip' (per-series quantiles), 'iqr', or 'none'
+    quantile_hi=0.98,          # per-series upper quantile
+    quantile_lo=None,          # per-series lower quantile; defaults to 1-quantile_hi
+    whisker=1.5,               # per-series IQR whisker if handle_spikes='iqr'
+    floor_zero=False,          # set True to never show values < 0 after clipping
+    note_text="dunkelflauten spikes clipped",
+    median_color="crimson",
+    median_linewidth=2.0
+):
+    """Violin plot of marginal (shadow) prices with **per-series** clipping only."""
 
     CO2_cost = inputs_dict['CO2 cost']
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
 
     H2_d = 0
     meoh_d = 0
+    fC_MeOH = 0
     if 'H2 grid' in n.loads.index:
-        H2_d = int(n.loads_t.p_set['H2 grid'].sum() // 1000)  # GWH/y
+        H2_d = int(n.loads_t.p_set['H2 grid'].sum() // 1000)  # GWh/y
     if 'Methanol' in n.loads.index:
         meoh_d = n.loads_t.p_set['Methanol'].sum()
         bioCH4_y_d = n.loads_t.p_set['bioCH4'].sum()
-        CO2_MeOH_plant = 1 / n.links.efficiency['Methanol plant']  # bus0 = CO2, bus1 = Methanol
-        bioCH4_CO2plant = n.links.efficiency['SkiveBiogas'] / n.links.efficiency2[
-            'SkiveBiogas']  # bus0 = biomass, bus1= bioCH4, bus2=CO2
+        CO2_MeOH_plant = 1 / n.links.efficiency['Methanol plant']
+        bioCH4_CO2plant = n.links.efficiency['SkiveBiogas'] / n.links.efficiency2['SkiveBiogas']
         fC_MeOH = round((meoh_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2)
 
-    data = []
-    x_ticks_plot = []
+    # Collect series (list of pd.Series)
+    data, x_ticks_plot = [], []
     for b in n.buses_t.marginal_price.columns:
         if b == 'ElDK1 bus':
             continue
-        if np.sum(n.buses_t.marginal_price[b]) != 0:
-            data.append(n.buses_t.marginal_price[b])
+        s = pd.Series(n.buses_t.marginal_price[b], copy=False)
+        if np.sum(s) != 0:
+            data.append(s)
             x_ticks_plot.append(b)
 
-    # add El Grid prices
-    data.append(inputs_dict['Elspotprices'].squeeze())
+    # Add grid price series (as Series)
+    data.append(pd.Series(inputs_dict['Elspotprices'].squeeze()))
     x_ticks_plot.append('Elspotprices')
-    data.append(en_market_prices['el_grid_price'].squeeze())
+    data.append(pd.Series(en_market_prices['el_grid_price'].squeeze()))
     x_ticks_plot.append('ElDK1 (w/ tarif & CO2tax)')
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
-    ax.violinplot(data, showmeans=False, showmedians=True)
-    ax.set_xticks(range(1, len(x_ticks_plot) + 1), x_ticks_plot, rotation=90)
-    ax.set_title('shadow prices in €/MWh or €/t (CO2)' + '\n' 'variability during year')
-    ax.grid()
+    # --- PER-SERIES CLIPPING ---
+    def clip_series_quantile(s: pd.Series) -> pd.Series:
+        s = s.dropna()
+        q_lo = quantile_lo if quantile_lo is not None else (1 - quantile_hi)
+        lo, hi = s.quantile(q_lo), s.quantile(quantile_hi)
+        if floor_zero:
+            lo = max(lo, 0.0)
+        return s.clip(lower=lo, upper=hi)
 
-    # place a text box in upper left in axes coords
+    def clip_series_iqr(s: pd.Series) -> pd.Series:
+        s = s.dropna()
+        q1, q3 = s.quantile(0.25), s.quantile(0.75)
+        iqr = q3 - q1
+        lo, hi = q1 - whisker * iqr, q3 + whisker * iqr
+        if floor_zero:
+            lo = max(lo, 0.0)
+        return s.clip(lower=lo, upper=hi)
+
+    if handle_spikes == "clip":
+        data_vis = [clip_series_quantile(s) for s in data]
+    elif handle_spikes == "iqr":
+        data_vis = [clip_series_iqr(s) for s in data]
+    else:
+        data_vis = [s.dropna() for s in data]
+
+    # Plot
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
+    vp = ax.violinplot(data_vis, showmeans=False, showmedians=True, showextrema=True)
+    ax.set_xticks(range(1, len(x_ticks_plot) + 1), x_ticks_plot, rotation=90)
+    ax.set_title('shadow prices in €/MWh or €/t (CO2)\nvariability during year')
+    ax.grid(True)
+
+    # Median styling
+    vp['cmedians'].set_color(median_color)
+    vp['cmedians'].set_linewidth(median_linewidth)
+
+    # Info box (top-left)
     textstr = '\n'.join((
         r'CO2 tax (€/t)=%.0f' % (CO2_cost),
         r'H2 prod (GWh/y)=%.0f' % (H2_d),
-        r'fC MeOH (frac. CO2_bg)=%.0f' % (fC_MeOH)))
-    ax.text(0.05, 0.85, textstr, transform=ax.transAxes, fontsize=10,
-            va='center')
+        r'fC MeOH (frac. CO2_bg)=%.2f' % (fC_MeOH)))
+    ax.text(0.05, 0.85, textstr, transform=ax.transAxes, fontsize=10, va='center',
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none'))
+
+    # Note (top-right)
+    if handle_spikes in ("clip", "iqr"):
+        scope_note = f"{note_text}"
+        if floor_zero:
+            scope_note += "\n(floored at 0)"
+        ax.text(0.98, 0.98, scope_note, transform=ax.transAxes,
+                ha='right', va='top', fontsize=9,
+                bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
 
     plt.tight_layout()
-    plt.show()
 
-    #folder = p.print_folder_Opt
-    fig.savefig(folder + 'shd_prices_violin.png')
-
+    # Save
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    fig.savefig(folder / 'shd_prices_violin.png', dpi=300)
+    plt.close(fig)
     return
 
 
@@ -2427,57 +2485,92 @@ def get_system_cost(n_opt):
 
 
 def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_flag, folder):
-    """ function that return 2 dicitonaries with total capital and marginal costs per agent
-    it screens all the agents"""
+    """Return dicts with total capital and marginal costs per agent and (optionally) plot one stacked bar."""
     cc_stores, cc_generators, cc_links = get_capital_cost(n_opt)
     mc_stores, mc_generators, mc_links = get_marginal_cost(n_opt)
 
-    agent_list_cost = []
-    cc_tot_agent = {}
-    mc_tot_agent = {}
+    cc_tot_agent, mc_tot_agent = {}, {}
 
     for key in network_comp_allocation:
-        agent_list_cost.append(key)
-        agent_links_n_opt = list(set(network_comp_allocation[key]['links']).intersection(set(n_opt.links.index)))
-        agent_generators_n_opt = list(
-            set(network_comp_allocation[key]['generators']).intersection(set(n_opt.generators.index)))
-        agent_stores_n_opt = list(set(network_comp_allocation[key]['stores']).intersection(set(n_opt.stores.index)))
+        agent_links_n_opt = list(set(network_comp_allocation[key]['links']).intersection(n_opt.links.index))
+        agent_generators_n_opt = list(set(network_comp_allocation[key]['generators']).intersection(n_opt.generators.index))
+        agent_stores_n_opt = list(set(network_comp_allocation[key]['stores']).intersection(n_opt.stores.index))
 
-        cc_tot_agent[key] = cc_links[agent_links_n_opt].sum() + cc_generators[agent_generators_n_opt].sum() + cc_stores[
-            agent_stores_n_opt].sum()
-        mc_tot_agent[key] = mc_links[agent_links_n_opt].sum() + mc_generators[agent_generators_n_opt].sum() + mc_stores[
-            agent_stores_n_opt].sum()
+        # Sum safely even if lists are empty
+        cc_tot_agent[key] = (
+            cc_links.get(agent_links_n_opt, 0).sum()
+            + cc_generators.get(agent_generators_n_opt, 0).sum()
+            + cc_stores.get(agent_stores_n_opt, 0).sum()
+        )
+        mc_tot_agent[key] = (
+            mc_links.get(agent_links_n_opt, 0).sum()
+            + mc_generators.get(agent_generators_n_opt, 0).sum()
+            + mc_stores.get(agent_stores_n_opt, 0).sum()
+        )
 
     if plot_flag:
-        # creates plots vecotrs
-        cc_plot = []
-        mc_plot = []
-        totc_plot = []
-        for a in agent_list_cost:
-            cc_plot.append(cc_tot_agent[a])
-            mc_plot.append(mc_tot_agent[a])
-            totc_plot.append(mc_tot_agent[a] + cc_tot_agent[a])
+        cats = list(cc_tot_agent.keys())
+        cats.sort(key=lambda c: abs(cc_tot_agent[c] + mc_tot_agent[c]), reverse=True)
 
-        fig, ax = plt.subplots()
+        cmap = mpl.cm.get_cmap("tab20", len(cats))
+        colors = {cat: cmap(i) for i, cat in enumerate(cats)}
 
-        ax.bar(agent_list_cost, cc_plot)
-        # ax.bar(agent_list_cost, mc_plot)
-        # ax.set_xlabel('agents')
-        ax.set_ylabel('€/y')
-        ax.legend(['fixed costs (investment & FOM)'])
-        # ax.legend(['fixed costs', 'operational costs'])
-        ax.set_xticks(range(0, len(agent_list_cost)), agent_list_cost, rotation=60)
-        ax.set_title('Total  system cost by plant')
+        fig, ax = plt.subplots(figsize=(7, 6))
+
+        x = 0
+        bottom_pos = 0.0
+        bottom_neg = 0.0
+
+        def stack_segment(value, facecolor, hatch=None):
+            nonlocal bottom_pos, bottom_neg   # <-- fix
+            if value == 0:
+                return
+            if value >= 0:
+                ax.bar(x, value, bottom=bottom_pos, color=facecolor, edgecolor="black",
+                       linewidth=0.6, hatch=hatch)
+                bottom_pos += value
+            else:
+                ax.bar(x, value, bottom=bottom_neg, color=facecolor, edgecolor="black",
+                       linewidth=0.6, hatch=hatch)
+                bottom_neg += value
+
+        # Build the single stacked bar
+        for cat in cats:
+            col = colors[cat]
+            stack_segment(cc_tot_agent.get(cat, 0.0), facecolor=col, hatch=None)     # CAPEX (plain)
+            stack_segment(mc_tot_agent.get(cat, 0.0), facecolor=col, hatch="///")    # Marginal (striped)
+
+        # Cosmetics
+        ax.set_xticks([x], ["Total system cost"])
+        ax.set_ylabel("€/y")
+        ax.set_title("Annualized Total system cost\nplain=CAPEX, striped=Marginal")
+        ax.grid(axis="y", linestyle="--", alpha=0.35)
+
+        total = bottom_pos + bottom_neg
+        ax.text(x, bottom_pos if total >= 0 else bottom_neg, f"{total:,.0f}",
+                ha="center", va="bottom" if total >= 0 else "top", fontsize=9)
+
+        # Legends
+        pattern_legend = [
+            Patch(facecolor="white", edgecolor="black", label="Fixed cost (plain)"),
+            Patch(facecolor="white", edgecolor="black", hatch="///", label="Operational cost (striped)")
+        ]
+        ax.legend(handles=pattern_legend, loc="upper left", frameon=True)
+
+        cat_handles = [Patch(facecolor=colors[c], edgecolor="black", label=c) for c in cats]
+        ax2 = ax.inset_axes([1.02, 0.0, 0.28, 1.0], transform=ax.transAxes)
+        ax2.axis("off")
+        ax2.legend(handles=cat_handles, title="Categories", loc="upper left", frameon=True)
+
         plt.tight_layout()
-        plt.show()
-
-        fig.savefig(folder + 'cc_cm_plants.png')
+        folder = Path(folder); folder.mkdir(parents=True, exist_ok=True)
+        fig.savefig(folder / 'system_cost.png', dpi=300, bbox_inches="tight")
+        plt.close(fig)
 
     return cc_tot_agent, mc_tot_agent
 
 
 """ PLOTS SINGLE OPTMIZATION """
-
 
 def plot_duration_curve(ax, df_input, col_val):
     """plot duration curve from dataframe (df) with index being a DateTimeIndex
@@ -2538,8 +2631,8 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs, folder):
     ax3.set_title('Heat prices time series')
     ax3.tick_params(axis='x', rotation=45)
 
-    plot_duration_curve(ax4, pd.DataFrame(en_market_prices['NG_grid_price']), 'THE_NG_pricesEUR_MWh')
-    plot_duration_curve(ax4, inputs_dict['NG_price_year'], 'THE_NG_pricesEUR_MWh')
+    plot_duration_curve(ax4, pd.DataFrame(en_market_prices['NG_grid_price']), 'Neutral gas price EUR/MWh')
+    plot_duration_curve(ax4, inputs_dict['NG_price_year'], 'Neutral gas price EUR/MWh')
     # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat MT']),'Heat MT')
     # plot_duration_curve(ax4,pd.DataFrame(n_opt.buses_t.marginal_price['Heat DH']),'Heat DH')
     ax4.set_ylabel('€/MWh')
@@ -2548,42 +2641,105 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs, folder):
     ax4.grid(True)
     ax4.set_title('Heat prices durnation curves')
 
-    # folder = p.print_folder_Opt
-    fig.savefig(folder + 'el_heat_prices.png')
 
+    # Save
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    fig.savefig(folder / 'el_heat_prices.png', dpi=300)
+    plt.close(fig)
     return
 
 
-def plot_bus_list_shadow_prices(n_opt, bus_list, legend, start_date, end_date, folder):
-    '''function that plots shadow prices for the buses involved in the production of H2 and MeOH'''
-    ''' period of time defined by the user '''
 
-    # date format : '2022-01-01T00:00'
+def plot_bus_list_shadow_prices(
+    n_opt,
+    bus_list,
+    legend,
+    start_date,
+    end_date,
+    folder,
+    handle_spikes="clip",   # 'clip' (default), 'limit', 'log', or 'none'
+    quantile=0.95           # e.g., 0.95 or 0.99 depending on how extreme the spikes are
+):
+    """
+    Plots shadow prices for the buses involved in the production of H2 and MeOH
+    over the period [start_date, end_date]. Optionally suppresses large spikes so the
+    main signal is visible.
+
+    handle_spikes:
+        - 'clip'  : cap values above the quantile threshold before plotting
+        - 'limit' : keep data as-is but set y-axis upper limit to the threshold
+        - 'log'   : plot on a log y-scale (no clipping/limiting)
+        - 'none'  : no spike handling
+
+    quantile: high quantile used to determine the spike threshold.
+    """
+
+    # date format: 'YYYY-MM-DDTHH:MM'
     time_ok = p.hours_in_period[(p.hours_in_period >= start_date) & (p.hours_in_period <= end_date)]
 
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+    # Pull once; filter time and only needed buses
+    df_data = n_opt.buses_t.marginal_price.copy()
+    df_plot = df_data.loc[time_ok, bus_list].copy()
+
+    # Compute a common threshold across all selected series in the window
+    # (so all lines are treated consistently)
+    threshold = df_plot.stack().quantile(quantile)
+
+    # Prepare the version to visualize depending on the chosen method
+    if handle_spikes == "clip":
+        df_vis = df_plot.clip(upper=threshold)
+    else:
+        df_vis = df_plot  # unchanged
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), sharex=False)
+
+    # --- Time series ---
     for b in bus_list:
-        df_data = n_opt.buses_t.marginal_price.copy()
-        df_plot = df_data.loc[time_ok, :]
-        # df_plot = df_data.loc[(df_data.index >= pd.Timestamp(start_date)) & (df_data.index <= pd.Timestamp(end_date))]
-        ax1.plot(df_plot[b])
-        plot_duration_curve(ax2, df_plot, b)
+        ax1.plot(df_vis[b], label=b)
 
     ax1.set_ylabel('€/MWh or €/(t/h)')
     ax1.grid(True)
-    ax1.legend(legend)
     ax1.set_title('time series')
+
+    # Apply axis handling
+    if handle_spikes == "limit":
+        ax1.set_ylim(bottom=None, top=threshold)
+    elif handle_spikes == "log":
+        ax1.set_yscale('log')
+
+    # Use user-supplied legend labels if provided; otherwise default to bus names
+    if legend:
+        ax1.legend(legend)
+    else:
+        ax1.legend(bus_list)
+
+    ax1.text(0.02, 0.95, "dunkelflauten spikes clipped",
+             transform=ax1.transAxes,
+             fontsize=9, verticalalignment='top',
+             bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
+    # --- Duration curves ---
+    # If your plot_duration_curve expects a DataFrame and a column name,
+    # pass the same df_vis so duration curves are drawn from clipped/limited data
+    for b in bus_list:
+        plot_duration_curve(ax2, df_vis, b)
 
     ax2.set_ylabel('€/MWh or €/(t/h)')
     ax2.set_xlabel('h/y')
     ax2.grid(True)
-    ax2.legend(legend)
     ax2.set_title('duration curves')
+    if legend:
+        ax2.legend(legend)
+    else:
+        ax2.legend(bus_list)
 
-    # folder = p.print_folder_Opt
-    fig.savefig(folder + 't_int_shadow_prices.png')
-
-    return
+    # Save
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    fig.tight_layout()
+    plt.show()
+    fig.savefig(folder / 't_int_shadow_prices.png', dpi=300)
+    plt.close(fig)
 
 
 def save_opt_capacity_components(n_opt, network_comp_allocation, file_path):
@@ -2610,7 +2766,7 @@ def save_opt_capacity_components(n_opt, network_comp_allocation, file_path):
             df_agent.at[g, 'capacity'] = n_opt.generators.p_nom_opt[g]
             df_agent.at[g, 'reference inlet'] = n_opt.generators.bus[g]
             df_agent.at[g, 'unit'] = n_opt.buses.unit[n_opt.generators.bus[g]]
-            df_agent.at[g, 'agent'] = key
+            df_agent.at[g, 'plant'] = key
             df_agent.at[g, 'component'] = 'generator'
 
         for l in agent_links_n_opt:
@@ -2637,57 +2793,119 @@ def save_opt_capacity_components(n_opt, network_comp_allocation, file_path):
     return df_opt_componets
 
 
-def plot_heat_map_single_comp(df_time_serie):
-    "plot heat map for any time serie based on normalized value for week of the yeat and hour in a week"
-    # input example : df_time_serie = pd.DataFrame(network_opt.stores_t.e['H2 HP']) - must be a DF!
+def plot_heat_map_single_comp(df_time_serie, ax=None, label_freq_days=14, vmin=0, vmax=None, title=None):
+    """
+    Draw a heat map on the given Axes:
+      x-axis: every day of the year (data columns)
+      y-axis: hour of day (0–23)
+      labels every `label_freq_days` days.
+    """
+    if ax is None:
+        ax = plt.gca()
+
     col_name = str(df_time_serie.columns.values.squeeze())
-    df_2 = df_time_serie.index.isocalendar()
-    df_data = pd.concat([df_time_serie, df_2], axis=1)
-    df_data['hour of week'] = (df_data['day'] - 1) * 24 + (df_data.index.hour + 1)
-    df_data.rename(columns={'week': 'week of the year'}, inplace=True)
 
-    new_df = df_data.copy()
-    new_df = new_df.drop('day', axis=1)
-    new_df = new_df.drop('year', axis=1)
-    new_df = new_df.set_index('week of the year')
-    new_df = new_df.pivot_table(index='week of the year', columns="hour of week", values=col_name)
+    df = df_time_serie.copy()
+    df["day_of_year"] = df.index.dayofyear
+    df["hour_of_day"] = df.index.hour
+    df["date"] = df.index.date
 
-    fig = sns.heatmap(new_df, cmap='YlGn', vmin=0, cbar=True).set(title=col_name)
+    heat_df = df.pivot_table(index="hour_of_day",
+                             columns="day_of_year",
+                             values=col_name,
+                             aggfunc="mean")
 
+    # Plot on provided axes (no plt.figure/plt.show here)
+    hm = sns.heatmap(heat_df, cmap="YlGn", vmin=vmin, vmax=vmax, cbar=True, ax=ax)
+
+    # Titles & labels
+    ax.set_title(title or col_name, fontsize=10)
+    ax.set_ylabel("Hour")
+
+    # Ticks every N days with date labels
+    all_days = heat_df.columns
+    tick_positions = [i for i in range(len(all_days)) if i % label_freq_days == 0]
+    tick_labels = [df[df["day_of_year"] == d]["date"].iloc[0].strftime("%b-%d")
+                   for d in all_days[tick_positions]]
+    ax.set_xticks([pos + 0.5 for pos in tick_positions])
+    ax.set_xticklabels(tick_labels, rotation=45, ha="right")
+
+    # Fewer y ticks (optional: 0, 6, 12, 18)
+    ax.set_yticks([0.5, 6.5, 12.5, 18.5])
+    ax.set_yticklabels(["00", "06", "12", "18"])
 
 def heat_map_CF(network_opt, key_comp_dict, folder):
+    # Filter components that exist
     heat_map_comp_list = {
-        'generators': list(set(key_comp_dict['generators']).intersection(set(network_opt.generators.index))),
-        'links': list(set(key_comp_dict['links']).intersection(set(network_opt.links.index))),
-        'stores': list(set(key_comp_dict['stores']).intersection(set(network_opt.stores.index)))}
+        'generators': list(set(key_comp_dict.get('generators', [])).intersection(network_opt.generators.index)),
+        'links':      list(set(key_comp_dict.get('links', [])).intersection(network_opt.links.index)),
+        'stores':     list(set(key_comp_dict.get('stores', [])).intersection(network_opt.stores.index)),
+    }
 
-    # build DF with all time series for heat map
-    df_cf_comp_ts = pd.DataFrame()
+    # Build DF (columns = components)
+    df_cf_comp_ts = pd.DataFrame(index=network_opt.snapshots)
+
+    # Avoid division by zero; use where denom>0
     for g in heat_map_comp_list['generators']:
-        df_cf_comp_ts[g] = network_opt.generators_t.p[g] / network_opt.generators.p_nom_opt[g]
+        denom = network_opt.generators.p_nom_opt[g]
+        series = network_opt.generators_t.p[g] / denom if denom and denom != 0 else 0.0
+        df_cf_comp_ts[g] = series
+
     for l in heat_map_comp_list['links']:
-        df_cf_comp_ts[l] = network_opt.links_t.p0[l] / network_opt.links.p_nom_opt[l]
+        denom = network_opt.links.p_nom_opt[l]
+        series = network_opt.links_t.p0[l] / denom if denom and denom != 0 else 0.0
+        df_cf_comp_ts[l] = series
+
     for s in heat_map_comp_list['stores']:
-        df_cf_comp_ts[s] = network_opt.stores_t.e[s] / network_opt.stores.e_nom_opt[s]
+        denom = network_opt.stores.e_nom_opt[s]
+        series = network_opt.stores_t.e[s] / denom if denom and denom != 0 else 0.0
+        df_cf_comp_ts[s] = series
 
-    n_rows = math.ceil(len(df_cf_comp_ts.columns) ** 0.5)  # squared subplot
-    position = range(1, len(df_cf_comp_ts.columns) + 1)
+    # Drop all-NA columns (just in case)
+    df_cf_comp_ts = df_cf_comp_ts.dropna(axis=1, how="all")
 
-    fig = plt.figure()
-    fig.suptitle(' Capacity factors - weekly patterns')
+    if df_cf_comp_ts.shape[1] == 0:
+        print("No matching components with time series found.")
+        return
 
-    for k in range(len(df_cf_comp_ts.columns)):
-        ax = fig.add_subplot(n_rows, n_rows, position[k])
-        df_time_serie = pd.DataFrame(df_cf_comp_ts.iloc[:, k])
-        plot_heat_map_single_comp(df_time_serie)
+    n_comp = df_cf_comp_ts.shape[1]
+    n_rows = math.ceil(n_comp ** 0.5)
+    n_cols = n_rows  # square-ish grid
 
-    plt.subplots_adjust(hspace=0.7, wspace=0.5)
-    plt.tight_layout()
-    fig.savefig(folder + 'heat_map.png')
-    return
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 2.8*n_rows))
+    axes = np.atleast_2d(axes)  # ensure 2D
+
+    fig.suptitle('Capacity Factors – daily × hourly patterns', fontsize=14)
+
+    # Optional common color scale across all subplots (0..1 for CF)
+    vmin, vmax = 0.0, 1.0
+
+    # Plot each component into its subplot
+    for k, comp in enumerate(df_cf_comp_ts.columns):
+        r, c = divmod(k, n_cols)
+        ax = axes[r, c]
+        df_time_serie = pd.DataFrame(df_cf_comp_ts[comp])
+        plot_heat_map_single_comp(
+            df_time_serie,
+            ax=ax,
+            label_freq_days=30,
+            vmin=vmin, vmax=vmax,
+            title=comp
+        )
+
+    # Hide any unused subplots
+    for k in range(n_comp, n_rows*n_cols):
+        r, c = divmod(k, n_cols)
+        axes[r, c].axis("off")
+
+    plt.subplots_adjust(hspace=0.6, wspace=0.4)
+    # Do NOT call plt.show() for batch saving
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    fig.savefig(folder / 'heat_map.png', dpi=300, bbox_inches="tight")
+    plt.close(fig)
 
 # -------- SENSITIVITY ANALYSIS
-
 
 def results_df_plot_build(data_folder, dataset_flags, results_flags, network_comp_allocation, capacity_list):
     '''Function that reads all optimization runs in data_folder, selected by dataset_flags and

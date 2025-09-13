@@ -1,105 +1,109 @@
-from functions import *
+#!/usr/bin/env python3
+# main.py
 
-'''configuration parameters'''
-CO2_cost = 150  # €/t (CO2_cost)
-flh_H2 = 4000  # set hydrogen demand, flh for 100 MW plant (flh_H2)
-f_max_MeOH_y_demand = 0.9  # % of CO2 from biogas upgrading converted to MeOG (sets MeOH demand)
-el_DK1_sale_el_RFNBO = 0.1  # max electricity during the year that can be sold to ElDK1 (unit: fraction of El for RFNBOs)
+# Python modules
+from pathlib import Path
+import pickle as pkl
+import numpy as np
+import pandas as pd
 
-'''Input the network configuration'''
-n_flags = {'SkiveBiogas': True,
-           'central_heat': True,
-           'renewables': True,
-           'electrolyzer': True,
-           'meoh': True,
-           'symbiosis_net': True,
-           'DH': True,
-           'bioChar' : True,            # True if biochar credits have value (== to CO2 tax)
-           'print': False,              # saves svg of network before optimization
-           'export': False}             # saves network before optimization
+# (Optional) use a non-interactive backend so it works on servers/CLI
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
-''' check dependecies for correct optimization '''
-n_flags_OK = network_dependencies(n_flags)
+#  Local modules
+import parameters as p
+from scripts.prepare_network import network_dependencies, build_network, file_name_network
+from scripts.preprocessing import pre_processing_all_inputs
+from scripts.retrieve import retrieve_technology_data
+from scripts.helpers import prepare_costs, add_technology_cost, solve_network, create_folder_if_not_exists, export_print_network, get_total_marginal_capital_cost_agents
+from scripts.plots import shadow_prices_violinplot, plot_El_Heat_prices, plot_bus_list_shadow_prices, save_opt_capacity_components, heat_map_CF
 
-'''Pre_process of all input data'''
-# if preprocess_flag is False the input data are loaded from csv files, if True the input data are downloaded
-# and saved as CSV files
-preprocess_flag = False #
-# adjust H2 and MeOH demand based on n_flags_OK
-flh_H2_OK, f_max_MeOH_y_demand_OK = n_flags_to_preprocess (n_flags_OK, flh_H2, f_max_MeOH_y_demand)
-# pre-process all inputs
-inputs_dict = pre_processing_all_inputs(flh_H2_OK, f_max_MeOH_y_demand_OK, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag)
+# ----
 
-'''Technology Data cost and add extra technology costs'''
-# retrive technology-data repository
-retrieve_technology_data(p.cost_file, p.cost_folder, p.technology_data_url)
-tech_costs = prepare_costs(p.cost_folder + '/' + p.cost_file, p.USD_to_EUR, p.discount_rate, 1, p.lifetime)
-add_technology_cost(tech_costs, p.other_tech_costs)
+def main():
 
-''' Build the PyPSA network'''
-network = build_network(tech_costs, inputs_dict, n_flags_OK)
+    # ---- Network flags and dependency checks
+    n_flags = p.n_flags
+    n_flags_OK = network_dependencies(n_flags)
 
-'''save network_comp_allocation as pkl file'''
-network_comp_allocation = network.network_comp_allocation
-with open(p.print_folder_Opt+'network_comp_allocation.pkl', 'wb') as f:
-    pkl.dump(network_comp_allocation, f)
+    # ---- Preprocess inputs
+    inputs_dict = pre_processing_all_inputs(n_flags_OK=n_flags_OK, flh_H2=p.flh_H2,
+                                            f_max_MeOH_y_demand=p.f_max_MeOH_y_demand,
+                                            f_max_Methanation_y_demand=p.f_max_Methanation_y_demand,
+                                            CO2_cost=p.CO2_cost, el_DK1_sale_el_RFNBO=p.el_DK1_sale_el_RFNBO,
+                                            preprocess_flag=p.preprocess_flag)
 
-''' Optimization of the network'''
-# Optimization with gurobi, file name automatic from network composition and input variables
-n_flags_opt = {'print': True,  # saves svg of the topology
-               'export': True,
-               'plot' : True} # saves network file
+    # ---- Tech costs
+    retrieve_technology_data(p.cost_file, p.cost_folder, p.technology_data_url)
+    tech_costs = prepare_costs(p.cost_folder + '/' + p.cost_file, p.USD_to_EUR, p.discount_rate, 1, p.lifetime)
+    add_technology_cost(tech_costs, p.other_tech_costs)
 
-# solve network
-network.optimize.create_model()  # Create the Linopy model
-network.optimize.solve_model(solver_name= 'gurobi')   # Solve using Gurobi solver
-# network.optimize.solve_model(solver_name="highs")  # using free solver Highs
+    # ---- Build network
+    network = build_network(tech_costs, inputs_dict, n_flags_OK)
 
-# export and print network
-network_opt= network.copy()
-export_print_network(network_opt, n_flags_opt, n_flags, inputs_dict)
+    # ---- Optimize
+    n_flags_opt = {'print': True, 'export': True, 'plot': True}
+    solve_network(network, solver="gurobi")  # or "highs" if you prefer
 
-#####-----------------------------------
-''' Plot results - single optimization '''
-if n_flags_opt['plot']:
-
-    # create plots' folder
-    base_path = p.print_folder_Opt  # Change this to your desired path
+    # ---- Export/print
+    network_opt = network.copy()
     file_name = file_name_network(network_opt, n_flags, inputs_dict)
-    folder_name = file_name
-    plots_folder = create_folder_if_not_exists(base_path, folder_name)
+    results_folder = create_folder_if_not_exists(p.print_folder_Opt, file_name)
+    networks_folder = create_folder_if_not_exists(results_folder, 'networks')
+    export_print_network(network_opt, n_flags_opt, folder=networks_folder, file_name=file_name)
 
-    # plt marginal and capital cost by plant #
-    cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(network_opt, network_comp_allocation, True, plots_folder)
+    # ---- Save component allocation
+    network_comp_allocation = network.network_comp_allocation
+    networks_folder = Path(networks_folder)
+    with open(networks_folder / 'network_comp_allocation.pkl', 'wb') as f:
+        pkl.dump(network_comp_allocation, f)
 
-    # plt violin shadow prices
-    shadow_prices_violinplot(network_opt,inputs_dict, tech_costs, plots_folder)
+    # ---- Plotting
+    if n_flags_opt['plot']:
+        plots_folder = create_folder_if_not_exists(results_folder, 'plots')
 
-    # plt internal El and heat prices
-    plot_El_Heat_prices(network_opt, inputs_dict, tech_costs, plots_folder)
+        # Costs by plant
+        cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(
+            network_opt, network_comp_allocation, True, plots_folder
+        )
 
-    # plt partial timeseries for shadow prices -  set start and end in:
-    # date format : '2022-01-01T00:00'
-    d_start = str(p.En_price_year)+'-01-01'
-    d_end = str(p.En_price_year)+'-03-31'
+        # Violin of shadow prices (with clipping + note box from your updated function)
+        shadow_prices_violinplot(
+            network_opt, inputs_dict, tech_costs, plots_folder,
+            handle_spikes="clip", quantile_hi=0.98, quantile_lo=0.02
+        )
 
-    bus_list1=['El3 bus','H2 delivery','Heat LT']
-    legend1 = ['El to H2', 'H2 grid', 'GLS Heat LT ']
-    bus_list2=['Methanol','H2_meoh','El2 bus','CO2_meoh','Heat MT_Methanol plant','Heat DH_Methanol plant']
-    legend2 = ['MeOH prod cost', 'H2 to MeOH', 'El to MeOH', 'CO2 to MeOH', 'Heat MT to MeOH', 'Heat DH from MeOH']
+        # Internal electricity & heat prices
+        plot_El_Heat_prices(network_opt, inputs_dict, tech_costs, plots_folder)
 
-    plot_bus_list_shadow_prices(network_opt, bus_list1, legend1, d_start, d_end, plots_folder)
-    plot_bus_list_shadow_prices(network_opt, bus_list2, legend2, d_start, d_end, plots_folder)
+        # Demo Partial time series for shadow prices
+        d_start = f"{p.En_price_year}-01-01"
+        d_end = f"{p.En_price_year}-03-31"
 
-    # print and save list of plants optimal capacities as .csv
-    file_path= plots_folder + 'table_capacities'
-    df_opt_componets = save_opt_capacity_components(network_opt, network_comp_allocation, file_path)
+        bus_list = ['El3 bus', 'H2 delivery', 'Heat LT', 'Methanol', 'H2_distribution',
+                    'CO2_distribution', 'El2 bus']
+        legend = ['El internal', 'LCOE H2 ', 'Heat LT ', 'LCOE MeOH', 'CO2 internal']
 
-    # plot optimal operation as heat map
-    # Select components to plot (if present in the solution)
-    key_comp_dict={'generators':['onshorewind', 'solar', 'Straw Pellets'],
-                   'links' : ['DK1_to_El3', 'El3_to_DK1', 'Electrolyzer', 'Methanol plant', 'H2 compressor', 'CO2 compressor', 'H2grid_to_meoh' , 'CO2 sep to atm' ,'SkyClean', 'El boiler', 'NG boiler', 'NG boiler extra', 'Pellets boiler', 'Heat pump'],
-                   'stores': ['H2 HP', 'CO2 pure HP', 'CO2 Liq', 'battery', 'Water tank DH storage', 'Concrete Heat MT storage' , 'Digest DM']}
+        plot_bus_list_shadow_prices(
+            network_opt, bus_list, legend, d_start, d_end, plots_folder,
+            handle_spikes='clip', quantile=0.95
+        )
 
+        # Save optimal capacities
+        file_path = Path(plots_folder) / 'table_capacities'
+        df_opt_components = save_opt_capacity_components(network_opt, network_comp_allocation, str(file_path))
 
-    heat_map_CF(network_opt, key_comp_dict, plots_folder)
+        # Heat map demo
+        key_comp_dict = {
+            'generators': ['onshorewind', 'solar'],
+            'links': ['DK1_to_El3', 'El3_to_DK1', 'Electrolyzer', 'Methanol plant'],
+            'stores': ['H2 HP', 'CO2 pure HP', 'battery']
+        }
+        heat_map_CF(network_opt, key_comp_dict, plots_folder)
+
+    print("Done.")
+
+if __name__ == "__main__":
+    main()
