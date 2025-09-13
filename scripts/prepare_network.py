@@ -172,7 +172,7 @@ def add_local_heat_connections(n, heat_bus_list, GL_eff, plant_name, n_flags, te
                       efficiency=1,
                       p_min_pu=-1,
                       p_nom_extendable=True,
-                      capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+                      capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
     return n, new_buses
 
@@ -196,7 +196,7 @@ def add_el_conections(n, local_EL_bus, en_market_prices, n_flags, tech_costs):
           efficiency=1,
           marginal_cost=en_market_prices['el_grid_price'],
           capital_cost=tech_costs.at[
-                           'electricity grid connection', 'fixed'] * p.currency_multiplier,
+                           'electricity grid connection', 'fixed'],
           p_nom_extendable=True)
 
     # internal el connection
@@ -225,9 +225,9 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, plant_name, tech_costs, e
           bus1=local_heat_bus,
           efficiency=tech_costs.at['central gas boiler', 'efficiency'],
           p_nom_extendable=True,
-          capital_cost=tech_costs.at['central gas boiler', 'fixed'] * p.currency_multiplier,
+          capital_cost=tech_costs.at['central gas boiler', 'fixed'] ,
           marginal_cost=en_market_prices['NG_grid_price'] +
-                        tech_costs.at['gas boiler steam', 'VOM'] * p.currency_multiplier)
+                        tech_costs.at['gas boiler steam', 'VOM'])
 
     # additional El boiler
     n.add('Link',
@@ -235,8 +235,8 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, plant_name, tech_costs, e
           bus0=local_EL_bus,
           bus1=local_heat_bus,
           efficiency=tech_costs.at['electric boiler steam', 'efficiency'],
-          capital_cost=tech_costs.at['electric boiler steam', 'fixed'] * p.currency_multiplier,
-          marginal_cost=tech_costs.at['electric boiler steam', 'VOM'] * p.currency_multiplier,
+          capital_cost=tech_costs.at['electric boiler steam', 'fixed'],
+          marginal_cost=tech_costs.at['electric boiler steam', 'VOM'],
           p_nom_extendable=True)
 
     return n
@@ -392,7 +392,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
               efficiency3=GL_eff.loc["El2 bus", "SkiveBiogas"]* 0.5 ,
               efficiency4=GL_eff.loc["DM digestate", "SkiveBiogas"],
               p_nom=np.abs(GL_inputs.loc["Biomass", 'SkiveBiogas']),
-              marginal_cost=(p.Dig_biomass_price + NG_opportunity_revenue + EL_opportunity_revenue) * p.currency_multiplier,
+              marginal_cost=(p.Dig_biomass_price + NG_opportunity_revenue + EL_opportunity_revenue) ,
               p_nom_extendable=False)
 
         # DM digestate  store
@@ -463,8 +463,7 @@ def add_biogas_upgrading(n, n_flags, inputs_dict, tech_costs, brown_field):
                   efficiency4=GL_eff.loc["El2 bus", "SkiveBiogas"] * 0.5 / GL_eff.loc["bioCH4", "SkiveBiogas"],
                   p_nom = np.abs(GL_inputs.loc["bioCH4", 'SkiveBiogas']),
                   p_nom_extendable=False,
-                  # capital_cost=tech_costs.at['biogas upgrading', 'fixed'] * p.currency_multiplier,  # EUR/MWhCH4
-                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'] * p.currency_multiplier)
+                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'] )
 
             # existing NG boiler
             n.add("Link",
@@ -475,9 +474,8 @@ def add_biogas_upgrading(n, n_flags, inputs_dict, tech_costs, brown_field):
                   p_nom_extendable=False,
                   p_nom=np.abs(
                       GL_inputs.loc['Heat MT', 'SkiveBiogas'] / tech_costs.at['gas boiler steam', 'efficiency']),
-                  # capital_cost=tech_costs.at['central gas boiler', 'fixed'] * p.currency_multiplier,
                   marginal_cost=en_market_prices['NG_grid_price'] +
-                                tech_costs.at['gas boiler steam', 'VOM'] * p.currency_multiplier)
+                                tech_costs.at['gas boiler steam', 'VOM'] )
 
             # enables existing NG boiler to supply heat to the symbiosys network
             if n_flags['symbiosis_net']:
@@ -497,8 +495,8 @@ def add_biogas_upgrading(n, n_flags, inputs_dict, tech_costs, brown_field):
                   efficiency3=GL_eff.loc["Heat MT", "SkiveBiogas"] / GL_eff.loc["bioCH4", "SkiveBiogas"],
                   efficiency4=GL_eff.loc["El2 bus", "SkiveBiogas"] * 0.5 / GL_eff.loc["bioCH4", "SkiveBiogas"],
                   p_nom_extendable=True,
-                  capital_cost=tech_costs.at['biogas upgrading', 'fixed'] * p.currency_multiplier,  # EUR/MWhCH4
-                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['biogas upgrading', 'fixed'] ,  # EUR/MWhCH4
+                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'] )
 
             if not n_flags['symbiosis_net']:
                 # additional NG boiler
@@ -508,9 +506,9 @@ def add_biogas_upgrading(n, n_flags, inputs_dict, tech_costs, brown_field):
                       bus1="Heat MT",
                       efficiency=tech_costs.at['central gas boiler', 'efficiency'],
                       p_nom_extendable=True,
-                      capital_cost=tech_costs.at['central gas boiler', 'fixed'] * p.currency_multiplier,
+                      capital_cost=tech_costs.at['central gas boiler', 'fixed'] ,
                       marginal_cost=en_market_prices['NG_grid_price'] +
-                                    tech_costs.at['gas boiler steam', 'VOM'] * p.currency_multiplier)
+                                    tech_costs.at['gas boiler steam', 'VOM'] )
 
         # -----------infinite Store of biogenic CO2 (venting to ATM)
         n.add("Store",
@@ -566,8 +564,8 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               p_nom_max=p.cap_nom_max['onwind'],
               p_nom_extendable=True,
               carrier="onshorewind",
-              capital_cost=tech_costs.at['onwind', 'fixed'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['onwind', 'VOM'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['onwind', 'fixed'] ,
+              marginal_cost=tech_costs.at['onwind', 'VOM'] ,
               p_max_pu=CF_wind['CF wind'])
 
         # add PV utility generators
@@ -578,8 +576,8 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               p_nom_max=p.cap_nom_max['solar'],
               p_nom_extendable=True,
               carrier="solar",
-              capital_cost=tech_costs.at['solar', 'fixed'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['solar', 'VOM'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['solar', 'fixed'] ,
+              marginal_cost=tech_costs.at['solar', 'VOM'] ,
               p_max_pu=CF_solar['CF solar'])
 
         # add link to sell power to the external El grid
@@ -591,7 +589,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
               marginal_cost=en_market_prices['el_grid_sell_price'],
               p_nom_extendable=True,
               capital_cost=tech_costs.at[
-                               'electricity grid connection', 'fixed'] * p.currency_multiplier)
+                               'electricity grid connection', 'fixed'] )
 
         # log new components
         new_components = log_new_components(n, n0_dict)
@@ -633,9 +631,9 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         # -----------Electrolyzer------------------
         # cost_electrolysis dependent on scale (grid ot MeOH only)
         if H2_input_demand.iloc[:, 0].sum() > 0:
-            electrolysis_cost = tech_costs.at['electrolysis', 'fixed'] * p.electrolysis_dict['cost_factor'] * p.currency_multiplier
+            electrolysis_cost = tech_costs.at['electrolysis', 'fixed'] * p.electrolysis_dict['cost_factor']
         else:
-            electrolysis_cost = tech_costs.at['electrolysis small', 'fixed'] * p.currency_multiplier
+            electrolysis_cost = tech_costs.at['electrolysis small', 'fixed']
 
         n.add("Link",
               "Electrolyzer",
@@ -738,7 +736,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                       p_nom_extendable=True,
                       marginal_cost = p.H2_tariff,
                       capital_cost = tech_costs.at[
-                                       'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe * p.currency_multiplier)
+                                       'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe )
 
 
         # ----------METHANOL PLANT---------
@@ -765,7 +763,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
               efficiency4=GL_eff.at['Heat MT', 'Methanol plant'],
               efficiency5=GL_eff.at['Heat DH', 'Methanol plant'],
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['methanolisation', "fixed"] * p.meoh_dict['cost_factor'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['methanolisation', "fixed"] * p.meoh_dict['cost_factor'] ,
               p_min_pu=p.meoh_dict['p_min_pu'],
               ramp_limit_up=p.meoh_dict['ramp_limit_up'],
               ramp_limit_down=p.meoh_dict['ramp_limit_down'])
@@ -840,8 +838,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_min_pu=p.biometh_dict['p_min_pu'],
                   ramp_limit_up=p.biometh_dict['ramp_limit_up'],
                   ramp_limit_down=p.biometh_dict['ramp_limit_down'],
-                  capital_cost=tech_costs.at['biomethanation', "fixed"] * p.biometh_dict['cost_factor'] * p.currency_multiplier,
-                  marginal_cost =  tech_costs.at['biomethanation', "VOM"] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['biomethanation', "fixed"] * p.biometh_dict['cost_factor'],
+                  marginal_cost =  tech_costs.at['biomethanation', "VOM"] )
 
             # ----------BIO-METHANATION PLANT (CO2 + H2)---------
             # capital costs are scaled by the volumetric flow of input gas  to the reactor
@@ -867,8 +865,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_min_pu=p.biometh_dict['p_min_pu'],
                   ramp_limit_up=p.biometh_dict['ramp_limit_up'],
                   ramp_limit_down=p.biometh_dict['ramp_limit_down'],
-                  capital_cost=tech_costs.at['biomethanation', "fixed"] * p.biometh_dict['cost_factor'] * input_vol_flow_onlyco2_biogas_biometh * p.currency_multiplier ,
-                  marginal_cost =  tech_costs.at['biomethanation', "VOM"] * input_vol_flow_onlyco2_biogas_biometh * p.currency_multiplier)
+                  capital_cost=tech_costs.at['biomethanation', "fixed"] * p.biometh_dict['cost_factor'] * input_vol_flow_onlyco2_biogas_biometh  ,
+                  marginal_cost =  tech_costs.at['biomethanation', "VOM"] * input_vol_flow_onlyco2_biogas_biometh )
 
 
         # --------- CATALYTIC METHANATION PLANT (biogas + H2)
@@ -888,8 +886,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_min_pu = p.catmeth_dict['p_min_pu'],
                   ramp_limit_up=p.catmeth_dict['ramp_limit_up'],
                   ramp_limit_down=p.catmeth_dict['ramp_limit_down'],
-                  capital_cost=tech_costs.at['biogas plus hydrogen', "fixed"] * p.ramp_limit_down['cost_factor'] * p.currency_multiplier, # cost per MWh_H2 input
-                  marginal_cost = tech_costs.at['biogas plus hydrogen', "VOM"]  * p.currency_multiplier)
+                  capital_cost=tech_costs.at['biogas plus hydrogen', "fixed"] * p.ramp_limit_down['cost_factor'] , # cost per MWh_H2 input
+                  marginal_cost = tech_costs.at['biogas plus hydrogen', "VOM"]  )
 
             # --------- CATALYTIC METHANATION PLANT (CO2 + H2)
             # capital costs are scaled by the volumetric flow of input gas  to the reactor
@@ -917,8 +915,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_min_pu=p.p_min_pu_cat_meth,
                   ramp_limit_up=p.ramp_limit_up_cat_meth,
                   ramp_limit_down=p.ramp_limit_down_cat_meth,
-                  capital_cost=tech_costs.at['biogas plus hydrogen', "fixed"]  * p.ramp_limit_down['cost_factor']  * input_vol_flow_onlyco2_biogas_cat_meth * p.currency_multiplier,
-                  marginal_cost = tech_costs.at['biogas plus hydrogen', "VOM"] * input_vol_flow_onlyco2_biogas_cat_meth * p.currency_multiplier)
+                  capital_cost=tech_costs.at['biogas plus hydrogen', "fixed"]  * p.ramp_limit_down['cost_factor']  * input_vol_flow_onlyco2_biogas_cat_meth ,
+                  marginal_cost = tech_costs.at['biogas plus hydrogen', "VOM"] * input_vol_flow_onlyco2_biogas_cat_meth )
 
         # ----------- Add link between methanation bus and bioCH4 bus to satisfy external demand
         n.add('Link',
@@ -963,7 +961,7 @@ def add_biogas_store(n, n_flags, inputs_dict, tech_costs):
           bus='biogas',
           e_nom_extendable =  True,
           capital_cost=tech_costs.at[
-                           'biogas storage', 'fixed'] * p.currency_multiplier,
+                           'biogas storage', 'fixed'] ,
           e_nom_max=p.biogas_storage_dict['e_nom_max'],
           e_cyclic=True)
 
@@ -1004,7 +1002,7 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
               efficiency2=-1 * p.CO2_comp_dict['el_demand'],
               efficiency3=1 * p.CO2_comp_dict['heat_out'],
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['CO2_industrial_compressor', "fixed"] * p.CO2_comp_dict['cost_factor'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['CO2_industrial_compressor', "fixed"] * p.CO2_comp_dict['cost_factor'] )
 
         n.add('Link',
               'CO2 comp heat rejection',
@@ -1021,7 +1019,7 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
                   bus0='CO2 comp heat',
                   bus1='Heat LT',
                   efficiency=1,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier,
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] ,
                   p_nom_extendable=True)
 
 # -----------CO2 HP storage cylinders ---------------
@@ -1055,7 +1053,7 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
               bus="CO2 storage",
               e_nom_extendable=True,
               capital_cost=tech_costs.at[
-                               'CO2 storage cylinders', 'fixed'] * p.currency_multiplier,
+                               'CO2 storage cylinders', 'fixed'] ,
               e_nom_max=p.CO2_HP_dict['e_nom_max'],
               e_cyclic=True)
 
@@ -1072,14 +1070,14 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
               efficiency = 1,
               efficiency2 = -1 * p.CO2_Liq_dict['el_demand'],
               efficiency3 = p.CO2_Liq_dict['heat_out'],
-              capital_cost=tech_costs.at['CO2 liquefaction', 'fixed'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['CO2 liquefaction', 'fixed'] ,
               p_nom_extendable=True)
 
         n.add('Link',
               'CO2 liq return',
               bus0='CO2 liq storage',
               bus1='CO2_distribution',
-              capital_cost=p.CO2_Liq_dict['annualized_evaparator_cost'] * p.currency_multiplier,
+              capital_cost=p.CO2_Liq_dict['annualized_evaparator_cost'] ,
               efficiency=1,
               p_nom_extendable=True)
 
@@ -1096,9 +1094,9 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
               e_nom_extendable=True,
               e_nom_max = p.CO2_Liq_dict['e_nom_max'],
               capital_cost=tech_costs.at[
-                               'CO2 storage tank', 'fixed'] * p.currency_multiplier,
+                               'CO2 storage tank', 'fixed'] ,
               marginal_cost=tech_costs.at[
-                                'CO2 storage tank', 'VOM'] * p.currency_multiplier,
+                                'CO2 storage tank', 'VOM'] ,
               e_cyclic=True)
 
         if n_flags['symbiosis_net']:
@@ -1109,7 +1107,7 @@ def add_CO2_store(n, n_flags, inputs_dict, tech_costs):
                   bus0='CO2 liq heat LT',
                   bus1='Heat LT',
                   efficiency=1,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier,
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] ,
                   p_nom_extendable=True)
 
     return n
@@ -1152,8 +1150,8 @@ def add_H2_store(n, n_flags, inputs_dict, tech_costs):
               efficiency2=-1 * p.H2_comp_dict['el_demand'],
               efficiency3=1 * p.H2_comp_dict['heat_out'],
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['hydrogen storage compressor', 'fixed'] * p.H2_comp_dict['cost_factor'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['hydrogen storage compressor', 'VOM'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['hydrogen storage compressor', 'fixed'] * p.H2_comp_dict['cost_factor'] ,
+              marginal_cost=tech_costs.at['hydrogen storage compressor', 'VOM'] )
 
         n.add('Link',
               'H2 comp heat rejection',
@@ -1171,7 +1169,7 @@ def add_H2_store(n, n_flags, inputs_dict, tech_costs):
                   bus0='H2 comp heat',
                   bus1='Heat LT',
                   efficiency=1,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier,
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] ,
                   p_nom_extendable=True)
 
     # -----------H2 HP storage cylinders ---------------
@@ -1199,8 +1197,8 @@ def add_H2_store(n, n_flags, inputs_dict, tech_costs):
               "H2 HP",
               bus="H2 storage",
               e_nom_extendable=True,
-              capital_cost=tech_costs.at['hydrogen storage tank type 1', 'fixed'] * p.H2_storage_dict['cost_factor'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['hydrogen storage tank type 1', 'VOM'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['hydrogen storage tank type 1', 'fixed'] * p.H2_storage_dict['cost_factor'] ,
+              marginal_cost=tech_costs.at['hydrogen storage tank type 1', 'VOM'] ,
               e_nom_max=p.H2_storage_dict['e_nom_max'],
               e_cyclic=True)
 
@@ -1241,7 +1239,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               "Straw Pellets",
               bus="Straw Pellets",
               p_nom_extendable=True,
-              marginal_cost=p.Straw_pellets_price * p.currency_multiplier)
+              marginal_cost=p.Straw_pellets_price)
 
         # link converting straw pellets (t(h) to equivalent Digestate pellets (t/h) for Skyclean
         # NOTE: electricity in Skyclean is moslty for pelletization of digestate fibers,
@@ -1270,17 +1268,17 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               efficiency2=GL_eff.at['El2 bus', 'SkyClean'], # TODO FIX with new technology-data
               efficiency3=-GL_eff.at['CO2e bus', 'SkyClean'],  # NOTE: negative sign for CO2e in the input file # TODO FIX with new technology-data
               marginal_cost=(tech_costs.at[
-                  'biomass HOP', 'VOM']) * p.currency_multiplier,
+                  'biomass HOP', 'VOM']) ,
               p_nom_extendable=True,
               p_nom_max=p.cap_nom_max['pyrolysis'] / p.lhv_dig_pellets,
-              capital_cost=tech_costs.at['biochar pyrolysis', "fixed"] * p.currency_multiplier)  #
+              capital_cost=tech_costs.at['biochar pyrolysis', "fixed"] )  #
 
         n.add('Link',
               'biochar credits',
               bus0='biochar',
               bus1='biochar storage',
               efficiency=1,
-              marginal_cost=biochar_cost * p.currency_multiplier,  # REWARD FOR NEGATIVE EMISSIONS
+              marginal_cost=biochar_cost ,  # REWARD FOR NEGATIVE EMISSIONS
               p_nom_extendable=True)
 
         n.add('Store',
@@ -1300,9 +1298,9 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               efficiency=tech_costs.at['biomass HOP', 'efficiency'] * p.lhv_dig_pellets,
               efficiency2=GL_eff.at['El2 bus', 'SkyClean'],
               marginal_cost=(tech_costs.at[
-                  'biomass HOP', 'VOM']) * p.currency_multiplier,
+                  'biomass HOP', 'VOM']) ,
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['biomass HOP', 'fixed'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['biomass HOP', 'fixed'] )
 
         # additional NG boiler
         n.add("Link",
@@ -1311,9 +1309,9 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               bus1="Heat MT",
               efficiency=tech_costs.at['central gas boiler', 'efficiency'],
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['central gas boiler', 'fixed'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['central gas boiler', 'fixed'] ,
               marginal_cost=en_market_prices['NG_grid_price'] +
-                            tech_costs.at['gas boiler steam', 'VOM'] * p.currency_multiplier)
+                            tech_costs.at['gas boiler steam', 'VOM'] )
 
         # additional El boiler
         n.add('Link',
@@ -1321,8 +1319,8 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
               bus0=local_EL_bus,
               bus1='Heat MT',
               efficiency=tech_costs.at['electric boiler steam', 'efficiency'],
-              capital_cost=tech_costs.at['electric boiler steam', 'fixed'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['electric boiler steam', 'VOM'] * p.currency_multiplier,
+              capital_cost=tech_costs.at['electric boiler steam', 'fixed'] ,
+              marginal_cost=tech_costs.at['electric boiler steam', 'VOM'] ,
               p_nom_extendable=True)
 
         # log new components
@@ -1363,7 +1361,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   bus1="El2 bus",
                   efficiency=1,
                   capital_cost=tech_costs.at[
-                                   'electricity grid connection', 'fixed'] * p.currency_multiplier,
+                                   'electricity grid connection', 'fixed'] ,
                   p_nom_extendable=True)
 
         # Add battery as storage. Note time resolution = 1h, hence battery max C-rate (ch  & dch) is 1
@@ -1373,7 +1371,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               e_cyclic=True,
               e_nom_extendable=True,
               e_nom_max=p.cap_nom_max['battery'],
-              capital_cost=tech_costs.at["battery storage", 'fixed'] * p.currency_multiplier)  #
+              capital_cost=tech_costs.at["battery storage", 'fixed'] )  #
 
         n.add("Link",
               "battery charger",
@@ -1382,7 +1380,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               efficiency=tech_costs.at["battery inverter", 'efficiency'],
               p_nom_extendable=True,
               capital_cost=tech_costs.at[
-                               "battery inverter", 'fixed'] * p.currency_multiplier)  # cost added only on one of the links
+                               "battery inverter", 'fixed'] )  # cost added only on one of the links
         n.add("Link",
               "battery discharger",
               bus0="battery",
@@ -1398,7 +1396,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               efficiency=1,
               p_nom_extendable=True,
               capital_cost=tech_costs.at[
-                               'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe * p.currency_multiplier)
+                               'H2_pipeline_gas', "fixed"] * p.dist_H2_pipe )
 
         # -------- Trading of CO2 (LP)-----
         n.add("Link",
@@ -1407,7 +1405,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               bus1="CO2_distribution",
               efficiency=1,
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['CO2_pipeline_gas', "fixed"] * p.dist_CO2_pipe * p.currency_multiplier)
+              capital_cost=tech_costs.at['CO2_pipeline_gas', "fixed"] * p.dist_CO2_pipe )
 
         # -------- HEAT NETWORKS---------------
         # MT Heat to ambient (additional heat exchanger)
@@ -1418,7 +1416,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   bus1='Heat amb',
                   efficiency=1,
                   p_nom_extendable=True,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         # DH heat to ambient
         if 'Heat_DH_to_amb' not in n.links.index.values:
@@ -1428,7 +1426,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   bus1='Heat amb',
                   efficiency=1,
                   p_nom_extendable=True,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         # LT heat to ambient
         if 'Heat_LT_to_amb' not in n.links.index.values:
@@ -1438,7 +1436,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   bus1='Heat amb',
                   efficiency=1,
                   p_nom_extendable=True,
-                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         # HEAT INTEGRATION (heat cascade) - HEX
         n.add("Link",
@@ -1447,7 +1445,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               bus1='Heat DH',
               efficiency=1,
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         n.add("Link",
               "Heat_MT_to_LT",
@@ -1455,7 +1453,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               bus1='Heat LT',
               efficiency=1,
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         n.add("Link",
               "Heat_DH_to_LT",
@@ -1463,7 +1461,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               bus1='Heat LT',
               efficiency=1,
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
 
         # Thermal energy storage
@@ -1475,14 +1473,14 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
               e_nom_min=0,
               e_nom_max=p.TES_DH_dict['e_nom_max'],
               e_cyclic=True,
-              capital_cost=tech_costs.at['central water tank storage', 'fixed'] * p.TES_DH_dict['cost_factor'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['central water tank storage', 'fixed'] * p.TES_DH_dict['cost_factor'] )
 
         n.add("Link",
               "Heat DH storage charger",
               bus0="Heat DH",
               bus1="Heat DH storage",
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] * p.currency_multiplier)
+              capital_cost=tech_costs.at['DH heat exchanger', "fixed"] )
 
         n.add("Link",
               "Heat storage discharger",
@@ -1500,21 +1498,21 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   e_nom_max=p.TES_conc_dict['e_nom_max'],
                   e_cyclic=True,
                   standing_loss = p.TES_conc_dict['standing_loss'],
-                  capital_cost=tech_costs.at['Concrete-store', 'fixed'] * p.TES_conc_dict['cost_factor'] * p.currency_multiplier)
+                  capital_cost=tech_costs.at['Concrete-store', 'fixed'] * p.TES_conc_dict['cost_factor'] )
 
         n.add("Link",
               "Heat MT storage charger",
               bus0="Heat MT",
               bus1="Heat MT storage",
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['Concrete-charger', 'fixed'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['Concrete-charger', 'fixed'] )
 
         n.add("Link",
               "Heat MT storage discharger",
               bus0="Heat MT storage",
               bus1="Heat MT",
               p_nom_extendable=True,
-              capital_cost=tech_costs.at['Concrete-discharger', 'fixed'] * p.currency_multiplier)
+              capital_cost=tech_costs.at['Concrete-discharger', 'fixed'] )
 
         # log new components
         new_components = log_new_components(n, n0_dict)
@@ -1556,8 +1554,8 @@ def add_DH(n, n_flags, inputs_dict, tech_costs):
               efficiency=tech_costs.at['industrial heat pump medium temperature', 'efficiency'],
               efficiency2=-(tech_costs.at['industrial heat pump medium temperature', 'efficiency'] - 1),
               capital_cost=tech_costs.at[
-                               'industrial heat pump medium temperature', 'fixed'] * p.currency_multiplier,
-              marginal_cost=tech_costs.at['industrial heat pump medium temperature', 'VOM'] * p.currency_multiplier,
+                               'industrial heat pump medium temperature', 'fixed'] ,
+              marginal_cost=tech_costs.at['industrial heat pump medium temperature', 'VOM'] ,
               p_nom_extendable=True)
 
         # Link for sale of DH
@@ -1681,7 +1679,7 @@ def build_network(tech_costs, inputs_dict, n_flags):
 
     # Add agents if selected
     network, comp_biogas = add_biogas(network, n_flags, inputs_dict, tech_costs)
-    network, comp_biogas_upgrading = add_biogas_upgrading(network, n_flags, inputs_dict, tech_costs, brown_field=True)
+    network, comp_biogas_upgrading = add_biogas_upgrading(network, n_flags, inputs_dict, tech_costs, brown_field=p.brownfield_upgrading)
     network, comp_renewables = add_renewables(network, n_flags, inputs_dict, tech_costs)
     network, comp_electrolysis = add_electrolysis(network, n_flags, inputs_dict, tech_costs)
     network, comp_meoh = add_meoh(network, n_flags, inputs_dict, tech_costs)

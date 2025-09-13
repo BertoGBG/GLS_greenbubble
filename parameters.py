@@ -50,7 +50,7 @@ CO2_cost_ref_year = 0  # €/ton (CO2 tax in the reference year of energy prices
 
 # Biogas plants
 f_FLH_Biogas = 4 / 5  # fraction of maximum capacity that the Biogas plant is operated (only for GLS purposes)
-
+brownfield_upgrading = True
 #---------------------------------------
 """Retrive data"""
 # token to download  factors from Renewable Ninjas
@@ -103,17 +103,10 @@ discount_rate = 0.07  #
 Nyears = 1  # for myopic optimization (not used but needed in some functions)
 lifetime = 25  #
 
-'''set Currency of Cost Optimization: DKK or EUR'''
-currency = 'EUR'
-if currency == 'DKK':
-    currency_multiplier = DKK_Euro
-elif currency == 'EUR':
-    currency_multiplier = 1
-
 # --------------------------------------
 """ post 2030: EU rules for renewable el for H2' (RFNBOs) """
 rfnbos_dict= {'limit' : 'emissions', # it can be set to 'emissions', 'price' or 'None' (RFNBOs legislation not active)
-              'price_threshold' : 20 * currency_multiplier, # (Eur/MWh) : electricity is renewable if price is below 20€/MWh
+              'price_threshold' : 20 , # (Eur/MWh) : electricity is renewable if price is below 20€/MWh
               'emission_threshold' : 18 * 3.6 / 1000} # (gCO2e/MJ) --> tCO2e/MWh
 # --------------------------------------
 ''' Constants'''
@@ -167,7 +160,7 @@ Straw_pellets_price = 250  # (€/t)
 Dig_biomass_price = 0  # (€/t) (Manure) Set to 0 as only the Delta in bioCH4 prod costs are considered.
 
 '''District Heating price'''
-DH_price = 400 / DKK_Euro * currency_multiplier  #
+DH_price = 400 / DKK_Euro   #
 
 '''Fossil Methanol'''
 methanol_price_2023 = 360  # €/ton
@@ -176,17 +169,17 @@ CO2_intensity_MeOH_life = 110 / 1000000 * 3600 # (110 gCO2/MJ meoh) --> tCO2e/MW
 '''Electricity tariffs'''
 # Purchased Electricity
 # TSO and state tariff
-el_transmission_tariff = 7.4 / 100 * 1000 / DKK_Euro * currency_multiplier  # from energinet inputs in Ore/kWh DKK/MWh
-el_system_tariff = 5.1 / 100 * 1000 / DKK_Euro * currency_multiplier  # from energinet inputs in Ore/kWh DKK/MWh
-el_afgift = 76.1 / 100 * 1000 / DKK_Euro * currency_multiplier
+el_transmission_tariff = 7.4 / 100 * 1000 / DKK_Euro   # from energinet inputs in Ore/kWh DKK/MWh
+el_system_tariff = 5.1 / 100 * 1000 / DKK_Euro   # from energinet inputs in Ore/kWh DKK/MWh
+el_afgift = 76.1 / 100 * 1000 / DKK_Euro
 
 # DSO Tariff -  for 60/10kV transformer (A_low customer)
-el_net_tariff_low = 1.5 / 100 * 1000 / DKK_Euro * currency_multiplier  # currency/MWh
-el_net_tariff_high = 4.49 / 100 * 1000 / DKK_Euro * currency_multiplier
-el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro * currency_multiplier
+el_net_tariff_low = 1.5 / 100 * 1000 / DKK_Euro   # currency/MWh
+el_net_tariff_high = 4.49 / 100 * 1000 / DKK_Euro
+el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro
 
 # Selling tariff
-el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro * currency_multiplier  # (Ore/kWh) *100/1000 = DKK
+el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro  # (Ore/kWh) *100/1000 = DKK
 # / MWH includes transmission and system tariff
 
 # H2 grid tarif
@@ -286,7 +279,7 @@ biogas_storage_dict ={'lifetime': 15,
 dist_H2_pipe = 1  # km Estimated piping distance in the site--> for cost estimation
 dist_CO2_pipe = 1  # km Estimated piping distance in the site--> for cost estimation
 dist_PWH_pipe = 5  # km Estimated piping distance in the site--> for cost estimation
-capital_cost_PHW = 25000 * currency_multiplier  # €/MW/km
+capital_cost_PHW = 25000  # €/MW/km
 heat_loss_PHW = 0.02  # MW/MW
 
 ''' Technologies not included in technology-data with source: DEA '''
