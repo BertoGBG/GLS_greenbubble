@@ -18,7 +18,7 @@ To create the virtual environment:
 
 .../greenbubble % conda env create -f environment.yaml
 
-.../greenbubble % conda activate technology-data
+.../greenbubble % conda activate greenbubble_gls
 
 
 
