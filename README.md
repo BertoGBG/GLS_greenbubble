@@ -24,9 +24,12 @@ Install conda-lock (once)
 .../greenbubble % conda install -n base -c conda-forge conda-lock
 
 Create environment for your OS:
-.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml /n
+.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml 
+
 .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
+
 .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+
 .../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
 
 Activate environment:
