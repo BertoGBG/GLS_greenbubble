@@ -16,23 +16,18 @@ We recommend using the package manager and environment management system conda t
  that includes only conda and its dependencies or make sure conda is already installed on your system. For instructions for your operating system follow the conda [installation guide] (https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 To create the virtual environment for each platform:
 
-Add the conda-forge channel and enable strict priority
+Add the conda-forge channel and enable strict priority  
 .../greenbubble % conda config --add channels conda-forge
 .../greenbubble % conda config --set channel_priority strict
 
-Install conda-lock (once)
+Install conda-lock (once)  
 .../greenbubble % conda install -n base -c conda-forge conda-lock
 
-Create environment for your OS:
-.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml 
 
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
+Create environment for your OS:  
+.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml  .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.ym  .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml  .../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
 
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
-
-.../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
-
-Activate environment:
+Activate environment:  
 .../greenbubble % conda activate greenbubble_gls
 
 
