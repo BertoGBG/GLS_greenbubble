@@ -14,12 +14,23 @@ Clone this repository to your destination folder:
 Create the virtual environment from environment.yaml
 We recommend using the package manager and environment management system conda to install python dependencies. Install [miniconda](https://docs.anaconda.com/miniconda/), which is a mini version of [anaconda](https://www.anaconda.com)
  that includes only conda and its dependencies or make sure conda is already installed on your system. For instructions for your operating system follow the conda [installation guide] (https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
-To create the virtual environment: 
+To create the virtual environment for each platform:
 
-.../greenbubble % conda env create -f environment.yaml
+Add the conda-forge channel and enable strict priority
+.../greenbubble % conda config --add channels conda-forge
+.../greenbubble % conda config --set channel_priority strict
 
+Install conda-lock (once)
+.../greenbubble % conda install -n base -c conda-forge conda-lock
+
+Create environment for your OS:
+.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml
+.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
+.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+.../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
+
+Activate environment:
 .../greenbubble % conda activate greenbubble_gls
-
 
 
 **Reference**
