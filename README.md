@@ -18,6 +18,8 @@ To create the virtual environment for each platform:
 
 Add the conda-forge channel and enable strict priority  
 .../greenbubble % conda config --add channels conda-forge
+
+
 .../greenbubble % conda config --set channel_priority strict
 
 Install conda-lock (once)  
@@ -25,7 +27,13 @@ Install conda-lock (once)
 
 
 Create environment for your OS:  
-.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml  .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.ym  .../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml  .../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
+.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml
+
+.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.ym
+
+.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+
+.../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
 
 Activate environment:  
 .../greenbubble % conda activate greenbubble_gls
