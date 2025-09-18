@@ -302,8 +302,8 @@ def pre_processing_energy_data():
     sort_val = 'sort=HourDK%20asc'
     #filter_area = r'filter={"PriceArea":"DK1"}'
     Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
-    Elspotprices = Elspotprices_data[['HourDK', 'SpotPrice' + p.currency]].copy()
-    Elspotprices.rename(columns={'SpotPrice' + p.currency: 'SpotPrice ' + p.currency}, inplace=True)
+    Elspotprices = Elspotprices_data[['HourDK', 'SpotPrice' + 'EUR']].copy()
+    Elspotprices.rename(columns={'SpotPrice' + 'EUR': 'SpotPrice ' + 'EUR'}, inplace=True)
     Elspotprices['HourDK'] = pd.to_datetime(Elspotprices['HourDK'], infer_datetime_format=True)
     Elspotprices.set_index('HourDK', inplace=True)
     Elspotprices = remove_feb_29(Elspotprices)
