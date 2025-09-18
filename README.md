@@ -14,7 +14,9 @@ Clone this repository to your destination folder:
 Create the virtual environment from environment.yaml
 We recommend using the package manager and environment management system conda to install python dependencies. Install [miniconda](https://docs.anaconda.com/miniconda/), which is a mini version of [anaconda](https://www.anaconda.com)
  that includes only conda and its dependencies or make sure conda is already installed on your system. For instructions for your operating system follow the conda [installation guide] (https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
-To create the virtual environment for each platform:
+
+ 
+To create the virtual environment for each OS:
 
 Add the conda-forge channel and enable strict priority  
 .../greenbubble % conda config --add channels conda-forge
