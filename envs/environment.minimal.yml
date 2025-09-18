@@ -1,0 +1,85 @@
+name: greenbubble_gls
+channels:
+- conda-forge
+- gurobi
+dependencies:
+- cartopy
+- click
+- dask-core
+- fsspec
+- graphviz
+- linopy
+- matplotlib
+- netcdf4
+- networkx
+- numpy
+- pip
+- polars
+- pyomo
+- pyproj
+- pypsa
+- pytables
+- python=3.9
+- python-graphviz
+- pyyaml
+- requests
+- scipy
+- seaborn
+- setuptools
+- shapely
+- toolz
+- tqdm
+- urllib3
+- wheel
+- xarray
+- pip:
+  - aiohappyeyeballs==2.4.4
+  - aiohttp==3.11.11
+  - aiosignal==1.3.2
+  - async-timeout==5.0.1
+  - attrs==24.3.0
+  - beautifulsoup4==4.12.3
+  - bleach==6.2.0
+  - cssselect==1.2.0
+  - cssutils==2.11.1
+  - dataframe-image==0.2.7
+  - defusedxml==0.7.1
+  - entsoe-py==0.6.18
+  - et-xmlfile==2.0.0
+  - fastjsonschema==2.21.1
+  - frozenlist==1.5.0
+  - greenlet==3.1.1
+  - highspy==1.9.0
+  - html2image==2.0.5
+  - jinja2==3.1.5
+  - jsonschema==4.23.0
+  - jsonschema-specifications==2024.10.1
+  - jupyter-client==8.6.3
+  - jupyter-core==5.7.2
+  - jupyterlab-pygments==0.3.0
+  - lxml==5.3.0
+  - markupsafe==3.0.2
+  - mistune==3.1.0
+  - more-itertools==10.6.0
+  - multidict==6.1.0
+  - nbclient==0.10.2
+  - nbconvert==7.16.5
+  - nbformat==5.10.4
+  - openpyxl==3.1.5
+  - pandas==2.2.3
+  - pandocfilters==1.5.1
+  - platformdirs==4.3.6
+  - playwright==1.50.0
+  - propcache==0.2.1
+  - pyee==12.1.1
+  - pygments==2.19.1
+  - pypsatopo==1.1.0
+  - pyzmq==26.2.0
+  - referencing==0.36.1
+  - rpds-py==0.22.3
+  - soupsieve==2.6
+  - tinycss2==1.4.0
+  - traitlets==5.14.3
+  - webencodings==0.5.1
+  - websocket-client==1.8.0
+  - yarl==1.18.3
