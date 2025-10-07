@@ -9,6 +9,15 @@ from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 import pytz
 from scripts.helpers import build_electricity_grid_price_w_tariff
+from config import (CO2_cost_ref_year,
+                    En_price_year,
+                    DKK_Euro,
+                    latitude,
+                    longitude,
+                    H2_delivery_frequency,
+                    H2_profile_flag,
+                    demand_H2, demand_CH4, demand_meoh)
+
 
 # ------ INPUTS PRE-PROCESSING ----
 
@@ -32,46 +41,30 @@ def GL_inputs_to_eff(GL_inputs):
     return GL_eff
 
 
-def balance_bioCH4_MeOH_demand_GL():
-    ''' function preprocesses the GreenLab site input data creting MeOH and bioCH4 demands'''
 
+def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
     '''Load GreenLab inputs'''
-    GL_inputs = pd.read_excel(p.GL_input_file, sheet_name='Overview_2', index_col=0)
-    GL_eff = GL_inputs_to_eff(GL_inputs)
 
-    '''bioCH4 production ('demand')'''
-    bioCH4_prod = p.ref_df.copy()
-    bioCH4_prod = bioCH4_prod.rename(columns={p.ref_col_name: 'bioCH4 demand MWh'})
-    bioCH4_prod['bioCH4 demand MWh'] = np.abs(
-        GL_inputs.loc["bioCH4", 'SkiveBiogas']) * p.f_FLH_Biogas  # MWh Yearly demand delivered
-    bioCH4_prod.to_csv(p.bioCH4_prod_input_file, sep=';')  # MWh/h
+    '''bioCH4 demand '''
+    bioCH4_demand = p.ref_df.copy()
+    bioCH4_demand = bioCH4_demand.rename(columns={p.ref_col_name: 'bioCH4 demand MWh'})
+    bioCH4_demand.at[bioCH4_demand.index[-1], 'bioCH4 demand MWh'] = demand_CH4
+    bioCH4_demand.to_csv(p.bioCH4_prod_input_file, sep=';')  # MWh/h
 
-    """Methanol demand"""
-    # maximum of MeOH (yearly) demand compatible with CO2 produced from the biogas plant
-    Methanol_demand_y_max = np.abs(GL_eff.at['Methanol', 'Methanol plant']) * np.abs(
-        GL_inputs.at['CO2 pure', 'SkiveBiogas']) * p.f_FLH_Biogas * p.FLH_y  # Max MWh MeOH Yearly delivered
-
-    # Create Randomized weekly delivery
-    # Time series demand (hourly)
-    f_delivery = 24 * 365 // p.MeOH_delivery_frequency  # frequency of delivery in (h)
-    n_delivery = len(p.hours_in_period) // f_delivery
-    # Delivery constant amount profile
-    q_delivery = Methanol_demand_y_max / n_delivery
-    empty_v = np.zeros(len(p.hours_in_period))
-    delivery = pd.DataFrame({'a': empty_v})
+    '''Methanol demand'''
     Methanol_demand = p.ref_df.copy()
     Methanol_demand.rename(columns={p.ref_col_name: 'Methanol demand MWh'}, inplace=True)
-
-    for i in range(n_delivery):
-        delivery_ind = (i + 1) * f_delivery - 10  # Delivery at 14:00
-        #delivery.iloc[delivery_ind] = q_delivery[i]
-        delivery.iloc[delivery_ind] = q_delivery
-
-    Methanol_demand['Methanol demand MWh'] = delivery['a'].values
-
+    Methanol_demand.at[Methanol_demand.index[-1], 'Methanol demand MWh'] = demand_meoh
     Methanol_demand.to_csv(p.Methanol_demand_input_file, sep=';')  # t/h
 
-    return
+    '''H2 demand with annual profile'''
+    H2_input_demand = build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
+
+    demands = {'bioCH4': bioCH4_demand,
+               'H2' : H2_input_demand,
+               'meoh' : Methanol_demand}
+
+    return demands
 
 
 def load_input_data():
@@ -82,16 +75,18 @@ def load_input_data():
     Elspotprices = Elspotprices.set_axis(p.hours_in_period)
     CO2_emiss_El = pd.read_csv(p.CO2emis_input_file, sep=';', index_col=0)  # kg/MWh CO2
     CO2_emiss_El = CO2_emiss_El.set_axis(p.hours_in_period)
-    bioCH4_prod = pd.read_csv(p.bioCH4_prod_input_file, sep=';', index_col=0)  # MWh/h y
-    bioCH4_prod = bioCH4_prod.set_axis(p.hours_in_period)
+    #bioCH4_prod = pd.read_csv(p.bioCH4_prod_input_file, sep=';', index_col=0)  # MWh/h y
+    #bioCH4_prod = bioCH4_prod.set_axis(p.hours_in_period)
     CF_wind = pd.read_csv(p.CF_wind_input_file, sep=';', index_col=0)  # MWh/h y
     CF_wind = CF_wind.set_axis(p.hours_in_period)
     CF_solar = pd.read_csv(p.CF_solar_input_file, sep=';', index_col=0)  # MWh/h y
     CF_solar = CF_solar.set_axis(p.hours_in_period)
     NG_price_year = pd.read_csv(p.NG_price_year_input_file, sep=';', index_col=0)  # MWh/h y
     NG_price_year = NG_price_year.set_axis(p.hours_in_period)
-    Methanol_demand_max = pd.read_csv(p.Methanol_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
-    Methanol_demand_max = Methanol_demand_max.set_axis(p.hours_in_period)
+    #Methanol_demand = pd.read_csv(p.Methanol_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
+    #Methanol_demand = Methanol_demand.set_axis(p.hours_in_period)
+    #Methanation_demand_max = pd.read_csv(p.Methanation_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
+    #Methanation_demand_max = Methanol_demand_max.set_axis(p.hours_in_period)
     NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
     #NG_demand_DK = NG_demand_DK.set_axis(p.hours_in_period) # different time scale
     El_demand_DK1 = pd.read_csv(p.El_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
@@ -99,12 +94,12 @@ def load_input_data():
     DH_external_demand = pd.read_csv(p.DH_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
     DH_external_demand = DH_external_demand.set_axis(p.hours_in_period)
 
-    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
+    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, El_demand_DK1, DH_external_demand
 
 
 # ---- DEMANDS for H2, MeOH and El_DK1_GLS
 
-def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
+def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
     """
     Calculate H2 demand distribution over a given number of intervals (n),
     ensuring deliveries align with the last hour of each interval.
@@ -184,11 +179,11 @@ def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
             total_demand = np.sum(NG_demand_DK_2.loc[start_date:end_date, :].values)  # Total demand for normalization
 
             if total_demand > 0:  # Avoid division by zero
-                H2_val = np.sum(period_data) / total_demand * H2_size * flh_H2
+                H2_val = np.sum(period_data) / total_demand * demand_H2 #H2_size * flh_H2
             else:
                 H2_val = 0  # If there's no demand data, keep it zero
         else:
-            H2_val = H2_size * flh_H2 / n  # Equal division among intervals
+            H2_val = demand_H2 / n  # Equal division among intervals
 
         # Assign H2 demand value at the correct timestamp
         H2_demand_y.at[end_time, col_name] = H2_val
@@ -303,7 +298,7 @@ def pre_processing_energy_data():
     #filter_area = r'filter={"PriceArea":"DK1"}'
     Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
     Elspotprices = Elspotprices_data[['HourDK', 'SpotPrice' + 'EUR']].copy()
-    Elspotprices.rename(columns={'SpotPrice' + 'EUR': 'SpotPrice ' + 'EUR'}, inplace=True)
+    Elspotprices.rename(columns={'SpotPrice' + 'EUR': 'SpotPrice'}, inplace=True)
     Elspotprices['HourDK'] = pd.to_datetime(Elspotprices['HourDK'], infer_datetime_format=True)
     Elspotprices.set_index('HourDK', inplace=True)
     Elspotprices = remove_feb_29(Elspotprices)
@@ -312,14 +307,14 @@ def pre_processing_energy_data():
 
     '''CO2 emission from El Grid DK1'''
     sort_val = 'sort=HourDK%20asc'
-    # filter_area = r'filter={"PriceArea":"DK1"}'
-    if p.En_price_year <= 2022:
+    # filter_area = r'filter={"PriceArea":"DK1"}' # defined in parameters
+    if En_price_year <= 2022:
         dataset_name = 'DeclarationEmissionHour'
         CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
                                            p.filter_area)  # g/kWh = kg/MWh
         CO2_emiss_El = CO2emis_data[['HourDK', 'CO2PerkWh']].copy()
 
-    elif p.En_price_year > 2022:
+    elif En_price_year > 2022:
         dataset_name = 'DeclarationGridEmission'
         CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
                                            p.filter_area)  # g/kWh = kg/MWh
@@ -345,7 +340,7 @@ def pre_processing_energy_data():
 
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
-    if p.En_price_year <= 2022:
+    if En_price_year <= 2022:
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasMonthlyNeutralPrice'
         sort_val = 'sort=Month%20ASC'
@@ -357,14 +352,14 @@ def pre_processing_energy_data():
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'])
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
         NG_price_year.set_index('HourDK', inplace=True)
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro  # coversion to €/MWh
+        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / DKK_Euro  # coversion to €/MWh
         last_rows3 = pd.DataFrame(
             {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)
         NG_price_year = pd.concat([NG_price_year, last_rows3])
         NG_price_year = NG_price_year.asfreq('h', method='ffill')
 
-    elif p.En_price_year > 2022:
+    elif En_price_year > 2022:
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasDailyBalancingPrice'
         sort_val = 'sort=GasDay%20ASC'
@@ -424,10 +419,10 @@ def pre_processing_energy_data():
     hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
     DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
 
-    DH_Skive_Capacity = 59  # MW
+    DH_max_capacity = p.DH_Skive_Capacity  # MW
     # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
-    DH_Tamb_min = -15  # minimum outdoor temp --> maximum Capacity Factor
-    DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
+    DH_Tamb_min = p.DH_Tamb_min  # minimum outdoor temp --> maximum Capacity Factor
+    DH_Tamb_max = p.DH_Tamb_max  # maximum outdoor temp--> capacity Factor = 0
     CF_DH = (DH_Tamb_max - DH_Skive['Middeltemperatur'].values) / (DH_Tamb_max - DH_Tamb_min)
     CF_DH[CF_DH < 0] = 0
     DH_Skive['Capacity Factor DH'] = CF_DH
@@ -437,14 +432,14 @@ def pre_processing_energy_data():
     DH_CFbase_load = DH_CFmean_Jan / 4
     DH_Skive['Capacity Factor DH'] = DH_Skive['Capacity Factor DH'] + DH_CFbase_load
     DH_Skive['DH demand MWh'] = DH_Skive[
-                                    'Capacity Factor DH'] * DH_Skive_Capacity  # estimated demand for DH in Skive municipality
+                                    'Capacity Factor DH'] * DH_max_capacity  # estimated demand for DH in Skive municipality
     DH_Skive = remove_feb_29(DH_Skive)
     DH_Skive = DH_Skive.set_axis(p.hours_in_period)
     DH_Skive.to_csv(p.DH_external_demand_input_file, sep=';')  # MWh/h
 
     '''Onshore Wind and Solar Capacity Factors'''
     # Download CF for wind and solar corresponding to the energy year
-    CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, p.hours_in_period[0].strftime('%Y-%m-%d'), p.hours_in_period[-1].strftime('%Y-%m-%d'), p.latitude, p.longitude)
+    CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, p.hours_in_period[0].strftime('%Y-%m-%d'), p.hours_in_period[-1].strftime('%Y-%m-%d'), latitude, longitude)
     CF_wind = remove_feb_29(CF_wind)
     CF_solar = remove_feb_29(CF_solar)
     CF_wind.to_csv(p.CF_wind_input_file, sep=';')  # kg/MWh
@@ -455,44 +450,44 @@ def pre_processing_energy_data():
 
 # ---- Pre-processing for PyPSA network
 
-def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Methanation_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, preprocess_flag):
+def pre_processing_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
     # returns: inputs_dict which contains all inputs for the pypsa network
 
     if preprocess_flag:
         pre_processing_energy_data()  # download + preprocessing + save to CSV
-        balance_bioCH4_MeOH_demand_GL()  # Read CSV GL + create CSV with bioCH4 and MeOH max demands
+
+    # create CSV with bioCH4 and MeOH  demands
+    #bioCH4_demand, Methanol_demand = build_annual_demands(demand_CH4, demand_meoh)
 
     # load the inputs form CSV files
-    GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand = load_input_data()
+    GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, El_demand_DK1, DH_external_demand = load_input_data()
 
-    ''' create H2 grid demand'''
-    if not n_flags_OK['electrolyzer']:
-        flh_H2 = 0
-    H2_input_demand = preprocess_H2_grid_demand(p.H2_output, flh_H2, NG_demand_DK, profile_flag=p.H2_profile_flag, n=p.H2_delivery_frequency)
-
-    ''' create  Methanol demand'''
+    '''Build all demands'''
+    # Sanity check
+    if not n_flags_OK['electrolysis']:
+        demand_H2 = 0
+    if not n_flags_OK['biogas']:
+        demand_CH4 = 0
     if not n_flags_OK['meoh']:
-        f_max_MeOH_y_demand = 0
-    Methanol_input_demand = Methanol_demand_max * f_max_MeOH_y_demand
+        demand_meoh = 0
 
-    ''' create methanation demand'''
-    if not n_flags_OK['methanation']:
-        f_max_Methanation_y_demand = 0
-    methanation_meoh = (p.lhv_meoh / 32 )/ (p.lhv_ch4 / 16) # MWh_SNG / MWh_meoh for same C content
-    Methanation_input_demand = Methanol_demand_max.copy() * methanation_meoh * f_max_Methanation_y_demand
-    Methanation_input_demand = Methanation_input_demand.rename(columns={'Methanol demand MWh': 'Methanation demand MWh'})
+    demands = build_demands_TS (demand_CH4, demand_meoh, demand_H2, NG_demand_DK)
+    H2_input_demand = demands['H2']
+    Methanol_demand = demands['meoh']
 
     """ return the yearly el demand for the DK1 which is avaibale sale of RE form GLS,
     it is estimated in proportion to the El in GLS needed for producing RFNBOs """
-    # Guess of the RE EL demand yearly in GLS based on H2 and MeOH demand
+
+    # Estimation of the RE demand yearly in GLS based on H2 and MeOH demand
     El_d_H2 = np.abs(
         H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
-    El_d_MeOH = np.abs(Methanol_input_demand.values.sum() * (
+    El_d_MeOH = np.abs(Methanol_demand.values.sum() * (
             (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-            p.el_comp_H2 + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.el_comp_CO2 / GL_eff.at[
+            tech_costs.at['hydrogen storage compressor','electricity-input'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + tech_costs.at['hydrogen storage compressor','electricity-input'] / GL_eff.at[
                 'Methanol', 'Methanol plant']))
-    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH  # MWh el for H2 and MeOH
+
+    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH # MWh el for H2 and MeOH
 
     # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
     if el_DK1_sale_el_RFNBO < 0:
@@ -509,16 +504,15 @@ def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Met
                    'GL_eff': GL_eff,
                    'Elspotprices': Elspotprices,
                    'CO2_emiss_El': CO2_emiss_El,
-                   'bioCH4_demand': bioCH4_prod,
+                   'bioCH4_demand': demands['bioCH4'],
                    'CF_wind': CF_wind,
                    'CF_solar': CF_solar,
                    'NG_price_year': NG_price_year,
-                   'Methanol_input_demand': Methanol_input_demand,
-                   'Methanation_input_demand': Methanation_input_demand,
+                   'Methanol_input_demand': demands['meoh'],
                    'NG_demand_DK': NG_demand_DK,
                    'El_demand_DK1': El_demand_DK1,
                    'DH_external_demand': DH_external_demand,
-                   'H2_input_demand': H2_input_demand,
+                   'H2_input_demand': demands['H2'],
                    'CO2 cost': CO2_cost,
                    'el_DK1_sale_el_RFNBO': el_DK1_sale_el_RFNBO,
                    }
@@ -527,8 +521,7 @@ def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Met
 
 
 def en_market_prices_w_CO2(inputs_dict, tech_costs):
-    """Returns the market price of extrenally traded commodities adjusted for CO2 tax"""
-    " returns input currency"
+    """Returns the market price of externally traded commodities adjusted for CO2 tax"""
     CO2_cost = inputs_dict['CO2 cost']
     CO2_emiss_El = inputs_dict['CO2_emiss_El']
     NG_price_year = inputs_dict['NG_price_year']
@@ -539,126 +532,16 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
 
     # Market prices of energy commodities purchased on the market, including CO2 tax
     # adjust el price for difference in CO2 tax
-    mk_el_grid_price = el_grid_price + (np.array(CO2_emiss_El) * (CO2_cost - p.CO2_cost_ref_year))  # currency / MWh
+    mk_el_grid_price = el_grid_price + (np.array(CO2_emiss_El) * (CO2_cost - CO2_cost_ref_year))  # currency / MWh
     mk_el_grid_sell_price = el_grid_sell_price  # NOTE selling prices are negative in the model
 
-    # NG grid price uneffected by CO2 tax (paid locally by the consumer)
+    # NG grid price unaffected by CO2 tax (paid locally by the consumer)
     mk_NG_grid_price = NG_price_year + tech_costs.at['gas', 'CO2 intensity'] * (
-                CO2_cost - p.CO2_cost_ref_year)  # currency / MWH
+                CO2_cost - CO2_cost_ref_year)  # currency / MWH
 
     # District heating price
     DH_price = p.ref_df.copy()
-    DH_price.iloc[:, 0] = -p.DH_price
-
-    en_market_prices = {'el_grid_price': np.squeeze(mk_el_grid_price),
-                        'el_grid_sell_price': np.squeeze(mk_el_grid_sell_price),
-                        'NG_grid_price': np.squeeze(mk_NG_grid_price),
-                        # 'bioCH4_grid_sell_price': np.squeeze(mk_bioCH4_grid_sell_price),
-                        'DH_price': np.squeeze(DH_price)
-                        }
-
-    return en_market_prices
-
-
-# ---- Pre-processing for PyPSA network
-
-def pre_processing_all_inputs(n_flags_OK, flh_H2, f_max_MeOH_y_demand, f_max_Methanation_y_demand, CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
-    # functions calling all other functions and build inputs dictionary to the model
-    # returns: inputs_dict which contains all inputs for the pypsa network
-
-    if preprocess_flag:
-        pre_processing_energy_data()  # download + preprocessing + save to CSV
-        balance_bioCH4_MeOH_demand_GL()  # Read CSV GL + create CSV with bioCH4 and MeOH max demands
-
-    # load the inputs form CSV files
-    GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand = load_input_data()
-
-    ''' create H2 grid demand'''
-    if not n_flags_OK['electrolyzer']:
-        flh_H2 = 0
-    H2_input_demand = preprocess_H2_grid_demand(p.H2_output, flh_H2, NG_demand_DK, profile_flag=p.H2_profile_flag, n=p.H2_delivery_frequency)
-
-    ''' create  Methanol demand'''
-    if not n_flags_OK['meoh']:
-        f_max_MeOH_y_demand = 0
-    Methanol_input_demand = Methanol_demand_max * f_max_MeOH_y_demand
-
-    ''' create methanation demand'''
-    if not n_flags_OK['methanation']:
-        f_max_Methanation_y_demand = 0
-    methanation_meoh = (p.lhv_meoh / 32 )/ (p.lhv_ch4 / 16) # MWh_SNG / MWh_meoh for same C content
-    Methanation_input_demand = Methanol_demand_max.copy() * methanation_meoh * f_max_Methanation_y_demand
-    Methanation_input_demand = Methanation_input_demand.rename(columns={'Methanol demand MWh': 'Methanation demand MWh'})
-
-    """ return the yearly el demand for the DK1 which is avaibale sale of RE form GLS,
-    it is estimated in proportion to the El in GLS needed for producing RFNBOs """
-
-    # Guess of the RE EL demand yearly in GLS based on H2 and MeOH demand
-    El_d_H2 = np.abs(
-        H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
-    El_d_MeOH = np.abs(Methanol_input_demand.values.sum() * (
-            (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-            p.H2_comp_dict['el_demand'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + p.H2_comp_dict['el_demand'] / GL_eff.at[
-                'Methanol', 'Methanol plant']))
-    El_d_methanation = np.abs(Methanation_input_demand.values.sum() / (tech_costs.at['biogas plus hydrogen', "Methane Output"] - tech_costs.at['biogas plus hydrogen', "Biogas Input"]))
-
-    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH + El_d_methanation # MWh el for H2 and MeOH
-
-    # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
-    if el_DK1_sale_el_RFNBO < 0:
-        el_DK1_sale_el_RFNBO = 0
-        print('Warning: ElDK1 demand set = 0')
-
-    El_d_y_DK1 = El_d_y_guess_GLS * el_DK1_sale_el_RFNBO
-
-    # Distribute the external el demand according to the time series of DK1 demand
-    El_demand_DK1.iloc[:, 0] = El_demand_DK1.iloc[:, 0] * (
-            El_d_y_DK1 / len(p.hours_in_period)) / El_demand_DK1.values.mean()
-
-    inputs_dict = {'GL_inputs': GL_inputs,
-                   'GL_eff': GL_eff,
-                   'Elspotprices': Elspotprices,
-                   'CO2_emiss_El': CO2_emiss_El,
-                   'bioCH4_demand': bioCH4_prod,
-                   'CF_wind': CF_wind,
-                   'CF_solar': CF_solar,
-                   'NG_price_year': NG_price_year,
-                   'Methanol_input_demand': Methanol_input_demand,
-                   'Methanation_input_demand': Methanation_input_demand,
-                   'NG_demand_DK': NG_demand_DK,
-                   'El_demand_DK1': El_demand_DK1,
-                   'DH_external_demand': DH_external_demand,
-                   'H2_input_demand': H2_input_demand,
-                   'CO2 cost': CO2_cost,
-                   'el_DK1_sale_el_RFNBO': el_DK1_sale_el_RFNBO,
-                   }
-
-    return inputs_dict
-
-
-def en_market_prices_w_CO2(inputs_dict, tech_costs):
-    """Returns the market price of extrenally traded commodities adjusted for CO2 tax"""
-    " returns input currency"
-    CO2_cost = inputs_dict['CO2 cost']
-    CO2_emiss_El = inputs_dict['CO2_emiss_El']
-    NG_price_year = inputs_dict['NG_price_year']
-    Elspotprices = inputs_dict['Elspotprices']
-    GL_eff = inputs_dict['GL_eff']
-
-    el_grid_price, el_grid_sell_price = build_electricity_grid_price_w_tariff(Elspotprices)  #
-
-    # Market prices of energy commodities purchased on the market, including CO2 tax
-    # adjust el price for difference in CO2 tax
-    mk_el_grid_price = el_grid_price + (np.array(CO2_emiss_El) * (CO2_cost - p.CO2_cost_ref_year))  # currency / MWh
-    mk_el_grid_sell_price = el_grid_sell_price  # NOTE selling prices are negative in the model
-
-    # NG grid price uneffected by CO2 tax (paid locally by the consumer)
-    mk_NG_grid_price = NG_price_year + tech_costs.at['gas', 'CO2 intensity'] * (
-                CO2_cost - p.CO2_cost_ref_year)  # currency / MWH
-
-    # District heating price
-    DH_price = p.ref_df.copy()
-    DH_price.iloc[:, 0] = -p.DH_price
+    DH_price.iloc[:, 0] = -p.DH_price_local
 
     en_market_prices = {'el_grid_price': np.squeeze(mk_el_grid_price),
                         'el_grid_sell_price': np.squeeze(mk_el_grid_sell_price),

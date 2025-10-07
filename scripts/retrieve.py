@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
-import parameters as p
+import config as p
 import os
 from io import StringIO
 import json
@@ -102,6 +102,7 @@ def load_input_data():
     return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
 
 
+
 # ---- DEMANDS for H2, MeOH and El_DK1_GLS
 
 def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
@@ -196,6 +197,7 @@ def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
     H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')
 
     return H2_demand_y
+
 
 # ----- EXTERNAL ENERGY MARKETS
 
@@ -528,7 +530,8 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
 
 
 # ---- Technology data
-def retrieve_technology_data(file_name, local_folder, base_url):
+
+def retrieve_technology_data(local_file_path, base_url):
     """
     Downloads a specific .CSV cost file from the PyPSA technology-data GitHub repository
     and saves it in a specified local folder. If the file already exists locally, it checks
@@ -542,15 +545,18 @@ def retrieve_technology_data(file_name, local_folder, base_url):
     - str: Path to the downloaded file if successful, None if skipped.
     """
 
+    # Extract folder
+    local_folder  = os.path.dirname(local_file_path)
+
+    # Extract file name
+    file_name = os.path.basename(local_file_path)
+
     # GitHub raw file URL
-    # base_url = "https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/"
+    # base_url = "https://raw.githubusercontent.com/PyPSA/technology-data/py-isa/outputs/"
     file_url = base_url + file_name
 
     # Create the local folder if it does not exist
     os.makedirs(local_folder, exist_ok=True)
-
-    # Local file path
-    local_file_path = os.path.join(local_folder, file_name)
 
     # Function to compute file hash
     def compute_file_hash(file_path):

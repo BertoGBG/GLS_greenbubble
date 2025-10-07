@@ -89,6 +89,12 @@ CH4 liquefaction,electricity-input,0.036,MWh_el/MWh_CH4,"Pospíšil et al. (2019
 CH4 liquefaction,investment,241.443,EUR/kW_CH4,"Calculated, based on Lochner and Bothe (2009): https://doi.org/10.1016/j.enpol.2008.12.012 and Fasihi et al 2017, table 1, https://www.mdpi.com/2071-1050/9/2/306","based on 265 MUSD-2005/(1 bcm/a), 1 bcm = 10.6 TWh, currency exchange rate: 1.15 USD=1 EUR.",2005.0
 CH4 liquefaction,lifetime,25.0,years,"Fasihi et al 2017, table 1, https://www.mdpi.com/2071-1050/9/2/306",,2005.0
 CH4 liquefaction,methane-input,1.0,MWh_CH4/MWh_CH4,"Pospíšil et al. (2019): Energy demand of liquefaction and regasification of natural gas and the potential of LNG for operative thermal energy storage (https://doi.org/10.1016/j.rser.2018.09.027), Table 2 and Table 3. alternative source 2: https://encyclopedia.airliquide.com/methane (accessed 2021-02-10).","For refrigeration cycle, cleaning of gas presumed unnecessary as it should be nearly pure CH4 (=SNG). Assuming energy required is only electricity which is for Table 3 in the source provided with efficiencies of ~50% of LHV, making the numbers consistent with the numbers in Table 2.",
+CO2 gas pipe,FOM,0.1,%/year,"DEA Technology Data for Carbon Capture, Transport and Storage",sheet 421 co2 pipeline. constant for all years,2025.0
+CO2 gas pipe,investment,130000.0,EUR/(t/h)/km,"DEA Technology Data for Carbon Capture, Transport and Storage",sheet 421 co2 pipeline. constant for all years,2020.0
+CO2 gas pipe,lifetime,50.0,years,"DEA Technology Data for Carbon Capture, Transport and Storage",sheet 421 co2 pipeline. constant for all years,2025.0
+CO2 industrial compressor,FOM,4.0,%/year,Aarhus University BCE estimate,,2020.0
+CO2 industrial compressor,investment,1516000.0,EUR/t/h_CO2,Aarhus University BCE estimate,,2020.0
+CO2 industrial compressor,lifetime,15.0,years,Aarhus University BCE estimate,,2020.0
 CO2 liquefaction,FOM,5.0,%/year,Mitsubish Heavy Industries Ltd. and IEA (2004): https://ieaghg.org/docs/General_Docs/Reports/PH4-30%20Ship%20Transport.pdf .,,2004.0
 CO2 liquefaction,carbondioxide-input,1.0,t_CO2/t_CO2,Mitsubish Heavy Industries Ltd. and IEA (2004): https://ieaghg.org/docs/General_Docs/Reports/PH4-30%20Ship%20Transport.pdf .,"Assuming a pure, humid, low-pressure input stream. Neglecting possible gross-effects of CO2 which might be cycled for the cooling process.",
 CO2 liquefaction,electricity-input,0.123,MWh_el/t_CO2,Mitsubish Heavy Industries Ltd. and IEA (2004): https://ieaghg.org/docs/General_Docs/Reports/PH4-30%20Ship%20Transport.pdf .,,
@@ -98,17 +104,14 @@ CO2 liquefaction,lifetime,25.0,years,"Guesstimate, based on CH4 liquefaction.",,
 CO2 pipeline,FOM,0.9,%/year,"Danish Energy Agency, Technology Data for Energy Transport (March 2021), Excel datasheet: 121 co2 pipeline.",,2015.0
 CO2 pipeline,investment,2116.4433,EUR/(tCO2/h)/km,"Danish Energy Agency, Technology Data for Energy Transport (March 2021), Excel datasheet: 121 co2 pipeline.",Assuming the 120-500 t CO2/h range that is based on cost of a 12 inch onshore pipeline.,2015.0
 CO2 pipeline,lifetime,50.0,years,"Danish Energy Agency, Technology Data for Energy Transport (March 2021), Excel datasheet: 121 co2 pipeline.",,2015.0
-CO2 storage cylinders, FOM,1.0,%/year,AU Foulum,,2020.0
-CO2 storage cylinders, investment,77000.0, EUR/t_CO2,AU Foulum,,2020.0
-CO2 storage cylinders, lifetime,25.0,years,AU Foulum,,2020.0
+CO2 storage cylinders,FOM,1.0,%/year,Aarhus University BCE estimate,,202.0
+CO2 storage cylinders,investment,77000.0,EUR/tCO2,Aarhus University BCE estimate,,2020.0
+CO2 storage cylinders,lifetime,25.0,years,Aarhus University BCE estimate,,2020.0
 CO2 storage tank,FOM,1.0,%/year,"Lauri et al. 2014: doi: 10.1016/j.egypro.2014.11.297, pg. 2746 .","Assuming a 3000m^3 pressurised steel cylinder tanks and a CO2 density of 1100 kg/m^3 (close to triple point at -56.6°C and 5.2 bar with max density of 1200kg/m^3 ). Lauri et al. report costs 3x higher per m^3 for steel tanks, which are consistent with other sources. The numbers reported are in rather difficult to pinpoint as systems can greatly vary.",2013.0
 CO2 storage tank,investment,2584.3462,EUR/t_CO2,"Lauri et al. 2014: doi: 10.1016/j.egypro.2014.11.297, Table 3.","Assuming a 3000m^3 pressurised steel cylinder tanks and a CO2 density of 1100 kg/m^3 (close to triple point at -56.6°C and 5.2 bar with max density of 1200kg/m^3 ). Lauri et al. report costs 3x higher per m^3 for steel tanks, which are consistent with other sources. The numbers reported are in rather difficult to pinpoint as systems can greatly vary.",2013.0
 CO2 storage tank,lifetime,25.0,years,"Lauri et al. 2014: doi: 10.1016/j.egypro.2014.11.297, pg. 2746 .","Assuming a 3000m^3 pressurised steel cylinder tanks and a CO2 density of 1100 kg/m^3 (close to triple point at -56.6°C and 5.2 bar with max density of 1200kg/m^3 ). Lauri et al. report costs 3x higher per m^3 for steel tanks, which are consistent with other sources. The numbers reported are in rather difficult to pinpoint as systems can greatly vary.",2013.0
 CO2 submarine pipeline,FOM,0.5,%/year,"Danish Energy Agency, Technology Data for Energy Transport (March 2021), Excel datasheet: 121 co2 pipeline.",,2015.0
 CO2 submarine pipeline,investment,4232.8865,EUR/(tCO2/h)/km,"Danish Energy Agency, Technology Data for Energy Transport (March 2021), Excel datasheet: 121 co2 pipeline.",Assuming the 120-500 t CO2/h range that is based on cost of a 12 inch offshore pipeline.,2015.0
-CO2_industrial_compressor, FOM,4.0,%/year,AU Foulum,,2020.0
-CO2_industrial_compressor, investment,1516000.0, EUR/t/h_CO2,AU Foulum,,2020.0
-CO2_industrial_compressor, lifetime,25.0,years,AU Foulum,,2020.0
 Charging infrastructure fast (purely) battery electric vehicles passenger cars,FOM,1.6,%,PATHS TO A CLIMATE-NEUTRAL ENERGY SYSTEM The German energy transformation in its social context. https://www.ise.fraunhofer.de/en/publications/studies/paths-to-a-climate-neutral-energy-system.html,Charging infrastructure fast (purely) battery electric vehicles passenger cars,2020.0
 Charging infrastructure fast (purely) battery electric vehicles passenger cars,investment,448894.0,EUR/Ladesï¿½ule,PATHS TO A CLIMATE-NEUTRAL ENERGY SYSTEM The German energy transformation in its social context. https://www.ise.fraunhofer.de/en/publications/studies/paths-to-a-climate-neutral-energy-system.html,Charging infrastructure fast (purely) battery electric vehicles passenger cars,2020.0
 Charging infrastructure fast (purely) battery electric vehicles passenger cars,lifetime,30.0,years,PATHS TO A CLIMATE-NEUTRAL ENERGY SYSTEM The German energy transformation in its social context. https://www.ise.fraunhofer.de/en/publications/studies/paths-to-a-climate-neutral-energy-system.html,Charging infrastructure fast (purely) battery electric vehicles passenger cars,2020.0
@@ -157,6 +160,9 @@ Concrete-store,lifetime,35.0,years,"Viswanathan_2022, p.107 (p.129)","{'carrier'
 "Container, methanol",efficiency,1.7001,MWh/km,"Danish Energy Agency, inputs/data_sheets_for_maritime_commercial_freight_and_passenger_transport.xlsx","Container, methanol",2023.0
 "Container, methanol",investment,125635594.6493,EUR,"Danish Energy Agency, inputs/data_sheets_for_maritime_commercial_freight_and_passenger_transport.xlsx","Container, methanol",2023.0
 "Container, methanol",lifetime,32.0,years,"Danish Energy Agency, inputs/data_sheets_for_maritime_commercial_freight_and_passenger_transport.xlsx","Container, methanol",2023.0
+DH heat exchanger,FOM,0.1,%/year,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2025.0
+DH heat exchanger,investment,140.162,EUR/MW,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2020.0
+DH heat exchanger,lifetime,35.0,years,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2025.0
 Diesel Bus city,FOM,0.0004,%/year,"Danish Energy Agency, inputs/data_sheets_for_commercial_freight_and_passenger_transport_0.xlsx",Diesel B1,2022.0
 Diesel Bus city,Motor size,250.0,kW,"Danish Energy Agency, inputs/data_sheets_for_commercial_freight_and_passenger_transport_0.xlsx",Diesel B1,2022.0
 Diesel Bus city,VOM,0.1068,EUR/km,"Danish Energy Agency, inputs/data_sheets_for_commercial_freight_and_passenger_transport_0.xlsx",Diesel B1,2022.0
@@ -237,7 +243,7 @@ General liquid hydrocarbon storage (crude),FOM,6.25,%/year,"Stelter and Nishida 
 General liquid hydrocarbon storage (crude),investment,137.8999,EUR/m^3,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 8F .",Assumed 20% lower than for product storage. Crude or middle distillate tanks are usually larger compared to product storage due to lower requirements on safety and different construction method. Reference size used here: 80 000 – 120 000 m^3 .,2012.0
 General liquid hydrocarbon storage (crude),lifetime,30.0,years,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 11.",,2012.0
 General liquid hydrocarbon storage (product),FOM,6.25,%/year,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , figure 7 and pg. 12 .",Assuming ca. 10 EUR/m^3/a (center value between stand alone and addon facility).,2012.0
-General liquid hydrocarbon storage (product),investment,172.3748,EUR/m^3,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 8F .",Assumed at the higher end for addon facilities/mid-range for stand-alone facilities. Product storage usually smaller due to higher requirements on safety and different construction method. Reference size used here: 40 000 – 60 000 m^3 .,2012.0
+General liquid hydrocarbon storage (product),investment,172.3748,EUR/m^3,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 8F .",Assumed at the higher end for addon facilities/mid-range for stand-alone facilities. Product storage usually smaller due to higher requirements on safety and different construction method. Reference size used here: 40 000 - 60 000 m^3 .,2012.0
 General liquid hydrocarbon storage (product),lifetime,30.0,years,"Stelter and Nishida 2013: https://webstore.iea.org/insights-series-2013-focus-on-energy-security , pg. 11.",,2012.0
 Gravity-Brick-bicharger,FOM,1.5,%/year,"Viswanathan_2022, p.76 (p.98) Sentence 1 in 4.7.2 Operating Costs","{'carrier': ['elec', 'gravity', 'elec'], 'technology_type': ['bicharger'], 'type': ['mechanical'], 'note': ['1.5 percent of capital cost']}",2020.0
 Gravity-Brick-bicharger,efficiency,0.9274,per unit,"Viswanathan_2022, p.77 (p.99) Table 4.36","{'carrier': ['elec', 'gravity', 'elec'], 'technology_type': ['bicharger'], 'type': ['mechanical'], 'note': ['AC-AC efficiency at transformer level 0.86^0.5']}",2020.0
@@ -293,6 +299,9 @@ H2 liquefaction,hydrogen-input,1.017,MWh_H2/MWh_H2,"Heuser et al. (2019): Techno
 H2 liquefaction,investment,889.9426,EUR/kW_H2,"IRENA (2022): Global Hydrogen Trade to Meet the 1.5° Climate Goal: Technology Review of Hydrogen Carriers, https://www.irena.org/publications/2022/Apr/Global-hydrogen-trade-Part-II , pg. 62f.","Assumption for a 200t/d facility (Pessimistic long-term or optimistic short-term value).; and
 Assumption for a large >300t/d, e.g. 2500 t/d facility (Optimistic long-term value without change in base technology mentioned in report).",2022.0
 H2 liquefaction,lifetime,20.0,years,"Reuß et al 2017, https://doi.org/10.1016/j.apenergy.2017.05.050 , Table 9.",,2022.0
+H2 pipe,FOM,0.1,%/year,DEA Technology data for transport of energy,sheet H70. 70 bar pipeline,2025.0
+H2 pipe,investment,38000.0,EUR/MW/km,DEA Technology data for transport of energy,sheet H70. 70 bar pipeline,2020.0
+H2 pipe,lifetime,30.0,years,DEA Technology data for transport of energy,sheet H70. 70 bar pipeline,2025.0
 H2 pipeline,FOM,3.0,%/year,TODO, from old pypsa cost assumptions,2015.0
 H2 pipeline,investment,282.5452,EUR/MW/km,Welder et al https://doi.org/10.1016/j.energy.2018.05.059, from old pypsa cost assumptions,2015.0
 H2 pipeline,lifetime,40.0,years,TODO, from old pypsa cost assumptions,2015.0
@@ -462,6 +471,9 @@ PHS,FOM,1.0,%/year,DIW DataDoc http://hdl.handle.net/10419/80348, from old pypsa
 PHS,efficiency,0.75,per unit,DIW DataDoc http://hdl.handle.net/10419/80348, from old pypsa cost assumptions,2015.0
 PHS,investment,2274.8177,EUR/kWel,DIW DataDoc http://hdl.handle.net/10419/80348, from old pypsa cost assumptions,2010.0
 PHS,lifetime,80.0,years,IEA2010, from old pypsa cost assumptions,2015.0
+PWH pipe,FOM,0.1,%/year,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2025.0
+PWH pipe,investment,63000.0,EUR/MW/km,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2020.0
+PWH pipe,lifetime,45.0,years,DEA Technology data for transport of energy,"Heat exchanged for DH transmission, sheet 113_11. constant for all years",2025.0
 Pumped-Heat-charger,FOM,0.366,%/year,"Viswanathan_2022, NULL","{'carrier': ['elec', 'phes'], 'technology_type': ['charger'], 'type': ['thermal'], 'note': ['Guesstimate, 50% on charger']}",2020.0
 Pumped-Heat-charger,efficiency,0.99,per unit,"Viswanathan_2022, NULL","{'carrier': ['elec', 'phes'], 'technology_type': ['charger'], 'type': ['thermal'], 'note': ['Charger']}",2020.0
 Pumped-Heat-charger,investment,761782.6727,EUR/MW,"Georgiou_2018, Figure 9 of reference roughly 80% of capital cost are power related 47%/80% of costs are required for liquefaction (charging)","{'carrier': ['elec', 'phes'], 'technology_type': ['charger'], 'type': ['thermal'], 'note': ['Power Equipment Charge']}",2020.0
@@ -590,9 +602,9 @@ biogas plus hydrogen,heat output,0.2174,MWh_th/MWh_H2,"Danish Energy Agency, dat
 biogas plus hydrogen,hydrogen input,1.0,MWh_H2/MWh_H2,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx","99 SNG from methan. of biogas:  Hydrogen Consumption,",2020.0
 biogas plus hydrogen,investment,1555.4306,EUR/kW_H2,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",99 SNG from methan. of biogas:  Specific investment,2020.0
 biogas plus hydrogen,lifetime,25.0,years,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",99 SNG from methan. of biogas:  Technical lifetime,2020.0
-biogas storage, investment,16750, EUR/MWh_CH4,AU Foulum,,2020.0
-biogas storage, lifetime,15.0,years,AU Foulum,,2020.0
-biogas storage, FOM,0, %/year,AU Foulum,,2020.0
+biogas storage,FOM,0.2,%/year,Aarhus University BCE estimate,,2025.0
+biogas storage,investment,16750.0,EUR/MWh_biogas,Aarhus University BCE estimate,,2020.0
+biogas storage,lifetime,15.0,years,Aarhus University BCE estimate,,2025.0
 biogas upgrading,FOM,17.0397,%/year,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx","82 Upgrading 3,000 Nm3 per h:  Fixed O&M ",2020.0
 biogas upgrading,VOM,3.6704,EUR/MWh output,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx","82 Upgrading 3,000 Nm3 per h:  Variable O&M",2020.0
 biogas upgrading,investment,170.2068,EUR/kW,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx","82 Upgrading 3,000 Nm3 per h:  investment (upgrading, methane redution and grid injection)",2020.0
@@ -632,6 +644,10 @@ biomass HOP,VOM,2.9457,EUR/MWh,"Danish Energy Agency, technology_data_for_el_and
 biomass HOP,efficiency,1.0323,per unit,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx","09c Straw HOP:  Total efficiency , net, annual average",2015.0
 biomass HOP,investment,881.102,EUR/kW_th - heat output,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx",09c Straw HOP:  Nominal investment ,2015.0
 biomass HOP,lifetime,25.0,years,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx",09c Straw HOP:  Technical lifetime,2015.0
+biomass belt dryer,FOM,3.0,%/year,DOI: 10.1080/07373937.2018.1492615,,2020.0
+biomass belt dryer,electricity-input,0.025,MWh/t_H2O removed,DOI: 10.1080/07373937.2018.1492615,,2020.0
+biomass belt dryer,heat-input,1.0,MWh/t_H2O removed,DOI: 10.1080/07373937.2018.1492615,,2020.0
+biomass belt dryer,lifetime,20.0,years,DOI: 10.1080/07373937.2018.1492615,,2020.0
 biomass boiler,FOM,7.4851,%/year,"Danish Energy Agency, technologydatafor_heating_installations_marts_2018.xlsx","204 Biomass boiler, automatic:  Fixed O&M",2015.0
 biomass boiler,efficiency,0.86,per unit,"Danish Energy Agency, technologydatafor_heating_installations_marts_2018.xlsx","204 Biomass boiler, automatic:  Heat efficiency, annual average, net",2015.0
 biomass boiler,investment,687.1015,EUR/kW_th,"Danish Energy Agency, technologydatafor_heating_installations_marts_2018.xlsx","204 Biomass boiler, automatic:  Specific investment",2015.0
@@ -770,23 +786,29 @@ central water-sourced heat pump,VOM,1.6826,EUR/MWh,"Danish Energy Agency, techno
 central water-sourced heat pump,efficiency,3.82,per unit,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx","40 Comp. hp, seawater 20 MW:  Total efficiency , net, annual average",2015.0
 central water-sourced heat pump,investment,1058.2216,EUR/kW,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx","40 Comp. hp, seawater 20 MW:  Specific investment",2015.0
 central water-sourced heat pump,lifetime,40.0,years,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx","40 Comp. hp, seawater 20 MW:  Technical lifetime",2015.0
+centrifugal dewatering,DM out,0.45,kgDM/kgtot,https://dcapub.au.dk/djfpublikation/djfpdf/DCArapport208.pdf,,2025.0
+centrifugal dewatering,DM separation,0.509,kg_out/kg_in,https://dcapub.au.dk/djfpublikation/djfpdf/DCArapport208.pdf,,2025.0
+centrifugal dewatering,FOM,3.5,%/year,https://doi.org/10.3390/agronomy11050836,,2025.0
+centrifugal dewatering,electricity-input,0.005,MWh/tDM_in,calc from : https://doi.org/10.3390/su16135461,,2025.0
+centrifugal dewatering,investment,130000.0,EUR/t/h fibers,https://doi.org/10.3390/agronomy11050836,,2020.0
+centrifugal dewatering,lifetime,20.0,years, https://doi.org/10.3390/su16135461,,2025.0
 clean water tank storage,FOM,2.0,%/year,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1.",,
 clean water tank storage,investment,69.1286,EUR/m^3-H2O,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1.",,2013.0
 clean water tank storage,lifetime,30.0,years,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1.",,
 coal,CO2 intensity,0.3361,tCO2/MWh_th,Entwicklung der spezifischen Kohlendioxid-Emissionen des deutschen Strommix in den Jahren 1990 - 2018,,
 coal,FOM,1.31,%/year,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.","Calculated based on average of listed range, i.e. (39.5+91.25) USD/kW_e/a /2 / (1.09 USD/EUR) / investment cost * 100.",2023.0
 coal,VOM,3.2612,EUR/MWh_e,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.","Calculated based on average of listed range, i.e. (3+5.5)USD/MWh_e/2 / (1.09 USD/EUR).",2023.0
-coal,efficiency,0.33,p.u.,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.","Calculated based on average of listed range, i.e. 1 / ((8.75+12) MMbtu/MWh_th /2 / (3.4095 MMbtu/MWh_th)), rounded up.",2023.0
+coal,efficiency,0.356,p.u.,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.","Calculated based on average of listed range, i.e. 1 / ((8.75+12) MMbtu/MWh_th /2 / (3.4095 MMbtu/MWh_th)), rounded up.",2023.0
 coal,fuel,9.5542,EUR/MWh_th,"DIW (2013): Current and propsective costs of electricity generation until 2050, http://hdl.handle.net/10419/80348 , pg. 80 text below figure 10, accessed: 2023-12-14.","Based on IEA 2011 data, 99 USD/t.",2010.0
 coal,investment,3827.1629,EUR/kW_e,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.","Higher costs include coal plants with CCS, but since using here for calculating the average nevertheless. Calculated based on average of listed range, i.e. (3200+6775) USD/kW_e/2 / (1.09 USD/EUR).",2023.0
 coal,lifetime,40.0,years,"Lazard's levelized cost of energy analysis - version 16.0 (2023): https://www.lazard.com/media/typdgxmm/lazards-lcoeplus-april-2023.pdf , pg. 49 (Levelized Cost of Energy - Key Assumptions), accessed: 2023-12-14.",,2023.0
-csp-tower,FOM,1.1,%/year,ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power),Ratio between CAPEX and FOM from ATB database for “moderate” scenario.,1.0
+csp-tower,FOM,1.1,%/year,ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power),Ratio between CAPEX and FOM from ATB database for “moderate” scenario.,2020.0
 csp-tower,investment,108.37,"EUR/kW_th,dp",ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power) and NREL SAM v2021.12.2 (https://sam.nrel.gov/).,"Based on NREL’s SAM (v2021.12.2) numbers for a CSP power plant, 2020 numbers. CAPEX degression (=learning) taken from ATB database (“moderate”) scenario. Costs include solar field and solar tower as well as EPC cost for the default installation size (104 MWe plant). Total costs (223,708,924 USD) are divided by active area (heliostat reflective area, 1,269,054 m2) and multiplied by design point DNI (0.95 kW/m2) to obtain EUR/kW_th. Exchange rate: 1.16 USD to 1 EUR.",2020.0
 csp-tower,lifetime,30.0,years,ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power),-,2020.0
-csp-tower TES,FOM,1.1,%/year,see solar-tower.,-,1.0
+csp-tower TES,FOM,1.1,%/year,see solar-tower.,-,2020.0
 csp-tower TES,investment,14.52,EUR/kWh_th,ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power) and NREL SAM v2021.12.2 (https://sam.nrel.gov/).,"Based on NREL’s SAM (v2021.12.2) numbers for a CSP power plant, 2020 numbers. CAPEX degression (=learning) taken from ATB database (“moderate”) scenario. Costs include the TES incl. EPC cost for the default installation size (104 MWe plant, 2.791 MW_th TES). Total costs (69390776.7 USD) are divided by TES size to obtain EUR/kW_th. Exchange rate: 1.16 USD to 1 EUR.",2020.0
 csp-tower TES,lifetime,30.0,years,see solar-tower.,-,2020.0
-csp-tower power block,FOM,1.1,%/year,see solar-tower.,-,1.0
+csp-tower power block,FOM,1.1,%/year,see solar-tower.,-,2020.0
 csp-tower power block,investment,759.17,EUR/kW_e,ATB CSP data (https://atb.nrel.gov/electricity/2021/concentrating_solar_power) and NREL SAM v2021.12.2 (https://sam.nrel.gov/).,"Based on NREL’s SAM (v2021.12.2) numbers for a CSP power plant, 2020 numbers. CAPEX degression (=learning) taken from ATB database (“moderate”) scenario. Costs include the power cycle incl. BOP and EPC cost for the default installation size (104 MWe plant). Total costs (135185685.5 USD) are divided by power block nameplate capacity size to obtain EUR/kW_e. Exchange rate: 1.16 USD to 1 EUR.",2020.0
 csp-tower power block,lifetime,30.0,years,see solar-tower.,-,2020.0
 decentral CHP,FOM,3.0,%/year,HP, from old pypsa cost assumptions,2015.0
@@ -884,8 +906,8 @@ electric boiler steam,VOM,0.8811,EUR/MWh,"Danish Energy Agency, technology_data_
 electric boiler steam,efficiency,0.99,per unit,"Danish Energy Agency, technology_data_for_industrial_process_heat.xlsx","310.1 Electric boiler steam  :  Total efficiency, net, annual average",2019.0
 electric boiler steam,investment,70.49,EUR/kW,"Danish Energy Agency, technology_data_for_industrial_process_heat.xlsx",310.1 Electric boiler steam  :  Nominal investment,2019.0
 electric boiler steam,lifetime,25.0,years,"Danish Energy Agency, technology_data_for_industrial_process_heat.xlsx",310.1 Electric boiler steam  :  Technical lifetime,2019.0
-electric steam cracker,FOM,3.0,%/year,Guesstimate,,
-electric steam cracker,VOM,190.4799,€/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35",,2015.0
+electric steam cracker,FOM,3.0,%/year,Guesstimate,,2015.0
+electric steam cracker,VOM,190.4799,EUR/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35",,2015.0
 electric steam cracker,carbondioxide-output,0.55,t_CO2/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), ",The report also references another source with 0.76 t_CO2/t_HVC,
 electric steam cracker,electricity-input,2.7,MWh_el/t_HVC,"Lechtenböhmer et al. (2016): 10.1016/j.energy.2016.07.110, Section 4.3, page 6.",Assuming electrified processing.,
 electric steam cracker,investment,11124025.7434,EUR/(t_HVC/h),"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35",Assuming CAPEX of 1200 €/t actually given in €/(t/a).,2015.0
@@ -908,7 +930,7 @@ electrobiofuels,investment,470280.0038,EUR/kW_th,combination of BtL and electrof
 electrolysis,FOM,4.0,%/year,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 100 MW:  Fixed O&M ,2020.0
 electrolysis,efficiency,0.6217,per unit,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 100 MW:  Hydrogen Output,2020.0
 electrolysis,efficiency-heat,0.2228,per unit,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 100 MW:   - hereof recoverable for district heating,2020.0
-electrolysis,investment,1500.0,EUR/kW_e,private communications; IEA https://iea.blob.core.windows.net/assets/9e0c82d4-06d2-496b-9542-f184ba803645/TheRoleofE-fuelsinDecarbonisingTransport.pdf,,2020.0
+electrolysis,investment,550.0,EUR/kW_e,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 100 MW:  Specific investment,2020.0
 electrolysis,lifetime,25.0,years,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 100 MW:  Technical lifetime,2020.0
 electrolysis small,FOM,4.0,%/year,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 10 MW:  Fixed O&M ,2020.0
 electrolysis small,efficiency,0.6217,per unit,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx",86 AEC 10 MW:  Hydrogen Output,2020.0
@@ -1006,8 +1028,8 @@ methanol-to-kerosene,hydrogen-input,0.0279,MWh_H2/MWh_kerosene,"Concawe (2022): 
 methanol-to-kerosene,investment,269000.0,EUR/MW_kerosene,"Concawe (2022): E-Fuels: A technoeconomic assessment of European domestic production and imports towards 2050 (https://www.concawe.eu/wp-content/uploads/Rpt_22-17.pdf), table 94.",,2020.0
 methanol-to-kerosene,lifetime,30.0,years,"Concawe (2022): E-Fuels: A technoeconomic assessment of European domestic production and imports towards 2050 (https://www.concawe.eu/wp-content/uploads/Rpt_22-17.pdf), table 94.",,
 methanol-to-kerosene,methanol-input,1.0764,MWh_MeOH/MWh_kerosene,"Concawe (2022): E-Fuels: A technoeconomic assessment of European domestic production and imports towards 2050 (https://www.concawe.eu/wp-content/uploads/Rpt_22-17.pdf), table 6.","Assuming LHV 11.94 kWh/kg for kerosene, 5.54 kWh/kg for methanol, 33.3 kWh/kg for hydrogen.",
-methanol-to-olefins/aromatics,FOM,3.0,%/year,Guesstimate,same as steam cracker,
-methanol-to-olefins/aromatics,VOM,31.7466,€/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35", ,2015.0
+methanol-to-olefins/aromatics,FOM,3.0,%/year,Guesstimate,same as steam cracker,2015.0
+methanol-to-olefins/aromatics,VOM,31.7466,EUR/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35", ,2015.0
 methanol-to-olefins/aromatics,carbondioxide-output,0.6107,t_CO2/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Sections 4.5 (for ethylene and propylene) and 4.6 (for BTX)","Weighted average: 0.4 t_MeOH/t_ethylene+propylene for 21.7 Mt of ethylene and 17 Mt of propylene, 1.13 t_CO2/t_BTX for 15.7 Mt of BTX. The report also references process emissions of 0.55 t_MeOH/t_ethylene+propylene elsewhere. ",
 methanol-to-olefins/aromatics,electricity-input,1.3889,MWh_el/t_HVC,"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), page 69",5 GJ/t_HVC ,
 methanol-to-olefins/aromatics,investment,2781006.4359,EUR/(t_HVC/h),"DECHEMA 2017: DECHEMA: Low carbon energy and feedstock for the European chemical industry (https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf), Table 35",Assuming CAPEX of 1200 €/t actually given in €/(t/a).,2015.0
@@ -1063,6 +1085,10 @@ organic rankine cycle,FOM,2.0,%/year,"Aghahosseini, Breyer 2020: From hot rock t
 organic rankine cycle,electricity-input,0.12,MWh_el/MWh_th,"Aghahosseini, Breyer 2020: From hot rock to useful energy: A global estimate of enhanced geothermal systems potential, https://www.sciencedirect.com/science/article/pii/S0306261920312551; Breede et al. 2015: Overcoming challenges in the classification of deep geothermal potential, https://eprints.gla.ac.uk/169585/","Heat-input, Electricity-output. This is a rough estimate, depends on input temperature, implies ~150 C.",2020.0
 organic rankine cycle,investment,1376.0,EUR/kW_el,Tartiere and Astolfi 2017: A world overview of the organic Rankine cycle market,"Low rollout complicates the estimation, compounded by a dependence both on plant size and temperature, converted from 1500 USD/kW using currency conversion 1.09 USD = 1 EUR.",2020.0
 organic rankine cycle,lifetime,30.0,years,"Aghahosseini, Breyer 2020: From hot rock to useful energy: A global estimate of enhanced geothermal systems potential, https://www.sciencedirect.com/science/article/pii/S0306261920312551",,2020.0
+pelletization,FOM,3.0,%/year,Own assumption: find better,,2025.0
+pelletization,electricity-input,0.1,MW_e/MW_pellets,Own assumption: find better,,2025.0
+pelletization,investment,0.0,EUR/MW_pellets,Own assumption: find better,,2020.0
+pelletization,lifetime,15.0,years,Own assumption: find better,,2025.0
 perennials gbr,FOM,0.0,%year,Own assumption,,2015.0
 perennials gbr,VOM,43.2317,EUR/tDM,https://doi.org/10.1016/B978-0-323-95879-0.50147-8,"includes purchase of perennial crops and sales of proteine concentrate, table 8.1 wages, maintenance and auxiliary costs",2015.0
 perennials gbr,biogas-output,0.1947,MWh/tDM,https://doi.org/10.1016/B978-0-323-95879-0.50147-8,table 2,2015.0

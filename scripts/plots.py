@@ -14,7 +14,8 @@ from scripts.helpers import (
     optimal_network_only,
     build_electricity_grid_price_w_tariff,
     get_system_cost,
-    get_total_marginal_capital_cost_agents)
+    get_total_marginal_capital_cost_agents,
+    create_folder_if_not_exists)
 
 
 def export_print_network(n, n_flags_opt, folder, file_name):
@@ -57,12 +58,12 @@ def shadow_prices_violinplot(
     fC_MeOH = 0
     if 'H2 grid' in n.loads.index:
         H2_d = int(n.loads_t.p_set['H2 grid'].sum() // 1000)  # GWh/y
-    if 'Methanol' in n.loads.index:
-        meoh_d = n.loads_t.p_set['Methanol'].sum()
-        bioCH4_y_d = n.loads_t.p_set['bioCH4'].sum()
-        CO2_MeOH_plant = 1 / n.links.efficiency['Methanol plant']
-        bioCH4_CO2plant = n.links.efficiency['SkiveBiogas'] / n.links.efficiency2['SkiveBiogas']
-        fC_MeOH = round((meoh_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2) #TODO fix this when biomethanation is in the model
+    #if 'Methanol' in n.loads.index: # TODO and add methanation
+    #    meoh_d = n.loads_t.p_set['Methanol'].sum()
+    #    bioCH4_y_d = n.loads_t.p_set['bioCH4'].sum()
+    #    CO2_MeOH_plant = 1 / n.links.efficiency['Methanol plant']
+    #    bioCH4_CO2plant = n.links.efficiency['SkiveBiogas'] / n.links.efficiency2['SkiveBiogas']
+    #    fC_MeOH = round((meoh_d * CO2_MeOH_plant) * bioCH4_CO2plant / bioCH4_y_d, 2) #TODO fix this when biomethanation is in the model
 
     # Collect series (list of pd.Series)
     data, x_ticks_plot = [], []
@@ -184,9 +185,9 @@ def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs, folder):
     ax1.set_title('El prices time series')
     ax1.tick_params(axis='x', rotation=45)
 
-    plot_duration_curve(ax2, pd.DataFrame(en_market_prices['el_grid_price']), 'SpotPrice EUR')
-    plot_duration_curve(ax2, el_grid_price_tariff, 'SpotPrice EUR')
-    plot_duration_curve(ax2, inputs_dict['Elspotprices'], 'SpotPrice EUR')
+    plot_duration_curve(ax2, pd.DataFrame(en_market_prices['el_grid_price']), 'SpotPrice')
+    plot_duration_curve(ax2, el_grid_price_tariff, 'SpotPrice')
+    plot_duration_curve(ax2, inputs_dict['Elspotprices'], 'SpotPrice')
     # plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El2 bus']),'El2 bus')
     # plot_duration_curve(ax2,pd.DataFrame(n_opt.buses_t.marginal_price['El3 bus']),'El3 bus')
     ax2.set_ylabel('€/MWh')
@@ -360,6 +361,7 @@ def save_opt_capacity_components(n_opt, network_comp_allocation, file_path):
             df_agent.at[s, 'component'] = 'store'
 
         df_opt_componets = pd.concat([df_opt_componets, df_agent])
+        df_opt_componets.sort_index(inplace=True)
 
     "save to csv"
     df_opt_componets.to_csv(file_path + '.csv')
@@ -800,12 +802,16 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
     return df_results, results_plot
 
 
-def single_opt_plots(network_opt, network_comp_allocation, inputs_dict, tech_costs, plots_folder ):
+def single_opt_plots(network_opt, network_comp_allocation, inputs_dict, tech_costs, results_folder ):
+
+    # produces and saves plots for single analysis
+
+    plots_folder = create_folder_if_not_exists(results_folder, 'plots')
 
     # Costs by plant
-    cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(
-        network_opt, network_comp_allocation, True, plots_folder
-    )
+    #cc_tot_agent, mc_tot_agent = get_total_marginal_capital_cost_agents(
+    #    network_opt, network_comp_allocation, True, plots_folder
+    #)
 
     # Violin of shadow prices (with clipping + note box from your updated function)
     shadow_prices_violinplot(
@@ -820,12 +826,21 @@ def single_opt_plots(network_opt, network_comp_allocation, inputs_dict, tech_cos
     d_start = f"{p.En_price_year}-01-01"
     d_end = f"{p.En_price_year}-03-31"
 
-    bus_list = ['El3 bus', 'H2 delivery', 'Heat LT', 'Methanol', 'H2_distribution',
-                'CO2_distribution', 'El2 bus', 'methanation']
-    legend = ['El internal', 'LCOE H2 ', 'Heat LT ', 'LCOE MeOH', 'CO2 internal' , 'methanation']
+    bus_list = ['El3 bus', 'El2 bus','H2', 'H2 HP','Heat MT', 'Heat LT', 'CO2_distribution',  'CO2 pure HP',  'Methanol','methanation']
+    legend = ['El PtX', 'El internal', 'LCOE H2 ', 'H2 HP' ,'Heat MT ', 'Heat LT', 'CO2 internal' , 'CO2 HP', 'LCOE MeOH', 'LCOE methanation']
+
+    # build a mapping bus -> label
+    bus_label = dict(zip(legend, legend))
+
+    # keep only buses that actually exist in the network (preserves your list order)
+    buses_in_net = [b for b in bus_list if b in network_opt.buses.index]
+
+    # final aligned lists for plotting/legend
+    buses_final = [b for b in buses_in_net if b in bus_label]
+    legend_final = [bus_label[b] for b in buses_final]
 
     plot_bus_list_shadow_prices(
-        network_opt, bus_list, legend, d_start, d_end, plots_folder,
+        network_opt, buses_final, legend_final, d_start, d_end, plots_folder,
         handle_spikes='clip', quantile=0.95
     )
 
@@ -836,7 +851,7 @@ def single_opt_plots(network_opt, network_comp_allocation, inputs_dict, tech_cos
     # Heat map demo
     key_comp_dict = {
         'generators': ['onshorewind', 'solar'],
-        'links': ['DK1_to_El3', 'El3_to_DK1', 'Electrolyzer', 'Methanol plant', 'biomethanation_biogas', 'biomethanation_co2'],
+        'links': ['DK1_to_El3', 'El3_to_DK1', 'electrolysis', 'Methanol plant', 'biomethanation_biogas', 'biomethanation_co2'],
         'stores': ['H2 HP', 'CO2 pure HP', 'CO2 Liq', 'battery']
     }
     heat_map_CF(network_opt, key_comp_dict, plots_folder)
