@@ -32,8 +32,8 @@ cost_path = os.path.join(cost_folder, cost_file)
 
 # token to download  factors from Renewable Ninjas
 # obtain your own token from : https://www.renewables.ninja/documentation/api
-RN_token = "3665f7dcb14437156a2071ac917e37a9165f9be8"  #
-entsoe_api = "5f634ee5-faa2-4257-8a63-9cb21a1c356d" #
+RN_token = ""  #
+entsoe_api = "" #
 
 """ Crete an external NG demand"""
 NG_demand_year = 2019 # year for NG demand
