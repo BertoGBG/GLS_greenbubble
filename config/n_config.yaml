@@ -1,0 +1,148 @@
+# n_config.yaml
+
+# common defaults for most technologies
+base: &base
+  initial capacity: 0 # default initial capacity null
+  expansion: true # default capacity expansion
+  cost factor: 1  # default to input source
+  max capacity: .inf   # default to infinity
+
+# -------------------  config (alphabetical) -------------------
+# Units refer to bus0 in the network except for 'biogas'
+battery:
+  <<: *base
+
+battery inverter:
+  <<: *base
+
+biogas:
+  <<: *base
+
+biogas storage:
+  <<: *base
+  max capacity: 200 # MWh
+
+biogas upgrading:
+  <<: *base
+
+biomass belt dryer:
+  <<: *base
+  cost factor: 1.2       # override
+  min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
+
+biomass boiler:
+  <<: *base
+
+biomethanation biogas:
+  <<: *base
+  ramp limit up: 1 # % of total power capacity per hour
+  ramp limit down: 1 # % of total power capacity per hour
+  min load: 0 # % of max power capacity that must run (otherwise shut-off)
+
+biomethanation CO2:
+  <<: *base
+  ramp limit up: 1 # % of total power capacity per hour
+  ramp limit down: 1 # % of total power capacity per hour
+  min load: 0 # % of max power capacity that must run (otherwise shut-off)
+
+cat methanation biogas:
+  <<: *base
+  ramp limit up: 0.08 # % of total power capacity per hour
+  ramp limit down: 0.08 # % of total power capacity per hour
+  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+
+cat methanation CO2:
+  <<: *base
+  ramp limit up: 0.08 # % of total power capacity per hour
+  ramp limit down: 0.08 # % of total power capacity per hour
+  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+
+CO2 compressor:
+  <<: *base
+
+CO2 HP storage:
+  <<: *base
+
+CO2 Liq:
+  <<: *base
+
+CO2 Liq storage:
+  <<: *base
+
+CO2 pipe:
+  <<: *base
+
+dewatering:
+  <<: *base
+
+El boiler:
+  <<: *base
+
+electrolysis:
+  <<: *base
+  cost factor: 2                        # override
+  ramp limit up: 1 # % of total power capacity per hour
+  ramp limit down: 1 # % of total power capacity per hour
+  min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
+
+DH heat exchanger:
+  <<: *base
+
+eSMR meoh: # TODO add to the network
+  <<: *base
+  ramp limit up: 0.08 # % of total power capacity per hour
+  ramp limit down: 0.08 # % of total power capacity per hour
+  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+
+grid connection:
+  <<: *base
+
+H2 compressor:
+  <<: *base
+  cost factor: 2                        # override
+
+H2 pipe:
+  <<: *base
+
+H2 storage:
+  <<: *base
+
+
+heat pump:
+  <<: *base
+
+meoh:
+  <<: *base
+  ramp limit up: 0.08 # % of total power capacity per hour
+  ramp limit down: 0.08 # % of total power capacity per hour
+  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+
+NG boiler:
+  <<: *base
+
+onwind:
+  <<: *base
+
+pelletization:
+  <<: *base
+
+pyrolysis:
+  <<: *base
+
+solar:
+  <<: *base
+
+TES concrete:
+  <<: *base
+  min capacity: 1.5 # MWh
+  ramp limit up: 0.1 # % of total en capacity per hour
+  ramp limit down: 0.1 # % of total en capacity per hour
+  standing loss: 0.02 # % of total energy  per hour
+
+TES DH:
+  <<: *base
+  min capacity: 5 # MWh
+  ramp limit up: 0.02 # % of total en capacity per hour
+  ramp limit down: 0.02 # % of total en capacity per hour
+  standing loss: 0.002 # % of total energy  per hour
+

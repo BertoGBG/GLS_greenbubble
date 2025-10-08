@@ -1,0 +1,39 @@
+name: greenbubble_gls
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.11
+  - pip
+
+  # main packages
+  - numpy
+  - pandas
+  - atlite==0.2.11
+  - xarray==2023.10.0
+  - matplotlib
+  - openpyxl
+  - pypsa
+  - networkx
+  - geopy
+  - cartopy
+  - highspy>=1.5.3
+
+  # interactive python
+  - ipython
+  - jupyterlab
+
+  # reading excel tables
+  - xlrd
+
+  # plotting
+  - matplotlib>=3.6
+
+  # publishing
+  - jupyter-book
+
+  # pip packages
+  - pip:
+      - pypsatopo
+      - entsoe-py
+      - seaborn
+      - gurobipy

@@ -1,4 +1,3 @@
-
 # LOGIC for results structure
 
 # results_folder = network(s) filename
@@ -87,57 +86,18 @@ DKK_Euro = 7.46  #
 discount_rate = 0.07  #
 
 #--------------------------------------
-'''Network configuration '''
+'''Load Network configuration '''
 # Load network configuration
-with open("n_config.yaml", "r", encoding="utf-8") as f:
+with open("config/n_config.yaml", "r", encoding="utf-8") as f:
     cfg = yaml.safe_load(f)
 
 cfg.pop("base", None)
 n_config = pd.DataFrame.from_dict(cfg, orient="index").sort_index()
 
-# Minimum Capacity installed
-cap_nom_min = {'TES concrete' : 1.5, # MWh
-               'TES DH' : 5, # MWh
-               }
 
-# minimum load (can be deactivated fully)
-p_min_pu ={'meoh' : 0.15,
-           'electrolysis' : 0.0,
-           'cat methanation' : 0.15,
-           'biomethanation' : 0.0,
-           }
+'''Load Network options '''
+with open("config/n_options.yaml", "r", encoding="utf-8") as f:
+    cfg = yaml.safe_load(f)
 
-# ramp up limit
-ramp_limit_up ={'meoh' : 1/12,
-                'electrolysis' : 1,
-                'cat methanation' : 1/12,
-                'biomethanation' : 1,
-                'TES DH' : 1/50,
-                'TES concrete' : 1/10}
-
-# ramp down limit
-ramp_limit_down = { 'meoh' : 1/12,
-                    'electrolysis' : 1,
-                    'cat methanation' : 1/12,
-                    'biomethanation' : 1,
-                    'TES DH' : ramp_limit_up['TES DH'],
-                    'TES concrete' : ramp_limit_up['TES concrete']}
-
-# standing loss for energy storage
-standing_loss = {'TES concrete' : 0.02,
-                 'TES DH' : 0.02,
-                 }
-
-# other options
-n_options = {
-    'DH' : True, # add sales of DH heat to teh external market - ONLY WITH n_flags['symbiosis']
-    'biochar credits' : True, # biochar is rewarded for CO2 stored at same value of CO2 tax - ONLY WITH n_flags['central_heat']
-    # 'CO2 Liq credits' : True, # Liquid CO2 (sequestred) is sold and rewarded e at same value of CO2 tax  - # TODO add to the model
-    'pellets market' : False, # purchase of pellets from external market - ONLY WITH n_flags['central_heat']
-    'moist biomass market' : False,  # purchase of chips (moist biomass) - ONLY WITH n_flags['central_heat']
-    'symbiosis El transformer' : False, # True: the internal el grid is on two buses(El3 for variable RE, and H2) and (El2 for teh rest). if True they have different voltage and adds the cost for a transformer. - ONLY WITH n_flags['symbiosis']
-    'pellets annual max': 20000, # MWh/y max cap fo consumption (risk of unbounded optimization if inf and biochar credits : true)
-    'moist biomass annual max': 20000, # MWh/y max cap fo consumption (risk of unbounded optimization if inf and biochar credits : true)
-    'Dig biomass annual max': 400000, # t/y of digestible biomass (manure)
-}
-
+cfg.pop("base", None)
+n_options = pd.DataFrame.from_dict(cfg, orient="index").sort_index()

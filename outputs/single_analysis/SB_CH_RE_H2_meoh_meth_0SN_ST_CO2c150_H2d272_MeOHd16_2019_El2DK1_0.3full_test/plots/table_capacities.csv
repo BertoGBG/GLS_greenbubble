@@ -1,98 +1,100 @@
 ,Fixed cost (€/y),capacity,component,reference inlet,unit,agent,plant
-CO2 HP return,0.0,0.007009436560593197,link,CO2 storage,t/h,,meoh
-CO2 HP storage,16.01857574166765,0.0021713007843529074,store,CO2 storage,t/h,,meoh
-CO2 Liq,2.660679862190147,1.171535404390323,link,CO2_distribution,t/h,,storage
-CO2 Liq storage,14764.654432546364,59.62925874087643,store,CO2 Liq storage,t/h,,storage
-CO2 biogenic out,0.0,23.062767457866443,store,CO2 pure atm,t/h,,SkiveBiogas
-CO2 comp heat integration DH,443.5204015830992,40.4471573181938,link,CO2 comp heat DH,MW,,meoh
-CO2 comp heat integration LT,2.4046274388800404,0.21929170330128203,link,CO2 comp heat LT,MW,,meoh
-CO2 comp heat rejection DH,0.0,0.0005713805101465397,link,CO2 comp heat DH,MW,,meoh
-CO2 comp heat rejection LT,0.0,90.7436978838394,link,CO2 comp heat LT,MW,,meoh
-CO2 compressor,113728.89735975467,0.5008127743748576,link,CO2_distribution,t/h,,meoh
-CO2 extra compression,0.0,2082.446302835779,link,CO2 storage,t/h,,meoh
-CO2 liq return,0.0,0.5008713890751026,link,CO2 Liq storage,t/h,,storage
-CO2 sep to atm,0.0,0.7262074149548647,link,CO2 sep,t/h,,SkiveBiogas
-CO2 storage send,0.0,2082.4463046881374,link,CO2 pure HP,t/h,,meoh
-CO2_pipe,15412.82065250916,0.8069725136146002,link,CO2 sep,t/h,,symbiosis
-Concrete Heat MT storage,2904.988394820731,1.5000691951339835,store,Heat MT storage,MW,,storage
-DH GL_to_DH grid,0.0,44.52538388055548,link,Heat DH,MW,,symbiosis
-DH gen,0.0,13.297847559041848,generator,DH grid,MW,,external_grids
-DK1_to_El3,0.0,16.810948568671584,link,ElDK1 bus,MW,,electrolysis
-DK1_to_El_CO2_compressor,113.52235595946887,0.0080651310103819,link,ElDK1 bus,MW,,meoh
-DK1_to_El_CO2_liq,70.34038803927436,0.004997292736422715,link,ElDK1 bus,MW,,storage
-DK1_to_El_C_heat,5.5182496267656775,0.00039204089636534737,link,ElDK1 bus,MW,,central_heat
-DK1_to_El_H2_compressor,79.94679299124763,0.005679774295421611,link,ElDK1 bus,MW,,meoh
-DK1_to_El_biogas,7316.001165964071,0.5197611287830696,link,ElDK1 bus,MW,,SkiveBiogas
-DK1_to_El_heat_pump,4.512659994039055,0.00032059935463485655,link,ElDK1 bus,MW,,symbiosis
-DK1_to_El_meoh,75.63346403586833,0.005373336300702508,link,ElDK1 bus,MW,,meoh
-DK1_to_methanation,2191.012973350323,0.15565926663665955,link,ElDK1 bus,MW,,methanation
+CO2 HP return,0.0,0.0043714382889818775,link,CO2 storage,t/h,,meoh
+CO2 HP storage,5.753711485197526,0.0007799094290419795,store,CO2 storage,t/h,,meoh
+CO2 Liq,1.753378800389626,0.7720377679233471,link,CO2_distribution,t/h,,storage
+CO2 Liq storage,11455.790962582687,46.26592017510748,store,CO2 Liq storage,t/h,,storage
+CO2 biogenic out,0.0,19.677800689722368,store,CO2 pure atm,t/h,,SkiveBiogas
+CO2 comp heat integration DH,469.7482075228463,42.83902066691339,link,CO2 comp heat DH,MW,,meoh
+CO2 comp heat integration LT,1.9591335811357171,0.17866457524999754,link,CO2 comp heat LT,MW,,meoh
+CO2 comp heat rejection DH,0.0,0.0003735211793934745,link,CO2 comp heat DH,MW,,meoh
+CO2 comp heat rejection LT,0.0,96.1547527112976,link,CO2 comp heat LT,MW,,meoh
+CO2 compressor,111457.00022018934,0.49080832400231184,link,CO2_distribution,t/h,,meoh
+CO2 extra compression,0.0,2205.7842160378523,link,CO2 storage,t/h,,meoh
+CO2 liq return,0.0,0.49089230825123575,link,CO2 Liq storage,t/h,,storage
+CO2 sep to atm,0.0,0.6590676391723986,link,CO2 sep,t/h,,SkiveBiogas
+CO2 storage send,0.0,2205.7842313469505,link,CO2 pure HP,t/h,,meoh
+CO2_pipe,13104.602383410489,0.6861206111250673,link,CO2 sep,t/h,,symbiosis
+Concrete Heat MT storage,2905.0904774795927,1.5001219082712163,store,Heat MT storage,MW,,storage
+DH GL_to_DH grid,0.0,45.43282687893487,link,Heat DH,MW,,symbiosis
+DH gen,0.0,14.247328017964662,generator,DH grid,MW,,external_grids
+DK1_to_El3,0.0,16.202951612108624,link,ElDK1 bus,MW,,electrolysis
+DK1_to_El_CO2_compressor,111.10891909786086,0.007893669765505137,link,ElDK1 bus,MW,,meoh
+DK1_to_El_CO2_liq,1060.4287595316982,0.07533755620658038,link,ElDK1 bus,MW,,storage
+DK1_to_El_C_heat,2.5427922750256147,0.00018065122642090534,link,ElDK1 bus,MW,,central_heat
+DK1_to_El_H2_compressor,78.28131159161352,0.005561451119604161,link,ElDK1 bus,MW,,meoh
+DK1_to_El_biogas,7100.6160383648585,0.5044592152780708,link,ElDK1 bus,MW,,SkiveBiogas
+DK1_to_El_heat_pump,2.776470024996477,0.00019725272884567134,link,ElDK1 bus,MW,,symbiosis
+DK1_to_El_meoh,74.05561140738271,0.005261238660935806,link,ElDK1 bus,MW,,meoh
+DK1_to_methanation,3584.6558113296965,0.25466982693543533,link,ElDK1 bus,MW,,methanation
 Dig biomass,-0.0,-400000.0,store,Dig biomass market,t/h,,SkiveBiogas
-Digestate,0.0,2447.842028344486,store,Digestate,t/h DM,,SkiveBiogas
-El boiler,5.948260143386162,0.000840637360998549,link,El_C_heat,MW,,central_heat
-El2_to_El_CO2_compressor,0.0,38.46640571410694,link,El2 bus,MW,,meoh
-El2_to_El_CO2_liq,0.0,0.09009619298703761,link,El2 bus,MW,,storage
-El2_to_El_C_heat,0.0,0.0005199486372347409,link,El2 bus,MW,,central_heat
-El2_to_El_H2_compressor,0.0,0.037811570178880094,link,El2 bus,MW,,meoh
-El2_to_El_biogas,0.0,0.5311265643630417,link,El2 bus,MW,,SkiveBiogas
-El2_to_El_heat_pump,0.0,0.00017328974980015865,link,El2 bus,MW,,symbiosis
-El2_to_El_meoh,0.0,0.03576941313853215,link,El2 bus,MW,,meoh
-El2_to_methanation,0.0,0.49332862271517625,link,El2 bus,MW,,methanation
-El3_to_DK1,252414.74920419307,17.932661845137698,link,El3 bus,MW,,renewables
-El3_to_El2,0.0,39.62750835614457,link,El3 bus,MW,,symbiosis
-Grid gen,0.0,28.67323750330931,generator,ElDK1 bus,MW,,external_grids
-H2 comp heat integration DH,2.54900735639566,0.23245853219234933,link,H2 comp heat DH,MW,,meoh
-H2 comp heat integration LT,1.6932660546340743,0.15441859776660055,link,H2 comp heat LT,MW,,meoh
-H2 comp heat rejection DH,0.0,0.00036377324278038387,link,H2 comp heat DH,MW,,meoh
-H2 comp heat rejection LT,0.0,0.012893990978863974,link,H2 comp heat LT,MW,,meoh
-H2 compressor,60148.90538151674,2.289556858965323,link,H2_distribution,MW,,meoh
-H2 delivery,0.0,250473.0138137699,store,H2 delivery,MW,,demands
-H2 pipe,87555.56134027608,14.120574141787955,link,H2,MW,,symbiosis
-H2_to_delivery,0.0,53.90227140734189,link,H2,MW,,demands
-Heat DH storage charger,142.37539534271917,12.984025071027173,link,Heat DH,MW,,storage
-Heat DH_meoh,4.450748039114724,0.40588912140039796,link,Heat DH,MW,,meoh
-Heat DH_meoh_amb,0.0,0.0005587759821553696,link,Heat DH_meoh,MW,,meoh
-Heat LT_biogas,2.9706945898021675,0.2709145982668459,link,Heat LT,MW,,SkiveBiogas
-Heat LT_biogas_amb,0.0,0.17680876496530895,link,Heat LT_biogas,MW,,SkiveBiogas
-Heat LT_electrolysis,4.984668466589023,0.4545803731407174,link,Heat LT,MW,,electrolysis
-Heat LT_electrolysis_amb,0.0,14.14467939333303,link,Heat LT_electrolysis,MW,,electrolysis
-Heat MT storage charger,11.982873919075168,0.0009445294707888124,link,Heat MT,MW,,storage
-Heat MT storage discharger,13.389376319351486,0.000290463963308464,link,Heat MT storage,MW,,storage
-Heat MT_biogas,10.607813883734243,0.9673871042370307,link,Heat MT,MW,,SkiveBiogas
-Heat MT_biogas_amb,0.0,0.00044172249189257634,link,Heat MT_biogas,MW,,SkiveBiogas
-Heat MT_meoh,5.744599416392409,0.5238828146246928,link,Heat MT,MW,,meoh
-Heat MT_meoh_amb,0.0,0.00043896043151389716,link,Heat MT_meoh,MW,,meoh
-Heat MT_methanation,4.9843781423227265,0.45455389681351743,link,Heat MT,MW,,methanation
-Heat MT_methanation_amb,0.0,0.00044545032815716373,link,Heat MT_methanation,MW,,methanation
-Heat amb,0.0,174963.15374863058,store,Heat amb,MW,,external_grids
-Heat storage discharger,0.0,38.0542647773516,link,Heat DH storage,MW,,storage
-Heat_DH_to_LT,1.7550364834338645,0.16005179579392803,link,Heat DH,MW,,symbiosis
-Heat_DH_to_amb,0.0,0.00056592489930623,link,Heat DH,MW,,symbiosis
-Heat_LT_to_amb,0.0,0.33164574041472894,link,Heat LT,MW,,symbiosis
-Heat_MT_to_DH,409.0717344637799,37.30558670858085,link,Heat MT,MW,,symbiosis
-Heat_MT_to_LT,1.9447289015950266,0.17735093029156757,link,Heat MT,MW,,symbiosis
-Heat_MT_to_amb,0.0,0.0004418505370552917,link,Heat MT,MW,,symbiosis
-Methanol prod,0.0,1792471.2522288307,store,Methanol,MW,,demands
-NG boiler,8.272916346042871,0.0012628573741890019,link,NG,MW,,central_heat
-NG grid,0.0,0.002200410240433945,generator,NG,MW,,external_grids
-Water tank DH storage,12596.520868411004,51.53315593025726,store,Heat DH storage,MW,,storage
-battery,47.5298268170908,0.00368604515454747,store,battery,MW,,storage
-battery charger,19.30381921711247,0.0007822228593589421,link,El3 bus,MW,,storage
-battery discharger,0.0,0.003789396037332397,link,battery,MW,,storage
-bioCH4 delivery,0.0,1028284.0030740376,store,bioCH4,MW,,demands
-biogas,12763389.803115347,37.04780726877874,link,Dig biomass,t/h DM,,SkiveBiogas
-biogas store,168217.8685189524,89.83310108948908,store,biogas,MW,,SkiveBiogas
-biogas upgrading,370681.3643466315,8.22474398277063,link,biogas,MW,,SkiveBiogas
-biogas upgrading_NG boiler,6.006559992706446,0.001028330741918119,link,NG,MW,,SkiveBiogas
-biomass belt dryer,96009.15854221844,1.1574257527398928,link,moist biomass,t/h DM,,central_heat
-biomethanation CO2,30.712944025302825,0.00019800860147812447,link,H2_distribution,MW,,methanation
-biomethanation biogas,1955601.7733431347,11.830137675342641,link,H2_distribution,MW,,methanation
-cat methanation CO2,24.86815749072245,0.000199257830286289,link,H2_distribution,MW,,methanation
-cat methanation biogas,42.52898915934486,0.0003186353107978435,link,H2_distribution,MW,,methanation
-dewatering,38252.86551744646,2.274102776349057,link,Digestate,t/h DM,,SkiveBiogas
-electrolysis,13649536.502954438,98.62982699909092,link,El3 bus,MW,,electrolysis
-heat pump,13.493015909234284,0.0001801379066637883,link,El_heat_pump,MW,,symbiosis
-meoh,43843.02288152389,0.5008422239533936,link,CO2 pure HP,t/h,,meoh
-onshorewind,22064935.15299188,217.0802839499468,generator,El3 bus,MW,,renewables
-pellets boiler,1134049.8702259518,8.979249285523936,link,pellets,MW,,central_heat
-pellets store,0.0,230523.91922425095,store,pellets,MW,,central_heat
-solar,992062.4569456852,19.320812218208452,generator,El3 bus,MW,,renewables
+Digestate,0.0,3122.266174374392,store,Digestate,t/h DM,,SkiveBiogas
+El boiler,2.8704640250644067,0.00040566808523908264,link,El_C_heat,MW,,central_heat
+El2_to_El_CO2_compressor,0.0,40.74043023928879,link,El2 bus,MW,,meoh
+El2_to_El_CO2_liq,0.0,0.07536994648286782,link,El2 bus,MW,,storage
+El2_to_El_C_heat,0.0,0.00021538189130745534,link,El2 bus,MW,,central_heat
+El2_to_El_H2_compressor,0.0,0.0370572894058939,link,El2 bus,MW,,meoh
+El2_to_El_biogas,0.0,0.5154258538293036,link,El2 bus,MW,,SkiveBiogas
+El2_to_El_heat_pump,0.0,9.558582211434589e-05,link,El2 bus,MW,,symbiosis
+El2_to_El_meoh,0.0,0.035055991523111216,link,El2 bus,MW,,meoh
+El2_to_methanation,0.0,0.48173270748260577,link,El2 bus,MW,,methanation
+El3_to_DK1,254186.90930812043,18.058563948637463,link,El3 bus,MW,,renewables
+El3_to_El2,,41.84836752448968,link,El3 bus,MW,,symbiosis
+Grid gen,0.0,28.13281233443652,generator,ElDK1 bus,MW,,external_grids
+H2 comp heat integration DH,1.6163163040652204,0.14740111073388498,link,H2 comp heat DH,MW,,meoh
+H2 comp heat integration LT,1.502132834297163,0.13698806829353508,link,H2 comp heat LT,MW,,meoh
+H2 comp heat rejection DH,0.0,0.0002296347377386892,link,H2 comp heat DH,MW,,meoh
+H2 comp heat rejection LT,0.0,0.012238193961080735,link,H2 comp heat LT,MW,,meoh
+H2 compressor,58944.66774645834,2.2437177781095077,link,H2_distribution,MW,,meoh
+H2 delivery,0.0,150517.09427857582,store,H2 delivery,MW,,demands
+H2 pipe,85545.31752039607,13.796370899102229,link,H2,MW,,symbiosis
+H2_to_delivery,0.0,51.292148473862305,link,H2,MW,,demands
+Heat DH storage charger,191.01714939658635,17.419944301410165,link,Heat DH,MW,,storage
+Heat DH_meoh,3.0391675908093316,0.2771590421163284,link,Heat DH,MW,,meoh
+Heat DH_meoh_amb,0.0,0.0003588106148993252,link,Heat DH_meoh,MW,,meoh
+Heat LT_biogas,2.828735939451618,0.2579685785507013,link,Heat LT,MW,,SkiveBiogas
+Heat LT_biogas_amb,0.0,0.17734459070516223,link,Heat LT_biogas,MW,,SkiveBiogas
+Heat LT_electrolysis,5.068474210770768,0.4622230973693846,link,Heat LT,MW,,electrolysis
+Heat LT_electrolysis_amb,0.0,13.58803370198317,link,Heat LT_electrolysis,MW,,electrolysis
+Heat MT storage charger,5.546130211164312,0.00043716419522180663,link,Heat MT,MW,,storage
+Heat MT storage discharger,5.77123628776676,0.00012519897307775076,link,Heat MT storage,MW,,storage
+Heat MT_biogas,8.620508812541221,0.7861534099878427,link,Heat MT,MW,,SkiveBiogas
+Heat MT_biogas_amb,0.0,0.0002506138644481184,link,Heat MT_biogas,MW,,SkiveBiogas
+Heat MT_meoh,4.123781138331711,0.37607114318201623,link,Heat MT,MW,,meoh
+Heat MT_meoh_amb,0.0,0.00024960906990020355,link,Heat MT_meoh,MW,,meoh
+Heat MT_methanation,3.1750006943791296,0.2895464382530014,link,Heat MT,MW,,methanation
+Heat MT_methanation_amb,0.0,0.00025325783492014035,link,Heat MT_methanation,MW,,methanation
+Heat amb,0.0,187398.8120354419,store,Heat amb,MW,,external_grids
+Heat storage discharger,0.0,44.8725257703279,link,Heat DH storage,MW,,storage
+Heat_DH_to_LT,1.404697835495186,0.12810241453155544,link,Heat DH,MW,,symbiosis
+Heat_DH_to_amb,0.0,0.00036492744755548066,link,Heat DH,MW,,symbiosis
+Heat_LT_to_amb,0.0,0.3351528242236608,link,Heat LT,MW,,symbiosis
+Heat_MT_to_DH,396.4361586579209,36.15327641890461,link,Heat MT,MW,,symbiosis
+Heat_MT_to_LT,1.4252024628616824,0.12997234855462028,link,Heat MT,MW,,symbiosis
+Heat_MT_to_amb,0.0,0.0002513287506138988,link,Heat MT,MW,,symbiosis
+Methanol prod,0.0,984192.802565797,store,Methanol,MW,,demands
+NG boiler,4.162705189049685,0.0006354352836023438,link,NG,MW,,central_heat
+NG grid,0.0,0.0010391744785355544,generator,NG,MW,,external_grids
+Water tank DH storage,23408.530874626133,95.76576613987869,store,Heat DH storage,MW,,storage
+battery,744151.6256447168,57.71063514521392,store,battery,MW,,storage
+battery charger,125387.5472991163,5.080911951836578,link,El3 bus,MW,,storage
+battery discharger,0.0,29.211920196946203,link,battery,MW,,storage
+bioCH4 delivery,0.0,625224.7174068653,store,bioCH4,MW,,demands
+biogas,12762187.775086952,37.04431818763223,link,Dig biomass,t/h DM,,SkiveBiogas
+biogas store,108832.02441083845,58.119380163059745,store,biogas,MW,,SkiveBiogas
+biogas upgrading,336377.2344486742,7.463597852698201,link,biogas,MW,,SkiveBiogas
+biogas upgrading_NG boiler,2.8338650624752275,0.0004851613179140036,link,NG,MW,,SkiveBiogas
+biomass belt dryer,92643.3695673221,1.1168499275063033,link,moist biomass,t/h DM,,central_heat
+biomethanation CO2,13.413719035693209,8.647922988724037e-05,link,H2_distribution,MW,,methanation
+biomethanation biogas,1909661.2546478452,11.552226973659836,link,H2_distribution,MW,,methanation
+cat methanation CO2,8.174567072376833,6.549928353072486e-05,link,H2_distribution,MW,,methanation
+cat methanation biogas,22.815620916227154,0.00017093899021323008,link,H2_distribution,MW,,methanation
+dewatering,36909.84338774057,2.1942611667716143,link,Digestate,t/h DM,,SkiveBiogas
+electrolysis,13114130.638448073,94.7610518374485,link,El3 bus,MW,,electrolysis
+heat pump,7.343454508362935,9.803846165422089e-05,link,El_heat_pump,MW,,symbiosis
+meoh,42965.17142579638,0.4908140587747428,link,CO2 pure HP,t/h,,meoh
+moist biomass market,-0.0,-20000.0,store,moist biomass market,MW,,central_heat
+onshorewind,22280483.301351786,219.2008998922288,generator,El3 bus,MW,,renewables
+pellets boiler,1101406.0616704102,8.720780145546232,link,pellets,MW,,central_heat
+pellets market,-0.0,-20000.0,store,pellets market,MW,,central_heat
+pellets store,0.0,250652.70661980202,store,pellets,MW,,central_heat
+solar,1077868.3115561232,20.99191547641988,generator,El3 bus,MW,,renewables

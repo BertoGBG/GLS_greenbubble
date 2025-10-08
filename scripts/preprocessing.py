@@ -16,7 +16,7 @@ from config import (CO2_cost_ref_year,
                     longitude,
                     H2_delivery_frequency,
                     H2_profile_flag,
-                    demand_H2, demand_CH4, demand_meoh)
+                    demand_H2, demand_CH4, demand_meoh, n_options)
 
 
 # ------ INPUTS PRE-PROCESSING ----
@@ -541,7 +541,7 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs):
 
     # District heating price
     DH_price = p.ref_df.copy()
-    DH_price.iloc[:, 0] = -p.DH_price_local
+    DH_price.iloc[:, 0] = - n_options.at['DH', 'price'] #
 
     en_market_prices = {'el_grid_price': np.squeeze(mk_el_grid_price),
                         'el_grid_sell_price': np.squeeze(mk_el_grid_sell_price),

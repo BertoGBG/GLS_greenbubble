@@ -58,17 +58,9 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 # --------------------------------------
 ''' ASSUMPTIONS ON ENERGY PRICES'''
-''' Biogenic Feedstocks '''
-pellets_price = 250 / lhv_dict['pellets']  # (€/t) / (MWh/t) : NOTE reference 13% moisture( DEA Input moisture to pyrolysis)
-biogas_manure_price = 19.8676 # EUR/MWh biogas from JRC ENSPRESO
-moist_biomass_price = 100 / lhv_dict['chips'] # # (€/t) / (MWh/t) : NOTE reference 13% moisture( DEA Input moisture to pyrolysis)
-
 '''Fossil Methanol'''
 methanol_price_2023 = 360  # €/ton
 CO2_intensity_MeOH_life = 110 / 1000000 * 3600 # (110 gCO2/MJ meoh) --> tCO2e/MWh
-
-'''District Heating price'''
-DH_price_local = 400 / DKK_Euro   #
 
 '''Electricity tariffs'''
 # Purchased Electricity

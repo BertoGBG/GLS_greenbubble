@@ -8,12 +8,7 @@ import math
 from scripts.preprocessing import en_market_prices_w_CO2
 from scripts.grid_constraints import add_link_El_grid_to_H2
 from config import (n_options,
-                    cap_nom_min,
-                    p_min_pu,
-                    ramp_limit_up,
-                    ramp_limit_down,
-                    n_config,
-                    standing_loss)
+                    n_config)
 
 # ------- BUILD PYPSA NETWORK HANDLING FUNCTIONS-------------
 def network_dependencies(n_flags):
@@ -376,7 +371,7 @@ def add_external_grids(network, inputs_dict, n_flags):
                 p_nom_extendable=True)
 
     # --------------District heating-------------------
-    if n_options['DH']:
+    if n_options.at['DH','enable']:
         DH_external_demand = inputs_dict['DH_external_demand']
         network.add('Bus', 'DH grid', carrier='Heat', unit='MW')
 
@@ -1101,9 +1096,9 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs):
                   bus='Heat DH storage',
                   e_nom_extendable=expansion,
                   e_nom = capacity,
-                  e_nom_min=cap_nom_min['TES DH'],
+                  e_nom_min=n_config.at['TES DH', 'min capacity'],
                   e_nom_max=n_config.at['TES DH', 'max capacity'],
-                  standing_loss=standing_loss['TES DH'],
+                  standing_loss=n_config.at['TES DH', 'standing loss'],
                   e_cyclic=True,
                   capital_cost=capital_cost) #
 
@@ -1112,8 +1107,8 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs):
                   bus0="Heat DH",
                   bus1="Heat DH storage",
                   p_nom_extendable=expansion,
-                  p_nom = capacity * ramp_limit_up['TES DH'],
-                  p_nom_max = n_config.at['TES DH', 'max capacity'] * ramp_limit_up['TES DH'],
+                  p_nom = capacity * n_config.at['TES DH','ramp limit up'],
+                  p_nom_max = n_config.at['TES DH', 'max capacity'] * n_config.at['TES DH','ramp limit up'],
                   capital_cost= tech_costs.at['DH heat exchanger', "fixed"] * n_config.at['DH heat exchanger','cost factor'] * int(capital_cost > 0)
                   )
 
@@ -1122,8 +1117,8 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs):
                   bus0="Heat DH storage",
                   bus1="Heat DH",
                   p_nom_extendable=expansion,
-                  p_nom = capacity * ramp_limit_down['TES DH'],
-                  p_nom_max = n_config.at['TES DH', 'max capacity'] * ramp_limit_down['TES DH'])
+                  p_nom = capacity * n_config.at['TES DH','ramp limit down'],
+                  p_nom_max = n_config.at['TES DH', 'max capacity'] * n_config.at['TES DH','ramp limit down'])
 
         t = 'TES DH'
         if t in cap_to_add:
@@ -1147,9 +1142,9 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs):
                   bus='Heat MT storage',
                   e_nom_extendable=expansion,
                   e_nom=capacity,
-                  e_nom_min=cap_nom_min['TES concrete'],
+                  e_nom_min=n_config.at['TES concrete','min capacity'],
                   e_nom_max=n_config.at['TES concrete', 'max capacity'],
-                  standing_loss=standing_loss['TES concrete'],
+                  standing_loss=n_config.at['TES concrete','standing loss'],
                   e_cyclic=True,
                   capital_cost=capital_cost)
 
@@ -1158,18 +1153,20 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs):
                   bus0="Heat MT",
                   bus1="Heat MT storage",
                   p_nom_extendable=expansion,
-                  p_nom=capacity * ramp_limit_up['TES concrete'],
-                  p_nom_max=n_config.at['TES concrete', 'max capacity'] * ramp_limit_up['TES concrete'],
+                  p_nom=capacity * n_config.at['TES concrete', 'ramp limit up'],
+                  p_nom_max=n_config.at['TES concrete', 'max capacity'],
                   capital_cost= tech_costs.at['Concrete-charger', 'fixed'] * n_config.at['TES concrete', 'cost factor'] * int(capital_cost > 0)
                   )
+
+            # p/en <= max
 
             n.add("Link",
                   prefix + "Heat MT storage discharger",
                   bus0="Heat MT storage",
                   bus1="Heat MT",
                   p_nom_extendable=expansion,
-                  p_nom=capacity * ramp_limit_down['TES concrete'],
-                  p_nom_max=n_config.at['TES DH', 'max capacity'] * ramp_limit_down['TES DH'],
+                  p_nom=capacity * n_config.at['TES concrete', 'ramp limit down'],
+                  p_nom_max=n_config.at['TES DH', 'max capacity'],
                   capital_cost= tech_costs.at['Concrete-discharger', 'fixed'] * n_config.at['TES concrete', 'cost factor'] * int(capital_cost > 0)
                   )
 
@@ -1366,7 +1363,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 p_nom_extendable=True,
                 p_min_pu = 1,
                 p_max_pu = 1,
-                marginal_cost=p.biogas_manure_price / GL_eff.loc["bioCH4", "SkiveBiogas"],
+                marginal_cost=n_options.at['Dig biomass' , 'price'] / GL_eff.loc["bioCH4", "SkiveBiogas"],
                 efficiency=1,
                 )
 
@@ -1375,7 +1372,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 "Store",
                 'Dig biomass',
                 bus='Dig biomass market',
-                e_nom_min=-n_options['Dig biomass annual max'],
+                e_nom_min= - n_options.at['Dig biomass','max capacity'],
                 e_nom_max=0,
                 e_nom_extendable=True,
                 e_min_pu=1.0,
@@ -1747,9 +1744,9 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
                   p_nom_extendable=expansion,
                   p_nom = capacity,
                   p_nom_max= n_config.at['electrolysis', 'max capacity'],
-                  p_min_pu= p_min_pu['electrolysis'],
-                  ramp_limit_up=ramp_limit_up['electrolysis'],
-                  ramp_limit_down=ramp_limit_down['electrolysis'])
+                  p_min_pu=n_config.at['electrolysis', 'min load'],
+                  ramp_limit_up=n_config.at['electrolysis', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['electrolysis', 'ramp limit down'],)
 
         # ------- Check techs to add ------------
         techs = ['electrolysis']
@@ -1828,9 +1825,9 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                   p_nom = capacity,
                   p_nom_max = n_config.at['meoh', 'max capacity'],
                   capital_cost=capital_cost,
-                  p_min_pu=p_min_pu['meoh'],
-                  ramp_limit_up=ramp_limit_up['meoh'],
-                  ramp_limit_down=ramp_limit_down['meoh'])
+                  p_min_pu=n_config.at['meoh', 'min load'],
+                  ramp_limit_up=n_config.at['meoh', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['meoh', 'ramp limit down'],)
 
             if not n_flags['central_heat']:
                 # add local NG and El boiler to produce MT heat
@@ -1913,10 +1910,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_nom=capacity,
                   p_nom_extendable = expansion,
                   p_nom_max = n_config.at['biomethanation biogas','max capacity'],
-                  p_min_pu=p_min_pu['biomethanation'],
+                  p_min_pu=n_config.at['biomethanation biogas', 'min load'],
                   capital_cost = capital_cost,
-                  ramp_limit_up=ramp_limit_up['biomethanation'],
-                  ramp_limit_down=ramp_limit_down['biomethanation'],
+                  ramp_limit_up=n_config.at['biomethanation biogas', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['biomethanation biogas', 'ramp limit down'],
                   marginal_cost=tech_costs.at['biomethanation', "VOM"]) #
 
         # ----------BIO-METHANATION PLANT (CO2 + H2)---------
@@ -1953,9 +1950,9 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   p_nom_extendable=expansion,
                   p_nom = capacity,
                   p_nom_max = n_config.at['biomethanation CO2', 'max capacity' ],
-                  p_min_pu=p_min_pu['biomethanation'],
-                  ramp_limit_up=ramp_limit_up['biomethanation'],
-                  ramp_limit_down=ramp_limit_down['biomethanation'],
+                  p_min_pu=n_config.at['biomethanation CO2', 'min load'],
+                  ramp_limit_up=n_config.at['biomethanation CO2', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['biomethanation CO2', 'ramp limit down'],
                   capital_cost=capital_cost * input_vol_flow_onlyco2_biogas_biometh,
                   marginal_cost=tech_costs.at['biomethanation', "VOM"] * input_vol_flow_onlyco2_biogas_biometh)
             return
@@ -1983,11 +1980,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   efficiency2= -1 * tech_costs.at['biogas plus hydrogen', "Biogas Input"],
                   efficiency3= -1 * tech_costs.at['biogas plus hydrogen', "electricity input"],
                   efficiency4= tech_costs.at['biogas plus hydrogen', "heat output"],
-                  p_min_pu=p_min_pu['cat methanation'],
                   p_nom= capacity,
                   p_nom_extendable=expansion,
-                  ramp_limit_up=ramp_limit_up['cat methanation'],
-                  ramp_limit_down=ramp_limit_down['cat methanation'],
+                  p_nom_max=n_config.at['cat methanation biogas', 'max capacity'],
+                  p_min_pu=n_config.at['cat methanation biogas', 'min load'],
+                  ramp_limit_up=n_config.at['cat methanation biogas', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['cat methanation biogas', 'ramp limit down'],
                   capital_cost= capital_cost ,# cost per MWh_H2 input
                   marginal_cost=tech_costs.at['biogas plus hydrogen', "VOM"] )# - en_market_prices['NG_grid_price'] * tech_costs.at['biogas plus hydrogen', "Methane Output"] )
 
@@ -2027,10 +2025,9 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                   efficiency4 = tech_costs.at['biogas plus hydrogen', "heat output"],
                   p_nom_extendable=expansion,
                   p_nom = capacity,
-                  p_nom_max = n_config.at['cat methanation CO2', 'max capacity'],
-                  p_min_pu=p_min_pu['cat methanation'],
-                  ramp_limit_up=ramp_limit_up['cat methanation'],
-                  ramp_limit_down=ramp_limit_down['cat methanation'],
+                  p_min_pu=n_config.at['cat methanation CO2', 'min load'],
+                  ramp_limit_up=n_config.at['cat methanation CO2', 'ramp limit up'],
+                  ramp_limit_down=n_config.at['cat methanation CO2', 'ramp limit down'],
                   capital_cost = capital_cost * input_vol_flow_onlyco2_biogas_cat_meth,#
                   marginal_cost=tech_costs.at['biogas plus hydrogen', "VOM"] * input_vol_flow_onlyco2_biogas_cat_meth) # - en_market_prices['NG_grid_price'] * tech_costs.at['biogas plus hydrogen', "Methane Output"] - tech_costs.at[ 'biogas plus hydrogen', "Biogas Input"] )
 
@@ -2118,7 +2115,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                 n.add('Bus', 'Heat MT', carrier='Heat', unit='MW')
 
         # ---- add generator for straw (market)
-        if n_options['pellets market']:
+        if n_options.at['pellets market','enable']:
             bus_dict = {'bus_list': ['pellets', 'pellets market'],
                         'carrier_list': ['pellets', 'pellets'],
                         'unit_list': ['MW', 'MW']}
@@ -2131,14 +2128,14 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                 bus1='pellets',
                 p_nom_extendable=True,
                 efficiency = 1,
-                marginal_cost=p.pellets_price
+                marginal_cost=n_options.at['pellets market','price']
                 )
 
             n.add(
                 "Store",
                 'pellets market',
                 bus='pellets market',
-                e_nom_min= -n_options['pellets annual max'],
+                e_nom_min= -n_options.at['pellets market','max capacity'],
                 e_nom_max=0,
                 e_nom_extendable=True,
                 e_min_pu=1.0,
@@ -2147,7 +2144,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                 )
 
         # ---- add generator for chip biomass (market)
-        if n_options['moist biomass market']:
+        if n_options.at['moist biomass market','enable']:
             bus_dict = {'bus_list': ['moist biomass', 'moist biomass market'],
                         'carrier_list': ['moist biomass', ' moist biomass'],
                         'unit_list': ['MW', 'MW']}
@@ -2160,14 +2157,14 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                 bus1='moist biomass',
                 p_nom_extendable=True,
                 efficiency = 1,
-                marginal_cost=p.moist_biomass_price
+                marginal_cost=n_options.at['moist biomass market','price']
             )
 
             n.add(
                 "Store",
                 'moist biomass market',
                 bus='moist biomass market',
-                e_nom_min=-n_options['moist biomass annual max'],
+                e_nom_min= - n_options.at['moist biomass market','max capacity'],
                 e_nom_max=0,
                 e_nom_extendable=True,
                 e_min_pu=1.0,
@@ -2190,8 +2187,8 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
                   'biochar sequestration',
                   bus0= 'biochar',
                   bus1 = 'biochar sequestration',
-                  efficiecy = 1,
-                  marginal_cost =  - n_options['biochar credits'] * CO2_cost,
+                  efficiency = 1,
+                  marginal_cost =  - n_options.at['biochar credits', 'enable'] * CO2_cost,
                   )
 
             n.add('Store',
@@ -2398,11 +2395,11 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   bus0="El3 bus",
                   bus1="El2 bus",
                   efficiency=1,
-                  capital_cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor'] * n_options['symbiosis El transformer'],
+                  capital_cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor'] * n_options.at['symbiosis El transformer','enable'],
                   p_nom_extendable=True)
 
         # Link for sale of DH
-        if n_options['DH']:
+        if n_options.at['DH', 'enable']:
             bus_dict = {'bus_list': ['DH grid', 'Heat DH'],
                         'carrier_list': ['Heat', 'Heat', ],
                         'unit_list': ['MW', 'MW']}
@@ -2414,7 +2411,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                     bus1='DH grid',
                     efficiency=1,
                     p_nom_extendable=True,
-                    marginal_cost=-p.DH_price_local)
+                    marginal_cost= - n_options.at['DH', 'price'])
 
         # ------- Trading of  H2 (35 bars)---------------
         if n_flags['electrolysis']:
