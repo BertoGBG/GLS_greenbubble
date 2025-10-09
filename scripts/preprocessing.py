@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
-import parameters as p
+from scripts import parameters as p
 import os
 from io import StringIO
 import json
@@ -9,14 +9,14 @@ from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 import pytz
 from scripts.helpers import build_electricity_grid_price_w_tariff
-from config import (CO2_cost_ref_year,
-                    En_price_year,
-                    DKK_Euro,
-                    latitude,
-                    longitude,
-                    H2_delivery_frequency,
-                    H2_profile_flag,
-                    demand_H2, demand_CH4, demand_meoh, n_options)
+from scripts.config import (CO2_cost_ref_year,
+                            En_price_year,
+                            DKK_Euro,
+                            latitude,
+                            longitude,
+                            H2_delivery_frequency,
+                            H2_profile_flag,
+                            n_options)
 
 
 # ------ INPUTS PRE-PROCESSING ----

@@ -3,27 +3,27 @@
 # -------------------  options config (alphabetical) -------------------
 # expansion
 biochar credits:
-  enable: true
+  enable: false
 
 CO2 Liq credits:
   enalble: false
 
 Dig biomass:
-  max capacity: 400000 # t/y of manure and biomass
+  max capacity: .inf # t/y of manure and biomass
   price : 19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
 DH:
-  enable: true
+  enable: false
   price : 54 # €/MWh
 
 moist biomass market:
-  enable: true
+  enable: false
   max capacity: 20000 # (MWh/y) limit always if biochar credits['expansion'] : true
   price : 43 # €/MWh
 
 pellets market:
   enable: true
-  max capacity: 20000 # (MWh/y) limit always if biochar credits['expansion'] : true
+  max capacity: .inf # (MWh/y) limit always if biochar credits['expansion'] : true
   price : 62 # €/MWh
 
 symbiosis El transformer:

@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
-import config as p
 import CoolProp.CoolProp as CP
 import math
-from parameters import lhv_dict
+from scripts.parameters import lhv_dict
 
 # --- Component specific Calculations
 

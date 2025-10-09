@@ -1,14 +1,11 @@
-import pandas as pd
 import numpy as np
 import pypsa
-from numpy.core.defchararray import capitalize
 
-import parameters as p
-import math
+from scripts import parameters as p
 from scripts.preprocessing import en_market_prices_w_CO2
 from scripts.grid_constraints import add_link_El_grid_to_H2
-from config import (n_options,
-                    n_config)
+from scripts.config import (n_options,
+                            n_config)
 
 # ------- BUILD PYPSA NETWORK HANDLING FUNCTIONS-------------
 def network_dependencies(n_flags):

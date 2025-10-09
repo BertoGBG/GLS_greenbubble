@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pypsa
 import pypsatopo
-import parameters as p
+from scripts import parameters as p
 import os
 import matplotlib.pyplot as plt
 import math

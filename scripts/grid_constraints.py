@@ -1,6 +1,6 @@
 import pandas as pd
-from parameters import hours_in_period, ref_df
-from config import rfnbos_dict
+from scripts.parameters import hours_in_period, ref_df
+from scripts.config import rfnbos_dict
 from scripts.preprocessing import en_market_prices_w_CO2
 
 # -----CONSTRAINTS on GRID ELECTRICITY RFNBOs---------------

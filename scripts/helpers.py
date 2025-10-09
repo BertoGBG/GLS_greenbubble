@@ -1,20 +1,20 @@
 import pandas as pd
 import numpy as np
 import pypsatopo
-from config import En_price_year, discount_rate, outputs_folder
-import parameters as p
+from scripts.config import En_price_year, discount_rate, outputs_folder
+from scripts import parameters as p
 import os
-import inspect
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from pathlib import Path
 import matplotlib as mpl
 from matplotlib.patches import Patch
 import pickle as pkl
-from copy import deepcopy
 from scripts.solver_profiles import SOLVER_PROFILES
-import datetime as dt
 import yaml
+from copy import deepcopy
+import inspect, datetime as dt
+
 
 # -------NETWORK
 def build_snapshots(En_price_year):
@@ -170,9 +170,12 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
         key = "TimeLimit" if solver == "gurobi" else "time_limit"
         opts[key] = float(time_limit)
 
+
+
 def solve_network(n, solver="gurobi", profile=None,
                   io_api="direct", time_limit=None, threads=None,
-                  overrides=None, fallback_order=("highs",)):
+                  overrides=None, fallback_order=("highs",),
+                  assign_all_duals=False):
     """
     Solve with Gurobi or HiGHS using named profiles.
     Returns: (status, condition, used_solver, used_options)
@@ -185,6 +188,7 @@ def solve_network(n, solver="gurobi", profile=None,
         base = SOLVER_PROFILES[solver][profile]
     except KeyError:
         raise ValueError(f"Unknown profile '{profile}' for solver '{solver}'")
+
     opts = deepcopy(base)
     _apply_common_overrides(solver, opts, threads=threads, time_limit=time_limit)
     if overrides:
@@ -192,18 +196,45 @@ def solve_network(n, solver="gurobi", profile=None,
 
     n.optimize.create_model()
 
-    # ---- primary attempt: pass options as **kwargs (correct) ----
+    def _assign_duals(n):
+        """Assign duals after solve without sending flags to the solver."""
+        if not assign_all_duals:
+            return
+        # Newer PyPSA exposes helpers on the optimize object:
+        if hasattr(n.optimize, "assign_duals"):
+            try:
+                n.optimize.assign_duals(assign_all_duals=True)
+                return
+            except TypeError:
+                # some versions use a different kw
+                n.optimize.assign_duals()
+                return
+        # Linopy-level fallback:
+        if hasattr(n, "model") and hasattr(n.model, "assign_duals"):
+            n.model.assign_duals()
+            return
+        # Older PyPSA fallback:
+        if hasattr(n.optimize, "read_solution"):
+            try:
+                n.optimize.read_solution(assign_all_duals=True)
+                return
+            except TypeError:
+                n.optimize.read_solution()
+                return
+
+    # ---- primary attempt: pass ONLY solver options to the solver ----
     try:
         status, condition = n.optimize.solve_model(
             solver_name=solver,
             io_api=io_api,
-            **opts,
+            **opts,               # <-- DO NOT include assign_all_duals here
         )
+        _assign_duals(n)
         return status, condition, solver, opts
     except Exception as e:
         print(f"[WARN] {solver} failed: {e}")
 
-    # ---- fallbacks: try other solvers with their default profile ----
+    # ---- fallbacks ----
     for fb in fallback_order:
         fb = fb.lower()
         if fb not in SOLVER_PROFILES:
@@ -216,22 +247,14 @@ def solve_network(n, solver="gurobi", profile=None,
             status, condition = n.optimize.solve_model(
                 solver_name=fb,
                 io_api=io_api,
-                **fb_opts,
+                **fb_opts,          # <-- still keep dual assignment OUT of here
             )
+            _assign_duals(n)
             return status, condition, fb, fb_opts
         except Exception as e2:
             print(f"[WARN] {fb} fallback failed: {e2}")
 
     raise RuntimeError("All solver attempts failed.")
-
-#def solve_network(n, solver="gurobi"):
-#    """Create and solve the Linopy model using gurobi; fall back to HiGHS if needed."""
-#    n.optimize.create_model()
-#    try:
-#        n.optimize.solve_model(solver_name=solver)
-#    except Exception as e:
-#        print(f"[WARN] {solver} failed: {e}\nFalling back to HiGHS.")
-#        n.optimize.solve_model(solver_name="highs")
 
 def optimal_network_only(n_opt):
     """function that removes unused: buses, links, stores, generators, storage_units and loads,

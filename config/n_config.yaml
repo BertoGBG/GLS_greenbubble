@@ -1,4 +1,6 @@
 # n_config.yaml
+# GREEN and BROWN field optimization
+# for each technology set the initial capacity (with zero cost) and possibility to expand and the other constraints.
 
 # common defaults for most technologies
 base: &base
@@ -141,8 +143,8 @@ TES concrete:
 
 TES DH:
   <<: *base
+  expansion: false
   min capacity: 5 # MWh
   ramp limit up: 0.02 # % of total en capacity per hour
   ramp limit down: 0.02 # % of total en capacity per hour
   standing loss: 0.002 # % of total energy  per hour
-

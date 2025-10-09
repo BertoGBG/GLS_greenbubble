@@ -37,91 +37,89 @@ Activate environment:
 please cite as: https://doi.org/10.1016/j.enconman.2024.119175
 
 
-
 **What can the model do**
-The model calcualtes the optimal capacities and operation of the plants and components forming the PtX hub. The modle optimizes all teh content of the "GreenBubble" in the figure, while the external energy systems is modelled as exogenously set inputs. Production cost for H2 and MeOH are estimated as well as prices for internally traded commodities.
+GreenBubble is an open model for optimization of industrial energy system based on agricultural setups. The model is based on PyPSA framework https://pypsa.readthedocs.io/en/stable/ and can simultaneously optimize the capacity of the plants in the industrial hub and they operation, over 1 year time horizon with time resolution up to 1h.
+The capacity expansion can be green-field or brown-field with optimization is based on long-term economic equilibrium, and shadow prices for internal eergy and material flow are considered valid for the internal market.
+The optimization also includes the internal hydrogen (inc. compression), CO2 (inc. comnpression), electricity and heat (3 temperature levels) networks .
 
+**Technolgy and processes:**
+In the current the only PtX products available are: hydrogen (for grid and/or internal use), methanol and biomethane. The Energy inputs are biomass (digestible and solid biomass) and renewable energy (onshore wind and solar).  
+Electricity can be sold as a product, but the sales are constrained proportionally to the internal demand.
 
-**Structure of the Repository:**
-The three main files to run a single optimization are:
-- main.py
-- functions.py
-- paramaters.py
+1) Hydrogen production:
+   - Alkaline electrolysis
+   
+2) Methane production:
+   - Biogas + upgrading
+   - Biomethannation of biogas (with H2)
+   - Biomethanation of CO2 (with H2)
+   - Catalytic methanation of biogas (with H2)
+   - Catalytic methanation of CO2 (with H2)
+   
+3) Methanol production:
+   - CO2 hydrogenation 
+   - eSMR with methanol synthesis (available soon)
 
-The other files were used inthe paper to produce results of various sensitivity analysis.
+4) Renewable electricity 
+   - On-shore wind 
+   - solar PV
 
-_main.py_ (not executable from terminal) : 
-   - set the main paramaters in the analysis
-   - sets the pypsa netowrk configuration options
-   - execute the workflow (load input data, create pypsa network, optimize network, plot basic results)
+5) Storage technologies:
+   - Lithium-ion battieries
+   - H2 in steel vessels
+   - CO2 liquefaction and storage
+   - CO2 pressurized in cylinders
+   - Heat at water tanks (as for district heating)
+   - Heat in concrete based Thermal Energy Storage
+   
+6) Biomass handling:
+   - Biomass drying in hot air belt dryer
+   - Dewatering of digestate fibers
 
-_paramaters.py_ : contains all the other paramaters and assumption used in the model. 
-   - pre-processign paramaters:
-
-_functions.py_ : contains all functions developped for this model (and extra plotting functions) 
-
+**External markets (exogenous assumptions) :**
+The optimization behaves as a price taker with respect to external markets, hence prices and availability of external resources are exogenously set.
+these include: 
+- CO2 tax on fossil emission
+- Electricity prices and emission intensities + TSO and DSO tariffs
+- Natural gas prices
+- District heating Price 
+- Biomass pellets
+- Biomass chips
+- Digestible biomass (manure) 
 
 
 **Workflow:**
-1) Set main analysis paramaters (in main.py):
-   - annual H2 demand 
-   - annual MeOH demand (% of max demand compatible with biogas production)
-   - CO2 tax for fossil emission
-   - max electricity sellable to external grids (as % of consumed in the production of RFNBOs)
-   - En_price_year (set in paramaters.py) select the historical year the for surrounding energy system and RE
 
-2) preprocessing of input data (if preprocess_flag = True , in main.py ):
-   download  data from varous sources (see paramaters.py) to generate exogenously set the variables in the model:
+1) Configuration:
+    in ../config/ are present three files for configuration
+    a) config.yaml : main config file with all the optimization paramaters as demands for H2, MeOH, CH4 and which plants can be part of the solution (in n_flags).
+    b) n_config.yaml : green/brown field config file. Default is all green field, but each technology can initialized with an existing capacity and expansion limited.
+                        all constrains relative to a specific technolgy are set here (e.g. ramp up/down limits and min load)
+    c) n_options.yaml : config for options relative to external markets. e.g. enable biomass purchase, sales of biochar credits etc...
+
+2) Run the model:
+   - from terminal run:  greenbubble_main.py  
+
+3) preprocessing:
+   Data packages for Skive are pre-downloaded in ../data/ . See ../scripts/paramaters.py for inputs to the pre-processing.
    - electricity spot prices
    - CO2 emission intensities
    - NG prices
    - Electricity demand profile (DK_1)
    - Capacity factors for wind and solar
    - NG demand profile (if used to geenrate an H2 demand profile)
-   - H2 and MeOH demand (set from main.py)
    - DH demand profile in Skive
-     
-   All data are saved as .csv in /data once downloaded.  Pre-download input data for years 2019-2024 are provided and do not need to be downloaded again. To download other input data enter your [Renewable](https://www.renewables.ninja) and [entsoe]                    (https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html) API tokens in
-paramaters.py and set  preprocess_flag = True in main.py 
+   - 
+4) GLS specific data are retrive from the file: GreenLab_Input_file.xlxs
 
-3) create PyPSA network
-   The _n_flags_ dictionary contains binary variables which allows plants in to be part of the PtX hub  solution: 
-   example:
-   n_flags = {'SkiveBiogas': True,         # VARIABLE: Biomethane plant                    
-              'central_heat': True,        # VARIABLE:Heat generation  (including pyrolysis for bichar)     
-              'renewables': True,          # VARIABLE:Onshore wind and solar      
-              'electrolyzer': True,        # VARIABLE:H2 production 
-              'meoh': True,                # VARIABLE:MeOH synthesys
-              'symbiosis_net': True,       # VARIABLE:Trading of energy and material flows withinthe park
-              'DH': True,                  # VARIABLE:connection to district heating network 
-              'bioChar' : True,            # VARIABLE: if biochar credits have value or not
-              'print': True,               # OPTION: saves svg of network before optimization
-              'export': False}             # OPTION: saves network before optimization
+5) general database for techno-economic data of various technolgies: [technology-data](https://technology-data.readthedocs.io/en/latest/)
 
-4) retrive techno-economic
-   GLS specific data are retrive from the file: GreenLab_Input_file.xlxs
-   general database for techno-economic data of varous technolgies: [technology-data](https://technology-data.readthedocs.io/en/latest/)
- 
-5) solve network
-   - build linopy model
-   - solve network
-     we sugget to use [gurobi](gurobi.com) as a solver and we have successfully tested the free solver [highspy](https://pypi.org/project/highspy/)
+6) exceptions to the technology-data are set via ../scripts/technology_inputs.py in particoular: compressors and biomass drying are based on physics (semi-empirical for dryer) 
 
 **Results of the single optimization**
 The optimized network returns the optimal capacties for all the components in the model and their dispatch with one hour resolution and the shadow prices for each material and energy flows in the behihd-the-meter market.
-Example results are stored within the output folder
-
-
-**Analysis Options**
-In addition to the aforementioned configuration options, several other parameters can be modfied within in paramaters.py
-examples are: 
-- discout rate (var: discout_rate) : for discoutning of investment cost sin the model. default = 7%
-- H2 and MeOH demannd (frequency of delivery): can me set with difference frequency on the delivery: weekly, monthly, and annual (base case). default n=1 (delivery at the end of the year)
-- H2 demand (annual profile): for H2 with weekly or monthly delivery, the amount for each delivery can follow the profile of the NG demand in DK (set H2_profile_flag = True). default = 'False'
-- CO2 tax on the reference year prices (var: CO2_cost_ref_year): it is automatically applied to energy prices for reference energy year. default = 0
-- prices for other commodities traded with external energy systems: DH, pellets (note 'biomass' refers to biogas feedstock)
-- taxes on electricity (TSO an DSO): default values from DK1 and Skive in 2022
-- techno-economic inputs for technolgies not presents in technology-data
+Example results are stored within: ../outputs/single_analysis/
+Each optimization run creates a folder based on n_flags and 'run name' set in config.yaml. Thsi folder contains two subfolders, /plot (for graphicals and table) and /networks for the pre- adn post- networks and the full configuration of each run 
 
 
 
