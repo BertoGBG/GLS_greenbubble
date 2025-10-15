@@ -38,8 +38,14 @@ n_flags:
   print: true # saves svg of network before optimization
   export: false # exports prenetwork before optimization
 
+# optimization flags
+n_flags_opt:
+  print: true
+  export: true
+  plot: false
+
 # Where to save single-run outputs
-outputs_folder: outputs/single_analysis/
+outputs_folder: outputs/single_analysis
 
 # Demand flexibility
 H2_profile_flag: true # 'True': the demand follows NG demand profile: 'False' it is flexible delivery during the period  (see frequency)

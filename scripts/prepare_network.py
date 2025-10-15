@@ -5,10 +5,11 @@ from scripts import parameters as p
 from scripts.preprocessing import en_market_prices_w_CO2
 from scripts.grid_constraints import add_link_El_grid_to_H2
 from scripts.config import (n_options,
-                            n_config)
+                            n_config,
+                            rfnbos_dict)
 
 # ------- BUILD PYPSA NETWORK HANDLING FUNCTIONS-------------
-def network_dependencies(n_flags):
+def network_dependencies(n_flags, ):
     """Check if all required dependencies are satisfied when building the network based on n_flags dictionary in main,
     modifies n_flag dict """
     n_flags_OK = n_flags.copy()
@@ -20,7 +21,13 @@ def network_dependencies(n_flags):
     n_flags_OK['renewables'] = n_flags['renewables']
 
     # H2 production Dependencies
-    n_flags_OK['electrolysis'] = n_flags['electrolysis']
+    cond1 = n_flags['electrolysis'] and rfnbos_dict['limit'] != ('emissions' or 'price')
+    cond2 = n_flags['electrolysis'] and n_flags['renewables']
+
+    if cond1 or cond2 :
+        n_flags_OK['electrolysis'] = True
+    else:
+        n_flags_OK['electrolysis'] = False
 
     # MeOH production Dependencies
     if n_flags['meoh'] and n_flags['electrolysis'] and n_flags['biogas'] and n_flags[
@@ -572,6 +579,33 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs):
                   p_nom_extendable=expansion,
                   p_nom = capacity,
                   p_nom_max = n_config.at['CO2 Liq', 'max capacity'])
+
+            if n_options.at['CO2 Liq credits', 'enable']:
+                CO2_cost = inputs_dict['CO2 cost']
+
+                # Required buses
+                bus_dict = {
+                    'bus_list': ['CO2 Liq seq'],
+                    'carrier_list': ['CO2'],
+                    'unit_list': ['t/h']
+                }
+                n = add_requirements_buses(n, bus_dict)
+
+                # CO2 credits for CCS from liquiefied CO2
+                n.add('Link',
+                      'CO2 Liq seq',
+                      bus0 = 'CO2 Liq storage',
+                      bus1 = 'CO2 Liq seq',
+                      efficiency = 1,
+                      p_nom_extendable = True,
+                      marginal_cost = -1  * CO2_cost)
+
+                n.add("Store",
+                      'CO2 Liq sequestration',
+                      bus="CO2 Liq seq",
+                      e_nom_extendable=True,
+                      e_cyclic=False)
+                return n
 
             return n
 
@@ -1364,18 +1398,16 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 efficiency=1,
                 )
 
-
             n.add(
                 "Store",
                 'Dig biomass',
                 bus='Dig biomass market',
-                e_nom_min= - n_options.at['Dig biomass','max capacity'],
+                e_nom_min= -1 * n_options.at['Dig biomass','max capacity'],
                 e_nom_max=0,
                 e_nom_extendable=True,
                 e_min_pu=1.0,
                 e_max_pu=0.0,
                 )
-
 
             # ---- DM digestate  store
             n.add("Store",
@@ -1708,6 +1740,11 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
 
 
         # ---------- Add RFNBOs constraint for use of electricity form the grid without additional RE----
+        bus_dict = {'bus_list': ['ElDK1 bus', 'El3 bus'],
+                    'carrier_list': ['AC', 'AC'],
+                    'unit_list': ['MW', 'MW']}
+        n = add_requirements_buses(n, bus_dict)
+
         n = add_link_El_grid_to_H2(n, inputs_dict, tech_costs)
 
         # -----add local heat connections
@@ -2440,7 +2477,13 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
                   capital_cost=tech_costs.at['CO2 gas pipe', "fixed"] *  tech_costs.at['CO2 gas pipe', 'distance'] * n_config.at['CO2 pipe', 'cost factor'])
 
         # -------- HEAT NETWORKS---------------
+        bus_dict = {'bus_list': ['Heat MT', 'Heat DH', 'Heat LT', 'Heat amb'],
+                    'carrier_list': ['Heat', 'Heat', 'Heat', 'Heat'],
+                    'unit_list': ['MW', 'MW', 'MW', 'MW']}
+        n = add_requirements_buses(n, bus_dict)
+
         # MT Heat to ambient (additional heat exchanger)
+
         n.add("Link",
               "Heat_MT_to_amb",
               bus0="Heat MT",

@@ -3,10 +3,7 @@ import numpy as np
 import pypsatopo
 from scripts.config import En_price_year, discount_rate, outputs_folder
 from scripts import parameters as p
-import os
 import matplotlib.pyplot as plt
-from scipy.stats import pearsonr
-from pathlib import Path
 import matplotlib as mpl
 from matplotlib.patches import Patch
 import pickle as pkl
@@ -14,7 +11,10 @@ from scripts.solver_profiles import SOLVER_PROFILES
 import yaml
 from copy import deepcopy
 import inspect, datetime as dt
-
+import math
+from pathlib import Path
+import xarray as xr
+import os, json
 
 # -------NETWORK
 def build_snapshots(En_price_year):
@@ -175,10 +175,11 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
 def solve_network(n, solver="gurobi", profile=None,
                   io_api="direct", time_limit=None, threads=None,
                   overrides=None, fallback_order=("highs",),
-                  assign_all_duals=False):
+                  assign_all_duals=True):
     """
     Solve with Gurobi or HiGHS using named profiles.
     Returns: (status, condition, used_solver, used_options)
+    Also stamps objective/solver info into n.meta for persistence in NetCDF.
     """
     solver = solver.lower()
     if profile is None:
@@ -197,23 +198,18 @@ def solve_network(n, solver="gurobi", profile=None,
     n.optimize.create_model()
 
     def _assign_duals(n):
-        """Assign duals after solve without sending flags to the solver."""
         if not assign_all_duals:
             return
-        # Newer PyPSA exposes helpers on the optimize object:
         if hasattr(n.optimize, "assign_duals"):
             try:
                 n.optimize.assign_duals(assign_all_duals=True)
                 return
             except TypeError:
-                # some versions use a different kw
                 n.optimize.assign_duals()
                 return
-        # Linopy-level fallback:
         if hasattr(n, "model") and hasattr(n.model, "assign_duals"):
             n.model.assign_duals()
             return
-        # Older PyPSA fallback:
         if hasattr(n.optimize, "read_solution"):
             try:
                 n.optimize.read_solution(assign_all_duals=True)
@@ -222,14 +218,47 @@ def solve_network(n, solver="gurobi", profile=None,
                 n.optimize.read_solution()
                 return
 
-    # ---- primary attempt: pass ONLY solver options to the solver ----
+    def _stamp_meta(n, status, condition, used_solver, used_opts):
+        # Safely fetch objective value if available
+        obj_val = float("nan")
+        try:
+            if hasattr(n, "model") and hasattr(n.model, "objective"):
+                # Linopy convention after solve: objective.value is a scalar
+                val = getattr(n.model.objective, "value", None)
+                if val is not None:
+                    obj_val = float(val)
+        except Exception:
+            pass
+
+        # Ensure meta exists and contains JSON-/YAML-friendly types
+        meta = dict(getattr(n, "meta", {}) or {})
+        # Convert any non-serializable solver options to strings
+        safe_opts = {}
+        for k, v in (used_opts or {}).items():
+            try:
+                _ = float(v) if isinstance(v, (int, float)) else v
+                safe_opts[k] = v
+            except Exception:
+                safe_opts[k] = str(v)
+
+        meta.update({
+            "objective": None if (obj_val is None or math.isnan(obj_val)) else float(obj_val),
+            "opt_status": str(status) if status is not None else None,
+            "opt_termination": str(condition) if condition is not None else None,
+            "opt_solver": used_solver,
+            "opt_options": safe_opts,
+        })
+        n.meta = meta  # assign back
+
+    # ---- primary attempt ----
     try:
         status, condition = n.optimize.solve_model(
             solver_name=solver,
             io_api=io_api,
-            **opts,               # <-- DO NOT include assign_all_duals here
+            **opts,
         )
         _assign_duals(n)
+        _stamp_meta(n, status, condition, solver, opts)
         return status, condition, solver, opts
     except Exception as e:
         print(f"[WARN] {solver} failed: {e}")
@@ -247,14 +276,18 @@ def solve_network(n, solver="gurobi", profile=None,
             status, condition = n.optimize.solve_model(
                 solver_name=fb,
                 io_api=io_api,
-                **fb_opts,          # <-- still keep dual assignment OUT of here
+                **fb_opts,
             )
             _assign_duals(n)
+            _stamp_meta(n, status, condition, fb, fb_opts)
             return status, condition, fb, fb_opts
         except Exception as e2:
             print(f"[WARN] {fb} fallback failed: {e2}")
 
+    # If we reach here, no solution; still stamp meta for traceability
+    _stamp_meta(n, status=None, condition="failed", used_solver=solver, used_opts=opts)
     raise RuntimeError("All solver attempts failed.")
+
 
 def optimal_network_only(n_opt):
     """function that removes unused: buses, links, stores, generators, storage_units and loads,
@@ -304,10 +337,10 @@ def file_name_network(n, n_flags, run_name, inputs_dict):
     else:
         MeOH_d = 0
 
-    if 'methanation' in n.loads.index.values:
-        Methanation_d = int(n.loads_t.p_set['methanation'].sum() // 1000)  # yearly production of MeOH in GWh
+    if 'bioCH4' in n.loads.index.values:
+        bioCH4_d = int(n.loads_t.p_set['bioCH4'].sum() // 1000)  # yearly production of MeOH in GWh
     else:
-        Methanation_d = 0
+        bioCH4_d = 0
 
     # CO2 tax
     CO2_c = int(CO2_cost)  # CO2 price in currency
@@ -320,10 +353,9 @@ def file_name_network(n, n_flags, run_name, inputs_dict):
 
     # agents
     file_name = n_flags['biogas'] * 'SB_' + n_flags['central_heat'] * 'CH_' + n_flags['renewables'] * 'RE_' + \
-                n_flags['electrolysis'] * 'H2_' + n_flags['meoh'] * 'meoh_' + n_flags['methanation'] * 'meth_' + str(
-        Methanation_d) + n_flags['symbiosis'] * 'SN_' + \
+                n_flags['electrolysis'] * 'H2_' + n_flags['meoh'] * 'meoh_' + n_flags['methanation'] * 'meth_' + n_flags['symbiosis'] * 'SN_' + \
                 n_flags['storage'] * 'ST_' + 'CO2c' + str(CO2_c) + '_' + 'H2d' + str(H2_d) + \
-                '_' + 'MeOHd' + str(MeOH_d) + '_' + str(year) + '_' + 'El2DK1' + '_' + str(el_DK1_sale_el_RFNBO) + run_name
+                '_' + 'MeOHd' + str(MeOH_d) + '_' + 'CH4d' + str(bioCH4_d) + '_' + str(year) + '_' + 'ElDK1' + '_' + str(el_DK1_sale_el_RFNBO) + '_' + run_name
 
     return file_name
 
@@ -339,35 +371,54 @@ def create_results_folders (network_name):
 def save_config (results_folder,c):
     # export configuration from config.py
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
-    dump_params_module(c, dst_folder=networks_folder, filename="config.yaml",
+    dump_params_module(c, dst_folder=networks_folder, filename="config_run.yaml",
                        dataframes_as="records")
 
+import os
 
 def export_print_network(n, n_flags, network_name, results_folder, suffix):
-    # function that expoers a netowrk to a location and print the svg file from pypsa topo
-    # n : pypsa network
-    # n_flags: dict containig n_flags['print'] : bool and n_flags['export'] : bool
-    # file_name : str
-    # suffix : '_OPT' for postnetworks and '_PRE' for prenetworks
-
-    # Create directories for saving files if not existing
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
 
-    if suffix == '_OPT':
-        n_plot = optimal_network_only(n)
-    else:
-        n_plot = n
+    # choose the plotted network
+    n_plot = optimal_network_only(n) if suffix == '_OPT' else n
 
-    if n_flags['print']:
-        filename = network_name + suffix + '.svg'
+    full_path = None
+
+    if n_flags.get('print'):
+        filename = f"{network_name}{suffix}.svg"
         full_path = os.path.join(networks_folder, filename)
-        pypsatopo.generate(n_plot, file_output=full_path, negative_efficiency=False, carrier_color=True)
-    if n_flags['export']:
-        filename = network_name + suffix + '.nc'
+        pypsatopo.generate(n_plot, file_output=full_path,
+                           negative_efficiency=False, carrier_color=True)
+
+    if n_flags.get('export'):
+        filename = f"{network_name}{suffix}.nc"
         full_path = os.path.join(networks_folder, filename)
         n.export_to_netcdf(full_path)
 
-    return
+    if full_path is None:
+        return None
+
+    return full_path
+
+
+def patch_netcdf_attrs(nc_path: Path, **attrs):
+    # load -> update attrs -> write back atomically
+    ds = xr.load_dataset(nc_path)  # load to memory so we can overwrite the same path
+    # make options JSON-safe if you want to store them too
+    if "opt_options" in attrs and attrs["opt_options"] is not None:
+        try:
+            json.dumps(attrs["opt_options"])
+        except Exception:
+            attrs["opt_options"] = {k: str(v) for k, v in attrs["opt_options"].items()}
+
+    for k, v in attrs.items():
+        if v is not None:
+            ds.attrs[k] = v
+    tmp = nc_path.with_suffix(nc_path.suffix + ".tmp")
+    ds.to_netcdf(tmp)   # write new file
+    ds.close()
+    os.replace(tmp, nc_path)  # atomic replace on most OSes
+
 
 def save_network_comp_allocation (results_folder, network_comp_allocation):
     # save allocation of compeonts to each agent/plant in pkl file
@@ -569,7 +620,7 @@ def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_
         bottom_neg = 0.0
 
         def stack_segment(value, facecolor, hatch=None):
-            nonlocal bottom_pos, bottom_neg   # <-- fix
+            nonlocal bottom_pos, bottom_neg
             if value == 0:
                 return
             if value >= 0:
@@ -616,14 +667,6 @@ def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_
 
     return cc_tot_agent, mc_tot_agent
 
-
-def reg_coef(x, y, label=None, color=None, hue=None, **kwargs):
-    ''' function that calculates the pearson correlation conefficient (r) for plotting in PairGrid'''
-    ax = plt.gca()
-    r, p = pearsonr(x, y)
-    ax.annotate('r = {:.2f}'.format(r), xy=(0.5, 0.5), xycoords='axes fraction', ha='center')
-    ax.set_axis_off()
-    return
 
 
 def create_folder_if_not_exists(path, folder_name):

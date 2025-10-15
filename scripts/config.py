@@ -61,6 +61,7 @@ latitude                 = _cfg["latitude"]
 longitude                = _cfg["longitude"]
 
 n_flags                  = dict(_cfg["n_flags"])      # stays a dict
+n_flags_opt              = dict(_cfg["n_flags_opt"])      # stays a dict
 outputs_folder           = _cfg["outputs_folder"]
 
 H2_profile_flag          = _cfg["H2_profile_flag"]

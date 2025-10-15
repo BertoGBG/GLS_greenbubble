@@ -82,7 +82,7 @@ El boiler:
 
 electrolysis:
   <<: *base
-  cost factor: 2                        # override
+  cost factor: 3                        # according to IEA (last pypsa-eur inputs)
   ramp limit up: 1 # % of total power capacity per hour
   ramp limit down: 1 # % of total power capacity per hour
   min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
