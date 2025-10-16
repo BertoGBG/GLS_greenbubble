@@ -8,6 +8,7 @@ import json
 from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 import pytz
+import calendar
 from scripts.helpers import build_electricity_grid_price_w_tariff
 from scripts.config import (CO2_cost_ref_year,
                             En_price_year,
@@ -66,6 +67,32 @@ def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
 
     return demands
 
+def align_series_to_year(s: pd.Series | pd.DataFrame, target_year: int):
+    idx = pd.DatetimeIndex(pd.to_datetime(s.index, utc=False, errors="coerce"))
+
+    # If tz-aware, convert to UTC then drop tz to avoid wall-time shifts
+    if idx.tz is not None:
+        idx = idx.tz_convert("UTC").tz_localize(None)
+
+    # Ensure tz-naive
+    try:
+        idx = idx.tz_localize(None)
+    except Exception:
+        pass
+
+    # Map the calendar year
+    idx_mapped = idx.map(lambda ts: ts.replace(year=target_year))
+
+    # If target year is non-leap, drop Feb 29 rows (they won't exist later)
+    if not calendar.isleap(target_year):
+        mask = ~((idx_mapped.month == 2) & (idx_mapped.day == 29))
+        s = s.loc[mask]
+        idx_mapped = idx_mapped[mask]
+
+    s = s.copy()
+    s.index = idx_mapped
+    return s
+
 
 def load_input_data():
     """Load csv files and prepare Input Data to GL network"""
@@ -120,21 +147,23 @@ def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
     H2_demand_y = p.ref_df.copy()
     col_name= 'H2_demand_MWh'
     H2_demand_y.rename(columns={'ref col': col_name}, inplace=True)
-    H2_demand_y[col_name] = 0
+    H2_demand_y[col_name] = 0.0
 
     # Convert start_date and end_date from ISO 8601 format
-    timezone = pytz.utc  # keeping UTC timestamps
-    start_date = datetime.strptime(p.start_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
-    end_date = datetime.strptime(p.end_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
+    start_date = datetime.strptime(p.start_date, "%Y-%m-%d %H:%M")
+    end_date = datetime.strptime(p.end_date, "%Y-%m-%d %H:%M")
 
     # NG_demand_DK align timestamp
-    NG_demand_DK_2 = NG_demand_DK.copy()
-    NG_demand_DK_2.index = pd.to_datetime(NG_demand_DK_2.index)
-    NG_demand_DK_2.index = NG_demand_DK_2.index.map(lambda x: x.replace(year=start_date.year))
+    NG_demand_DK_2 = align_series_to_year(NG_demand_DK, En_price_year)
+    NG_demand_DK_2 = NG_demand_DK_2.reindex(p.hours_in_period)
+
+    #NG_demand_DK_2.index = pd.to_datetime(NG_demand_DK_2.index)
+    #NG_demand_DK_2.index = NG_demand_DK_2.index.map(lambda x: x.replace(year=start_date.year))
 
     # Determine the time step based on n (monthly or weekly)
     if n == 12:
         step = timedelta(days=30)  # Approximate monthly step
+
     elif n == 52:
         step = timedelta(weeks=1)  # Weekly step
     elif n == 1:
@@ -155,9 +184,6 @@ def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
 
         if next_time > end_date or i == n - 1:  # Ensure last delivery is exactly at year-end
             next_time = end_date.replace(hour=23, minute=0, second=0)
-
-        # Convert to UTC datetime
-        next_time = next_time.astimezone(pytz.utc)
 
         # Find the last available hour within the reference DataFrame index
         valid_times = H2_demand_y.index[H2_demand_y.index <= next_time]
@@ -415,7 +441,7 @@ def pre_processing_energy_data():
     DH_Skive = DH_Skive.sort_values(by=['DateTime'], ascending=True)
     DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'])
     DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
-    hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='H')
+    hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='h')
     hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
     DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
 

@@ -10,10 +10,10 @@ CO2 Liq credits:
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass
-  price : 19.8676 # EUR/MWh biogas from JRC ENSPRESO
+  price : 10 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
 DH:
-  enable: false
+  enable: true
   price : 54 # €/MWh
 
 moist biomass market:

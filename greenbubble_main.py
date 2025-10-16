@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # greenbubble_main.py
 
-# Python modules
-
 # use a non-interactive backend so it works on servers/CLI
 import matplotlib
 matplotlib.use("Agg")
@@ -27,74 +25,76 @@ def main(n_flags=None, run_name=None, outputs_folder=None):
     if outputs_folder is not None: c.outputs_folder = outputs_folder
 
 
-# ---- Network flags and dependency checks
-n_flags = c.n_flags
-print(n_flags)
-n_flags_opt = c.n_flags_opt
-n_flags_OK = network_dependencies(n_flags)
+    # ---- Network flags and dependency checks
+    n_flags = c.n_flags
+    print(n_flags)
+    n_flags_opt = c.n_flags_opt
+    n_flags_OK = network_dependencies(n_flags)
 
-# ---- Tech costs
-retrieve_technology_data(p.cost_path, p.technology_data_url)
-tech_costs = prepare_costs(cost_path = p.cost_path,
-                           tech_inputs= tech_inputs,
-                           USD_to_EUR= c.USD_to_EUR,
-                           discount_rate=c.discount_rate)
+    # ---- Tech costs
+    retrieve_technology_data(p.cost_path, p.technology_data_url)
+    tech_costs = prepare_costs(cost_path = p.cost_path,
+                               tech_inputs= tech_inputs,
+                               USD_to_EUR= c.USD_to_EUR,
+                               discount_rate=c.discount_rate)
 
-# ---- Preprocess inputs
-inputs_dict = pre_processing_all_inputs(n_flags_OK = n_flags_OK,
-                                        demand_H2 = c.demand_H2,
-                                        demand_meoh = c.demand_meoh,
-                                        demand_CH4 = c.demand_CH4,
-                                        CO2_cost = c.CO2_cost,
-                                        el_DK1_sale_el_RFNBO = c.el_DK1_sale_el_RFNBO,
-                                        tech_costs  = tech_costs,
-                                        preprocess_flag = c.preprocess_flag)
+    # ---- Preprocess inputs
+    inputs_dict = pre_processing_all_inputs(n_flags_OK = n_flags_OK,
+                                            demand_H2 = c.demand_H2,
+                                            demand_meoh = c.demand_meoh,
+                                            demand_CH4 = c.demand_CH4,
+                                            CO2_cost = c.CO2_cost,
+                                            el_DK1_sale_el_RFNBO = c.el_DK1_sale_el_RFNBO,
+                                            tech_costs  = tech_costs,
+                                            preprocess_flag = c.preprocess_flag)
 
-# ---- Build network
-network = build_network(tech_costs, inputs_dict, n_flags_OK)
+    # ---- Build network
+    network = build_network(tech_costs, inputs_dict, n_flags_OK)
 
-# ---Create results folders
-network_name = file_name_network(n=network, n_flags=n_flags, run_name=c.run_name, inputs_dict= inputs_dict) # creates network name for saving results
-results_folder = create_folder_if_not_exists(c.outputs_folder, network_name) # Based on n_flags and demands
+    # ---Create results folders
+    network_name = file_name_network(n=network, n_flags=n_flags, run_name=c.run_name, inputs_dict= inputs_dict) # creates network name for saving results
+    results_folder = create_folder_if_not_exists(c.outputs_folder, network_name) # Based on n_flags and demands
 
-# ---- Export and print prenetwork
-export_print_network(n=network, n_flags=n_flags, network_name=network_name, results_folder=results_folder, suffix ='_PRE')
-print('network built')
+    # ---- Export and print prenetwork
+    export_print_network(n=network, n_flags=n_flags, network_name=network_name, results_folder=results_folder, suffix ='_PRE')
+    print('network built')
 
-# ---- Optimize
-status, cond, used_solver, used_opts = solve_network(network, solver="gurobi", profile="gurobi-default", assign_all_duals=True) # or "highs" (select solver options from solver_profiles_old.py)
-# get the objective function from linopy model
-obj = None
-try:
-    obj = float(getattr(getattr(network, "model", None).objective, "value", None))
-except Exception:
-    pass
+    # Optimize
+    status, cond, used_solver, used_opts = solve_network(network,
+                                                         solver="gurobi",
+                                                         profile="gurobi-default",
+                                                         overrides={"DualReductions": 0},
+                                                         assign_all_duals=True) # or "highs" (select solver options from solver_profiles_old.py)
+    # get the objective function from linopy model
+    obj = None
+    try:
+        obj = float(getattr(getattr(network, "model", None).objective, "value", None))
+    except Exception:
+        pass
 
-# ---- Export and print postnetwork and configuration
-nc_path = export_print_network(n=network, n_flags = n_flags_opt, network_name=network_name, results_folder=results_folder, suffix ='_OPT')
-# patch the objective and solver attributes to .nc file
-patch_netcdf_attrs(
-    Path(nc_path),
-    objective=obj,
-    opt_status=str(status) if status is not None else None,
-    opt_termination=str(cond) if cond is not None else None,
-    opt_solver=used_solver,
-)
-# save the config used for this run
-save_config (results_folder,c)
-print('network optimized & saved')
-print('results saved in' + results_folder)
+    # ---- Export and print postnetwork and configuration
+    nc_path = export_print_network(n=network, n_flags = n_flags_opt, network_name=network_name, results_folder=results_folder, suffix ='_OPT')
+    # patch the objective and solver attributes to .nc file
+    patch_netcdf_attrs(
+        Path(nc_path),
+        objective=obj,
+        opt_status=str(status) if status is not None else None,
+        opt_termination=str(cond) if cond is not None else None,
+        opt_solver=used_solver,
+    )
+    # save the config used for this run
+    save_config (results_folder,c)
+    print('network optimized & saved')
+    print('results saved in' + results_folder)
 
-# ---- Save component allocation
-network_comp_allocation = network.network_comp_allocation
-save_network_comp_allocation(results_folder, network_comp_allocation)
+    # ---- Save component allocation
+    network_comp_allocation = network.network_comp_allocation
+    save_network_comp_allocation(results_folder, network_comp_allocation)
 
-# ---- Plotting and saving figures
-if c.n_flags_opt['plot']:
-    single_opt_plots(network, network_comp_allocation, inputs_dict, tech_costs, results_folder)
-    print('plotting done')
-
-print("Done.")
+    # ---- Plotting and saving figures
+    if c.n_flags_opt['plot']:
+        single_opt_plots(network, network_comp_allocation, inputs_dict, tech_costs, results_folder)
+        print('plotting done')
 
 if __name__ == "__main__":
 

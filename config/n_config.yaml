@@ -11,14 +11,14 @@ base: &base
 
 # -------------------  config (alphabetical) -------------------
 # Units refer to bus0 in the network except for 'biogas'
-battery:
+battery: # includes inverter
   <<: *base
-
-battery inverter:
-  <<: *base
+  ramp limit up: 0.5 # % of total en capacity per hour
+  ramp limit down: 0.5 # % of total en capacity per hour
 
 biogas:
   <<: *base
+  initial capacity: 10 # in MWCH4 (for simplicity)
 
 biogas storage:
   <<: *base
@@ -26,6 +26,8 @@ biogas storage:
 
 biogas upgrading:
   <<: *base
+  initial capacity: 10 #  in MWCH4 (for simplicity)
+
 
 biomass belt dryer:
   <<: *base

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pypsatopo
-from scripts.config import En_price_year, discount_rate, outputs_folder
+from scripts.config import En_price_year, discount_rate, outputs_folder, n_config
 from scripts import parameters as p
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -14,26 +14,26 @@ import inspect, datetime as dt
 import math
 from pathlib import Path
 import xarray as xr
-import os, json
+import json
+import calendar
+import os
 
-# -------NETWORK
-def build_snapshots(En_price_year):
-    start_day = str(En_price_year) + '-01-01'
-    start_date = start_day + 'T00:00'  # keep the format 'YYYY-MM-DDThh:mm' when selecting start and end time
-    end_day = str(En_price_year + 1) + '-01-01'
-    end_date = end_day + 'T00:00'  # excludes form the data set
 
-    hours_in_period = pd.date_range(start_date + 'Z', end_date + 'Z', freq='h')
-    hours_in_period = hours_in_period.drop(hours_in_period[-1])
+# -------NETWORK ----
 
-    # Check if it's a leap year
-    def is_leap_year(year):
-        return (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
+def build_snapshots(year):
+    start = f"{year}-01-01 00:00"
+    end   = f"{year+1}-01-01 00:00"
 
-    if is_leap_year(En_price_year):
-        # Remove all timestamps that fall on February 29
-        hours_in_period = hours_in_period[~((hours_in_period.month == 2) & (hours_in_period.day == 29))]
-    return hours_in_period, start_date, end_date
+    # tz-naive hourly index; end is excluded
+    hours = pd.date_range(start, end, freq="h", inclusive="left")
+
+    # optional: drop Feb 29 if your inputs don't have it
+    if calendar.isleap(year):
+        hours = hours[~((hours.month == 2) & (hours.day == 29))]
+
+    return hours, start, end
+
 
 # -------TECHNO-ECONOMIC DATA & ANNUITY
 def annuity(n, r):
@@ -99,6 +99,7 @@ def merge_into_costs(costs: pd.DataFrame, tech_inputs: dict, currency_year=None)
 
     return costs_out
 
+
 def prepare_costs(cost_path : str, tech_inputs: dict, USD_to_EUR: float , discount_rate : float, Nyears: int = 1, lifetime: int = 25):
     """ This function uses, data retrived form the technology catalogue and other sources and compiles a DF used in the model
     input:
@@ -138,6 +139,7 @@ def prepare_costs(cost_path : str, tech_inputs: dict, USD_to_EUR: float , discou
     costs["fixed"] = [annuity_factor(v) * v["investment"] * Nyears for i, v in costs.iterrows()]
     return costs
 
+
 def cost_add_technology(discount_rate, tech_costs, technology, investment, lifetime, FOM):
     '''function to calculate annualized fixed cost for any technology from inpits
     and adds it to the tech_costs dataframe '''
@@ -160,8 +162,171 @@ def add_technology_cost(tech_costs, other_tech_costs):
     return tech_costs
 
 
+def build_electricity_grid_price_w_tariff(Elspotprices):
+    """this function creates the Electricity grid price including the all the tariffs
+    Note that CO2 tax is added separately
+    Tariff system valid for customer conected to 60kV grid via a 60/10kV transformer
+    Tariff system in place from 2025"""
+
+    # for tariff reference check the parameter file
+    # Grid tariff are based on hour of the day, day of the week and season:
+    # high tariff in summer + weekdays + 06:00 to 24.00
+    # high tariff in winter + weekends + 06:00 to 24.00
+    # high tariff in winter + weekdays + 21:00 to 24.00
+    # peak tariff in winter + weekdays + 06:00 to 21.00
+    # Low tariff the rest of the time
+
+    summer_start = str(En_price_year) + '-04-01 00:00'  # '2019-04-01 00:00:00+00:00' # Monday
+    summer_end = str(En_price_year) + '-10-01 00:00'  # '2019-10-01 00:00:00+00:00'
+    winter_1 = pd.date_range(p.start_date , summer_start , freq='h')
+    winter_1 = winter_1.drop(winter_1[-1])
+    winter_2 = pd.date_range(summer_end , p.end_date, freq='h')
+    winter_2 = winter_2.drop(winter_2[-1])
+    winter = winter_1.append(winter_2)
+    winter = winter[~((winter.month == 2) & (winter.day == 29))]
+    summer = pd.date_range(summer_start, summer_end, freq='h')
+    summer = summer.drop(summer[-1])
+
+    peak_weekday = range(1, 6)
+    peak_hours = range(7, 21 + 1)
+    high_hours_weekday_winter = range(22, 24 + 1)
+    high_hours_weekend_winter = range(7, 24 + 1)
+    high_hours_weekday_summer = range(7, 24 + 1)
+
+    # set the tariff in every hour equal to low and che
+    el_grid_price = Elspotprices + p.el_transmission_tariff + p.el_system_tariff + p.el_afgift
+    el_grid_sell_price = -Elspotprices + p.el_tariff_sell
+
+    # assign tariff to hours
+    for h in winter:
+        day = h.weekday()
+        hour = h.hour
+        net_tariff = 0  # Default value
+
+        if day in [5, 6]:  # weekends
+            if hour in high_hours_weekend_winter:
+                net_tariff = p.el_net_tariff_high
+            else:
+                net_tariff = p.el_net_tariff_low
+        elif day in range(0, 5):  # weekdays
+            if hour in peak_hours:
+                net_tariff = p.el_net_tariff_peak
+            elif hour in high_hours_weekday_winter:
+                net_tariff = p.el_net_tariff_high
+            else:
+                net_tariff = p.el_net_tariff_low
+
+        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
+
+    for h in summer:
+        day = h.weekday()
+        hour = h.hour
+        net_tariff = 0  # Default value
+
+        if day in [5, 6]:  # weekends
+            net_tariff = p.el_net_tariff_low
+        elif day in range(0, 5):  # weekdays
+            if hour in high_hours_weekday_summer:
+                net_tariff = p.el_net_tariff_high
+            else:
+                net_tariff = p.el_net_tariff_low
+
+        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
+
+    return el_grid_price, el_grid_sell_price
+
+
+# --- Add CUSTOM CONSTRAINTS ----
+def _exists(name, index):
+    return name in index
+
+def _is_extendable_store(n, name):
+    return _exists(name, n.stores.index) and bool(n.stores.at[name, "e_nom_extendable"])
+
+def _is_extendable_link(n, name):
+    return _exists(name, n.links.index) and bool(n.links.at[name, "p_nom_extendable"])
+
+
+def add_custom_constraints(n, n_config=None):
+    """
+    Enforce p_nom(link) <= alpha * e_nom(store) for selected charger/discharger links
+    and their corresponding stores. Works whether variables are extendable or fixed.
+    """
+    m = n.model
+
+    # ---- helpers to fetch variable slices or fall back to constants ----
+    def _link_p_nom_expr(link_name):
+        if "Link-p_nom" in m.variables:
+            v = m.variables["Link-p_nom"]
+            # v.dims typically: ('link',)
+            if "link" in v.dims and link_name in v.coords["link"].values:
+                return v.sel(link=link_name)
+        # fall back to fixed parameter if the link exists
+        if link_name in n.links.index:
+            return float(n.links.at[link_name, "p_nom"])
+        # otherwise skip
+        return None
+
+    def _store_e_nom_expr(store_name):
+        if "Store-e_nom" in m.variables:
+            v = m.variables["Store-e_nom"]
+            # v.dims typically: ('store',)
+            if "store" in v.dims and store_name in v.coords["store"].values:
+                return v.sel(store=store_name)
+        if store_name in n.stores.index:
+            return float(n.stores.at[store_name, "e_nom"])
+        return None
+
+    def _add_bound(link_name, store_name, factor, tag):
+        if not factor:
+            return
+        link_expr  = _link_p_nom_expr(link_name)
+        store_expr = _store_e_nom_expr(store_name)
+        if link_expr is None or store_expr is None:
+            # Component missing or not part of the model; skip gracefully
+            print(f"[custom-constraints] skip {tag}: missing "
+                  f"{'link' if link_expr is None else 'store'} '{link_name if link_expr is None else store_name}'")
+            return
+        lhs = link_expr - float(factor) * store_expr
+        cname = f"{tag}__{link_name}__le_{factor}__{store_name}"
+        m.add_constraints(lhs <= 0, name=cname)
+
+    # ---- read factors from config (if provided) ----
+    def _cfg(at_tech, key, default=None):
+        if n_config is None:
+            return default
+        try:
+            return n_config.at[at_tech, key]
+        except Exception:
+            return default
+
+    # ---- TES Concrete ----
+    tes_store      = "TES Concrete storage"
+    tes_charger    = "TES Concrete storage charger"
+    tes_discharger = "TES Concrete storage discharger"
+    if tes_store in n.stores.index:
+        _add_bound(tes_charger,    tes_store, _cfg("TES concrete", "ramp limit up"),   "TES_concrete_charger_limit")
+        _add_bound(tes_discharger, tes_store, _cfg("TES concrete", "ramp limit down"), "TES_concrete_discharger_limit")
+
+    # ---- Water tank DH ----
+    dh_store      = "Water tank DH storage"
+    dh_charger    = "Water tank DH charger"
+    dh_discharger = "Water tank DH discharger"
+    if dh_store in n.stores.index:
+        _add_bound(dh_charger,     dh_store, _cfg("TES DH", "ramp limit up"),   "Water_tank_DH_charger_limit")
+        _add_bound(dh_discharger,  dh_store, _cfg("TES DH", "ramp limit down"), "Water_tank_DH_discharger_limit")
+
+    # ---- Battery ----
+    bat_store      = "battery"
+    bat_charger    = "battery charger"
+    bat_discharger = "battery discharger"
+    if bat_store in n.stores.index:
+        _add_bound(bat_charger,    bat_store, _cfg("battery", "ramp limit up"),   "battery_charger_limit")
+        _add_bound(bat_discharger, bat_store, _cfg("battery", "ramp limit down"), "battery_discharger_limit")
+
 
 # --- OPTIMIZATION-----
+
 def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
     if threads is not None:
         key = "Threads" if solver == "gurobi" else "threads"
@@ -171,15 +336,13 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
         opts[key] = float(time_limit)
 
 
-
 def solve_network(n, solver="gurobi", profile=None,
                   io_api="direct", time_limit=None, threads=None,
                   overrides=None, fallback_order=("highs",),
-                  assign_all_duals=True):
+                  assign_all_duals=True, n_config=None):
     """
     Solve with Gurobi or HiGHS using named profiles.
     Returns: (status, condition, used_solver, used_options)
-    Also stamps objective/solver info into n.meta for persistence in NetCDF.
     """
     solver = solver.lower()
     if profile is None:
@@ -195,44 +358,45 @@ def solve_network(n, solver="gurobi", profile=None,
     if overrides:
         opts.update(overrides)
 
-    n.optimize.create_model()
+    # 1) Build PyPSA/Linopy model
+    n.optimize.create_model()      # n.model is now a Linopy Model
+
+    # 2) Add your custom constraints to that exact model
+    add_custom_constraints(n, n_config=n_config)
 
     def _assign_duals(n):
         if not assign_all_duals:
             return
+        # PyPSA 1.x usually exposes assign_duals on n.optimize
         if hasattr(n.optimize, "assign_duals"):
             try:
                 n.optimize.assign_duals(assign_all_duals=True)
-                return
             except TypeError:
                 n.optimize.assign_duals()
-                return
+            return
+        # fallback legacy names
         if hasattr(n, "model") and hasattr(n.model, "assign_duals"):
             n.model.assign_duals()
             return
         if hasattr(n.optimize, "read_solution"):
             try:
                 n.optimize.read_solution(assign_all_duals=True)
-                return
             except TypeError:
                 n.optimize.read_solution()
-                return
+            return
 
     def _stamp_meta(n, status, condition, used_solver, used_opts):
-        # Safely fetch objective value if available
         obj_val = float("nan")
         try:
-            if hasattr(n, "model") and hasattr(n.model, "objective"):
-                # Linopy convention after solve: objective.value is a scalar
-                val = getattr(n.model.objective, "value", None)
+            val = getattr(getattr(n, "model", None), "objective", None)
+            if val is not None:
+                val = getattr(val, "value", None)
                 if val is not None:
                     obj_val = float(val)
         except Exception:
             pass
 
-        # Ensure meta exists and contains JSON-/YAML-friendly types
         meta = dict(getattr(n, "meta", {}) or {})
-        # Convert any non-serializable solver options to strings
         safe_opts = {}
         for k, v in (used_opts or {}).items():
             try:
@@ -248,7 +412,7 @@ def solve_network(n, solver="gurobi", profile=None,
             "opt_solver": used_solver,
             "opt_options": safe_opts,
         })
-        n.meta = meta  # assign back
+        n.meta = meta
 
     # ---- primary attempt ----
     try:
@@ -284,9 +448,9 @@ def solve_network(n, solver="gurobi", profile=None,
         except Exception as e2:
             print(f"[WARN] {fb} fallback failed: {e2}")
 
-    # If we reach here, no solution; still stamp meta for traceability
     _stamp_meta(n, status=None, condition="failed", used_solver=solver, used_opts=opts)
     raise RuntimeError("All solver attempts failed.")
+
 
 
 def optimal_network_only(n_opt):
@@ -318,6 +482,8 @@ def optimal_network_only(n_opt):
             n.remove('Bus', b)
     return n
 
+
+# ---- SAVE & EXPORT RESULTS
 
 def file_name_network(n, n_flags, run_name, inputs_dict):
     """function that automatically creates a file name give a network"""
@@ -359,6 +525,7 @@ def file_name_network(n, n_flags, run_name, inputs_dict):
 
     return file_name
 
+
 def create_results_folders (network_name):
 
     # Create directories for saving files if not existing
@@ -368,13 +535,24 @@ def create_results_folders (network_name):
 
     return networks_folder, plots_folder
 
+
 def save_config (results_folder,c):
     # export configuration from config.py
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
     dump_params_module(c, dst_folder=networks_folder, filename="config_run.yaml",
                        dataframes_as="records")
 
-import os
+
+def create_folder_if_not_exists(path, folder_name):
+    # general function for storing plots
+    folder_path = os.path.join(path, folder_name)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Folder created: {folder_path}")
+    else:
+        print(f"Folder already exists: {folder_path}")
+    return folder_path  # Return the full path of the folder
+
 
 def export_print_network(n, n_flags, network_name, results_folder, suffix):
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
@@ -431,81 +609,78 @@ def save_network_comp_allocation (results_folder, network_comp_allocation):
 
     return
 
+
+def _to_basic(obj, dataframes_as="records"):
+    """Convert common scientific Python objects to YAML-safe Python types."""
+    if obj is None or isinstance(obj, (bool, int, float, str)):
+        return obj
+    if isinstance(obj, (np.integer,)):   return int(obj)
+    if isinstance(obj, (np.floating,)):  return float(obj)
+    if isinstance(obj, (np.bool_,)):     return bool(obj)
+    if isinstance(obj, (np.ndarray,)):   return obj.tolist()
+
+    if isinstance(obj, pd.DataFrame):
+        if dataframes_as == "records":
+            return obj.to_dict(orient="records")
+        if dataframes_as == "split":
+            return obj.to_dict(orient="split")  # {index, columns, data}
+        if dataframes_as == "columns":
+            return obj.to_dict(orient="list")   # {col: [..], ...}
+        if dataframes_as == "csv":
+            return obj.to_csv(index=False)
+        if dataframes_as == "summary":
+            return {"__type__": "DataFrame",
+                    "shape": list(obj.shape),
+                    "columns": obj.columns.tolist()}
+        return obj.to_dict(orient="records")
+
+    if isinstance(obj, (pd.Series, pd.Index)):
+        return obj.tolist()
+    if isinstance(obj, (pd.Timestamp, dt.datetime, dt.date)):
+        return obj.isoformat()
+    if isinstance(obj, Path):
+        return str(obj)
+
+    if isinstance(obj, dict):
+        return {k: _to_basic(v, dataframes_as) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_to_basic(v, dataframes_as) for v in obj]
+
+    # Fallback for anything else
+    return repr(obj)
+
+
+def _extract_public_values(module):
+    vals = {}
+    for k, v in vars(module).items():
+        if k.startswith("_"):                       # skip private/special
+            continue
+        if inspect.ismodule(v) or inspect.isfunction(v) or inspect.isclass(v):
+            continue                                # skip callables/classes/modules
+        vals[k] = v
+    return vals
+
+
+def dump_params_module(module, dst_folder, filename="params.yaml",
+                       dataframes_as="records", sort_keys=False):
+    """
+    Dump the public contents of `module` to YAML in `dst_folder/filename`.
+    dataframes_as: 'records' | 'split' | 'columns' | 'csv' | 'summary'
+    """
+    params = _extract_public_values(module)
+    clean = _to_basic(params, dataframes_as=dataframes_as)
+
+    dst = Path(dst_folder)
+    dst.mkdir(parents=True, exist_ok=True)
+    path = dst / filename
+
+    with path.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(clean, f, sort_keys=sort_keys, allow_unicode=True)
+
+    return path
+
+
 # --- ANALYSIS AND PLOT ----
-
-def build_electricity_grid_price_w_tariff(Elspotprices):
-    """this function creates the Electricity grid price including the all the tariffs
-    Note that CO2 tax is added separately
-    Tariff system valid for customer conected to 60kV grid via a 60/10kV transformer
-    Tariff system in place from 2025"""
-
-    # for tariff reference check the parameter file
-    # Grid tariff are based on hour of the day, day of the week and season:
-    # high tariff in summer + weekdays + 06:00 to 24.00
-    # high tariff in winter + weekends + 06:00 to 24.00
-    # high tariff in winter + weekdays + 21:00 to 24.00
-    # peak tariff in winter + weekdays + 06:00 to 21.00
-    # Low tariff the rest of the time
-
-    summer_start = str(En_price_year) + '-04-01T00:00'  # '2019-04-01 00:00:00+00:00' # Monday
-    summer_end = str(En_price_year) + '-10-01T00:00'  # '2019-10-01 00:00:00+00:00'
-    winter_1 = pd.date_range(p.start_date + 'Z', summer_start + 'Z', freq='H')
-    winter_1 = winter_1.drop(winter_1[-1])
-    winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='H')
-    winter_2 = winter_2.drop(winter_2[-1])
-    winter = winter_1.append(winter_2)
-    winter = winter[~((winter.month == 2) & (winter.day == 29))]
-    summer = pd.date_range(summer_start + 'Z', summer_end + 'Z', freq='H')
-    summer = summer.drop(summer[-1])
-
-    peak_weekday = range(1, 6)
-    peak_hours = range(7, 21 + 1)
-    high_hours_weekday_winter = range(22, 24 + 1)
-    high_hours_weekend_winter = range(7, 24 + 1)
-    high_hours_weekday_summer = range(7, 24 + 1)
-
-    # set the tariff in every hour equal to low and che
-    el_grid_price = Elspotprices + p.el_transmission_tariff + p.el_system_tariff + p.el_afgift
-    el_grid_sell_price = -Elspotprices + p.el_tariff_sell
-
-    # assign tariff to hours
-    for h in winter:
-        day = h.weekday()
-        hour = h.hour
-        net_tariff = 0  # Default value
-
-        if day in [5, 6]:  # weekends
-            if hour in high_hours_weekend_winter:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-        elif day in range(0, 5):  # weekdays
-            if hour in peak_hours:
-                net_tariff = p.el_net_tariff_peak
-            elif hour in high_hours_weekday_winter:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-
-        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
-
-    for h in summer:
-        day = h.weekday()
-        hour = h.hour
-        net_tariff = 0  # Default value
-
-        if day in [5, 6]:  # weekends
-            net_tariff = p.el_net_tariff_low
-        elif day in range(0, 5):  # weekdays
-            if hour in high_hours_weekday_summer:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-
-        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
-
-    return el_grid_price, el_grid_sell_price
-
 
 def get_capital_cost(n_opt):
     '''function to retrive annualized capital cost for the optimized network, for each genertor, store and link '''
@@ -669,80 +844,3 @@ def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_
 
 
 
-def create_folder_if_not_exists(path, folder_name):
-    # general function for storing plots
-    folder_path = os.path.join(path, folder_name)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"Folder created: {folder_path}")
-    else:
-        print(f"Folder already exists: {folder_path}")
-    return folder_path  # Return the full path of the folder
-
-
-def _to_basic(obj, dataframes_as="records"):
-    """Convert common scientific Python objects to YAML-safe Python types."""
-    if obj is None or isinstance(obj, (bool, int, float, str)):
-        return obj
-    if isinstance(obj, (np.integer,)):   return int(obj)
-    if isinstance(obj, (np.floating,)):  return float(obj)
-    if isinstance(obj, (np.bool_,)):     return bool(obj)
-    if isinstance(obj, (np.ndarray,)):   return obj.tolist()
-
-    if isinstance(obj, pd.DataFrame):
-        if dataframes_as == "records":
-            return obj.to_dict(orient="records")
-        if dataframes_as == "split":
-            return obj.to_dict(orient="split")  # {index, columns, data}
-        if dataframes_as == "columns":
-            return obj.to_dict(orient="list")   # {col: [..], ...}
-        if dataframes_as == "csv":
-            return obj.to_csv(index=False)
-        if dataframes_as == "summary":
-            return {"__type__": "DataFrame",
-                    "shape": list(obj.shape),
-                    "columns": obj.columns.tolist()}
-        return obj.to_dict(orient="records")
-
-    if isinstance(obj, (pd.Series, pd.Index)):
-        return obj.tolist()
-    if isinstance(obj, (pd.Timestamp, dt.datetime, dt.date)):
-        return obj.isoformat()
-    if isinstance(obj, Path):
-        return str(obj)
-
-    if isinstance(obj, dict):
-        return {k: _to_basic(v, dataframes_as) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple, set)):
-        return [_to_basic(v, dataframes_as) for v in obj]
-
-    # Fallback for anything else
-    return repr(obj)
-
-def _extract_public_values(module):
-    vals = {}
-    for k, v in vars(module).items():
-        if k.startswith("_"):                       # skip private/special
-            continue
-        if inspect.ismodule(v) or inspect.isfunction(v) or inspect.isclass(v):
-            continue                                # skip callables/classes/modules
-        vals[k] = v
-    return vals
-
-def dump_params_module(module, dst_folder, filename="params.yaml",
-                       dataframes_as="records", sort_keys=False):
-    """
-    Dump the public contents of `module` to YAML in `dst_folder/filename`.
-    dataframes_as: 'records' | 'split' | 'columns' | 'csv' | 'summary'
-    """
-    params = _extract_public_values(module)
-    clean = _to_basic(params, dataframes_as=dataframes_as)
-
-    dst = Path(dst_folder)
-    dst.mkdir(parents=True, exist_ok=True)
-    path = dst / filename
-
-    with path.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(clean, f, sort_keys=sort_keys, allow_unicode=True)
-
-    return path
