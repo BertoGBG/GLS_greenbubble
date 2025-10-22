@@ -118,7 +118,7 @@ def tech_to_add(tech, n0_dict):
                if 'EXI_' + t not in {x for k in ('links', 'generators', 'stores') for x in n0_dict.get(k, [])}]
     exp_missing = [t for t in tech
                if t not in {x for k in ('links', 'generators', 'stores') for x in n0_dict.get(k, [])}]
-    cap_to_add = [t for t, c, m in zip(tech, cap, cap_missing) if m and (c is not None) and (c > 0)] # Initial capacities to be aded
+    cap_to_add = [t for t, c, m in zip(tech, cap, cap_missing) if m and (c is not None) and (c > 0)] # Initial capacities to be added
     exp_to_add = [t for t, c, m in zip(tech, exp, exp_missing) if m and (c is not None) and (c > 0)] # capacity expansion to be added
 
     return cap_to_add, exp_to_add
@@ -844,12 +844,13 @@ def add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, CO2_comp_dict):
               efficiency4=tech_costs.at["CO2 industrial compressor", "extra heat output LT"],
               p_nom_extendable=True)
 
-        n.add("Link",
-              "CO2 HP return",
-              bus0="CO2 storage",
-              bus1="CO2_distribution",
-              efficiency=1,
-              p_nom_extendable=True)
+        #n.add("Link",
+        #      "CO2 HP return",
+        #      bus0="CO2 storage",
+        #      bus1="CO2_distribution",
+        #      efficiency=1,
+        #      p_nom_extendable=True)
+
         return n
 
     def add_CO2_storage_HP_cap_exp(n, prefix, capital_cost, capacity, expansion):
@@ -868,7 +869,7 @@ def add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, CO2_comp_dict):
               e_nom_max=n_config.at["CO2 HP storage", "max capacity"],
               capital_cost=capital_cost,
               e_cyclic=True)
-        return n, local_CO2_HP_bus
+        return n
 
     # ==========================================================
     # 4. Build components
@@ -912,11 +913,11 @@ def add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, CO2_comp_dict):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        n = add_CO2_storage_HP_cap_exp(n, prefix="EXI_", capital_cost=0, capacity=capacity, expansion=False)
+        n = add_CO2_storage_HP_cap_exp(n, prefix=f"EXI_{plant_name}_", capital_cost=0, capacity=capacity, expansion=False)
 
     if t in exp_to_add:
         capital_cost = tech_costs.at["CO2 storage cylinders", "fixed"] * n_config.at[t, "cost factor"]
-        n = add_CO2_storage_HP_cap_exp(n, prefix="", capital_cost=capital_cost, capacity=0, expansion=True)
+        n = add_CO2_storage_HP_cap_exp(n, prefix=f"{plant_name}_", capital_cost=capital_cost, capacity=0, expansion=True)
 
     return n, local_CO2_HP_bus
 
@@ -929,7 +930,6 @@ def add_H2_compressor(n, n_flags, tech_costs, n_config, H2_comp_dict):
         plant_name : str -> name of the agent where the compressor is located
         local_CO2_HP_bus : str -> local HP CO2 bus
         """
-
 
     # --- Dependencies ---
     dependencies = [n_flags.get("electrolysis", False), n_flags.get("symbiosis", False)]
@@ -2005,10 +2005,12 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # Auxiliary setup: local buses and heat integration
     # ----------------------------------------------------------------------
-    def add_meoh_aux(n, local_EL_bus, plant_name):
+    def add_meoh_aux(n, plant_name):
         # ----------------------------------------------------------------------
         # Add local El and Heat buses
         # ----------------------------------------------------------------------
+        local_EL_bus = f"El_{plant_name}"
+
         n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
 
         meoh_heat_directions = {'Heat MT': -1,
@@ -2028,7 +2030,6 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                           'Heat LT bus': new_heat_buses[2]}
         # add components
         n, local_CO2_HP_bus = add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, meoh_comp_dict)
-
         n, local_H2_HP_bus = add_H2_compressor(n, n_flags, tech_costs, n_config, meoh_comp_dict)
 
         # add to dict
@@ -2075,7 +2076,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         if not n_flags.get("central_heat", False):
             add_local_boilers(
                 n=n,
-                local_EL_bus=local_EL_bus,
+                local_EL_bus=meoh_comp_dict['el bus'],
                 local_heat_bus=meoh_comp_dict['Heat MT bus'],
                 name=name,
                 heat_efficiency_plant="efficiency4",
@@ -2099,8 +2100,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
 
     t = "meoh"
     if t in cap_to_add or t in exp_to_add:
-        local_EL_bus = "El_meoh"
-        n, meoh_comp_dict = add_meoh_aux(n,  local_EL_bus, plant_name = t)
+        n, meoh_comp_dict = add_meoh_aux(n, plant_name = t)
 
     if t in cap_to_add:
         cap = n_config.at[t, "initial capacity"]
@@ -2217,7 +2217,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             name,
             bus0="H2_distribution",
             bus1="bioCH4",
-            bus2="CO2_distribution",
+            bus2=meth_comp_dict['local_CO2_HP_bus'],
             bus3=meth_comp_dict['el bus'],
             efficiency=tech_costs.at["biomethanation", "Methane Output"]
             - tech_costs.at["biomethanation", "Biogas Input"],
@@ -2310,7 +2310,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             name,
             bus0="H2_distribution",
             bus1="bioCH4",
-            bus2="CO2_distribution",
+            bus2=meth_comp_dict['local_CO2_HP_bus'],
             bus3=meth_comp_dict['el bus'],
             bus4=meth_comp_dict['Heat MT bus'],
             efficiency=tech_costs.at["biogas plus hydrogen", "Methane Output"]
@@ -2340,14 +2340,15 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     ]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
+    if cap_to_add or exp_to_add:
+        n, meth_comp_dict = add_methanation_aux(n, plant_name='methanation')
+
     for t, add_fn in [
         ("biomethanation biogas", add_biomethanation_biogas_cap_exp),
         ("biomethanation CO2", add_biomethanation_CO2_cap_exp),
         ("cat methanation biogas", add_cat_methanation_biogas_cap_exp),
         ("cat methanation CO2", add_cat_methanation_CO2_cap_exp),
     ]:
-        # add common components
-        n, meth_comp_dict = add_methanation_aux(n, plant_name = 'methanation')
 
         if t in cap_to_add:
             cap = n_config.at[t, "initial capacity"]

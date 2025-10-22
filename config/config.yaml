@@ -35,7 +35,7 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: false
+  meoh: true
   methanation: true
   symbiosis: true
   storage: false

@@ -48,24 +48,20 @@ biomethanation CO2:
   ramp limit up: 1 # % of total power capacity per hour
   ramp limit down: 1 # % of total power capacity per hour
   min load: 0 # % of max power capacity that must run (otherwise shut-off)
-  expansion: false
 
 cat methanation biogas:
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  expansion: false
 
 cat methanation CO2:
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  expansion: false
 
-
-CO2 compressor:
+CO2 compressor: # applies to both meoh and methanation
   <<: *base
 
 CO2 HP storage:
