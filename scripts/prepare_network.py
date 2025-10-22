@@ -899,11 +899,11 @@ def add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, CO2_comp_dict):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        n = add_CO2_compressor_cap_exp(n, prefix="EXI_", capital_cost=0, capacity=capacity, expansion=False)
+        n = add_CO2_compressor_cap_exp(n, prefix=f"EXI_{plant_name}_", capital_cost=0, capacity=capacity, expansion=False)
 
     if t in exp_to_add:
         capital_cost = tech_costs.at["CO2 industrial compressor", "fixed"] * n_config.at[t, "cost factor"]
-        n = add_CO2_compressor_cap_exp(n, prefix="", capital_cost=capital_cost, capacity=0, expansion=True)
+        n = add_CO2_compressor_cap_exp(n, prefix=f"{plant_name}_", capital_cost=capital_cost, capacity=0, expansion=True)
 
     # --- HP Storage ---
     t = "CO2 HP storage"
@@ -997,11 +997,11 @@ def add_H2_compressor(n, n_flags, tech_costs, n_config, H2_comp_dict):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        n = add_H2_comp_cap_exp(n, prefix="EXI_", capital_cost=0, capacity=capacity, expansion=False)
+        n = add_H2_comp_cap_exp(n, prefix=f"EXI_{plant_name}_", capital_cost=0, capacity=capacity, expansion=False)
 
     if t in exp_to_add:
         capital_cost = tech_costs.at["hydrogen storage compressor", "fixed"] * n_config.at[t, "cost factor"]
-        n = add_H2_comp_cap_exp(n, prefix="", capital_cost=capital_cost, capacity=0, expansion=True)
+        n = add_H2_comp_cap_exp(n, prefix=f"{plant_name}_", capital_cost=capital_cost, capacity=0, expansion=True)
 
     return n, local_H2_HP_bus
 
@@ -1538,116 +1538,6 @@ def add_demands(n, n_flags, inputs_dict):
 
     return n, new_components
 
-def add_external_market_products(n, n_flags, inputs_dict):
-    """Add external markets for products , used in price driven optimization
-    exogenous prices for markets are set as time series, or cased to TS from a single float"""
-
-    # Take a snapshot of network state
-    n0_dict = get_network_status(n)
-
-    # ---- Helper to process demand series safely ----
-    def clean_prices_series(df, network):
-        s = df.iloc[:, 0].astype(float)
-        s.index = pd.DatetimeIndex(s.index).tz_localize(None)
-        return s.reindex(network.snapshots).fillna(0.0)
-
-    # ---- Import and align demand time series ----
-    #s_ch4 = clean_demand_series(inputs_dict['bioCH4_demand'], n)
-    #s_h2  = clean_demand_series(inputs_dict['H2_input_demand'], n)
-    #s_meoh = clean_demand_series(inputs_dict['Methanol_input_demand'], n)
-
-    # ==============================================================
-    # 1. BIOCH4
-    # ==============================================================
-    if n_flags.get('biogas') or n_flags.get('methanation'):
-
-        bus_dict = {
-            'bus_list': ['bioCH4', 'NG'],
-            'carrier_list': ['gas', 'gas'],
-            'unit_list': ['MW', 'MW']
-        }
-        n = add_requirements_buses(n, bus_dict)
-
-        ng_price = 5 # TODO dummy price
-
-        n.add('Link',
-              'bioCH4 sales',
-              bus0 = 'bioCH4',
-              bus1 = 'NG',
-              p_nom_extendable= True,
-              mrginal_cost = ng_price)
-
-    # ==============================================================
-    # 2. HYDROGEN
-    # ==============================================================
-    if n_flags.get('electrolysis'):
-
-        bus_dict = {
-            'bus_list': ['H2', 'H2 delivery'],
-            'carrier_list': ['H2', 'H2'],
-            'unit_list': ['MW', 'MW']
-        }
-        n = add_requirements_buses(n, bus_dict)
-
-        # Link from production (H2) to delivery (H2 delivery)
-        if "H2_to_delivery" not in n.links.index:
-
-            h2_price = 5 # TODO dummy price (connect to NG profiles)
-
-            n.add("Link",
-                  "H2 sales",
-                  bus0="H2",
-                  bus1="H2 delivery",
-                  efficiency=1.0,
-                  p_nom_extendable=True,
-                  marginal_cost = h2_price)
-
-        # Infinite delivery storage
-        if "H2 delivery" not in n.stores.index:
-            n.add("Store",
-                  "H2 delivery",
-                  bus="H2 delivery",
-                  e_nom_extendable=True,
-                  e_cyclic=True)
-
-    # ==============================================================
-    # 3. METHANOL
-    # ==============================================================
-    if n_flags.get('meoh'):
-
-        bus_dict = {
-            'bus_list': ['Methanol', 'Methanol market'],
-            'carrier_list': ['Methanol' , 'Methanol'],
-            'unit_list': ['MW', 'MW']
-        }
-        n = add_requirements_buses(n, bus_dict)
-
-        meoh_price = 5 # TODO dummy value
-
-        # Methanol production storage (infinite)
-        n.add("Store",
-              "Methanol prod",
-              bus="Methanol market",
-              e_nom_extendable=True,
-              e_nom_max=float("inf"),
-              e_cyclic=True)
-
-        # Methanol sales
-        n.add("Link",
-              "Methanol sales",
-              bus0="Methanol",
-              bus1="Methanol market",
-              efficiency=1.0,
-              p_nom_extendable=True,
-              marginal_cost=meoh_price)
-
-    # ==============================================================
-    # 4. Log newly added components
-    # ==============================================================
-    new_components = log_new_components(n, n0_dict)
-
-    return n, new_components
-
 
 # PLAYERS
 def add_biogas(n, n_flags, inputs_dict, tech_costs):
@@ -2121,26 +2011,31 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         # ----------------------------------------------------------------------
         n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
 
-        meoh_heat_buses = {'Heat MT': -1,
-                         'Heat DH': 1,
-                         'Heat LT': 1}
+        meoh_heat_directions = {'Heat MT': -1,
+                                'Heat DH': 1,
+                                'Heat LT': 1}
 
-        n, new_heat_buses = add_local_heat_connections(n, meoh_heat_buses, plant_name, n_flags,
+        n, new_heat_buses = add_local_heat_connections(n, meoh_heat_directions, plant_name, n_flags,
                                                        tech_costs, n_config)
 
         # ----------------------------------------------------------------------
         # Add H2 and CO2 compressors (w/ CO2 cylinders storage) and local buses
         # ----------------------------------------------------------------------
         meoh_comp_dict = {'plant': plant_name,
-                         'el bus': local_EL_bus,
-                         'Heat DH bus': new_heat_buses[1],
-                         'Heat LT bus': new_heat_buses[2]}
-
+                          'el bus': local_EL_bus,
+                          'Heat MT bus': new_heat_buses[0],
+                          'Heat DH bus': new_heat_buses[1],
+                          'Heat LT bus': new_heat_buses[2]}
+        # add components
         n, local_CO2_HP_bus = add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, meoh_comp_dict)
 
         n, local_H2_HP_bus = add_H2_compressor(n, n_flags, tech_costs, n_config, meoh_comp_dict)
 
-        return n, new_heat_buses, local_CO2_HP_bus, local_H2_HP_bus
+        # add to dict
+        meoh_comp_dict['local_CO2_HP_bus'] = local_CO2_HP_bus
+        meoh_comp_dict['local_H2_HP_bus'] = local_H2_HP_bus
+
+        return n, meoh_comp_dict
 
     # ----------------------------------------------------------------------
     # Methanol synthesis reactor
@@ -2157,12 +2052,12 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         n.add(
             "Link",
             name=name,
-            bus0=local_CO2_HP_bus,
+            bus0=meoh_comp_dict['local_CO2_HP_bus'],
             bus1="Methanol",
-            bus2=local_H2_HP_bus,
-            bus3=local_EL_bus,
-            bus4=new_heat_buses[0],
-            bus5=new_heat_buses[1],
+            bus2=meoh_comp_dict['local_H2_HP_bus'],
+            bus3=meoh_comp_dict['el bus'],
+            bus4=meoh_comp_dict['Heat MT bus'],
+            bus5=meoh_comp_dict['Heat DH bus'],
             efficiency=GL_eff.loc["Methanol", "Methanol plant"],
             efficiency2=GL_eff.loc["H2", "Methanol plant"],
             efficiency3=GL_eff.loc["El2 bus", "Methanol plant"],
@@ -2181,7 +2076,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             add_local_boilers(
                 n=n,
                 local_EL_bus=local_EL_bus,
-                local_heat_bus=new_heat_buses[0],
+                local_heat_bus=meoh_comp_dict['Heat MT bus'],
                 name=name,
                 heat_efficiency_plant="efficiency4",
                 tech_costs=tech_costs,
@@ -2205,7 +2100,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     t = "meoh"
     if t in cap_to_add or t in exp_to_add:
         local_EL_bus = "El_meoh"
-        n, new_heat_buses, local_CO2_HP_bus, local_H2_HP_bus = add_meoh_aux(n,  local_EL_bus, plant_name = t)
+        n, meoh_comp_dict = add_meoh_aux(n,  local_EL_bus, plant_name = t)
 
     if t in cap_to_add:
         cap = n_config.at[t, "initial capacity"]
@@ -2234,8 +2129,33 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # Local electricity and heat connections
     # ----------------------------------------------------------------------
-    local_EL_bus = "El_methanation"
-    n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
+    def add_methanation_aux(n, plant_name):
+        # ----------------------------------------------------------------------
+        # Add local El and Heat buses
+        # ----------------------------------------------------------------------
+        local_EL_bus = f"El_{plant_name}"
+        n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
+
+        meth_heat_directions = {'Heat DH': 1,
+                                'Heat LT': 1}
+
+        n, new_heat_buses = add_local_heat_connections(n, meth_heat_directions, plant_name, n_flags,
+                                                       tech_costs, n_config)
+
+        # ----------------------------------------------------------------------
+        # Add H2 and CO2 compressors (w/ CO2 cylinders storage) and local buses
+        # ----------------------------------------------------------------------
+        meth_comp_dict = {'plant': plant_name,
+                          'el bus': local_EL_bus,
+                          'Heat DH bus': new_heat_buses[0],
+                          'Heat LT bus': new_heat_buses[1]}
+        # add components
+        n, local_CO2_HP_bus = add_CO2_compressor_HP(n, n_flags, tech_costs, n_config, meth_comp_dict)
+
+        # add to dict
+        meth_comp_dict['local_CO2_HP_bus'] = local_CO2_HP_bus
+
+        return n, meth_comp_dict
 
     # ----------------------------------------------------------------------
     # BIOLOGICAL METHANATION (biogas)
@@ -2255,7 +2175,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus0="H2_distribution",
             bus1="bioCH4",
             bus2="biogas",
-            bus3=local_EL_bus,
+            bus3=meth_comp_dict['el bus'],
             efficiency=tech_costs.at["biomethanation", "Methane Output"],
             efficiency2=-tech_costs.at["biomethanation", "Biogas Input"],
             efficiency3=-tech_costs.at["biomethanation", "electricity input"],
@@ -2298,7 +2218,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus0="H2_distribution",
             bus1="bioCH4",
             bus2="CO2_distribution",
-            bus3=local_EL_bus,
+            bus3=meth_comp_dict['el bus'],
             efficiency=tech_costs.at["biomethanation", "Methane Output"]
             - tech_costs.at["biomethanation", "Biogas Input"],
             efficiency2=-tech_costs.at["biomethanation", "CO2 Input"],
@@ -2326,10 +2246,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         }
         n = add_requirements_buses(n, bus_dict)
 
-        # add heat connection
-        heat_bus_dict = {'Heat MT': 1}
-        n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name='methanation', n_flags=n_flags,
-                                                       tech_costs=tech_costs, n_config=n_config)
+        # add Heat MT bus
+        meth_heat_directions = {'Heat MT': 1}
+        n, new_heat_buses = add_local_heat_connections(n, meth_heat_directions, meth_comp_dict['plant'], n_flags,
+                                                       tech_costs, n_config)
+        meth_comp_dict['Heat MT bus']= new_heat_buses[0]
 
         name = f"{prefix}cat methanation biogas"
 
@@ -2339,8 +2260,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus0="H2_distribution",
             bus1="bioCH4",
             bus2="biogas",
-            bus3=local_EL_bus,
-            bus4=new_heat_buses[0],
+            bus3=meth_comp_dict['el bus'],
+            bus4=meth_comp_dict['Heat MT bus'],
             efficiency=tech_costs.at["biogas plus hydrogen", "Methane Output"],
             efficiency2=-tech_costs.at["biogas plus hydrogen", "Biogas Input"],
             efficiency3=-tech_costs.at["biogas plus hydrogen", "electricity input"],
@@ -2376,10 +2297,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         v_ch4 = v_co2 * v_ch4_v_co2
         vol_ratio = (v_h2 + v_co2) / (v_h2 + v_co2 + v_ch4)
 
-        # add heat connection
-        heat_bus_dict = {'Heat MT': 1}
-        n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name='methanation', n_flags=n_flags,
-                                                       tech_costs=tech_costs, n_config=n_config)
+        # add Heat MT bus
+        meth_heat_directions = {'Heat MT': 1}
+        n, new_heat_buses = add_local_heat_connections(n, meth_heat_directions, meth_comp_dict['plant'], n_flags,
+                                                       tech_costs, n_config)
+        meth_comp_dict['Heat MT bus']= new_heat_buses[0]
 
         name = f"{prefix}cat methanation CO2"
 
@@ -2389,8 +2311,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus0="H2_distribution",
             bus1="bioCH4",
             bus2="CO2_distribution",
-            bus3=local_EL_bus,
-            bus4=new_heat_buses[0],
+            bus3=meth_comp_dict['el bus'],
+            bus4=meth_comp_dict['Heat MT bus'],
             efficiency=tech_costs.at["biogas plus hydrogen", "Methane Output"]
             - tech_costs.at["biogas plus hydrogen", "Biogas Input"],
             efficiency2=-tech_costs.at["biogas plus hydrogen", "CO2 Input"],
@@ -2424,6 +2346,9 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         ("cat methanation biogas", add_cat_methanation_biogas_cap_exp),
         ("cat methanation CO2", add_cat_methanation_CO2_cap_exp),
     ]:
+        # add common components
+        n, meth_comp_dict = add_methanation_aux(n, plant_name = 'methanation')
+
         if t in cap_to_add:
             cap = n_config.at[t, "initial capacity"]
             n = add_fn(n, "EXI_", 0, cap, False)
@@ -2434,11 +2359,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                 else tech_costs.at["biomethanation", "fixed"]
             ) * n_config.at[t, "cost factor"]
             n = add_fn(n, "", cost, 0, True)
-
-    # ----------------------------------------------------------------------
-    # Add CO2 compression (shared component)
-    # ----------------------------------------------------------------------
-    n = add_CO2_compressor_HP(n, n_flags, inputs_dict, tech_costs, n_config)
 
     new_components = log_new_components(n, n0_dict)
     return n, new_components

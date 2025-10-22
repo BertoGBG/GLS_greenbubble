@@ -35,8 +35,8 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: true
-  methanation: false
+  meoh: false
+  methanation: true
   symbiosis: true
   storage: false
   print: false # saves svg of prenetwork before optimization
