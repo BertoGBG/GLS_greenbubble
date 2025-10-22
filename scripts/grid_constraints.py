@@ -1,7 +1,7 @@
 import pandas as pd
 from scripts.parameters import hours_in_period, ref_df
-from scripts.config import rfnbos_dict
-from scripts.preprocessing import en_market_prices_w_CO2
+from scripts.config import rfnbos_dict, n_options
+from scripts.helpers import en_market_prices_w_CO2
 
 # -----CONSTRAINTS on GRID ELECTRICITY RFNBOs---------------
 def p_max_pu_EU_renewable_el(Elspotprices, CO2_emiss_El):
@@ -24,7 +24,7 @@ def add_link_El_grid_to_H2(n, inputs_dict, tech_costs):
 
     Elspotprices = inputs_dict['Elspotprices']
     CO2_emiss_El = inputs_dict['CO2_emiss_El']
-    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
+    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
 
     # Grid to H2 availability
     p_max_pu_renew_el_price, p_max_pu_renew_em = p_max_pu_EU_renewable_el(Elspotprices, CO2_emiss_El)

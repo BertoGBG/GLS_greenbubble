@@ -326,9 +326,11 @@ symbiosis_data = {
     'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1},
     'H2 production': {"fluid": 'Hydrogen', "T": 50, 'P': 30},
     'H2 to MeOH': {"fluid": 'Hydrogen', "T": '', 'P': 80},
+    'H2 to Methanation': {"fluid": 'Hydrogen', "T": '', 'P': 20},
     'H2 storage': {"fluid": 'Hydrogen', "T": '', 'P': 250},
     'CO2 biogas': {"fluid": 'CO2', "T": 50, 'P': 1},
     'CO2 to MeOH': {"fluid": 'CO2', "T": '', 'P': 80},
+    'CO2 to Methanation': {"fluid": 'CO2', "T": '', 'P': 20},
     'CO2 to HP storage': {"fluid": 'CO2', "T": '', 'P': 80},
     'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30},
 }

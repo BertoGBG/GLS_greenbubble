@@ -9,13 +9,15 @@ import math
 import seaborn as sns
 import re
 from pathlib import Path
-from scripts.preprocessing import en_market_prices_w_CO2, load_input_data
+from scripts.preprocessing import load_input_data
 from scripts.helpers import (
     optimal_network_only,
     build_electricity_grid_price_w_tariff,
     get_system_cost,
     get_total_marginal_capital_cost_agents,
-    create_folder_if_not_exists)
+    create_folder_if_not_exists,
+    en_market_prices_w_CO2)
+from scripts.config import n_options
 
 
 def export_print_network(n, n_flags_opt, folder, file_name):
@@ -51,7 +53,7 @@ def shadow_prices_violinplot(
     """Violin plot of marginal (shadow) prices with **per-series** clipping only."""
 
     CO2_cost = inputs_dict['CO2 cost']
-    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
+    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
 
     H2_d = 0
     meoh_d = 0
@@ -165,7 +167,7 @@ def plot_duration_curve(ax, df_input, col_val):
 def plot_El_Heat_prices(n_opt, inputs_dict, tech_costs, folder):
     """function that plots El and Heat prices in external grids and GLS"""
 
-    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs)
+    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
     el_grid_price_tariff, el_grid_sell_price_tariff = build_electricity_grid_price_w_tariff(inputs_dict['Elspotprices'])
 
     legend1 = ['DK1 price + tariff + CO2 tax', 'DK1 price + tariff', 'DK1 spotprice', 'GLS El price',
@@ -502,15 +504,15 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
         if f.endswith('.nc'):
 
             # check if CO2 cost in the file is among the selected ones
-            m = re.search('CO2c(\d+)', f)
+            m = re.search(r'CO2c(\d+)', f)
             m_co2 = int(m.group(1))
 
             # check if H2 demand in the file is among the selected ones
-            m = re.search('H2d(\d+)', f)
+            m = re.search(r'H2d(\d+)', f)
             m_h2 = int(m.group(1)) * 1000 / p.H2_output
 
             # check if fC_MeOH in the file is among the selected ones
-            m = re.search('MeOHd(\d+)', f)
+            m = re.search(r'MeOHd(\d+)', f)
             MeOH_y_d = int(m.group(1)) * 1000  # demand in GWh/y
             bioCH4_y_d = bioCH4_prod.values.sum()
             CO2_MeOH_plant = 1 / GL_eff.at['Methanol', 'Methanol plant']  # bus0 = CO2, bus1 = Methanol
@@ -529,7 +531,7 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
             cond_bioChar = np.sign(f.find('bCh') + 1) in dataset_flags['bioChar']
 
             # check if el_DK1_sale_el_RFNBO in the file name is among selected ones
-            m = re.search('El2DK1_(\d+(\.\d*)?)', f)
+            m = re.search(r'El2DK1_(\d+(\.\d*)?)', f)
             m_El2DK1 = float(m.group(1))
 
             # append files names to file list
@@ -645,7 +647,7 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
 
         # Independent parameters
         if results_flags['CO2_cost']:
-            m = re.search('CO2c(\d+)', name)
+            m = re.search(r'CO2c(\d+)', name)
             df_results.at[name, 'CO2_cost'] = int(m.group(1))
 
         if results_flags['CO2_cost']:
@@ -658,7 +660,7 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
             df_results.at[name, 'fC_MeOH'] = fC_MeOH
 
         if results_flags['d_H2']:
-            m = re.search('H2d(\d+)', name)
+            m = re.search(r'H2d(\d+)', name)
             df_results.at[name, 'd_H2'] = int(m.group(1))
 
         if results_flags['En_year_price']:
@@ -674,7 +676,7 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
                 df_results.at[name, 'DH'] = 0
 
         if results_flags['el_DK1_sale_el_RFNBO']:
-            m = re.search('El2DK1_(\d+(\.\d*)?)', name)
+            m = re.search(r'El2DK1_(\d+(\.\d*)?)', name)
             m_El2DK1 = float(m.group(1))
             df_results.at[name, 'el_DK1_sale_el_RFNBO'] = m_El2DK1
 
@@ -711,7 +713,7 @@ def results_df_plot_build(data_folder, dataset_flags, results_flags, network_com
             df_results.at[name, 'MeOH_y'] = int(n_name.loads_t.p_set['Methanol'].sum() // 1000)
 
         if results_flags['mu_H2']:
-            m = re.search('H2d(\d+)', name)
+            m = re.search(r'H2d(\d+)', name)
             d_H2 = int(m.group(1))
             if d_H2 == 0:
                 df_results.at[name, 'mu_H2'] = np.mean(n_name.buses_t.marginal_price['H2_meoh'])  # * p.lhv_h2 /1000

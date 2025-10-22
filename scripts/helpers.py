@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pypsatopo
-from scripts.config import En_price_year, discount_rate, outputs_folder, n_config
+from scripts.config import En_price_year, discount_rate, outputs_folder, CO2_cost_ref_year, share_bio_NG, stochastic
 from scripts import parameters as p
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -235,6 +235,56 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
 
     return el_grid_price, el_grid_sell_price
 
+def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
+    """Build market prices for electricity, natural gas, and district heating including CO₂ cost adjustments."""
+
+    # --- 1. Base data from inputs_dict ---
+    CO2_cost       = inputs_dict["CO2 cost"]
+    CO2_emiss_El   = inputs_dict["CO2_emiss_El"]           # tCO2/MWh_el
+    NG_price_year  = inputs_dict["NG_price_year"]           # currency/MWh
+    Elspotprices   = inputs_dict["Elspotprices"]            # Series or DataFrame
+
+    # --- 2. Electricity grid prices (buy/sell) ---
+    el_grid_price, el_grid_sell_price = build_electricity_grid_price_w_tariff(Elspotprices)
+
+    # → FIX: both are DataFrames with one column, so flatten
+    el_grid_price = el_grid_price.iloc[:, 0]
+    el_grid_sell_price = el_grid_sell_price.iloc[:, 0]
+
+    # --- 3. Apply CO₂ adjustment to electricity purchase price ---
+    if isinstance(CO2_emiss_El, pd.DataFrame):
+        CO2_emiss_El = CO2_emiss_El.iloc[:, 0]
+
+    mk_el_grid_price = el_grid_price + CO2_emiss_El * (CO2_cost - CO2_cost_ref_year)
+    mk_el_grid_sell_price = el_grid_sell_price.copy()
+
+    # --- 4. Natural gas price (consumer pays CO₂ cost locally) ---
+    if isinstance(NG_price_year, pd.DataFrame):
+        NG_price_year = NG_price_year.iloc[:, 0]
+
+    co2_intensity_ng = tech_costs.at["gas", "CO2 intensity"]  # tCO₂/MWh_th
+    mk_NG_grid_price = (
+        NG_price_year + co2_intensity_ng * (1 - share_bio_NG) * (CO2_cost - CO2_cost_ref_year)
+    )
+    mk_NG_grid_price = pd.Series(mk_NG_grid_price, index=el_grid_price.index)
+
+    # --- 5. District heating price ---
+    DH_price = pd.Series(
+        -float(n_options.at["DH", "price"]),
+        index=el_grid_price.index,
+        name="DH_price",
+    )
+
+    # --- 6. Package results ---
+    en_market_prices = {
+        "el_grid_price": mk_el_grid_price,
+        "el_grid_sell_price": mk_el_grid_sell_price,
+        "NG_grid_price": mk_NG_grid_price,
+        "DH_price": DH_price,
+    }
+
+    return en_market_prices
+
 
 # --- Add CUSTOM CONSTRAINTS ----
 def _exists(name, index):
@@ -335,15 +385,16 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
         key = "TimeLimit" if solver == "gurobi" else "time_limit"
         opts[key] = float(time_limit)
 
-
 def solve_network(n, solver="gurobi", profile=None,
                   io_api="direct", time_limit=None, threads=None,
                   overrides=None, fallback_order=("highs",),
-                  assign_all_duals=True, n_config=None):
+                  assign_all_duals=False, n_config=None,
+                  return_model=True):
     """
-    Solve with Gurobi or HiGHS using named profiles.
-    Returns: (status, condition, used_solver, used_options)
+    Solve PyPSA network using Linopy and return solver results and model.
+    Returns: (status, condition, used_solver, used_options, model)
     """
+
     solver = solver.lower()
     if profile is None:
         profile = "gurobi-default" if solver == "gurobi" else "highs-default"
@@ -358,23 +409,21 @@ def solve_network(n, solver="gurobi", profile=None,
     if overrides:
         opts.update(overrides)
 
-    # 1) Build PyPSA/Linopy model
-    n.optimize.create_model()      # n.model is now a Linopy Model
+    # 1) Build Linopy model
+    m = n.optimize.create_model()
 
-    # 2) Add your custom constraints to that exact model
+    # 2) add constraints for stores ( charging and discharging rates)
     add_custom_constraints(n, n_config=n_config)
 
     def _assign_duals(n):
         if not assign_all_duals:
             return
-        # PyPSA 1.x usually exposes assign_duals on n.optimize
         if hasattr(n.optimize, "assign_duals"):
             try:
                 n.optimize.assign_duals(assign_all_duals=True)
             except TypeError:
                 n.optimize.assign_duals()
             return
-        # fallback legacy names
         if hasattr(n, "model") and hasattr(n.model, "assign_duals"):
             n.model.assign_duals()
             return
@@ -389,45 +438,44 @@ def solve_network(n, solver="gurobi", profile=None,
         obj_val = float("nan")
         try:
             val = getattr(getattr(n, "model", None), "objective", None)
-            if val is not None:
-                val = getattr(val, "value", None)
-                if val is not None:
-                    obj_val = float(val)
+            if val is not None and getattr(val, "value", None) is not None:
+                obj_val = float(val.value)
         except Exception:
             pass
 
         meta = dict(getattr(n, "meta", {}) or {})
-        safe_opts = {}
-        for k, v in (used_opts or {}).items():
-            try:
-                _ = float(v) if isinstance(v, (int, float)) else v
-                safe_opts[k] = v
-            except Exception:
-                safe_opts[k] = str(v)
+        safe_opts = {k: (v if isinstance(v, (int, float, str)) else str(v))
+                     for k, v in (used_opts or {}).items()}
 
         meta.update({
-            "objective": None if (obj_val is None or math.isnan(obj_val)) else float(obj_val),
-            "opt_status": str(status) if status is not None else None,
-            "opt_termination": str(condition) if condition is not None else None,
+            "objective": None if math.isnan(obj_val) else obj_val,
+            "opt_status": str(status) if status else None,
+            "opt_termination": str(condition) if condition else None,
             "opt_solver": used_solver,
             "opt_options": safe_opts,
         })
         n.meta = meta
 
-    # ---- primary attempt ----
+    # ---- main solver ----
     try:
         status, condition = n.optimize.solve_model(
             solver_name=solver,
             io_api=io_api,
             **opts,
         )
+
         _assign_duals(n)
         _stamp_meta(n, status, condition, solver, opts)
-        return status, condition, solver, opts
+
+        if return_model:
+            return status, condition, solver, opts, m  # 👈 return the model
+        else:
+            return status, condition, solver, opts
+
     except Exception as e:
         print(f"[WARN] {solver} failed: {e}")
 
-    # ---- fallbacks ----
+    # ---- fallback ----
     for fb in fallback_order:
         fb = fb.lower()
         if fb not in SOLVER_PROFILES:
@@ -444,13 +492,15 @@ def solve_network(n, solver="gurobi", profile=None,
             )
             _assign_duals(n)
             _stamp_meta(n, status, condition, fb, fb_opts)
-            return status, condition, fb, fb_opts
+            if return_model:
+                return status, condition, fb, fb_opts, m
+            else:
+                return status, condition, fb, fb_opts
         except Exception as e2:
             print(f"[WARN] {fb} fallback failed: {e2}")
 
     _stamp_meta(n, status=None, condition="failed", used_solver=solver, used_opts=opts)
     raise RuntimeError("All solver attempts failed.")
-
 
 
 def optimal_network_only(n_opt):
@@ -554,12 +604,34 @@ def create_folder_if_not_exists(path, folder_name):
     return folder_path  # Return the full path of the folder
 
 
-def export_print_network(n, n_flags, network_name, results_folder, suffix):
+def export_print_network(n, n_flags, network_name, results_folder, suffix, model = None):
+    """
+        Export and optionally plot a PyPSA network and its Linopy model.
+
+        Parameters
+        ----------
+        n : pypsa.Network
+            The network to export.
+        n_flags : dict
+            Dict of boolean options ('print', 'export').
+        network_name : str
+            Base name for the exported files.
+        results_folder : str
+            Root folder for results.
+        suffix : str
+            String suffix (e.g., '_OPT', '_DET', etc.) added to filenames.
+        model : linopy.Model, optional
+            If provided, the Linopy model is saved as .nc in the same folder.
+
+        Returns
+        -------
+        str or None
+            Full path of the exported network file (if any).
+        """
+
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
 
-    # choose the plotted network
-    n_plot = optimal_network_only(n) if suffix == '_OPT' else n
-
+    n_plot = n
     full_path = None
 
     if n_flags.get('print'):
@@ -567,35 +639,32 @@ def export_print_network(n, n_flags, network_name, results_folder, suffix):
         full_path = os.path.join(networks_folder, filename)
         pypsatopo.generate(n_plot, file_output=full_path,
                            negative_efficiency=False, carrier_color=True)
+        print(f"✅ PyPSA network plotted to: {full_path}")
 
-    if n_flags.get('export'):
-        filename = f"{network_name}{suffix}.nc"
-        full_path = os.path.join(networks_folder, filename)
-        n.export_to_netcdf(full_path)
+
+
+    # --- Export network to NetCDF ---
+    if n_flags.get("export"):
+        filename_nc = f"{network_name}{suffix}.nc"
+        nc_path = os.path.join(networks_folder, filename_nc)
+        n.export_to_netcdf(nc_path)
+        full_path = nc_path
+        print(f"✅ Solved PyPSA network saved to: {nc_path}")
+
+        # --- Optional model export ---
+        if model is not None:
+            try:
+                model_filename = f"{network_name}{suffix}_model.nc"
+                model_path = os.path.join(networks_folder, model_filename)
+                model.to_netcdf(model_path)
+                print(f"✅ Linopy model saved to: {model_path}")
+            except Exception as e:
+                print(f"[WARN] Could not export Linopy model: {e}")
 
     if full_path is None:
         return None
 
     return full_path
-
-
-def patch_netcdf_attrs(nc_path: Path, **attrs):
-    # load -> update attrs -> write back atomically
-    ds = xr.load_dataset(nc_path)  # load to memory so we can overwrite the same path
-    # make options JSON-safe if you want to store them too
-    if "opt_options" in attrs and attrs["opt_options"] is not None:
-        try:
-            json.dumps(attrs["opt_options"])
-        except Exception:
-            attrs["opt_options"] = {k: str(v) for k, v in attrs["opt_options"].items()}
-
-    for k, v in attrs.items():
-        if v is not None:
-            ds.attrs[k] = v
-    tmp = nc_path.with_suffix(nc_path.suffix + ".tmp")
-    ds.to_netcdf(tmp)   # write new file
-    ds.close()
-    os.replace(tmp, nc_path)  # atomic replace on most OSes
 
 
 def save_network_comp_allocation (results_folder, network_comp_allocation):
@@ -843,4 +912,5 @@ def get_total_marginal_capital_cost_agents(n_opt, network_comp_allocation, plot_
     return cc_tot_agent, mc_tot_agent
 
 
+# good network
 

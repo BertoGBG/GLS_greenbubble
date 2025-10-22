@@ -58,7 +58,6 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 # --------------------------------------
 ''' ASSUMPTIONS ON ENERGY PRICES'''
-
 '''Electricity tariffs'''
 # Purchased Electricity
 # TSO and state tariff

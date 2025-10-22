@@ -7,17 +7,13 @@ from io import StringIO
 import json
 from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
-import pytz
-import calendar
-from scripts.helpers import build_electricity_grid_price_w_tariff
-from scripts.config import (CO2_cost_ref_year,
-                            En_price_year,
+from scripts.config import (En_price_year,
                             DKK_Euro,
                             latitude,
                             longitude,
                             H2_delivery_frequency,
                             H2_profile_flag,
-                            n_options)
+                            )
 
 
 # ------ INPUTS PRE-PROCESSING ----
@@ -42,7 +38,6 @@ def GL_inputs_to_eff(GL_inputs):
     return GL_eff
 
 
-
 def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
     '''Load GreenLab inputs'''
 
@@ -59,63 +54,32 @@ def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
     Methanol_demand.to_csv(p.Methanol_demand_input_file, sep=';')  # t/h
 
     '''H2 demand with annual profile'''
-    H2_input_demand = build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
+    H2_input_demand, NG_demand_DK_h = build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
 
     demands = {'bioCH4': bioCH4_demand,
                'H2' : H2_input_demand,
-               'meoh' : Methanol_demand}
+               'meoh' : Methanol_demand,
+               'NG_DK' : NG_demand_DK_h}
 
     return demands
-
-def align_series_to_year(s: pd.Series | pd.DataFrame, target_year: int):
-    idx = pd.DatetimeIndex(pd.to_datetime(s.index, utc=False, errors="coerce"))
-
-    # If tz-aware, convert to UTC then drop tz to avoid wall-time shifts
-    if idx.tz is not None:
-        idx = idx.tz_convert("UTC").tz_localize(None)
-
-    # Ensure tz-naive
-    try:
-        idx = idx.tz_localize(None)
-    except Exception:
-        pass
-
-    # Map the calendar year
-    idx_mapped = idx.map(lambda ts: ts.replace(year=target_year))
-
-    # If target year is non-leap, drop Feb 29 rows (they won't exist later)
-    if not calendar.isleap(target_year):
-        mask = ~((idx_mapped.month == 2) & (idx_mapped.day == 29))
-        s = s.loc[mask]
-        idx_mapped = idx_mapped[mask]
-
-    s = s.copy()
-    s.index = idx_mapped
-    return s
 
 
 def load_input_data():
     """Load csv files and prepare Input Data to GL network"""
+
     GL_inputs = pd.read_excel(p.GL_input_file, sheet_name='Overview_2', index_col=0)
     GL_eff = GL_inputs_to_eff(GL_inputs)
     Elspotprices = pd.read_csv(p.El_price_input_file, sep=';', index_col=0)  # currency/MWh
     Elspotprices = Elspotprices.set_axis(p.hours_in_period)
     CO2_emiss_El = pd.read_csv(p.CO2emis_input_file, sep=';', index_col=0)  # kg/MWh CO2
     CO2_emiss_El = CO2_emiss_El.set_axis(p.hours_in_period)
-    #bioCH4_prod = pd.read_csv(p.bioCH4_prod_input_file, sep=';', index_col=0)  # MWh/h y
-    #bioCH4_prod = bioCH4_prod.set_axis(p.hours_in_period)
     CF_wind = pd.read_csv(p.CF_wind_input_file, sep=';', index_col=0)  # MWh/h y
     CF_wind = CF_wind.set_axis(p.hours_in_period)
     CF_solar = pd.read_csv(p.CF_solar_input_file, sep=';', index_col=0)  # MWh/h y
     CF_solar = CF_solar.set_axis(p.hours_in_period)
     NG_price_year = pd.read_csv(p.NG_price_year_input_file, sep=';', index_col=0)  # MWh/h y
     NG_price_year = NG_price_year.set_axis(p.hours_in_period)
-    #Methanol_demand = pd.read_csv(p.Methanol_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
-    #Methanol_demand = Methanol_demand.set_axis(p.hours_in_period)
-    #Methanation_demand_max = pd.read_csv(p.Methanation_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
-    #Methanation_demand_max = Methanol_demand_max.set_axis(p.hours_in_period)
     NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
-    #NG_demand_DK = NG_demand_DK.set_axis(p.hours_in_period) # different time scale
     El_demand_DK1 = pd.read_csv(p.El_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
     El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
     DH_external_demand = pd.read_csv(p.DH_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
@@ -149,16 +113,20 @@ def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
     H2_demand_y.rename(columns={'ref col': col_name}, inplace=True)
     H2_demand_y[col_name] = 0.0
 
+    # NG_demand_DK align timestamp
+    s = NG_demand_DK.iloc[:, 0].astype(float)
+    idx = pd.DatetimeIndex(s.index)
+    if idx.tz is not None:
+        idx = idx.tz_convert("UTC").tz_localize(None)
+    s.index = idx
+    start = s.index.min()
+    end = s.index.max() + pd.Timedelta(days=1)  # include the entire last day
+    hourly_index = pd.date_range(start, end, freq="h", inclusive="left")
+    NG_demand_DK_2 = (s.reindex(hourly_index, method="ffill") / 24.0)
+
     # Convert start_date and end_date from ISO 8601 format
     start_date = datetime.strptime(p.start_date, "%Y-%m-%d %H:%M")
     end_date = datetime.strptime(p.end_date, "%Y-%m-%d %H:%M")
-
-    # NG_demand_DK align timestamp
-    NG_demand_DK_2 = align_series_to_year(NG_demand_DK, En_price_year)
-    NG_demand_DK_2 = NG_demand_DK_2.reindex(p.hours_in_period)
-
-    #NG_demand_DK_2.index = pd.to_datetime(NG_demand_DK_2.index)
-    #NG_demand_DK_2.index = NG_demand_DK_2.index.map(lambda x: x.replace(year=start_date.year))
 
     # Determine the time step based on n (monthly or weekly)
     if n == 12:
@@ -192,31 +160,47 @@ def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
         last_hour = valid_times[-1]  # Ensures delivery at the last available hour
 
         delivery_dates.append(last_hour)
-        current_time = next_time  # Move to next interval start
+        #current_time = next_time  # Move to next interval start
 
-    # Assign H2 demand values at the correct timestamps
-    for i in range(len(delivery_dates)):
-        end_time = delivery_dates[i]
-        st_time = delivery_dates[i - 1] if i > 0 else start_date  # Ensure first interval starts from start_date
+    if profile_flag :
+        # Assign H2 demand values at the correct timestamps
+        def slice_by_month_day_hour(df, start, end):
+            mask = (
+                           (df.index.month > start.month) |
+                           ((df.index.month == start.month) &
+                            ((df.index.day > start.day) |
+                             ((df.index.day == start.day) & (df.index.hour >= start.hour))))
+                   ) & (
+                           (df.index.month < end.month) |
+                           ((df.index.month == end.month) &
+                            ((df.index.day < end.day) |
+                             ((df.index.day == end.day) & (df.index.hour <= end.hour))))
+                   )
+            return df.loc[mask]
 
-        if profile_flag:
+
+        for i in range(len(delivery_dates)):
+            end_time = delivery_dates[i]
+            st_time = delivery_dates[i - 1] if i > 0 else start_date  # Ensure first interval starts from start_date
+
             # Compute H2_val based only on NG demand within the current interval
-            period_data = NG_demand_DK_2.loc[st_time:end_time, :].values
-            total_demand = np.sum(NG_demand_DK_2.loc[start_date:end_date, :].values)  # Total demand for normalization
+            period_data = slice_by_month_day_hour(NG_demand_DK_2, st_time, end_time)
+            total_demand = NG_demand_DK_2.sum() # Total demand for normalization
 
             if total_demand > 0:  # Avoid division by zero
-                H2_val = np.sum(period_data) / total_demand * demand_H2 #H2_size * flh_H2
+                H2_val = period_data.sum() / total_demand * demand_H2 # H2_size * flh_H2
             else:
                 H2_val = 0  # If there's no demand data, keep it zero
-        else:
-            H2_val = demand_H2 / n  # Equal division among intervals
 
-        # Assign H2 demand value at the correct timestamp
-        H2_demand_y.at[end_time, col_name] = H2_val
+            H2_demand_y.loc[delivery_dates[i], :] = H2_val
+
+    else:
+        H2_val = demand_H2 / n
+        H2_demand_y.loc[delivery_dates, :] = H2_val
 
     H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')
 
-    return H2_demand_y
+    return H2_demand_y, NG_demand_DK_2
 
 # ----- EXTERNAL ENERGY MARKETS
 
@@ -406,6 +390,7 @@ def pre_processing_energy_data():
         NG_price_year = THE_daily_NG_prices[['THE_NG_pricesEUR_MWh']].copy()
 
     NG_price_year = remove_feb_29(NG_price_year)
+    NG_price_year = NG_price_year.interpolate(method='linear')
     NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
 
     '''  Estimated NG Demand DK '''
@@ -461,6 +446,7 @@ def pre_processing_energy_data():
                                     'Capacity Factor DH'] * DH_max_capacity  # estimated demand for DH in Skive municipality
     DH_Skive = remove_feb_29(DH_Skive)
     DH_Skive = DH_Skive.set_axis(p.hours_in_period)
+    DH_Skive = DH_Skive.interpolate (method='linear')
     DH_Skive.to_csv(p.DH_external_demand_input_file, sep=';')  # MWh/h
 
     '''Onshore Wind and Solar Capacity Factors'''
@@ -476,7 +462,7 @@ def pre_processing_energy_data():
 
 # ---- Pre-processing for PyPSA network
 
-def pre_processing_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
+def prepare_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
     # returns: inputs_dict which contains all inputs for the pypsa network
 
@@ -501,6 +487,7 @@ def pre_processing_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , C
     demands = build_demands_TS (demand_CH4, demand_meoh, demand_H2, NG_demand_DK)
     H2_input_demand = demands['H2']
     Methanol_demand = demands['meoh']
+    NG_DK = demands['NG_DK']
 
     """ return the yearly el demand for the DK1 which is avaibale sale of RE form GLS,
     it is estimated in proportion to the El in GLS needed for producing RFNBOs """
@@ -535,7 +522,7 @@ def pre_processing_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , C
                    'CF_solar': CF_solar,
                    'NG_price_year': NG_price_year,
                    'Methanol_input_demand': demands['meoh'],
-                   'NG_demand_DK': NG_demand_DK,
+                   'NG_demand_DK': NG_DK,
                    'El_demand_DK1': El_demand_DK1,
                    'DH_external_demand': DH_external_demand,
                    'H2_input_demand': demands['H2'],
@@ -545,36 +532,4 @@ def pre_processing_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , C
 
     return inputs_dict
 
-
-def en_market_prices_w_CO2(inputs_dict, tech_costs):
-    """Returns the market price of externally traded commodities adjusted for CO2 tax"""
-    CO2_cost = inputs_dict['CO2 cost']
-    CO2_emiss_El = inputs_dict['CO2_emiss_El']
-    NG_price_year = inputs_dict['NG_price_year']
-    Elspotprices = inputs_dict['Elspotprices']
-    GL_eff = inputs_dict['GL_eff']
-
-    el_grid_price, el_grid_sell_price = build_electricity_grid_price_w_tariff(Elspotprices)  #
-
-    # Market prices of energy commodities purchased on the market, including CO2 tax
-    # adjust el price for difference in CO2 tax
-    mk_el_grid_price = el_grid_price + (np.array(CO2_emiss_El) * (CO2_cost - CO2_cost_ref_year))  # currency / MWh
-    mk_el_grid_sell_price = el_grid_sell_price  # NOTE selling prices are negative in the model
-
-    # NG grid price unaffected by CO2 tax (paid locally by the consumer)
-    mk_NG_grid_price = NG_price_year + tech_costs.at['gas', 'CO2 intensity'] * (
-                CO2_cost - CO2_cost_ref_year)  # currency / MWH
-
-    # District heating price
-    DH_price = p.ref_df.copy()
-    DH_price.iloc[:, 0] = - n_options.at['DH', 'price'] #
-
-    en_market_prices = {'el_grid_price': np.squeeze(mk_el_grid_price),
-                        'el_grid_sell_price': np.squeeze(mk_el_grid_sell_price),
-                        'NG_grid_price': np.squeeze(mk_NG_grid_price),
-                        # 'bioCH4_grid_sell_price': np.squeeze(mk_bioCH4_grid_sell_price),
-                        'DH_price': np.squeeze(DH_price)
-                        }
-
-    return en_market_prices
 

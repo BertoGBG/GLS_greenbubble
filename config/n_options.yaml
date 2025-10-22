@@ -6,14 +6,14 @@ biochar credits:
   enable: false
 
 CO2 Liq credits:
-  enalble: false
+  enable: false
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass
   price : 10 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
 DH:
-  enable: true
+  enable: false
   price : 54 # €/MWh
 
 moist biomass market:
@@ -27,6 +27,6 @@ pellets market:
   price : 62 # €/MWh
 
 symbiosis El transformer:
-  expansion: false
+  expansion: true
 
 
