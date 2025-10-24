@@ -306,6 +306,7 @@ def aftercomp_cool_duty(fluid: str, p_out_bar: float, T_in_C: float, T_cool_C: f
         'specific_Q_above_split_kWh_per_kg': (Q_above / 3.6e6) if Q_above is not None else None,
         'specific_Q_below_split_J_per_kg': Q_below,
         'specific_Q_below_split_kWh_per_kg': (Q_below / 3.6e6) if Q_below is not None else None,
+        'T_cool_C' : T_cool_C,
     }
     return out
 

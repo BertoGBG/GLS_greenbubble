@@ -1126,17 +1126,19 @@ def add_battery(n, n_flags, inputs_dict, tech_costs, n_config):
         Add a battery system with inverter (AC/DC coupling).
         """
         st_bus = "battery"
+        local_EL_bus = 'El3 bus'
+
         # Ensure required buses exist
         bus_dict = {
-            "bus_list": [st_bus],
-            "carrier_list": ["battery"],
-            "unit_list": ["MW"]
+            "bus_list": [st_bus, local_EL_bus],
+            "carrier_list": ["battery", 'AC'],
+            "unit_list": ["MW", 'MW']
         }
         n = add_requirements_buses(n, bus_dict)
 
         # Add electricity connection
-        local_EL_bus = 'El_battery'
-        n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
+        #local_EL_bus = 'El_battery'
+        #n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
 
         # --- Storage unit ---
         n.add("Store",

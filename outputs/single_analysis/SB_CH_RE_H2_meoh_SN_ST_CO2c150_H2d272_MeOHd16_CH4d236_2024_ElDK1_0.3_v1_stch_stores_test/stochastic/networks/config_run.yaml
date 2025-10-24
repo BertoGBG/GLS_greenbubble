@@ -1,0 +1,624 @@
+CFG_PATH: /Users/au731098/Library/CloudStorage/OneDrive-Aarhusuniversitet/01_AU_Research/09_GreenBubble/GLS_greenbubble/config/config.yaml
+f: <_io.TextIOWrapper name='/Users/au731098/Library/CloudStorage/OneDrive-Aarhusuniversitet/01_AU_Research/09_GreenBubble/GLS_greenbubble/config/n_options.yaml'
+  mode='r' encoding='utf-8'>
+n_CFG_PATH: /Users/au731098/Library/CloudStorage/OneDrive-Aarhusuniversitet/01_AU_Research/09_GreenBubble/GLS_greenbubble/config/n_config.yaml
+n_cfg:
+  battery:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 0.5
+    ramp limit down: 0.5
+  biogas:
+    initial capacity: 10
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  biogas storage:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: 200
+  biogas upgrading:
+    initial capacity: 10
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  biomass belt dryer:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1.2
+    max capacity: .inf
+    min load: 0.5
+  biomass boiler:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  biomethanation biogas:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 1
+    ramp limit down: 1
+    min load: 0
+  biomethanation CO2:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 1
+    ramp limit down: 1
+    min load: 0
+  cat methanation biogas:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 0.08
+    ramp limit down: 0.08
+    min load: 0.15
+  cat methanation CO2:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 0.08
+    ramp limit down: 0.08
+    min load: 0.15
+  CO2 compressor:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  CO2 HP storage:
+    initial capacity: 0
+    expansion: false
+    cost factor: 1
+    max capacity: .inf
+    capacity: 0
+  CO2 Liq storage:
+    initial capacity: 0
+    expansion: false
+    cost factor: 1
+    max capacity: .inf
+  CO2 pipe:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  dewatering:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  El boiler:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  electrolysis:
+    initial capacity: 0
+    expansion: true
+    cost factor: 3
+    max capacity: .inf
+    ramp limit up: 0.9
+    ramp limit down: 0.9
+    min load: 0.15
+  DH heat exchanger:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  eSMR meoh:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 0.08
+    ramp limit down: 0.08
+    min load: 0.15
+  grid connection:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  H2 compressor:
+    initial capacity: 0
+    expansion: true
+    cost factor: 2
+    max capacity: .inf
+    capacity: 0
+  H2 pipe:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  H2 storage:
+    initial capacity: 0
+    expansion: false
+    cost factor: 1
+    max capacity: .inf
+  heat pump:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  meoh:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+    ramp limit up: 0.08
+    ramp limit down: 0.08
+    min load: 0.15
+  NG boiler:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  onwind:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  pelletization:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  pyrolysis:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  solar:
+    initial capacity: 0
+    expansion: true
+    cost factor: 1
+    max capacity: .inf
+  TES concrete:
+    initial capacity: 0
+    expansion: false
+    cost factor: 1
+    max capacity: .inf
+    min capacity: 1.5
+    ramp limit up: 0.1
+    ramp limit down: 0.1
+    standing loss: 0.02
+  TES DH:
+    initial capacity: 0
+    expansion: false
+    cost factor: 1
+    max capacity: .inf
+    min capacity: 5
+    ramp limit up: 0.02
+    ramp limit down: 0.02
+    standing loss: 0.002
+n_config:
+- initial capacity: 0
+  expansion: false
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: 0.0
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: false
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 2.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: 0.0
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: false
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: false
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.02
+  ramp limit down: 0.02
+  min load: .nan
+  capacity: .nan
+  min capacity: 5.0
+  standing loss: 0.002
+- initial capacity: 0
+  expansion: false
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.1
+  ramp limit down: 0.1
+  min load: .nan
+  capacity: .nan
+  min capacity: 1.5
+  standing loss: 0.02
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.5
+  ramp limit down: 0.5
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 10
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: 200.0
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 10
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.2
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: 0.5
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 1.0
+  ramp limit down: 1.0
+  min load: 0.0
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 1.0
+  ramp limit down: 1.0
+  min load: 0.0
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.08
+  ramp limit down: 0.08
+  min load: 0.15
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.08
+  ramp limit down: 0.08
+  min load: 0.15
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.08
+  ramp limit down: 0.08
+  min load: 0.15
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 3.0
+  max capacity: .inf
+  ramp limit up: 0.9
+  ramp limit down: 0.9
+  min load: 0.15
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: 0.08
+  ramp limit down: 0.08
+  min load: 0.15
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+- initial capacity: 0
+  expansion: true
+  cost factor: 1.0
+  max capacity: .inf
+  ramp limit up: .nan
+  ramp limit down: .nan
+  min load: .nan
+  capacity: .nan
+  min capacity: .nan
+  standing loss: .nan
+n_OPT_PATH: /Users/au731098/Library/CloudStorage/OneDrive-Aarhusuniversitet/01_AU_Research/09_GreenBubble/GLS_greenbubble/config/n_options.yaml
+n_opt:
+  biochar credits:
+    enable: false
+  CO2 Liq credits:
+    enable: false
+  Dig biomass:
+    max capacity: .inf
+    price: 5
+  DH:
+    enable: false
+    price: 30
+    load multiplier: 1
+  moist biomass market:
+    enable: false
+    max capacity: 20000
+    price: 43
+  pellets market:
+    enable: true
+    max capacity: .inf
+    price: 62
+  symbiosis El transformer:
+    expansion: true
+n_options:
+- enable: false
+  max capacity: .nan
+  price: .nan
+  load multiplier: .nan
+  expansion: .nan
+- enable: false
+  max capacity: .nan
+  price: 30.0
+  load multiplier: 1.0
+  expansion: .nan
+- enable: .nan
+  max capacity: .inf
+  price: 5.0
+  load multiplier: .nan
+  expansion: .nan
+- enable: false
+  max capacity: .nan
+  price: .nan
+  load multiplier: .nan
+  expansion: .nan
+- enable: false
+  max capacity: 20000.0
+  price: 43.0
+  load multiplier: .nan
+  expansion: .nan
+- enable: true
+  max capacity: .inf
+  price: 62.0
+  load multiplier: .nan
+  expansion: .nan
+- enable: .nan
+  max capacity: .nan
+  price: .nan
+  load multiplier: .nan
+  expansion: true
+run_name: v1_stch_stores_test
+CO2_cost: 150
+flh_H2: 4000
+H2_output: 68
+flh_Biogas: 8760
+biogas_output: 27
+flh_meoh: 2000
+meoh_output: 8
+demand_H2: 272000
+demand_CH4: 236520
+demand_meoh: 16000
+el_DK1_sale_el_RFNBO: 0.3
+En_price_year: 2024
+preprocess_flag: false
+latitude: 56.566
+longitude: 9.033
+n_flags:
+  biogas: true
+  central_heat: true
+  renewables: true
+  electrolysis: true
+  meoh: true
+  methanation: false
+  symbiosis: true
+  storage: true
+  print: false
+  export: false
+n_flags_opt:
+  print: false
+  export: true
+  plot: false
+outputs_folder: outputs/single_analysis
+H2_profile_flag: false
+H2_delivery_frequency: 1
+CO2_cost_ref_year: 0
+rfnbos_dict:
+  limit: emissions
+  price_threshold: 20
+  emission_threshold: 0.0648
+year_EU: 2030
+USD_to_EUR: 1.0
+DKK_Euro: 7.46
+discount_rate: 0.07
+share_bio_NG: 0
+stochastic: true

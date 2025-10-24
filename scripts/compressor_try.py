@@ -73,7 +73,7 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
                 fluid = symbiosis_n.at[HP_stream, 'fluid'],
                 p_in_bar = symbiosis_n.at[HP_stream, 'P'],
                 p_out_bar = symbiosis_n.at[storage_stream, 'P'],
-                T_in_C =   symbiosis_n.at[LP_stream, 'T'],
+                T_in_C = cooling_storage_pre_comp['T_cool_C'],
                 eta_s = 0.75,
                 r_max = 2.5,
                 T_cool_C = symbiosis_n.at['Heat LT min', 'T'],

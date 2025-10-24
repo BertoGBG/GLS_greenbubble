@@ -16,7 +16,7 @@ battery: # includes inverter
   <<: *base
   ramp limit up: 0.5 # % of total en capacity per hour
   ramp limit down: 0.5 # % of total en capacity per hour
-  expansion : false
+  expansion : true
 
 biogas: # (unit: MW CH4,  for simplicity)
   <<: *base
@@ -74,8 +74,7 @@ CO2 HP storage:
 
 CO2 Liq storage: # NOTE: for expansion e_nom in store and p_nom in liquefaction are optimized separately. Initial capacity has a constant ratio (c-rate = 1)
   <<: *base
-  expansion: true
-
+  expansion: false
 
 CO2 pipe:
   <<: *base
@@ -96,7 +95,7 @@ electrolysis: # (bus0 unit: MW el )
 DH heat exchanger:
   <<: *base
 
-eSMR meoh: # TODO add to the network
+eSMR meoh: # TODO add to the model
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
