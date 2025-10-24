@@ -64,6 +64,8 @@ def main(n_flags=None, run_name=None, outputs_folder=None):
         from scripts.create_stoch_scenarios import create_scenarios, scenarios, CO2_cost_s, share_bio_NG_s
         create_scenarios(network, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_costs)
         results_folder = create_folder_if_not_exists(results_folder , 'stochastic')
+        n_flags['print'] = False
+        n_flags_opt['print'] = False
 
     # ---- Export and print prenetwork
     export_print_network(n=network, n_flags=n_flags, network_name=network_name, results_folder=results_folder, suffix ='_PRE')

@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: v1_full_test_BF
+run_name: v1_stch_stores_test
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 150 # €/t (CO2_cost)
@@ -36,11 +36,11 @@ n_flags:
   renewables: true
   electrolysis: true
   meoh: true
-  methanation: true
-  symbiosis: true
-  storage: false
-  print: false # saves svg of prenetwork before optimization
-  export: false # exports prenetwork before optimization
+  methanation: false
+  symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
+  storage: true     # applies all types of every storage
+  print: true       # saves svg of prenetwork before optimization
+  export: false     # exports prenetwork before optimization
 
 # optimization flags
 n_flags_opt:

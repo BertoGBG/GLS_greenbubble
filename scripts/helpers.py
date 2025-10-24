@@ -395,26 +395,7 @@ def solve_network(n, solver="gurobi", profile=None,
     Returns: (status, condition, used_solver, used_options, model)
     """
 
-    solver = solver.lower()
-    if profile is None:
-        profile = "gurobi-default" if solver == "gurobi" else "highs-default"
-
-    try:
-        base = SOLVER_PROFILES[solver][profile]
-    except KeyError:
-        raise ValueError(f"Unknown profile '{profile}' for solver '{solver}'")
-
-    opts = deepcopy(base)
-    _apply_common_overrides(solver, opts, threads=threads, time_limit=time_limit)
-    if overrides:
-        opts.update(overrides)
-
-    # 1) Build Linopy model
-    m = n.optimize.create_model()
-
-    # 2) add constraints for stores ( charging and discharging rates)
-    add_custom_constraints(n, n_config=n_config)
-
+    #--- HELP FUNCTIONS ----
     def _assign_duals(n):
         if not assign_all_duals:
             return
@@ -455,6 +436,27 @@ def solve_network(n, solver="gurobi", profile=None,
             "opt_options": safe_opts,
         })
         n.meta = meta
+    #-----------------------
+
+    solver = solver.lower()
+    if profile is None:
+        profile = "gurobi-default" if solver == "gurobi" else "highs-default"
+
+    try:
+        base = SOLVER_PROFILES[solver][profile]
+    except KeyError:
+        raise ValueError(f"Unknown profile '{profile}' for solver '{solver}'")
+
+    opts = deepcopy(base)
+    _apply_common_overrides(solver, opts, threads=threads, time_limit=time_limit)
+    if overrides:
+        opts.update(overrides)
+
+    # 1) Build Linopy model
+    m = n.optimize.create_model()
+
+    # 2) add constraints for stores ( charging and discharging rates)
+    add_custom_constraints(n, n_config=n_config)
 
     # ---- main solver ----
     try:

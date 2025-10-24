@@ -43,7 +43,7 @@ def belt_dryer_investment(DM_flow_guess : float = 3, bed_height : float = 0.1, d
     return belt_dryer
 
 
-def compress_multistage_with_Tcap(fluid: str, p_in_bar: float, p_out_bar: float, T_in_C: float, T_max_C: float = 150,
+def compress_multistage_with_Tcap(fluid: str, p_in_bar: float, p_out_bar: float, T_in_C: float, T_max_C: float = 160,
                                   eta_s: float = 0.75, r_max: float = 2.5, T_cool_C=None,
                                   T_split_C=None):  # optional split temperature for duty partition (e.g., 90 °C)
 
@@ -147,7 +147,7 @@ def compress_multistage_with_Tcap(fluid: str, p_in_bar: float, p_out_bar: float,
             'p_in_bar': pin / 1e5,
             'T_in_C': Tin - 273.15,
             'p_out_bar': pout / 1e5,
-            'T_out_C': T2 - + 273.15,
+            'T_out_C': T2 - 273.15,
             'w_actual_J_per_kg': w,
             'w_isentropic_J_per_kg': ws,
             'Q_aftercool_J_per_kg': Q_after,
@@ -311,7 +311,7 @@ def aftercomp_cool_duty(fluid: str, p_out_bar: float, T_in_C: float, T_cool_C: f
 
 
 # --- Network Inputs  T and P levels -------
-T_max_comp = 160 # maximum dischrge temeprature for all compressors
+T_max_comp = 160 # maximum discharge temperature for all compressors
 T_ambient = 20 #
 
 # ------ List of stream in symbiosis network
@@ -325,14 +325,18 @@ symbiosis_data = {
     'Heat LT min': {"fluid": 'Water', "T": 50, 'P': 1},
     'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1},
     'H2 production': {"fluid": 'Hydrogen', "T": 50, 'P': 30},
-    'H2 to MeOH': {"fluid": 'Hydrogen', "T": '', 'P': 80},
-    'H2 to Methanation': {"fluid": 'Hydrogen', "T": '', 'P': 20},
+    'H2 to MeOH': {"fluid": 'Hydrogen', "T": T_max_comp, 'P': 80},
+    'H2 to biomethanation': {"fluid": 'Hydrogen', "T": '', 'P': 20},
+    'H2 to cat methanation': {"fluid": 'Hydrogen', "T": '', 'P': 20},
     'H2 storage': {"fluid": 'Hydrogen', "T": '', 'P': 250},
     'CO2 biogas': {"fluid": 'CO2', "T": 50, 'P': 1},
-    'CO2 to MeOH': {"fluid": 'CO2', "T": '', 'P': 80},
-    'CO2 to Methanation': {"fluid": 'CO2', "T": '', 'P': 20},
+    'CO2 to MeOH': {"fluid": 'CO2', "T": T_max_comp, 'P': 80},
+    'CO2 to biomethanation': {"fluid": 'CO2', "T": '', 'P': 20},
+    'CO2 to catmethanation': {"fluid": 'CO2', "T": '', 'P': 20},
     'CO2 to HP storage': {"fluid": 'CO2', "T": '', 'P': 80},
     'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30},
+    'CO2 from Liq storage': {"fluid": 'CO2', "T": T_ambient, 'P': 16},
+
 }
 symbiosis_n = pd.DataFrame.from_dict(symbiosis_data, orient="index")
 
