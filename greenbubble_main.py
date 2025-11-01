@@ -5,7 +5,7 @@
 import matplotlib
 from dask.dataframe.methods import assign
 
-matplotlib.use("Agg")
+#matplotlib.use("Agg")
 from pathlib import Path
 
 #  Local modules

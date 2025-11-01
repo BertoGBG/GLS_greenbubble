@@ -495,9 +495,10 @@ def prepare_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost
     # Estimation of the RE demand yearly in GLS based on H2 and MeOH demand
     El_d_H2 = np.abs(
         H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
+
     El_d_MeOH = np.abs(Methanol_demand.values.sum() * (
             (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-            tech_costs.at['hydrogen storage compressor','electricity-input'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + tech_costs.at['hydrogen storage compressor','electricity-input'] / GL_eff.at[
+            tech_costs.at['hydrogen storage compressor MeOH','electricity-input'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + tech_costs.at['CO2 industrial compressor MeOH','electricity-input'] / GL_eff.at[
                 'Methanol', 'Methanol plant']))
 
     El_d_y_guess_GLS = El_d_H2 + El_d_MeOH # MWh el for H2 and MeOH

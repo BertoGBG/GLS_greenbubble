@@ -633,16 +633,14 @@ def export_print_network(n, n_flags, network_name, results_folder, suffix, model
 
     networks_folder = create_folder_if_not_exists(results_folder, 'networks')
 
-    n_plot = n
     full_path = None
 
     if n_flags.get('print'):
         filename = f"{network_name}{suffix}.svg"
         full_path = os.path.join(networks_folder, filename)
-        pypsatopo.generate(n_plot, file_output=full_path,
+        pypsatopo.generate(n, file_output=full_path,
                            negative_efficiency=False, carrier_color=True)
         print(f"✅ PyPSA network plotted to: {full_path}")
-
 
 
     # --- Export network to NetCDF ---
