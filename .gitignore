@@ -2,3 +2,5 @@
 outputs/.DS_Store
 .DS_Store
 outputs/.DS_Store
+__pycache__/
+*.pyc

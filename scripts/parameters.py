@@ -5,22 +5,8 @@ from scripts.helpers import build_snapshots
 # --------------------------------------
 ''' Constants'''
 FLH_y = 8760  # full load hours equivalent  in a year for MeOH
-
-density_H2_1atm = 0.0827 # kg/m3
-density_CO2_1atm = 1.98 # kg/m3
-density_CH4_1atm = 0.716 # kg/m3
-
-moisture_pellets = 0.13 # for compatibility with DEA assumption on pyrolysis of biochar
-moisture_moist_biomass = 0.5 # if active['dewatering'] it is overwritten by the DEA input on dewatering of digestate fibers
-
-lhv_dict = {'meoh' : 5.54, # MWh/t
-            'H2' : 33.33, # MWh/t
-            'CH4' : 13.9, # MWh/t
-            'pellets' : 14.5/3.6, #  MWh/t @ moisture pellets (straw pellets)
-            'chips' : 2.3, #  MWh/t @ moisture moist biomass (straw pellets)
-            }
-
-# biogas_CH4_content = 0.65 # in v% --> biogas composition defined via the GL_Input file
+lhv_h2 = 33.33 # MWh/t
+# NOTE physical properties defined in: scripts.technology_inputs
 # --------------------------------------
 ''' PARAMETERS FOR RETRIEVING AND PRE PROCESSING'''
 
@@ -57,8 +43,7 @@ DH_Tamb_min = -15  # minimum outdoor temp --> maximum Capacity Factor
 DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 # --------------------------------------
-''' ASSUMPTIONS ON ENERGY PRICES'''
-
+''' ASSUMPTIONS ON ENERGY TARIFFS'''
 '''Electricity tariffs'''
 # Purchased Electricity
 # TSO and state tariff
@@ -77,7 +62,7 @@ el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro  # (Ore/kWh) *100/1000 =
 
 # H2 grid tariff
 H2_grid_purchase = False # enables purchasing of H2 from external grid
-H2_tariff = 0.04 * 1000 /lhv_dict['H2'] # (€/kg) * 10000 / MWh/t
+H2_tariff = 0.04 * 1000 / lhv_h2 # symbiosis_n.at['H2 production', 'LHV'] # (€/kg) * 10000 / MWh/t
 
 # --------------------------------------
 '''Location of CSV files as input to the model'''
@@ -105,7 +90,7 @@ DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/
 
 
 # --------------------------------------
-''' PREPROCESSING INPUTS sources'''
+''' PREPROCESSING: INPUTS sources'''
 # NG prices source: # https://api.energidataservice.dk/dataset
 # EL prices source: # https://api.energidataservice.dk/dataset
 # El emissions source: # https://api.energidataservice.dk/dataset

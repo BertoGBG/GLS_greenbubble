@@ -1,25 +1,29 @@
 # config/config.yml
-run_name: full_test
+run_name: v1_stch_stores_test
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 150 # €/t (CO2_cost)
+
 # Others
 CO2_cost_ref_year: 0
 
 # Annual Demands inputs
 flh_H2: 4000 # full load hours / y
-H2_output: 68 # nominal capacity (H2)
+H2_output: 68 # nominal capacity (MW H2)
 flh_Biogas: 8760 # full load hours / y
-biogas_output: 27 # nominal capacity (ch4)
-flh_meoh: 2000 # full load hours / y
-meoh_output: 8 # nominal capacity (meoh)
+biogas_output: 50 # nominal capacity (MW ch4)
+flh_meoh: 8000 # full load hours / y
+meoh_output: 15 # nominal capacity (MW meoh)
 
 # Sales of Electricity
-el_DK1_sale_el_RFNBO: 0.3 # max share of RE production that can be sold to ElDK1
+el_DK1_sale_el_RFNBO: 0.1 # max share of RE production that can be sold to ElDK1
 
 # Energy & Weather year
 En_price_year: 2024
 preprocess_flag: false
+
+# NG emissions
+share_bio_NG : 0 # share of biomethane in NG grid (fraction of fossil emission not accounted when combusting NG)
 
 # Location
 latitude: 56.566
@@ -33,14 +37,14 @@ n_flags:
   electrolysis: true
   meoh: true
   methanation: true
-  symbiosis: true
-  storage: true
-  print: true # saves svg of network before optimization
-  export: false # exports prenetwork before optimization
+  symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
+  storage: true     # applies all types of every storage
+  print: false       # saves svg of prenetwork before optimization
+  export: false     # exports prenetwork before optimization
 
 # optimization flags
 n_flags_opt:
-  print: true
+  print: false
   export: true
   plot: false
 
@@ -48,8 +52,8 @@ n_flags_opt:
 outputs_folder: outputs/single_analysis
 
 # Demand flexibility
-H2_profile_flag: true # 'True': the demand follows NG demand profile: 'False' it is flexible delivery during the period  (see frequency)
-H2_delivery_frequency: 52 # 1: Single delivery at the end of the 'Year'. 12 : 'Month', 52: 'Week'
+H2_profile_flag: false # 'True': the demand follows NG demand profile: 'False' it is flexible delivery during the period  (see frequency)
+H2_delivery_frequency: 1 # 1: Single delivery at the end of the 'Year'. 12 : 'Month', 52: 'Week'
 
 # RFNBOs
 rfnbos_dict:
@@ -62,3 +66,6 @@ year_EU: 2030
 USD_to_EUR: 1.0
 DKK_Euro: 7.46
 discount_rate: 0.07
+
+# Stochastic optimization
+stochastic: false # true -> stochastic optimization across scenarios,  false -> deterministic optimization

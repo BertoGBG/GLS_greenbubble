@@ -76,5 +76,8 @@ USD_to_EUR               = _cfg["USD_to_EUR"]
 DKK_Euro                 = _cfg["DKK_Euro"]
 discount_rate            = _cfg["discount_rate"]
 
+share_bio_NG             = _cfg['share_bio_NG']
+
+stochastic               = _cfg["stochastic"]
 #--------------------------
 

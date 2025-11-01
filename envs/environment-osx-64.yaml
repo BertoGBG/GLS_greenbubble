@@ -1,0 +1,59 @@
+# envs/environment-osx64.yaml
+name: greenbubble-pypsa1
+channels:
+  - gurobi
+  - conda-forge
+
+dependencies:
+  # Core
+  - python=3.11
+  - numpy>=2,<3
+  - pandas=2.*
+  - xarray
+  - scipy
+  - networkx
+  - linopy>=0.3
+
+  # Solvers
+  - highspy
+  - glpk
+  - gurobi
+
+  # NetCDF / HDF stack
+  - netcdf4>=1.7
+  - cftime>=1.6
+  - h5py>=3.15
+  - hdf5
+  - libnetcdf
+
+  # Geo / atlite
+  - atlite
+  - geopandas
+  - rasterio
+  - shapely>=2
+  - pyproj
+  - cartopy
+  - proj-data
+  - rtree
+
+  # Perf helpers
+  - numexpr
+  - bottleneck
+  - dask
+
+  # Viz / notebooks / utils
+  - matplotlib
+  - seaborn
+  - ipython
+  - jupyterlab
+  - ipykernel
+  - openpyxl
+  - requests
+  - tqdm
+  - coolprop
+
+  - pip
+  - pip:
+      - pypsa>=1,<2
+      - entsoe-py
+      - pypsatopo

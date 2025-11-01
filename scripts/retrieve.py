@@ -102,103 +102,6 @@ def load_input_data():
     return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
 
 
-
-# ---- DEMANDS for H2, MeOH and El_DK1_GLS
-
-def preprocess_H2_grid_demand(H2_size, flh_H2, NG_demand_DK, profile_flag, n):
-    """
-    Calculate H2 demand distribution over a given number of intervals (n),
-    ensuring deliveries align with the last hour of each interval.
-
-    Parameters:
-    - H2_size: Hydrogen capacity size
-    - flh_H2: Full load hours of H2 system
-    - NG_demand_DK: DataFrame containing natural gas demand data
-    - col_name: Column name for storing H2 demand
-    - profile_flag: Boolean flag for profile-based allocation
-    - n: Number of intervals (default: 12 for months, 52 for weeks, 1 for single year-end delivery)
-
-    Returns:
-    - H2_demand_y: DataFrame aligned with p.ref_df, with deliveries at correct timestamps
-    """
-
-    # Initialize output DataFrame with the same structure and index as p.ref_df
-    H2_demand_y = p.ref_df.copy()
-    col_name= 'H2_demand_MWh'
-    H2_demand_y.rename(columns={'ref col': col_name}, inplace=True)
-    H2_demand_y[col_name] = 0
-
-    # Convert start_date and end_date from ISO 8601 format
-    timezone = pytz.utc  # keeping UTC timestamps
-    start_date = datetime.strptime(p.start_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
-    end_date = datetime.strptime(p.end_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone)
-
-    # NG_demand_DK align timestamp
-    NG_demand_DK_2 = NG_demand_DK.copy()
-    NG_demand_DK_2.index = pd.to_datetime(NG_demand_DK_2.index)
-    NG_demand_DK_2.index = NG_demand_DK_2.index.map(lambda x: x.replace(year=start_date.year))
-
-    # Determine the time step based on n (monthly or weekly)
-    if n == 12:
-        step = timedelta(days=30)  # Approximate monthly step
-    elif n == 52:
-        step = timedelta(weeks=1)  # Weekly step
-    elif n == 1:
-        step = end_date - start_date  # Single delivery at the end of the year
-    else:
-        raise ValueError("Invalid value for n. Use 1 (yearly), 12 (monthly), or 52 (weekly).")
-
-    # Generate delivery timestamps
-    delivery_dates = []
-    current_time = start_date
-
-    for i in range(n):
-        # Calculate next delivery time
-        if n == 1:
-            next_time = end_date  # One delivery at year-end
-        else:
-            next_time = (current_time + step).replace(hour=23, minute=0, second=0)  # Last hour of the interval
-
-        if next_time > end_date or i == n - 1:  # Ensure last delivery is exactly at year-end
-            next_time = end_date.replace(hour=23, minute=0, second=0)
-
-        # Convert to UTC datetime
-        next_time = next_time.astimezone(pytz.utc)
-
-        # Find the last available hour within the reference DataFrame index
-        valid_times = H2_demand_y.index[H2_demand_y.index <= next_time]
-        if valid_times.empty:
-            continue
-        last_hour = valid_times[-1]  # Ensures delivery at the last available hour
-
-        delivery_dates.append(last_hour)
-        current_time = next_time  # Move to next interval start
-
-    # Assign H2 demand values at the correct timestamps
-    for i in range(len(delivery_dates)):
-        end_time = delivery_dates[i]
-        st_time = delivery_dates[i - 1] if i > 0 else start_date  # Ensure first interval starts from start_date
-
-        if profile_flag:
-            # Compute H2_val based only on NG demand within the current interval
-            period_data = NG_demand_DK_2.loc[st_time:end_time, :].values
-            total_demand = np.sum(NG_demand_DK_2.loc[start_date:end_date, :].values)  # Total demand for normalization
-
-            if total_demand > 0:  # Avoid division by zero
-                H2_val = np.sum(period_data) / total_demand * H2_size * flh_H2
-            else:
-                H2_val = 0  # If there's no demand data, keep it zero
-        else:
-            H2_val = H2_size * flh_H2 / n  # Equal division among intervals
-
-        # Assign H2 demand value at the correct timestamp
-        H2_demand_y.at[end_time, col_name] = H2_val
-
-    H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')
-
-    return H2_demand_y
-
-
 # ----- EXTERNAL ENERGY MARKETS
 
 def remove_feb_29(df):
@@ -422,7 +325,7 @@ def pre_processing_energy_data():
     DH_Skive = DH_Skive.sort_values(by=['DateTime'], ascending=True)
     DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'])
     DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
-    hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='H')
+    hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='h')
     hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
     DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
 
@@ -471,13 +374,13 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
 
     summer_start = str(p.En_price_year) + '-04-01T00:00'  # '2019-04-01 00:00:00+00:00' # Monday
     summer_end = str(p.En_price_year) + '-10-01T00:00'  # '2019-10-01 00:00:00+00:00'
-    winter_1 = pd.date_range(p.start_date + 'Z', summer_start + 'Z', freq='H')
+    winter_1 = pd.date_range(p.start_date + 'Z', summer_start + 'Z', freq='h')
     winter_1 = winter_1.drop(winter_1[-1])
-    winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='H')
+    winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='h')
     winter_2 = winter_2.drop(winter_2[-1])
     winter = winter_1.append(winter_2)
     winter = winter[~((winter.month == 2) & (winter.day == 29))]
-    summer = pd.date_range(summer_start + 'Z', summer_end + 'Z', freq='H')
+    summer = pd.date_range(summer_start + 'Z', summer_end + 'Z', freq='h')
     summer = summer.drop(summer[-1])
 
     peak_weekday = range(1, 6)

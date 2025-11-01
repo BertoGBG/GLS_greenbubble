@@ -2,19 +2,21 @@
 
 # -------------------  options config (alphabetical) -------------------
 # expansion
-biochar credits:
+biochar credits: #TODO : stochastic testing
   enable: false
 
-CO2 Liq credits:
-  enalble: false
+CO2 Liq credits: #TODO : stochastic testing
+  enable: false
+  #efficiency: 0.9 # assumption including boil off
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass
-  price : 19.8676 # EUR/MWh biogas from JRC ENSPRESO
+  price : 5 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
-DH:
+DH: #TODO : stochastic testing
   enable: false
-  price : 54 # €/MWh
+  price : 30 # €/MWh
+  load multiplier : 1 # keeps the load profile but multiplies the demand
 
 moist biomass market:
   enable: false
@@ -27,6 +29,6 @@ pellets market:
   price : 62 # €/MWh
 
 symbiosis El transformer:
-  expansion: false
+  expansion: true
 
 
