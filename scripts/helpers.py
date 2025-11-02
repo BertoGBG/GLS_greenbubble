@@ -452,8 +452,21 @@ def solve_network(n, solver="gurobi", profile=None,
     if overrides:
         opts.update(overrides)
 
-    # 1) Build Linopy model
-    m = n.optimize.create_model()
+    # 1) Try to build Linopy model, but skip if empty networks (or network without any cost)
+    try:
+        m = n.optimize.create_model()
+    except ValueError as e:
+        if "Objective function could not be created" in str(e):
+            print("⚠️  No costed components found — skipping optimization, setting objective = 0.0")
+            # Stamp metadata for consistency
+            _stamp_meta(n, status="skipped", condition="no_costs", used_solver=None, used_opts=None)
+            n.meta = getattr(n, "meta", {}) or {}
+            n.meta["objective"] = 0.0
+            print("Objective value manually set to 0.0 in metadata.")
+            return "skipped", "no_costs", None, {}, None
+
+        else:
+            raise
 
     # 2) add constraints for stores ( charging and discharging rates)
     add_custom_constraints(n, n_config=n_config)

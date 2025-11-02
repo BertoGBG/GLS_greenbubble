@@ -31,7 +31,7 @@ def add_link_El_grid_to_H2(n, inputs_dict, tech_costs):
 
     # Link for use fo electricity from the grid to produce H2
     p_max_pu_grid_to_h2 = ref_df.copy()
-    if rfnbos_dict['limit'] == None:
+    if rfnbos_dict['limit'] == 'unlimited':
         p_max_pu_grid_to_h2.iloc[:, 0] = 1
     elif rfnbos_dict['limit'] == 'emissions':
         p_max_pu_grid_to_h2.iloc[:, 0] = p_max_pu_renew_em.iloc[:, 0]

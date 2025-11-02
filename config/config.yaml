@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: v1_stch_stores_test
+run_name: singles_biogas
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 150 # €/t (CO2_cost)
@@ -32,19 +32,19 @@ longitude: 9.033
 # Network configuration flags
 n_flags:
   biogas: true
-  central_heat: true
-  renewables: true
+  central_heat: false
+  renewables: false
   electrolysis: true
   meoh: true
-  methanation: true
+  methanation: false
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
-  storage: true     # applies all types of every storage
-  print: false       # saves svg of prenetwork before optimization
+  storage: false     # applies all types of every storage
+  print: true       # saves svg of prenetwork before optimization
   export: false     # exports prenetwork before optimization
 
 # optimization flags
 n_flags_opt:
-  print: false
+  print: true
   export: true
   plot: false
 
@@ -57,7 +57,7 @@ H2_delivery_frequency: 1 # 1: Single delivery at the end of the 'Year'. 12 : 'Mo
 
 # RFNBOs
 rfnbos_dict:
-  limit: emissions         # emissions | price | None
+  limit: 'unlimited'         # emissions | price | unlimited
   price_threshold: 20      # €/MWh
   emission_threshold: 0.0648   # tCO2e/MWh  (= 18 * 3.6 / 1000)
 
