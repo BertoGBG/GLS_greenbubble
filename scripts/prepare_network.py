@@ -265,29 +265,14 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
             n.add("Bus", local_bus, carrier="Heat", unit="MW")
         new_buses.append(local_bus)
 
+        # if n_flags['symbiosis'] == True
         if n_flags.get("symbiosis", False):
+            # add het bus if not existing
             if b not in n.buses.index:
                 n.add("Bus", b, carrier="Heat", unit="MW")
 
             if int(symbiosis_dir>0):
-                # --- Ensure the ambient heat sink bus exists ---
-                if "Heat amb" not in n.buses.index:
-                    n.add("Bus", "Heat amb", carrier="Heat", unit="MW")  #
-
-                # 1) Heat rejection to ambient (one-way)
-                amb_link = f"{b}_{plant_name}_amb"
-                if amb_link not in n.links.index:
-                    n.add(
-                        "Link",
-                        amb_link,
-                        bus0=local_bus,
-                        bus1="Heat amb",
-                        efficiency=1.0,
-                        p_nom_extendable=True,
-                        marginal_cost=0.0,
-                    )
-
-                # 2) Heat rejection to symbiosis net
+                # 2) Heat rejection to symbiosis net (on heat bus)
                 sym_link = f"{b}_{plant_name}_to_symb"
                 if sym_link not in n.links.index:
                     n.add(
@@ -304,7 +289,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                     )
 
             elif int(symbiosis_dir<0):
-                # 1) Heat supplied by the symbiosis network
+                # 1) Heat supplied by the symbiosis network (from heat bus)
                 sym_link = f"{b}_{plant_name}_from_symb"
                 if sym_link not in n.links.index:
                     n.add(
@@ -319,6 +304,25 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                         capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
                                      * n_config.at["DH heat exchanger", "cost factor"],
                     )
+
+        # if n_flags['symbiosis'] == False
+        else:
+            # --- Ensure the ambient heat sink bus exists ---
+            if "Heat amb" not in n.buses.index:
+                n.add("Bus", "Heat amb", carrier="Heat", unit="MW")  #
+
+            # 1) Heat rejection to ambient (one-way)
+            amb_link = f"{b}_{plant_name}_amb"
+            if amb_link not in n.links.index:
+                n.add(
+                    "Link",
+                    amb_link,
+                    bus0=local_bus,
+                    bus1="Heat amb",
+                    efficiency=1.0,
+                    p_nom_extendable=True,
+                    marginal_cost=0.0,
+                )
 
     return n, new_buses
 
