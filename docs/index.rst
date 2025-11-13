@@ -1,139 +1,244 @@
-.. SPDX-FileCopyrightText: Contributors to GreenBubble <https://github.com/BertoGBG/GLS_greenbubble>
+.. SPDX-FileCopyrightText: Contributors to GreenBubble
 ..
 .. SPDX-License-Identifier: CC-BY-4.0
 
-==============================================================================
-GreeBubble: An open techno-economic optimisation model for industrial clusters
-==============================================================================
-
+====================================================================================
+GreenBubble: An open techno-economic optimisation model for industrial clusters
+====================================================================================
 
 GreenLab Skive – GreenBubble Model
 ----------------------------------
 
-GLS greenbubble is a open model inspired by GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
+The **GreenBubble** model is an open techno-economic optimisation tool inspired by 
+the **GreenLab Skive** industrial hub. It is developed using the 
+`PyPSA <https://github.com/PyPSA/pypsa>`_ framework and performs capacity expansion 
+and dispatch optimisation for a Power-to-X (PtX) industrial park driven by hydrogen 
+and methanol demands.
+
+The model is used in the paper:
+
+*Optimizing hydrogen and e-methanol production through Power-to-X integration in 
+biogas plants*  
+DOI: https://doi.org/10.1016/j.enconman.2024.119175
 
 .. image:: _static/front_image.png
    :alt: GreenBubble Diagram
-   :width: 600px
-
-**Installation**
-Clone this repository to your destination folder:
-
-% git clone https://github.com/BertoGBG/GLS_greenbubble.git
-
-Create the virtual environment from environment.yaml
-We recommend using the package manager and environment management system conda to install python dependencies. Install [miniconda](https://docs.anaconda.com/miniconda/), which is a mini version of [anaconda](https://www.anaconda.com)
- that includes only conda and its dependencies or make sure conda is already installed on your system. For instructions for your operating system follow the conda [installation guide] (https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
-To create the virtual environment for each platform:
-
-Add the conda-forge channel and enable strict priority
-.../greenbubble % conda config --add channels conda-forge
-.../greenbubble % conda config --set channel_priority strict
-
-Install conda-lock (once)
-.../greenbubble % conda install -n base -c conda-forge conda-lock
-
-Create environment for your OS:
-.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
-
-Activate environment:
-.../greenbubble % conda activate greenbubble_gls
+   :width: 700px
+   :align: center
 
 
-**Reference**
-please cite as: https://doi.org/10.1016/j.enconman.2024.119175
+Installation
+------------
+
+Clone the repository:
+
+.. code-block:: bash
+
+   git clone https://github.com/BertoGBG/GLS_greenbubble.git
+
+The recommended way to install dependencies is via **conda**.  
+Install `Miniconda <https://docs.anaconda.com/miniconda/>`_ or ensure conda is already
+available on your system.  
+For installation instructions, refer to the
+`conda installation guide <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_.
+
+**1. Add conda-forge channel and enable strict priority**
+
+.. code-block:: bash
+
+   conda config --add channels conda-forge
+   conda config --set channel_priority strict
+
+**2. Install conda-lock (only once)**
+
+.. code-block:: bash
+
+   conda install -n base -c conda-forge conda-lock
+
+**3. Create the environment (choose your platform)**
+
+.. code-block:: bash
+
+   conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml
+   conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
+   conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+   conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
+
+**4. Activate the environment**
+
+.. code-block:: bash
+
+   conda activate greenbubble_gls
 
 
-**What can the model do**
-GreenBubble is an open model for optimization of industrial energy system based on agricultural setups. The model is based on PyPSA framework https://pypsa.readthedocs.io/en/stable/ and can simultaneously optimize the capacity of the plants in the industrial hub and they operation, over 1 year time horizon with time resolution up to 1h.
-The capacity expansion can be green-field or brown-field with optimization is based on long-term economic equilibrium, and shadow prices for internal eergy and material flow are considered valid for the internal market.
-The optimization also includes the internal hydrogen (inc. compression), CO2 (inc. comnpression), electricity and heat (3 temperature levels) networks .
+Reference
+---------
 
-**Technolgy and processes:**
-In the current the only PtX products available are: hydrogen (for grid and/or internal use), methanol and biomethane. The Energy inputs are biomass (digestible and solid biomass) and renewable energy (onshore wind and solar).  
-Electricity can be sold as a product, but the sales are constrained proportionally to the internal demand.
+If you use GreenBubble in academic work, please cite:
 
-1) Hydrogen production:
-   - Alkaline electrolysis
-   
-2) Methane production:
-   - Biogas + upgrading
-   - Biomethannation of biogas (with H2)
-   - Biomethanation of CO2 (with H2)
-   - Catalytic methanation of biogas (with H2)
-   - Catalytic methanation of CO2 (with H2)
-   
-3) Methanol production:
-   - CO2 hydrogenation 
-   - eSMR with methanol synthesis (available soon)
-
-4) Renewable electricity 
-   - On-shore wind 
-   - solar PV
-
-5) Storage technologies:
-   - Lithium-ion battieries
-   - H2 in steel vessels
-   - CO2 liquefaction and storage
-   - CO2 pressurized in cylinders
-   - Heat at water tanks (as for district heating)
-   - Heat in concrete based Thermal Energy Storage
-   
-6) Biomass handling:
-   - Biomass drying in hot air belt dryer
-   - Dewatering of digestate fibers
-
-**External markets (exogenous assumptions) :**
-The optimization behaves as a price taker with respect to external markets, hence prices and availability of external resources are exogenously set.
-these include: 
-- CO2 tax on fossil emission
-- Electricity prices and emission intensities + TSO and DSO tariffs
-- Natural gas prices
-- District heating Price 
-- Biomass pellets
-- Biomass chips
-- Digestible biomass (manure) 
+DOI: https://doi.org/10.1016/j.enconman.2024.119175
 
 
-**Workflow:**
+What the Model Can Do
+---------------------
 
-1) Configuration:
-    in ../config/ are present three files for configuration
-    a) config.yaml : main config file with all the optimization paramaters as demands for H2, MeOH, CH4 and which plants can be part of the solution (in n_flags).
-    b) n_config.yaml : green/brown field config file. Default is all green field, but each technology can initialized with an existing capacity and expansion limited.
-                        all constrains relative to a specific technolgy are set here (e.g. ramp up/down limits and min load)
-    c) n_options.yaml : config for options relative to external markets. e.g. enable biomass purchase, sales of biochar credits etc...
+GreenBubble is an open modelling framework for **optimising industrial energy systems** 
+based on agricultural and biomass-driven setups.
 
-2) Run the model:
-   - from terminal run:  greenbubble_main.py  
+The model:
 
-3) preprocessing:
-   Data packages for Skive are pre-downloaded in ../data/ . See ../scripts/paramaters.py for inputs to the pre-processing.
-   - electricity spot prices
-   - CO2 emission intensities
-   - NG prices
-   - Electricity demand profile (DK_1)
-   - Capacity factors for wind and solar
-   - NG demand profile (if used to geenrate an H2 demand profile)
-   - DH demand profile in Skive
-   - 
-4) GLS specific data are retrive from the file: GreenLab_Input_file.xlxs
+- uses the `PyPSA framework <https://pypsa.readthedocs.io/en/stable/>`_
+- performs **simultaneous capacity expansion and operational dispatch**
+- covers **1-year simulations** with hourly resolution
+- supports both **greenfield** and **brownfield** optimisation
+- includes long-term economic optimisation and internal market shadow prices
+- models multi-energy networks (electricity, heat, hydrogen, CO₂)
 
-5) general database for techno-economic data of various technolgies: [technology-data](https://technology-data.readthedocs.io/en/latest/)
+Internal networks include:
 
-6) exceptions to the technology-data are set via ../scripts/technology_inputs.py in particoular: compressors and biomass drying are based on physics (semi-empirical for dryer) 
-
-**Results of the single optimization**
-The optimized network returns the optimal capacties for all the components in the model and their dispatch with one hour resolution and the shadow prices for each material and energy flows in the behihd-the-meter market.
-Example results are stored within: ../outputs/single_analysis/
-Each optimization run creates a folder based on n_flags and 'run name' set in config.yaml. Thsi folder contains two subfolders, /plot (for graphicals and table) and /networks for the pre- adn post- networks and the full configuration of each run 
+- hydrogen (incl. compression)
+- CO₂ (incl. compression & liquefaction)
+- electricity
+- heat (three temperature levels)
 
 
+Technologies and Processes
+--------------------------
+
+**Hydrogen production**
+- Alkaline electrolysis
+
+**Methane production**
+- Biogas upgrading
+- Biomethanation of biogas (with H₂)
+- Biomethanation of CO₂ (with H₂)
+- Catalytic methanation of biogas
+- Catalytic methanation of CO₂
+
+**Methanol production**
+- CO₂ hydrogenation
+- eSMR + methanol synthesis *(coming soon)*
+
+**Renewable electricity**
+- Onshore wind
+- Solar PV
+
+**Storage technologies**
+- Lithium-ion batteries
+- H₂ in steel vessels
+- CO₂ liquefaction and storage
+- CO₂ in pressurised cylinders
+- Hot water storage (district heating style)
+- Concrete-based thermal energy storage
+
+**Biomass handling**
+- Hot air belt drying
+- Dewatering of digestate fibres
 
 
+External Markets (Exogenous Assumptions)
+----------------------------------------
 
-  
+The optimisation behaves as a **price taker** in external markets.  
+Key exogenous inputs include:
+
+- CO₂ taxes on fossil emissions  
+- Electricity prices, emission intensities, TSO/DSO tariffs  
+- Natural gas prices  
+- District heating prices  
+- Biomass pellet & chip prices  
+- Digestible biomass (manure)  
+
+
+Workflow
+--------
+
+**1) Configuration**
+
+Three configuration files are stored in ``../config/``:
+
+a) ``config.yaml`` — main optimisation settings  
+   - H₂, methanol, CH₄ demands  
+   - which technologies may be included (``n_flags``)
+
+b) ``n_config.yaml`` — greenfield/brownfield settings  
+   - initial installed capacity  
+   - expansion limits  
+   - technical constraints (ramps, minimum loads, etc.)
+
+c) ``n_options.yaml`` — external market settings  
+   - biomass purchase  
+   - biochar credit sales  
+   - enabling/disabling technologies  
+
+----
+
+**2) Running the model**
+
+From the terminal:
+
+.. code-block:: bash
+
+   python greenbubble_main.py
+
+----
+
+**3) Preprocessing**
+
+Data for the Skive system is pre-downloaded in ``../data/``.  
+Configured via ``../scripts/parameters.py``.
+
+Includes:
+
+- electricity spot prices  
+- CO₂ emission intensities  
+- natural gas (NG) prices  
+- DK1 electricity demand  
+- renewable capacity factors (wind, solar)  
+- NG demand profile  
+- district heating demand profile  
+
+----
+
+**4) GreenLab Skive specific data**
+
+Retrieved from:
+
+``GreenLab_Input_file.xlsx``
+
+----
+
+**5) Techno-economic database**
+
+General database:  
+`technology-data <https://technology-data.readthedocs.io/en/latest/>`_
+
+----
+
+**6) Technology exceptions**
+
+Defined via ``../scripts/technology_inputs.py``:
+
+- compressors  
+- biomass drying (semi-empirical)  
+
+Results of the Single Optimisation
+----------------------------------
+
+The optimisation returns:
+
+- optimal capacities for all technologies  
+- dispatch time series (hourly)  
+- shadow prices for all material & energy carriers  
+
+Example results appear in:
+
+``../outputs/single_analysis/``
+
+Each run creates a dedicated folder (name based on ``n_flags`` and config settings)  
+containing:
+
+- ``/plot`` — figures & tables  
+- ``/networks`` — PyPSA networks (pre- and post-optimisation)  
+- full configuration snapshots  
 
