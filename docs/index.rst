@@ -1,10 +1,16 @@
+.. SPDX-FileCopyrightText: Contributors to GreenBubble <https://github.com/BertoGBG/GLS_greenbubble>
+..
+.. SPDX-License-Identifier: CC-BY-4.0
+
+##################################################################################
+GreeBubble: An open techno-economic optimisation model for industrial clusters 
+##################################################################################
+
 # GreenLab skive - greenbubble model
 
-GLS greenbubble is a open model of the PtX section of the GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
+GLS greenbubble is a open model inspired by GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
 
-<img width="1184" alt="Screenshot 2025-02-19 at 12 31 24" src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" />
-
-
+.. image:: https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069
 
 **Installation**
 Clone this repository to your destination folder:
