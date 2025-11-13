@@ -23,7 +23,7 @@ DOI: https://doi.org/10.1016/j.enconman.2024.119175
 
 .. image:: front_image.png
    :alt: GreenBubble Diagram
-   :width: 700px
+   :width: 1300px
    :align: center
 
 
@@ -212,6 +212,9 @@ Retrieved from:
 
 General database:  
 `technology-data <https://technology-data.readthedocs.io/en/latest/>`_
+Expanded database for industrial clusters:
+`technology-data-industry <https://github.com/BertoGBG/technology-data/tree/py-isa>`_
+
 
 ----
 
