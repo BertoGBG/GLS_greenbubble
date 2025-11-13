@@ -5,6 +5,7 @@
 setuptools
 sphinx
 sphinx_book_theme
+sphinx_rtd_theme
 sphinxcontrib-bibtex
 myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
 
