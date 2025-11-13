@@ -21,7 +21,7 @@ The model is used in the paper:
 biogas plants*  
 DOI: https://doi.org/10.1016/j.enconman.2024.119175
 
-.. image:: docs/front_image.png
+.. image:: front_image.png
    :alt: GreenBubble Diagram
    :width: 700px
    :align: center
