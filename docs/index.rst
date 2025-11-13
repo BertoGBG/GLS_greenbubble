@@ -2,11 +2,13 @@
 ..
 .. SPDX-License-Identifier: CC-BY-4.0
 
-##################################################################################
-GreeBubble: An open techno-economic optimisation model for industrial clusters 
-##################################################################################
+==============================================================================
+GreeBubble: An open techno-economic optimisation model for industrial clusters
+==============================================================================
 
-# GreenLab skive - greenbubble model
+
+GreenLab Skive – GreenBubble Model
+----------------------------------
 
 GLS greenbubble is a open model inspired by GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
 
