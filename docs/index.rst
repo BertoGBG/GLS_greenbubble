@@ -12,7 +12,9 @@ GreenLab Skive – GreenBubble Model
 
 GLS greenbubble is a open model inspired by GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
 
-.. image:: https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069
+.. image:: _static/front_image.png
+   :alt: GreenBubble Diagram
+   :width: 600px
 
 **Installation**
 Clone this repository to your destination folder:
