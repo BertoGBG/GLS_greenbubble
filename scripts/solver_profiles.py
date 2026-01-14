@@ -17,8 +17,7 @@ GUROBI_PROFILES = {
         "Seed": 123,
         "AggFill": 0,
         "PreDual": 0,
-        # Add this back via overrides if your version supports it:
-        # "GURO_PAR_BARDENSETHRESH": 200,
+
     },
     "gurobi-numeric-focus": {
         "NumericFocus": 3,
@@ -42,6 +41,33 @@ GUROBI_PROFILES = {
         "Seed": 123,
         "Threads": _default_threads(8),
     },
+
+    "gurobi-barhom-diagnose": {
+        "Threads": _default_threads(8),
+
+        # Barrier + homogeneous algorithm for numeric trouble
+        "Method": 2,
+        "Crossover": 0,
+        "BarHomogeneous": 1,
+        "DualReductions": 0,         # Critical: avoid "infeasible or unbounded" ambiguity
+        "InfUnbdInfo": 1,        # Ask gurobi for more info in inf/unbd cases
+        "NumericFocus": 3,         # Make barrier a bit more robust
+        "BarConvTol": 1e-6,
+        "FeasibilityTol": 1e-6,         # Keep tolerances reasonable
+        "OptimalityTol": 1e-6,
+        "Seed": 123,
+    },
+
+    "gurobi-simplex-diagnose": {
+        "Threads": _default_threads(8),
+        "Method": 1,
+        "DualReductions": 0,
+        "InfUnbdInfo": 1,
+        "Presolve": 2,
+        "NumericFocus": 3,
+        "Seed": 123,
+    }
+
 }
 
 HIGHS_PROFILES = {

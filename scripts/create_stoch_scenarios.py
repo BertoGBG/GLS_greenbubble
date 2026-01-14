@@ -8,15 +8,16 @@ import scripts.config as c
 import scripts.parameters as p
 import pandas as pd
 from scripts.preprocessing import prepare_all_inputs
-from scripts.helpers import en_market_prices_w_CO2
+from scripts.helpers import en_market_prices_w_CO2, add_el_grid_import_RFNBOs
 from pathlib import Path
 
 #----------------------------------------------------
 #  define scenarios
 #----------------------------------------------------
 scenarios = {"2020": 0.25, "2021": 0.25, "2023": 0.25, "2024": 0.25}
-CO2_cost_s = {"2020": 150, "2021": 150, "2023": 150, "2024": 150}
-share_bio_NG_s = {"2020": 0, "2021": 0, "2023": 0, "2024": 0}
+CO2_cost_s = {"2020": 100, "2021": 100, "2023": 100, "2024": 100}
+H2_price_s = {"2020": 120, "2021": 120, "2023": 120, "2024": 120}
+MeOH_price_s = {"2020": 120, "2021": 120, "2023": 120, "2024": 120}
 
 
 def set_input_paths(p, year):
@@ -31,31 +32,30 @@ def set_input_paths(p, year):
     return p
 
 
-def create_inputs_per_scenario(s, n_flags_OK, tech_costs, CO2_cost_s, share_bio_NG_s ):
+def create_inputs_per_scenario(n, s, n_flags_OK, tech_costs, CO2_cost_s):
     # builds inputs per scenario reading the input data from different folders.
-
     # returns pd series
 
-    # sets CO2 tax and bio_NG_share
+    # sets CO2 tax
     c.CO2_cost = CO2_cost_s[s]
-    c.share_bio_NG = share_bio_NG_s[s]
+
+    # set H2 and Methanol prices
+    c.price_H2 = H2_price_s[s],
+    c.price_meoh = MeOH_price_s[s]
 
     # change input data folder
     set_input_paths(p, str(s))
 
     # create inputs dict for each scenario
     inputs_dict = prepare_all_inputs(n_flags_OK=n_flags_OK,
-                                     demand_H2=c.demand_H2,
-                                     demand_meoh=c.demand_meoh,
-                                     demand_CH4=c.demand_CH4,
+                                     targets_dict=c.targets_dict,
                                      CO2_cost=c.CO2_cost,
-                                     el_DK1_sale_el_RFNBO=c.el_DK1_sale_el_RFNBO,
-                                     tech_costs=tech_costs,
+                                     max_RE_to_grid=c.max_RE_to_grid,
                                      preprocess_flag=c.preprocess_flag)
 
     # --- get energy prices from external markets
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, c.n_options)
-    #en_market_prices = {k: v.reindex(n.snapshots).ffill() for k, v in en_market_prices.items()}
+    p_max_pu_rfnbos = add_el_grid_import_RFNBOs(inputs_dict, c.rfnbos_dict)
 
     # for each scenario set the values of the dynamic properties of components along the dimension "scenario"
     # RE CF time series
@@ -65,17 +65,18 @@ def create_inputs_per_scenario(s, n_flags_OK, tech_costs, CO2_cost_s, share_bio_
     el_price = en_market_prices["el_grid_price"].astype(float).interpolate(method='linear')
     el_grid_sell_price = en_market_prices["el_grid_sell_price"].astype(float).interpolate(method='linear')
     NG_price = en_market_prices["NG_grid_price"].astype(float).interpolate(method='linear')
+    p_bioCH4 = en_market_prices['bioCH4_grid_sell_price'].astype(float).interpolate(method='linear')
+    p_max_pu_rfnbos = p_max_pu_rfnbos.reindex(n.snapshots).astype(float)
+
+    return CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_bioCH4
 
 
-    return CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price
+def create_scenarios(n, scenarios, CO2_cost_s, n_flags_OK, tech_costs):
 
+    # IMPORTANT: ACCESS NETWORK TO INDENTIFY COMPONENTS BEFORE ADDING SCENARIOS!
+    # DO NOT ACCESS NETWORK AFTER CREATION OF SCENARIOS USING THE SAME API FOR A SINGLE NETWORK
 
-def create_scenarios(n, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_costs):
-
-    # IMPORTANT: ACCESS NETWORK TO INDEDIFY COMPONENTS BEFORE ADDING SCENARIOS!
-    # DO NOT ACCESS NETOWRK AFTER CREATION OF SCENARIOS USING THE SAME API FOR A SINGLE NETWORK
-
-    # identify components #TODO change the filtering -> based on carrier and bus0 and bus1
+    # identify components #TODO (improvement) change the filtering based on carrier and bus0 and bus1
     solar_mask = n.generators.index.str.contains("solar", regex=True)
     solar_gens = n.generators.index[solar_mask]
 
@@ -85,11 +86,16 @@ def create_scenarios(n, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_
     dk1_buy = n.links.index.str.contains(r"DK1_to_", regex=True)
     dk1_buy_links = n.links.index[dk1_buy]
 
+    rfnbos_link = f"DK1_to_El_H2"
+
     dk1_sell = n.links.index.str.contains(r"_to_DK1", regex=True)
     dk1_sell_links = n.links.index[dk1_sell]
 
     dk1_NG = n.links.index.str.contains(r"NG boiler", regex=True)
     dk1_NG_links = n.links.index[dk1_NG]
+
+    bioCH4_sell = n.links.index.str.contains(r"bioCH4 delivery", regex=True)
+    bioCH4_sell_links = n.links.index[bioCH4_sell]
 
     co2_liq = n.links.index.str.contains(r"CO2 Liq seq", regex=True)
     co2_liq_links = n.links.index[co2_liq]
@@ -103,8 +109,7 @@ def create_scenarios(n, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_
     for s in n.scenarios:
 
         # create inputs per scenario
-        CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price = create_inputs_per_scenario(s, n_flags_OK, tech_costs, CO2_cost_s,
-                                                                           share_bio_NG_s)
+        CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_bioCH4 = create_inputs_per_scenario(n, s, n_flags_OK, tech_costs, CO2_cost_s)
 
         # set input data to scenarios
         # Solar CFs
@@ -119,13 +124,20 @@ def create_scenarios(n, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_
         for lk in dk1_buy_links:
             n.links_t.marginal_cost.loc[:, (s, lk)] = el_price.reindex(n.snapshots)
 
+        # p_ma_pu constraint for RFNBOs
+        n.links_t.p_max_pu.loc[:, (s, rfnbos_link)] = p_max_pu_rfnbos.reindex(n.snapshots)
+
         # DK1 electricity sell price
         for lk in dk1_sell_links:
             n.links_t.marginal_cost.loc[:, (s, lk)] = el_grid_sell_price.reindex(n.snapshots)
 
-        # DK1 NG price price
+        # DK1 NG purchase price
         for lk in dk1_NG_links:
             n.links_t.marginal_cost.loc[:, (s, lk)] = NG_price.reindex(n.snapshots)
+
+        # DK1 bioCH4 sell price
+        for lk in bioCH4_sell_links:
+            n.links_t.marginal_cost.loc[:, (s, lk)] = p_bioCH4.reindex(n.snapshots)
 
         # CO2 Liq credits
         co2_credits = -1 * c.n_options.at['CO2 Liq credits', 'enable'] * pd.Series(float(c.CO2_cost),

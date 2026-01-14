@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pypsatopo
-from scripts.config import En_price_year, discount_rate, outputs_folder, CO2_cost_ref_year, share_bio_NG, stochastic
+from scripts.config import En_price_year, discount_rate, outputs_folder, CO2_cost_ref_year, max_RE_to_grid, targets_dict, run_name
 from scripts import parameters as p
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -14,9 +14,9 @@ import inspect, datetime as dt
 import math
 from pathlib import Path
 import xarray as xr
-import json
 import calendar
 import os
+import time
 
 
 # -------NETWORK ----
@@ -161,7 +161,6 @@ def add_technology_cost(tech_costs, other_tech_costs):
 
     return tech_costs
 
-
 def build_electricity_grid_price_w_tariff(Elspotprices):
     """this function creates the Electricity grid price including the all the tariffs
     Note that CO2 tax is added separately
@@ -235,13 +234,19 @@ def build_electricity_grid_price_w_tariff(Elspotprices):
 
     return el_grid_price, el_grid_sell_price
 
+def build_NG_grid_price_w_tariff(NG_price_year):
+    ### function that adds NG TSO and DSO tariffs to the NG purchase price
+    NG_grid_price = NG_price_year + p.NG_tso_tariff + p.NG_dso_tariff
+    NG_sell_price = NG_price_year
+    return NG_grid_price, NG_sell_price
+
 def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
     """Build market prices for electricity, natural gas, and district heating including CO₂ cost adjustments."""
 
     # --- 1. Base data from inputs_dict ---
     CO2_cost       = inputs_dict["CO2 cost"]
-    CO2_emiss_El   = inputs_dict["CO2_emiss_El"]           # tCO2/MWh_el
-    NG_price_year  = inputs_dict["NG_price_year"]           # currency/MWh
+    CO2_emiss_El   = inputs_dict["CO2_emiss_El"]            # tCO2/MWh_el
+    NG_price_year  = inputs_dict["NG_price_year"]           # €/MWh
     Elspotprices   = inputs_dict["Elspotprices"]            # Series or DataFrame
 
     # --- 2. Electricity grid prices (buy/sell) ---
@@ -259,14 +264,23 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
     mk_el_grid_sell_price = el_grid_sell_price.copy()
 
     # --- 4. Natural gas price (consumer pays CO₂ cost locally) ---
-    if isinstance(NG_price_year, pd.DataFrame):
-        NG_price_year = NG_price_year.iloc[:, 0]
-
     co2_intensity_ng = tech_costs.at["gas", "CO2 intensity"]  # tCO₂/MWh_th
-    mk_NG_grid_price = (
-        NG_price_year + co2_intensity_ng * (1 - share_bio_NG) * (CO2_cost - CO2_cost_ref_year)
-    )
+
+    NG_grid_price, NG_sell_price = build_NG_grid_price_w_tariff(NG_price_year)
+
+    if isinstance(NG_grid_price, pd.DataFrame):
+        NG_grid_price = NG_grid_price.iloc[:, 0]
+    mk_NG_grid_price = NG_grid_price + co2_intensity_ng * (CO2_cost - CO2_cost_ref_year)
     mk_NG_grid_price = pd.Series(mk_NG_grid_price, index=el_grid_price.index)
+
+
+    #if targets_dict.get("price_bioCH4", 0) == "NG_based":
+    if isinstance(NG_sell_price, pd.DataFrame):
+        NG_sell_price = NG_sell_price.iloc[:, 0]
+    mk_NG_grid_sell_price = -1 * (NG_sell_price + co2_intensity_ng * (CO2_cost - CO2_cost_ref_year))
+    mk_NG_grid_sell_price = pd.Series(mk_NG_grid_sell_price, index=el_grid_price.index)
+
+
 
     # --- 5. District heating price ---
     DH_price = pd.Series(
@@ -280,6 +294,7 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
         "el_grid_price": mk_el_grid_price,
         "el_grid_sell_price": mk_el_grid_sell_price,
         "NG_grid_price": mk_NG_grid_price,
+        "bioCH4_grid_sell_price" : mk_NG_grid_sell_price ,
         "DH_price": DH_price,
     }
 
@@ -287,17 +302,45 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
 
 
 # --- Add CUSTOM CONSTRAINTS ----
-def _exists(name, index):
-    return name in index
 
-def _is_extendable_store(n, name):
-    return _exists(name, n.stores.index) and bool(n.stores.at[name, "e_nom_extendable"])
+def add_el_grid_import_RFNBOs(inputs_dict, rfnbos_dict):
+    """
+    Return a 1-col DataFrame (0/1) limiting grid electricity for RFNBO compliance.
 
-def _is_extendable_link(n, name):
-    return _exists(name, n.links.index) and bool(n.links.at[name, "p_nom_extendable"])
+    inputs_dict must contain:
+      - "Elspotprices": pd.Series or 1-col DataFrame
+      - "CO2_emiss_El": pd.Series or 1-col DataFrame
+    """
 
+    Elspotprices   = inputs_dict["Elspotprices"]            # DataFrame
+    CO2_emiss_El = inputs_dict['CO2_emiss_El']
+    idx= Elspotprices.index
 
-def add_custom_constraints(n, n_config=None):
+    # RFNBO rule
+    limit = rfnbos_dict.get("limit", "unlimited")
+
+    if limit == "unlimited":
+        p_max_pu = pd.Series(1.0, index=idx)
+
+    elif limit == "price":
+        thr = rfnbos_dict["price_threshold"]
+        p_max_pu = (Elspotprices <= thr).astype(float).fillna(0.0)
+        p_max_pu = p_max_pu.iloc[:,0]
+
+    elif limit == "emissions":
+        thr = rfnbos_dict["emission_threshold"]
+        p_max_pu = (CO2_emiss_El <= thr).astype(float).fillna(0.0)
+        p_max_pu = p_max_pu.iloc[:,0]
+
+    elif limit == "disconnected" :
+        p_max_pu = pd.Series(0.0, index=idx)
+
+    else:
+        raise ValueError(f"Unknown RFNBO limit rule: {limit!r}")
+
+    return p_max_pu
+
+def add_custom_constraints_stores(n, n_config=None):
     """
     Enforce p_nom(link) <= alpha * e_nom(store) for selected charger/discharger links
     and their corresponding stores. Works whether variables are extendable or fixed.
@@ -374,9 +417,398 @@ def add_custom_constraints(n, n_config=None):
         _add_bound(bat_charger,    bat_store, _cfg("battery", "ramp limit up"),   "battery_charger_limit")
         _add_bound(bat_discharger, bat_store, _cfg("battery", "ramp limit down"), "battery_discharger_limit")
 
+def add_custom_constraint_max_annual_RE_sales(n, RE_PtX_links, RE_sell_store, k,
+                                             name="Grid_RE_sell_cap_vs_RE_PtX_energy"):
+    """
+    Enforce an annual-energy coupling constraint:
+
+        Store-e_nom[RE_sell_store]  <=  k * Σ_{t in snapshots} Σ_{l in RE_PtX_links} Link-p[t,l] * dt[t]
+
+    Interpretation:
+      - LHS is the optimized energy capacity (MWh) of the Store 'RE_sell_store'
+      - RHS is k times the total (weighted) electricity sent through PtX links over the year (MWh)
+
+    Inputs:
+      n            : pypsa.Network (with linopy model in n.model)
+      snapshots    : iterable / index of snapshots used in the solve
+      RE_PtX_links : list[str] names of PtX Links
+      RE_sell_store: str name of the Store (e.g. "Grid RE sell")
+      k            : float scaling factor
+      name         : constraint name in linopy
+    """
+
+    m = n.model
+    snapshots = n.snapshots
+    # --- get variables (handle Link-p vs Link-p0 like your old function) ---
+    if "Store-e_nom" in m.variables:
+        e_store = m.variables["Store-e_nom"]
+    else:
+        # some versions store them differently, but this is the usual
+        e_store = m["Store-e_nom"]
+
+    if "Link-p" in m.variables:
+        p_l = m.variables["Link-p"]
+    elif "Link-p0" in m.variables:
+        p_l = m.variables["Link-p0"]
+    else:
+        raise KeyError("Neither 'Link-p' nor 'Link-p0' found in n.model.variables")
+
+    # --- sanity: ensure names exist in the variable coords ---
+    store_names = set(e_store.coords["name"].values)
+    link_names  = set(p_l.coords["name"].values)
+
+    if RE_sell_store not in store_names:
+        raise ValueError(f"Store '{RE_sell_store}' not found in Store-e_nom decision variables.")
+
+    lhs_existing = [l for l in RE_PtX_links if l in link_names]
+    if len(lhs_existing) == 0:
+        raise ValueError("None of RE_PtX_links exist in Link dispatch decision variables.")
+
+    # --- select ---
+    grid_sell_e_nom = e_store.sel(name=RE_sell_store)  # (MWh)
+
+    # same snapshot set as the model
+    snapshots = n.snapshots.intersection(snapshots)
+
+    p_link = p_l.sel(snapshot=snapshots, name=lhs_existing)  # (MW)
+
+    # --- weights as DataArray with dim 'snapshot' (robust) ---
+    dt_s = n.snapshot_weightings["objective"].reindex(snapshots)
+    dt = xr.DataArray(dt_s.to_numpy(), dims=("snapshot",), coords={"snapshot": snapshots})  # (h)
+
+    # RHS (MWh)
+    rhs = k * (p_link * dt).sum(("snapshot", "name"))
+
+    m.add_constraints(grid_sell_e_nom <= rhs, name=name)
+    return
+
+# --- COHERENCY CHECKS ----
+#TODO finalize coherency checks: CURRENLTY NOT EXECUTED
+
+def _is_finite_number(x):
+    try:
+        return np.isfinite(float(x))
+    except Exception:
+        return False
+
+def _has_finite_cap(series, keys=("p_nom_max", "e_nom_max")):
+    """True if any of the cap keys exist and are finite and > 0."""
+    for k in keys:
+        if k in series.index and _is_finite_number(series[k]) and float(series[k]) > 0:
+            return True
+    return False
+
+
+def _is_finite_number(x) -> bool:
+    try:
+        return np.isfinite(float(x))
+    except Exception:
+        return False
+
+
+def _has_finite_cap(series, keys=("p_nom_max", "e_nom_max")) -> bool:
+    """
+    True if any of the cap keys exist and are finite and > 0.
+    Works on a pandas Series (row from n.links / n.stores / n.generators).
+    """
+    for k in keys:
+        if k in series.index and _is_finite_number(series[k]) and float(series[k]) > 0:
+            return True
+    return False
+
+def _infer_h2_grid_bus(
+    n,
+    targets_dict,
+    demand_load_name="H2 grid",
+    price_store_name="H2 delivery",
+):
+    """
+    Infer the target (delivery) bus for H2 based on targets_dict['driver']:
+
+    - driver == 'demand': bus where Load named demand_load_name is attached
+    - driver == 'price' : bus where Store named price_store_name is attached
+
+    Returns: (bus_name, warnings_list)
+    Raises ValueError if it can't infer uniquely.
+    """
+    warnings = []
+    driver = (targets_dict or {}).get("driver", None)
+
+    if driver == "demand":
+        if not hasattr(n, "loads") or len(n.loads) == 0:
+            raise ValueError("Cannot infer h2_grid_bus: network has no loads.")
+        if demand_load_name not in n.loads.index:
+            # helpful debug: list candidates that look relevant
+            candidates = [i for i in n.loads.index if "H2" in str(i)]
+            raise ValueError(
+                f"Cannot infer h2_grid_bus for driver='demand': Load '{demand_load_name}' not found. "
+                f"H2-like load candidates: {candidates[:20]}"
+            )
+        bus = n.loads.at[demand_load_name, "bus"]
+        return bus, warnings
+
+    if driver == "price":
+        if not hasattr(n, "stores") or len(n.stores) == 0:
+            raise ValueError("Cannot infer h2_grid_bus: network has no stores.")
+        if price_store_name not in n.stores.index:
+            candidates = [i for i in n.stores.index if "H2" in str(i) or "delivery" in str(i).lower()]
+            raise ValueError(
+                f"Cannot infer h2_grid_bus for driver='price': Store '{price_store_name}' not found. "
+                f"H2/delivery-like store candidates: {candidates[:20]}"
+            )
+        bus = n.stores.at[price_store_name, "bus"]
+        return bus, warnings
+
+def check_H2_target_coherency(
+    n,
+    targets_dict,
+    h2_grid_bus=None,
+    H2_demand_load_name = "H2 grid",
+    H2_price_store_name="H2 delivery",
+    electrolysis_H2_bus="H2",
+    RE_bus="El3 bus",
+    electrolyzer_carrier=("AC",),  # your convention: links with carrier 'AC' feed electrolysis_H2_bus
+    re_carrier=("solar", "onwind", "offwind", "wind", "pv"),
+    sale_price=None,              # negative = revenue term (per your convention)
+    has_revenue_term=None,        # override/augment sale_price detection if revenue encoded elsewhere
+    strict=False,
+    rfnbos_dict=None,
+):
+    """
+    Heuristic coherency checker for target-driven optimisation setups in PyPSA.
+
+    Sign convention (as you stated):
+      - costs are positive
+      - selling prices / revenues appear as negative contributions in the objective
+
+    Driver convention:
+      targets_dict['driver'] in {'price', 'demand'} (others allowed but treated as 'generic').
+
+    What is flagged:
+      - Missing/uncapped delivery/sink structure around the target bus
+      - Extendable electrolyser capacity without p_nom_max
+      - Extendable RE capacity without p_nom_max (optionally on RE_bus)
+      - Unconstrained grid import link DK1_to_{RE_bus} when rfnbos_dict['limit']=='unlimited'
+
+    Notes:
+      - For driver='price' with revenue incentive, issues are framed as "unbounded objective risk".
+      - For driver='demand' (or non-revenue price driver), issues are framed as "ill-posed / inconsistent setup".
+
+    Returns:
+      {"ok": bool, "issues": list[str], "warnings": list[str]}
+    """
+    issues, warnings = [], []
+
+    # --- Determine driver & risk wording ---------------------------------------------------------
+    driver = (targets_dict or {}).get("driver", "generic")
+    if driver not in ("price", "demand"):
+        warnings.append(
+            f"targets_dict['driver'] not in {{'price','demand'}} (got {driver!r}); proceeding with generic checks."
+        )
+        driver = "generic"
+
+    # Detect whether there's an incentive that can push flow/capacity upwards in the objective
+    # (negative value = revenue under your convention)
+    negative_incentive = (sale_price is not None) and (sale_price < 0)
+
+    if has_revenue_term is None:
+        has_revenue_term = negative_incentive
+
+    # Only "unbounded objective" is a primary concern if (price-driver AND revenue term exists)
+    unboundedness_mode = (driver == "price") and bool(has_revenue_term)
+
+    if unboundedness_mode:
+        risk = "unbounded objective (revenue term can scale without bound)"
+        ctx = "price-driven target with revenue incentive"
+    elif driver == "demand":
+        risk = "infeasible or inconsistent target setup"
+        ctx = "demand-driven target"
+    else:
+        risk = "ill-posed or inconsistent target setup"
+        ctx = "target-driven setup"
+
+    # Helpful warning if user says driver=price but we can't see a revenue term
+    if driver == "price" and not has_revenue_term:
+        warnings.append(
+            "targets_dict['driver']=='price' but no revenue term detected from sale_price/has_revenue_term. "
+            "If revenue is encoded elsewhere (e.g., negative marginal_cost on a link/generator), "
+            "set has_revenue_term=True to activate unboundedness-focused wording."
+        )
+
+    # --- Basic existence checks ------------------------------------------------------------------
+    # --- infer h2_grid_bus if needed
+    if h2_grid_bus is None:
+        try:
+            inferred_bus, w = _infer_h2_grid_bus(
+                n,
+                targets_dict,
+                demand_load_name=H2_demand_load_name,
+                price_store_name=H2_price_store_name,
+            )
+            h2_grid_bus = inferred_bus
+            warnings.extend(w)
+        except ValueError as e:
+            issues.append(str(e))
+            report = {"ok": False, "issues": issues, "warnings": warnings}
+            if strict:
+                raise ValueError("Target coherency check failed:\n- " + "\n- ".join(issues))
+            return report
+
+    if h2_grid_bus not in n.buses.index:
+        issues.append(f"Target bus '{h2_grid_bus}' not found in n.buses.")
+        report = {"ok": False, "issues": issues, "warnings": warnings}
+        if strict:
+            raise ValueError("\n".join(issues))
+        return report
+
+    # --- 1) Check there is a finite sink/delivery cap around the target bus ----------------------
+    # Loads on the target bus (fixed p_set) do not "cap" in the objective sense, but they provide a defined sink.
+    if hasattr(n, "loads") and len(n.loads) > 0:
+        h2_loads = n.loads.index[n.loads.bus == h2_grid_bus]
+    else:
+        h2_loads = []
+
+    if len(h2_loads) == 0:
+        warnings.append(
+            f"No Loads found on target bus '{h2_grid_bus}'. For {ctx}, ensure delivery/export/storage is well-defined "
+            f"and appropriately bounded."
+        )
+
+    # Your convention: delivery links are those with bus1 == h2_grid_bus (deliver INTO the target bus).
+    if hasattr(n, "links") and len(n.links) > 0:
+        h2_in_links = n.links.index[n.links.bus1 == h2_grid_bus]
+    else:
+        h2_in_links = []
+
+    has_capped_delivery = False
+    if len(h2_in_links) > 0:
+        for lid in h2_in_links:
+            row = n.links.loc[lid]
+            if bool(row.get("p_nom_extendable", False)):
+                if _has_finite_cap(row, keys=("p_nom_max",)):
+                    has_capped_delivery = True
+                else:
+                    issues.append(
+                        f"Link '{lid}' delivers into '{h2_grid_bus}' and is extendable with no finite p_nom_max "
+                        f"-> can lead to {risk} ({ctx})."
+                    )
+            else:
+                if _is_finite_number(row.get("p_nom", np.nan)) and float(row.get("p_nom", 0.0)) > 0:
+                    has_capped_delivery = True
+
+    # Storage on the target bus
+    if hasattr(n, "stores") and len(n.stores) > 0:
+        h2_stores = n.stores.index[n.stores.bus == h2_grid_bus]
+    else:
+        h2_stores = []
+
+    has_capped_storage = False
+    for sid in h2_stores:
+        row = n.stores.loc[sid]
+        if bool(row.get("e_nom_extendable", False)):
+            if _has_finite_cap(row, keys=("e_nom_max",)):
+                has_capped_storage = True
+            else:
+                issues.append(
+                    f"Store '{sid}' on '{h2_grid_bus}' is e_nom_extendable with no finite e_nom_max "
+                    f"-> can allow unlimited accumulation and contribute to {risk} ({ctx})."
+                )
+        else:
+            if _is_finite_number(row.get("e_nom", np.nan)) and float(row.get("e_nom", 0.0)) > 0:
+                has_capped_storage = True
+
+    if not (has_capped_delivery or has_capped_storage or len(h2_loads) > 0):
+        issues.append(
+            f"No obvious finite sink/cap structure on target bus '{h2_grid_bus}' "
+            f"(no load, no capped delivery link, no capped store) -> common cause of {risk} ({ctx})."
+        )
+
+    # --- 2) Check electrolyser capacity is bounded -----------------------------------------------
+    carriers = (electrolyzer_carrier,) if isinstance(electrolyzer_carrier, str) else tuple(electrolyzer_carrier)
+
+    if hasattr(n, "links") and len(n.links) > 0:
+        ely_links = n.links.index[(n.links.carrier.isin(carriers)) & (n.links.bus1 == electrolysis_H2_bus)]
+    else:
+        ely_links = []
+
+    if len(ely_links) == 0:
+        warnings.append(
+            f"No electrolyser Links found with carriers {carriers} feeding '{electrolysis_H2_bus}'. "
+            "If the target relies on electrolysis, check your carrier/bus conventions."
+        )
+    else:
+        for lid in ely_links:
+            row = n.links.loc[lid]
+            if bool(row.get("p_nom_extendable", False)) and not _has_finite_cap(row, keys=("p_nom_max",)):
+                issues.append(
+                    f"Electrolyser link '{lid}' is extendable with no finite p_nom_max "
+                    f"-> can contribute to {risk} ({ctx})."
+                )
+            if (not bool(row.get("p_nom_extendable", False))) and not (
+                _is_finite_number(row.get("p_nom", np.nan)) and float(row.get("p_nom", 0.0)) > 0
+            ):
+                warnings.append(
+                    f"Electrolyser link '{lid}' has no clear finite p_nom (or p_nom=0). Check setup."
+                )
+
+    # --- 3) Check RE electricity supply is bounded (if it can drive scaling) ----------------------
+    re_carriers = (re_carrier,) if isinstance(re_carrier, str) else tuple(re_carrier)
+
+    if not hasattr(n, "generators") or len(n.generators) == 0:
+        warnings.append("No generators found in network; skipping RE cap checks.")
+    else:
+        gens = n.generators
+        if RE_bus is not None:
+            re_gens = gens.index[(gens.bus == RE_bus) & (gens.carrier.isin(re_carriers))]
+        else:
+            re_gens = gens.index[gens.carrier.isin(re_carriers)]
+
+        if len(re_gens) == 0:
+            warnings.append(f"No RE generators found for carriers {re_carriers} (RE_bus={RE_bus}).")
+        else:
+            for gid in re_gens:
+                row = gens.loc[gid]
+                if bool(row.get("p_nom_extendable", False)) and not _has_finite_cap(row, keys=("p_nom_max",)):
+                    issues.append(
+                        f"RE generator '{gid}' is extendable with no finite p_nom_max "
+                        f"-> can contribute to {risk} ({ctx})."
+                    )
+
+    # --- 4) Check RFNBO grid import is not unconstrained -----------------------------------------
+    if rfnbos_dict is not None and rfnbos_dict.get("limit", None) == "unlimited":
+        link_rfnbos = f"DK1_to_{RE_bus}"
+
+        if not hasattr(n, "links") or link_rfnbos not in n.links.index:
+            issues.append(
+                f"RFNBO grid import link '{link_rfnbos}' not found, but rfnbos_dict['limit']=='unlimited' "
+                f"-> can break consistency of {ctx} and lead to {risk}."
+            )
+        else:
+            row = n.links.loc[link_rfnbos]
+
+            if bool(row.get("p_nom_extendable", False)):
+                if not _has_finite_cap(row, keys=("p_nom_max",)):
+                    issues.append(
+                        f"RFNBO grid import link '{link_rfnbos}' is extendable with no p_nom_max "
+                        f"while rfnbos limit is 'unlimited' -> allows unconstrained grid electricity use "
+                        f"and can lead to {risk} ({ctx})."
+                    )
+            else:
+                if not (_is_finite_number(row.get("p_nom", np.nan)) and float(row.get("p_nom", 0.0)) > 0):
+                    issues.append(
+                        f"RFNBO grid import link '{link_rfnbos}' has no finite p_nom while rfnbos limit is 'unlimited' "
+                        f"-> can lead to {risk} ({ctx})."
+                    )
+
+    ok = len(issues) == 0
+    report = {"ok": ok, "issues": issues, "warnings": warnings}
+
+    if strict and not ok:
+        raise ValueError("Target coherency check failed:\n- " + "\n- ".join(issues))
+
+    return report
 
 # --- OPTIMIZATION-----
-
 def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
     if threads is not None:
         key = "Threads" if solver == "gurobi" else "threads"
@@ -468,10 +900,66 @@ def solve_network(n, solver="gurobi", profile=None,
         else:
             raise
 
-    # 2) add constraints for stores ( charging and discharging rates)
-    add_custom_constraints(n, n_config=n_config)
+    # 2) add constraints for stores (charging and discharging rates)
+    add_custom_constraints_stores(n, n_config=n_config)
+
+    # 3) add custom constraints RE sell vs PtX consumption
+    ptx_elec_buses = ["El_H2", "El_meoh", "El_methanation"]
+
+    # candidate links in the network (may be MultiIndex)
+    cand = n.links.index[n.links.bus1.isin(ptx_elec_buses)]
+
+    # convert to plain link names
+    if hasattr(cand, "nlevels") and cand.nlevels > 1:
+        # pick the level that corresponds to link names (usually last)
+        cand_names = cand.get_level_values(-1)
+    else:
+        cand_names = cand
+
+    import xarray as xr
+
+    # --- links present in the model ---
+    p_l = n.model.variables["Link-p"] if "Link-p" in n.model.variables else n.model.variables["Link-p0"]
+    model_links = set(map(str, p_l.coords["name"].values))
+
+    RE_PtX_links = sorted([str(l) for l in cand_names.unique() if str(l) in model_links])
+
+    # --- store present in the model ---
+    RE_sell_store = "Grid RE sell"
+
+    e_store = n.model.variables["Store-e_nom"] if "Store-e_nom" in n.model.variables else n.model["Store-e_nom"]
+    model_stores = set(map(str, e_store.coords["name"].values))
+
+    store_exists = RE_sell_store in model_stores
+    links_exist = len(RE_PtX_links) > 0
+
+    if links_exist and store_exists:
+        add_custom_constraint_max_annual_RE_sales(
+            n,
+            RE_PtX_links=RE_PtX_links,
+            RE_sell_store=RE_sell_store,
+            k=max_RE_to_grid,
+            name="Grid_RE_sell_cap_vs_RE_PtX_energy",
+        )
+    else:
+        print(
+            f"Skipping annual RE sales constraint: "
+            f"links_exist={links_exist} (n={len(RE_PtX_links)}), "
+            f"store_exists={store_exists} ({RE_sell_store})"
+        )
+
+    # --- ensure solver logs are written ---
+    log_dir = Path(outputs_folder) / "solver_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    stamp = time.strftime("%Y%m%d_%H%M%S")
+
+    if solver == "gurobi":
+        opts.setdefault("solver_options", {})
+        opts["solver_options"].setdefault("OutputFlag", 1)
+        opts["solver_options"]["LogFile"] = str(log_dir / f"gurobi_{run_name}_{stamp}.log")
 
     # ---- main solver ----
+
     try:
         status, condition = n.optimize.solve_model(
             solver_name=solver,
@@ -489,6 +977,82 @@ def solve_network(n, solver="gurobi", profile=None,
 
     except Exception as e:
         print(f"[WARN] {solver} failed: {e}")
+
+    #### TEMP START
+    # ---- main solver (debug wrapper) ----
+    #import traceback
+
+    #try:
+    #    # 1) Solve
+    #    status, condition = n.optimize.solve_model(
+    #        solver_name=solver,
+    #        io_api=io_api,
+    #        **opts,
+    #    )
+
+        # 2) Assign duals (often where stochastic writeback breaks)
+    #    try:
+    #        _assign_duals(n)
+    #    except Exception as e_duals:
+    #        print(f"[WARN] dual assignment failed: {e_duals}")
+    #        traceback.print_exc()
+    #        raise  # re-raise so you see it's dual-related
+
+    #    # 3) Stamp metadata (rarely the issue, but isolate it)
+    #    try:
+    #        _stamp_meta(n, status, condition, solver, opts)
+    #    except Exception as e_meta:
+    #        print(f"[WARN] stamping metadata failed: {e_meta}")
+    #        traceback.print_exc()
+    #        raise
+
+    #    if return_model:
+    #        return status, condition, solver, opts, m
+    #    else:
+    #        return status, condition, solver, opts
+
+    #except Exception as e:
+    #    print(f"[WARN] {solver} failed: {e}")
+    #    traceback.print_exc()
+
+    #    # --- OPTIONAL quick diagnostics (safe to leave on while debugging) ---
+    #    try:
+            # Check for duplicate columns in time-dependent result tables
+    #        import pandas as pd
+
+    #        def _check_df_cols(df, label):
+    #            if isinstance(df, pd.DataFrame) and df.columns.has_duplicates:
+    #                dups = df.columns[df.columns.duplicated()].unique()
+    #                print(f"❌ duplicate columns in {label}: {list(dups)[:20]}")
+
+    #        for comp in ["links_t", "generators_t", "buses_t", "loads_t", "stores_t"]:
+    #            if hasattr(n, comp):
+    #                t = getattr(n, comp)
+    #                for field in ["p0", "p1", "p", "p_set", "marginal_price", "mu_upper", "mu_lower"]:
+    #                    if hasattr(t, field):
+    #                        _check_df_cols(getattr(t, field), f"{comp}.{field}")
+
+            # Check model coords if model exists
+    #        if hasattr(n, "model") and n.model is not None:
+    #            m2 = n.model
+    #            if hasattr(m2, "variables") and ("Link-p" in m2.variables or "Link-p0" in m2.variables):
+    #                pL = m2.variables["Link-p"] if "Link-p" in m2.variables else m2.variables["Link-p0"]
+    #                for dim in ["scenario", "snapshot", "name"]:
+    #                    if dim in pL.coords:
+    #                        idx = pL.coords[dim].to_index()
+    #                        if not idx.is_unique:
+    #                            print(f"❌ duplicate labels in model coord '{dim}':",
+    #                                  idx[idx.duplicated()].unique()[:20])
+
+    #    except Exception as e_diag:
+    #        print(f"[WARN] diagnostics also failed: {e_diag}")
+    #        traceback.print_exc()
+
+        # Re-raise so fallback logic triggers (or so you can see failure clearly)
+    #    raise
+
+    ### TEMP END
+
 
     # ---- fallback ----
     for fb in fallback_order:
@@ -549,46 +1113,100 @@ def optimal_network_only(n_opt):
 
 
 # ---- SAVE & EXPORT RESULTS
+def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic):
+    """
+    Create a descriptive filename for a PyPSA network based on:
+    - enabled technologies (n_flags)
+    - CO2 price
+    - target type (demand or price)
+    - H2 / MeOH / CH4 targets
+    - year and export cap
+    """
 
-def file_name_network(n, n_flags, run_name, inputs_dict):
-    """function that automatically creates a file name give a network"""
-    # the netwrok name includes: the agents included,  the demands variables H2_d, MeOH_d, CO2 cost, bioChar credits
-    # and max fraction of electricity sold externally
-    # example: Biogas_CHeat_RE_H2_MeOH_SymN_CO2c200_H2d297_MeOHd68
-    CO2_cost = inputs_dict['CO2 cost']
+    # ------------------
+    # Basic inputs
+    # ------------------
+    CO2_c = int(inputs_dict["CO2 cost"])
+    year = int(En_price_year)
+    max_RE_to_grid = inputs_dict["max_RE_to_grid"]
+    target = targets_dict["driver"]
 
-    # loads
-    if 'H2 grid' in n.loads.index.values:
-        H2_d = int(n.loads_t.p_set['H2 grid'].sum() // 1000)  # yearly production of H2 in GWh
+    # ------------------
+    # Helper functions
+    # ------------------
+    def annual_gwh(load_name):
+        """Annual energy demand in GWh (approx)."""
+        if load_name not in n.loads.index:
+            return 0
+        return int(n.loads_t.p_set[load_name].sum() // 1000)
+
+    def mean_abs_marginal_cost(link_name):
+        """Mean absolute marginal cost (supports time-varying costs)."""
+        if link_name not in n.links.index:
+            return 0
+
+        if hasattr(n, "links_t") and hasattr(n.links_t, "marginal_cost"):
+            if link_name in n.links_t.marginal_cost.columns:
+                return int(abs(n.links_t.marginal_cost[link_name].mean()))
+
+        return int(abs(n.links.at[link_name, "marginal_cost"]))
+
+    # ------------------
+    # Targets
+    # ------------------
+    if target == "demand":
+        H2_t   = annual_gwh("H2 grid")
+        MeOH_t = annual_gwh("Methanol")
+        CH4_t  = annual_gwh("bioCH4")
+
+    elif target == "price":
+        H2_t   = mean_abs_marginal_cost("H2_to_delivery")
+        MeOH_t = mean_abs_marginal_cost("Methanol_to_delivery")
+        CH4_t  = mean_abs_marginal_cost("bioCH4_to_delivery")
+
     else:
-        H2_d = 0
+        H2_t = MeOH_t = CH4_t = 0
 
-    if 'Methanol' in n.loads.index.values:
-        MeOH_d = int(n.loads_t.p_set['Methanol'].sum() // 1000)  # yearly production of MeOH in GWh
+    # ------------------
+    # Stochastic
+    # ------------------
+    if stochastic:
+        stch = 'STC'
     else:
-        MeOH_d = 0
+        stch = 'DET'
 
-    if 'bioCH4' in n.loads.index.values:
-        bioCH4_d = int(n.loads_t.p_set['bioCH4'].sum() // 1000)  # yearly production of MeOH in GWh
-    else:
-        bioCH4_d = 0
+    # ------------------
+    # Technology flags
+    # ------------------
+    prefix = (
+            n_flags.get("biogas", False) * "SB_" +
+            n_flags.get("central_heat", False) * "CH_" +
+            n_flags.get("renewables", False) * "RE_" +
+            n_flags.get("electrolysis", False) * "H2_" +
+            n_flags.get("meoh", False) * "meoh_" +
+            n_flags.get("methanation", False) * "meth_" +
+            n_flags.get("symbiosis", False) * "SN_" +
+            n_flags.get("storage", False) * "ST_"
+    )
 
-    # CO2 tax
-    CO2_c = int(CO2_cost)  # CO2 price in currency
-
-    # year
-    year = int(En_price_year)  # energy price year
-
-    # max El to DK1
-    el_DK1_sale_el_RFNBO = inputs_dict['el_DK1_sale_el_RFNBO']
-
-    # agents
-    file_name = n_flags['biogas'] * 'SB_' + n_flags['central_heat'] * 'CH_' + n_flags['renewables'] * 'RE_' + \
-                n_flags['electrolysis'] * 'H2_' + n_flags['meoh'] * 'meoh_' + n_flags['methanation'] * 'meth_' + n_flags['symbiosis'] * 'SN_' + \
-                n_flags['storage'] * 'ST_' + 'CO2c' + str(CO2_c) + '_' + 'H2d' + str(H2_d) + \
-                '_' + 'MeOHd' + str(MeOH_d) + '_' + 'CH4d' + str(bioCH4_d) + '_' + str(year) + '_' + 'ElDK1' + '_' + str(el_DK1_sale_el_RFNBO) + '_' + run_name
+    # ------------------
+    # Filename
+    # ------------------
+    file_name = (
+        f"{prefix}"
+        f"CO2c{CO2_c}_"
+        f"{target}_"
+        f"{stch}_"
+        f"H2{H2_t}_"
+        f"MeOH{MeOH_t}_"
+        f"CH4{CH4_t}_"
+        f"{year}_"
+        f"ElDK1_{max_RE_to_grid}_"
+        f"{run_name}"
+    )
 
     return file_name
+
 
 
 def create_results_folders (network_name):

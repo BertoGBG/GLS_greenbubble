@@ -13,13 +13,14 @@ BASE_OUT = Path("outputs/single_analysis/shapV")
 BASE_OUT.mkdir(parents=True, exist_ok=True)
 c.outputs_folder = str(BASE_OUT)
 
-
 # --------------------------------------------------------------------------
 #  Run subset
 # --------------------------------------------------------------------------
 def run_subset(subset):
-    flags = {a: (a in subset) for a in AGENTS} | BASE_FLAGS
+    subset_flags = {a: (a in subset) for a in AGENTS}
+    flags = dict(BASE_FLAGS) | subset_flags   # RIGHT side overrides base
     print(f"\n=== Running subset {subset} ===")
+    print("Enabled agents:", [a for a in AGENTS if flags.get(a, False)])
     m.main(n_flags=flags, outputs_folder=str(BASE_OUT))
 
 
@@ -129,9 +130,9 @@ def convexity_violations_marginal(v):
 # --------------------------------------------------------------------------
 if __name__ == "__main__":
     # Run all coalitions
-    for r in range(1, len(AGENTS) + 1):
-        for subset in combinations(AGENTS, r):
-            run_subset(subset)
+    #for r in range(0, len(AGENTS) + 1):
+    #    for subset in combinations(AGENTS, r):
+    #        run_subset(subset)
 
     # Build DataFrame
     df = build_shapley_df().dropna(subset=["objective"])
@@ -158,3 +159,4 @@ if __name__ == "__main__":
         print(f"Violations: {len(fails)} (showing first 5)")
         for S, T in fails[:5]:
             print("   ", S, "vs", T)
+

@@ -43,36 +43,35 @@ def main(n_flags=None, run_name=None, outputs_folder=None):
 
     # ---- Preprocess inputs
     inputs_dict = prepare_all_inputs(n_flags_OK = n_flags_OK,
-                                            demand_H2 = c.demand_H2,
-                                            demand_meoh = c.demand_meoh,
-                                            demand_CH4 = c.demand_CH4,
-                                            CO2_cost = c.CO2_cost,
-                                            el_DK1_sale_el_RFNBO = c.el_DK1_sale_el_RFNBO,
-                                            tech_costs  = tech_costs,
-                                            preprocess_flag = c.preprocess_flag)
+                                     targets_dict = c.targets_dict,
+                                     CO2_cost = c.CO2_cost,
+                                     max_RE_to_grid = c.max_RE_to_grid,
+                                     preprocess_flag = c.preprocess_flag)
 
     # ---- Build network
     print('building the network')
-    network = build_network(tech_costs, inputs_dict, n_flags_OK, c.n_options, p)
+    n = build_network(tech_costs, inputs_dict, n_flags_OK, c.n_options, p)
+    n.consistency_check()
+
 
     # ---Create results folders
-    network_name = file_name_network(n=network, n_flags=n_flags, run_name=c.run_name, inputs_dict= inputs_dict) # creates network name for saving results
+    network_name = file_name_network(n=n, n_flags=n_flags, run_name=c.run_name, inputs_dict= inputs_dict, targets_dict=c.targets_dict, En_price_year=c.En_price_year, stochastic=c.stochastic) # creates network name for saving results
     results_folder = create_folder_if_not_exists(c.outputs_folder, network_name) # Based on n_flags and demands
 
     # ---- Stochastic
     if c.stochastic:
-        from scripts.create_stoch_scenarios import create_scenarios, scenarios, CO2_cost_s, share_bio_NG_s
-        create_scenarios(network, scenarios, CO2_cost_s, share_bio_NG_s, n_flags_OK, tech_costs)
+        from scripts.create_stoch_scenarios import create_scenarios, scenarios, CO2_cost_s
+        create_scenarios(n, scenarios, CO2_cost_s, n_flags_OK, tech_costs)
         results_folder = create_folder_if_not_exists(results_folder , 'stochastic')
         n_flags['print'] = False
         n_flags_opt['print'] = False
 
     # ---- Export and print prenetwork
-    export_print_network(n=network, n_flags=n_flags, network_name=network_name, results_folder=results_folder, suffix ='_PRE')
+    export_print_network(n=n, n_flags=n_flags, network_name=network_name, results_folder=results_folder, suffix ='_PRE')
     print('network built')
 
     # Optimize
-    solve_network(network,
+    solve_network(n,
                   solver="gurobi",  # or "highs"
                   profile="gurobi-default",  # select solver options from solver_profiles_old.py
                   overrides= None,# {"DualReductions": 0},
@@ -80,13 +79,13 @@ def main(n_flags=None, run_name=None, outputs_folder=None):
                   return_model=True)
 
     # ---- Export and print postnetwork and configuration
-    export_print_network(n=network, n_flags = n_flags_opt, network_name=network_name, results_folder=results_folder, suffix ='_OPT')
+    export_print_network(n=n, n_flags = n_flags_opt, network_name=network_name, results_folder=results_folder, suffix ='_OPT')
 
     # save the config used for this run
     save_config (results_folder,c)
 
     # ---- Save component allocation
-    network_comp_allocation = network.network_comp_allocation
+    network_comp_allocation = n.network_comp_allocation
     save_network_comp_allocation(results_folder, network_comp_allocation)
 
     # ---- Plotting and saving figures # TODO custom plotting with pypsa 1.0 not tested. for the moment use standard Pypsa plotting functions

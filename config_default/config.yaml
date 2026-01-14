@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: test_price_full
+run_name: default_demand_full
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
@@ -11,7 +11,7 @@ CO2_cost_ref_year: 0
 # if driver == 'demand': Demands must be present AND Prices are not used in the model
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
 targets:
-  driver: 'price' # 'price' | 'demand'.
+  driver: 'demand' # 'price' | 'demand'.
   demand_H2 : 270000 # MWh_H2 /y  Demand OR max production
   demand_CH4 : 260000 # Mwh_CH4 /y Demand OR max production
   demand_meoh : 36000 # Mwh_meoh /y Demand OR max production
@@ -69,4 +69,4 @@ DKK_Euro: 7.46
 discount_rate: 0.07
 
 # Stochastic optimization
-stochastic: true # true -> stochastic optimization across scenarios,  false -> deterministic optimization
+stochastic: false # true -> stochastic optimization across scenarios,  false -> deterministic optimization

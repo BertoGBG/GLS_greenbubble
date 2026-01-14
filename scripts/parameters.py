@@ -6,6 +6,7 @@ from scripts.helpers import build_snapshots
 ''' Constants'''
 FLH_y = 8760  # full load hours equivalent  in a year for MeOH
 lhv_h2 = 33.33 # MWh/t
+lhv_NG = 0.010 # MWh/Nm3
 # NOTE physical properties defined in: scripts.technology_inputs
 # --------------------------------------
 ''' PARAMETERS FOR RETRIEVING AND PRE PROCESSING'''
@@ -49,7 +50,7 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 # TSO and state tariff
 el_transmission_tariff = 7.4 / 100 * 1000 / DKK_Euro   # from energinet inputs in Ore/kWh DKK/MWh
 el_system_tariff = 5.1 / 100 * 1000 / DKK_Euro   # from energinet inputs in Ore/kWh DKK/MWh
-el_afgift = 76.1 / 100 * 1000 / DKK_Euro
+el_afgift = 35 / 100 * 1000 / DKK_Euro # state tarif set to 35. previously 72, but 0.8 for 2026 - 2027
 
 # DSO Tariff -  for 60/10kV transformer (A_low customer)
 el_net_tariff_low = 1.5 / 100 * 1000 / DKK_Euro   # currency/MWh
@@ -59,6 +60,12 @@ el_net_tariff_peak = 8.98 / 100 * 1000 / DKK_Euro
 # Selling tariff
 el_tariff_sell = ((0.9 + 0.16) / 100 * 1000) / DKK_Euro  # (Ore/kWh) *100/1000 = DKK
 # / MWH includes transmission and system tariff
+
+# NG grid tariffs DSO : https://evida.dk/tarifblad010125/
+NG_dso_tariff = 0.134 / lhv_NG / DKK_Euro  # (DKK/Nm3) / (MWh/Nm3) / (DKK/EUR) = Eur/MWh
+
+# NG grid tariff TSO : https://en.energinet.dk/media/fhslybmk/transmission-tariffs-effective-as-of-1st-january-2025-updated-1st-june-2024.pdf
+NG_tso_tariff =  0.05824 / DKK_Euro # (DKK/MW_avg) / (DKK/EUR) = Eur/MWh
 
 # H2 grid tariff
 H2_grid_purchase = False # enables purchasing of H2 from external grid

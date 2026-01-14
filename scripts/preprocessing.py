@@ -13,7 +13,7 @@ from scripts.config import (En_price_year,
                             longitude,
                             H2_delivery_frequency,
                             H2_profile_flag,
-                            )
+                            targets_dict)
 
 
 # ------ INPUTS PRE-PROCESSING ----
@@ -38,8 +38,12 @@ def GL_inputs_to_eff(GL_inputs):
     return GL_eff
 
 
-def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
+def build_demands_TS(targets_dict, NG_demand_DK):
+
     '''Load GreenLab inputs'''
+    demand_H2 = targets_dict['demand_H2']
+    demand_CH4 = targets_dict['demand_CH4']
+    demand_meoh = targets_dict['demand_meoh']
 
     '''bioCH4 demand '''
     bioCH4_demand = p.ref_df.copy()
@@ -54,7 +58,7 @@ def build_demands_TS(demand_CH4, demand_meoh, demand_H2, NG_demand_DK):
     Methanol_demand.to_csv(p.Methanol_demand_input_file, sep=';')  # t/h
 
     '''H2 demand with annual profile'''
-    H2_input_demand, NG_demand_DK_h = build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
+    H2_input_demand, NG_demand_DK_h = build_H2_grid_demand(targets_dict, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
 
     demands = {'bioCH4': bioCH4_demand,
                'H2' : H2_input_demand,
@@ -90,7 +94,7 @@ def load_input_data():
 
 # ---- DEMANDS for H2, MeOH and El_DK1_GLS
 
-def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
+def build_H2_grid_demand(targets_dict, NG_demand_DK, profile_flag, n):
     """
     Calculate H2 demand distribution over a given number of intervals (n),
     ensuring deliveries align with the last hour of each interval.
@@ -106,6 +110,7 @@ def build_H2_grid_demand(demand_H2, NG_demand_DK, profile_flag, n):
     Returns:
     - H2_demand_y: DataFrame aligned with p.ref_df, with deliveries at correct timestamps
     """
+    demand_H2 = targets_dict['demand_H2']
 
     # Initialize output DataFrame with the same structure and index as p.ref_df
     H2_demand_y = p.ref_df.copy()
@@ -462,9 +467,9 @@ def pre_processing_energy_data():
 
 # ---- Pre-processing for PyPSA network
 
-def prepare_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost, el_DK1_sale_el_RFNBO, tech_costs, preprocess_flag):
+def prepare_all_inputs(n_flags_OK, targets_dict, CO2_cost, max_RE_to_grid, preprocess_flag):
     # functions calling all other functions and build inputs dictionary to the model
-    # returns: inputs_dict which contains all inputs for the pypsa network
+    # returns: inputs_dict which contains DataFrames with all inputs for the pypsa network
 
     if preprocess_flag:
         pre_processing_energy_data()  # download + preprocessing + save to CSV
@@ -478,59 +483,53 @@ def prepare_all_inputs(n_flags_OK, demand_H2, demand_meoh, demand_CH4 , CO2_cost
     '''Build all demands'''
     # Sanity check
     if not n_flags_OK['electrolysis']:
-        demand_H2 = 0
+        targets_dict['demand_H2'] = 0
     if not n_flags_OK['biogas']:
-        demand_CH4 = 0
+        targets_dict['demand_CH4'] = 0
     if not n_flags_OK['meoh']:
-        demand_meoh = 0
+        targets_dict['demand_meoh'] = 0
 
-    demands = build_demands_TS (demand_CH4, demand_meoh, demand_H2, NG_demand_DK)
-    H2_input_demand = demands['H2']
-    Methanol_demand = demands['meoh']
+    # build demands TS (considers targets_dict['driver'])
+    demands = build_demands_TS (targets_dict, NG_demand_DK)
     NG_DK = demands['NG_DK']
 
-    """ return the yearly el demand for the DK1 which is avaibale sale of RE form GLS,
-    it is estimated in proportion to the El in GLS needed for producing RFNBOs """
+    H2_input_demand = demands['H2']
+    bioCH4_demand = demands['bioCH4']
+    Methanol_demand = demands['meoh']
 
-    # Estimation of the RE demand yearly in GLS based on H2 and MeOH demand
-    El_d_H2 = np.abs(
-        H2_input_demand.values.sum() / GL_eff.at['H2', 'GreenHyScale'])  # yearly electricity demand for H2 demand
-
-    El_d_MeOH = np.abs(Methanol_demand.values.sum() * (
-            (GL_eff.at['H2', 'Methanol plant'] / GL_eff.at['Methanol', 'Methanol plant']) * (
-            tech_costs.at['hydrogen storage compressor MeOH','electricity-input'] + 1 / GL_eff.at['H2', 'GreenHyScale']) + tech_costs.at['CO2 industrial compressor MeOH','electricity-input'] / GL_eff.at[
-                'Methanol', 'Methanol plant']))
-
-    El_d_y_guess_GLS = El_d_H2 + El_d_MeOH # MWh el for H2 and MeOH
-
-    # Assign a ratio between the RE consumed for RFNBO production at the GLS and the Max which can be sold to DK1
-    if el_DK1_sale_el_RFNBO < 0:
-        el_DK1_sale_el_RFNBO = 0
-        print('Warning: ElDK1 demand set = 0')
-
-    El_d_y_DK1 = El_d_y_guess_GLS * el_DK1_sale_el_RFNBO
-
-    # Distribute the external el demand according to the time series of DK1 demand
-    El_demand_DK1.iloc[:, 0] = El_demand_DK1.iloc[:, 0] * (
-            El_d_y_DK1 / len(p.hours_in_period)) / El_demand_DK1.values.mean()
 
     inputs_dict = {'GL_inputs': GL_inputs,
                    'GL_eff': GL_eff,
                    'Elspotprices': Elspotprices,
                    'CO2_emiss_El': CO2_emiss_El,
-                   'bioCH4_demand': demands['bioCH4'],
+                   'bioCH4_demand': bioCH4_demand,
                    'CF_wind': CF_wind,
                    'CF_solar': CF_solar,
                    'NG_price_year': NG_price_year,
-                   'Methanol_input_demand': demands['meoh'],
+                   'Methanol_input_demand': Methanol_demand,
                    'NG_demand_DK': NG_DK,
                    'El_demand_DK1': El_demand_DK1,
                    'DH_external_demand': DH_external_demand,
-                   'H2_input_demand': demands['H2'],
+                   'H2_input_demand': H2_input_demand,
                    'CO2 cost': CO2_cost,
-                   'el_DK1_sale_el_RFNBO': el_DK1_sale_el_RFNBO,
+                   'max_RE_to_grid': max_RE_to_grid,
                    }
 
-    return inputs_dict
+    if targets_dict["driver"] == "price":
+        idx = Elspotprices.index  # <- align with scenario/year data
 
+        prices = {
+            "price_H2": targets_dict["price_H2"],
+            "price_meoh": targets_dict["price_meoh"],
+            "price_bioCH4": targets_dict["price_bioCH4"],
+        }
+
+        price_ts = {
+            k: pd.Series(-float(v), index=idx).to_frame(k)
+            for k, v in prices.items()
+            if isinstance(v, (int, float))
+        }
+        inputs_dict.update(price_ts)
+
+    return inputs_dict
 

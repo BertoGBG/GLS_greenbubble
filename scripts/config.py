@@ -41,19 +41,11 @@ n_options = pd.DataFrame.from_dict(n_opt, orient="index").sort_index()
 run_name                 = _cfg["run_name"]
 CO2_cost                 = _cfg["CO2_cost"]
 
-flh_H2                   = _cfg["flh_H2"]
-H2_output                = _cfg["H2_output"]
-flh_Biogas               = _cfg["flh_Biogas"]
-biogas_output            = _cfg["biogas_output"]
-flh_meoh                 = _cfg["flh_meoh"]
-meoh_output              = _cfg["meoh_output"]
+# Targets
+targets_dict              = dict(_cfg["targets"])  # stays a dict
 
-# Derived demands (same formulas as before)
-demand_H2                = flh_H2    * H2_output
-demand_CH4               = flh_Biogas * biogas_output
-demand_meoh              = flh_meoh  * meoh_output
-
-el_DK1_sale_el_RFNBO     = _cfg["el_DK1_sale_el_RFNBO"]
+#el_DK1_sale_el_RFNBO     = _cfg["el_DK1_sale_el_RFNBO"]
+max_RE_to_grid           = _cfg["max_RE_to_grid"]
 En_price_year            = _cfg["En_price_year"]
 preprocess_flag          = _cfg["preprocess_flag"]
 
@@ -64,8 +56,12 @@ n_flags                  = dict(_cfg["n_flags"])      # stays a dict
 n_flags_opt              = dict(_cfg["n_flags_opt"])      # stays a dict
 outputs_folder           = _cfg["outputs_folder"]
 
-H2_profile_flag          = _cfg["H2_profile_flag"]
-H2_delivery_frequency    = _cfg["H2_delivery_frequency"]
+if targets_dict['driver'] == 'demand':
+    H2_profile_flag = False
+    H2_delivery_frequency = 1
+else:
+    H2_profile_flag          = _cfg["H2_profile_flag"]
+    H2_delivery_frequency    = _cfg["H2_delivery_frequency"]
 
 CO2_cost_ref_year        = _cfg["CO2_cost_ref_year"]
 
@@ -75,8 +71,6 @@ year_EU                  = _cfg["year_EU"]
 USD_to_EUR               = _cfg["USD_to_EUR"]
 DKK_Euro                 = _cfg["DKK_Euro"]
 discount_rate            = _cfg["discount_rate"]
-
-share_bio_NG             = _cfg['share_bio_NG']
 
 stochastic               = _cfg["stochastic"]
 #--------------------------
