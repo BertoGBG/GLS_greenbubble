@@ -11,7 +11,7 @@ CO2 Liq credits: #TODO : stochastic testing
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass
-  price : 5 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
+  price : 0 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
 DH: # TODO : stochastic testing
   enable: false
@@ -26,7 +26,7 @@ moist biomass market:
 pellets market:
   enable: true
   max capacity: .inf # (MWh/y) max limit if biochar credits['expansion'] : true
-  price : 62 # €/MWh
+  price : 45 # €/MWh
 
 symbiosis El transformer:
   expansion: true

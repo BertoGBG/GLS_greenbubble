@@ -1,0 +1,143 @@
+# EXPORT and PLOTS
+# Add to this section the component that you are intrested in plotting
+# selector: the component name in the network (all components containing it will be selected),
+# field : variable type
+# kind : component type
+# th: capacity threshold for filtering low residual capacities
+plotting:
+  thresholds:
+    GEN_TH: 0.5        # MW
+    LINK_TH: 0.5       # MW
+    LINK_MASS_TH: 0.2  # t/h
+    STORE_TH: 1.0      # MWh
+    STORE_MASS_TH: 0.1 # t
+    SU_TH: 0.2         # MW
+    SU_MASS_TH: 0.2    # t/h   (only for StorageUnits on mass-flow buses)
+    NO_TH : 0           # Optional no tolerance
+
+  capacity_items:
+
+    - label: Wind
+      kind: Generator
+      field: p
+      selector: onshorewind
+      th: GEN_TH
+
+    - label: Solar
+      kind: Generator
+      field: p
+      selector: solar
+      th: GEN_TH
+
+    - label: Electrolyzer
+      kind: Link
+      field: p0
+      selector: electrolysis
+      th: NO_TH # --> because it is a demand
+
+    - label: Biogas
+      kind: Link
+      field: p0
+      selector: biogas
+      th: NO_TH # --> because it is a demand
+
+    - label: Biogas upgrading
+      kind: Link
+      field: p0
+      selector: biogas upgrading
+      th: LINK_TH
+
+    - label: Methanolisation
+      kind: Link
+      field: p0
+      selector: methanolisation
+      th: NO_TH  # --> because it is a demand
+
+    - label: biomethanation CO2
+      kind: Link
+      field: p0
+      selector: biomethanation CO2
+      th: LINK_TH
+
+    - label: biomethanation biogas
+      kind: Link
+      field: p0
+      selector: biomethanation biogas
+      th: LINK_TH
+
+    - label: cat methanation CO2
+      kind: Link
+      field: p0
+      selector: cat methanation CO2
+      th: LINK_TH
+
+    - label: cat methanation biogas
+      kind: Link
+      field: p0
+      selector: cat methanation biogas
+      th: LINK_TH
+
+    - label: Battery SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: battery
+      th: SU_TH
+
+    - label: H2 HP Store
+      kind: Store
+      field: e
+      selector: H2 HP storage
+      th: STORE_TH
+
+    - label: CO2 HP Store
+      kind: Store
+      field: e
+      selector: CO2 HP storage
+      th: STORE_MASS_TH
+
+    - label: CO2 Liq Store
+      kind: Store
+      field: e
+      selector: CO2 Liq storage
+      th: STORE_MASS_TH
+
+    - label: CO2 liquefaction
+      kind: Store
+      field: e
+      selector: CO2 liquefaction
+      th: LINK_MASS_TH
+
+    - label: CO2 Liq sequestration
+      kind: Store
+      field: e
+      selector: CO2 Liq sequestration
+      th: LINK_MASS_TH
+
+    - label: biochar sequestred
+      kind: Store
+      field: e
+      selector: CO2 Liq sequestration
+      th: LINK_MASS_TH
+
+    - label: TES DH SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: TES DH
+      th: SU_TH
+
+    - label: TES concrete SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: TES concrete
+      th: SU_TH
+
+# list of internal buses for plotting shadow prices
+  bus_list_mp:
+    - El3 bus
+    - H2
+    - bioCH4
+    - Methanol
+    - Heat MT
+    - Heat DH
+    - Heat LT
+    - CO2 distribution

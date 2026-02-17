@@ -36,30 +36,30 @@ _AS_cache = {}
 # P : bar(a)
 
 symbiosis_data = {
-    "Heat MT max": {"fluid": 'Water', "T": 180, 'P' : 10, }, # production
-    'Heat MT min': {"fluid": 'Water', "T": 140, 'P': 3, 'buses' : ['Heat MT', "Heat MT storage"] }, # return
-    'Heat DH min': {"fluid": 'Water', "T": 90, 'P': 1, 'buses' : ['Heat DH' ,'DH grid', "Heat DH storage"] },
-    'Heat LT min': {"fluid": 'Water', "T": 50, 'P': 1, 'buses' : ['Heat LT'] },
-    'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1, 'buses' : ['Heat amb'] },
-    'NG grid': {"fluid": 'CH4', "T": T_ambient, 'P': 40, 'LHV': lhv_ch4, 'buses' : ['NG'] },
-    'H2 production': {"fluid": 'H2', "T": 50, 'P': 30, 'LHV': lhv_h2, 'buses' : ['H2' , 'H2 distribution', 'H2 delivery']},
-    'H2 to methanolisation': {"fluid": 'H2', "T": T_max_comp, 'P': 80 , 'LHV': lhv_h2, 'buses' : ['H2 to methanolisation']},
-    'H2 to biomethanation': {"fluid": 'H2', "T": T_ambient, 'P': 1, 'LHV': lhv_h2, 'buses' : ['H2 to biomethanatio']},
-    'H2 to cat methanation': {"fluid": 'H2', "T": T_max_comp, 'P': 20, 'LHV': lhv_h2, 'buses' : ['H2 to cat methanation']},
+    "Heat MT max": {"fluid": 'Water', "T": 180, 'P' : 10, 'carrier' : 'Heat'}, # production
+    'Heat MT min': {"fluid": 'Water', "T": 140, 'P': 3, 'carrier' : 'Heat', 'buses' : ['Heat MT', "Heat MT storage"] }, # return
+    'Heat DH min': {"fluid": 'Water', "T": 90, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat DH' ,'DH grid', "Heat DH storage"] },
+    'Heat LT min': {"fluid": 'Water', "T": 50, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat LT'] },
+    'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1, 'carrier' : 'Heat' , 'buses' : ['Heat amb'] },
+    'NG grid': {"fluid": 'CH4', "T": T_ambient, 'P': 40, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['NG'] },
+    'H2 production': {"fluid": 'H2', "T": 50, 'P': 30, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2' , 'H2 distribution', 'H2 delivery']},
+    'H2 to methanolisation': {"fluid": 'H2', "T": T_max_comp, 'P': 80 , 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanolisation']},
+    'H2 to biomethanation': {"fluid": 'H2', "T": T_ambient, 'P': 1, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to biomethanation']},
+    'H2 to cat methanation': {"fluid": 'H2', "T": T_max_comp, 'P': 20, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to cat methanation']},
     'H2 HP storage': {"fluid": 'H2', "T": T_ambient, 'P': 150, 'LHV': lhv_h2, 'buses' : ['H2 HP storage']},
-    'CO2 biogas upgrading': {"fluid": 'CO2', "T": 50, 'P': 1, 'buses' : ["CO2 sep", "CO2 distribution", 'CO2 to biomethanation']},
-    'biogas': {"fluid": "biogas", "T": 50, 'P': 1, 'LHV': lhv_biogas, 'buses' : ['biogas', 'biogas to biomethanation']}, # coolprop name assigned in function (as a mixture)
-    'biogas to cat methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'buses' :['biogas to cat methanation']},
-    'bioCH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'buses' : ['bioCH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
-    'meoh': {"fluid": "Methanol", "T": 50, 'P': 1, 'LHV': lhv_meoh, 'buses' : ['Methanol']},
-    'CO2 to methanolisation': {"fluid": 'CO2', "T": T_max_comp, 'P': 80, 'buses' : ['CO2 to methanolisation', 'CO2 to meoh']},
-    'CO2 to cat methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'buses' :['CO2 to cat methanation']},
-    'CO2 HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 60, 'buses' : ['CO2 HP storage']},
-    'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30},
-    'CO2 from Liq storage': {"fluid": 'CO2', "T": T_ambient, 'P': 16},
-    'CO2 Liq storage': {"fluid": 'CO2', "T": -26, 'P': 16, 'buses' : ['CO2 Liq sequestration', 'CO2 Liq storage']},
-    'pellets': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_pellets, 'moisture' : 0.13, 'buses': ['pellets']}, # name NOT valid in coolprop
-    'chips': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_chips, 'moisture' : 0.5, 'buses' :["moist biomass"]},  # name NOT valid in coolprop
+    'CO2 biogas upgrading': {"fluid": 'CO2', "T": 50, 'P': 1, 'carrier' : 'CO2', 'buses' : ["CO2 sep", "CO2 distribution", 'CO2 to biomethanation']},
+    'biogas': {"fluid": "biogas", "T": 50, 'P': 1, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' : ['biogas', 'biogas to biomethanation']}, # coolprop name assigned in function (as a mixture)
+    'biogas to cat methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' :['biogas to cat methanation']},
+    'bioCH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['bioCH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
+    'meoh': {"fluid": "Methanol", "T": 50, 'P': 1, 'LHV': lhv_meoh, 'carrier' : 'Methanol', 'buses' : ['Methanol']},
+    'CO2 to methanolisation': {"fluid": 'CO2', "T": T_max_comp, 'P': 80, 'carrier' : 'CO2', 'buses' : ['CO2 to methanolisation', 'CO2 to meoh']},
+    'CO2 to cat methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'carrier' : 'CO2', 'buses' :['CO2 to cat methanation']},
+    'CO2 HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 60, 'carrier' : 'CO2', 'buses' : ['CO2 HP storage']},
+    'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30,'carrier' : 'CO2'},
+    'CO2 from Liq storage': {"fluid": 'CO2', "T": T_ambient, 'P': 16, 'carrier' : 'CO2',},
+    'CO2 Liq storage': {"fluid": 'CO2', "T": -26, 'P': 16, 'carrier' : 'CO2', 'buses' : ['CO2 Liq sequestration', 'CO2 Liq storage']},
+    'pellets': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_pellets, 'moisture' : 0.13, 'carrier' : 'pellets','buses': ['pellets']}, # name NOT valid in coolprop
+    'chips': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_chips, 'moisture' : 0.5, 'carrier' : 'moist biomass', 'buses' :["moist biomass"]},  # name NOT valid in coolprop
 }
 
 symbiosis_n = pd.DataFrame.from_dict(symbiosis_data, orient="index")
@@ -547,7 +547,6 @@ def compressor_calculation(comp_streams, symbiosis_n):
     else:
         Pst_out = None
 
-
     # ---- Mode Zero : compressor not needed -------
     if (Pout / Pin) < 1 and (not Pst or Pst < Pout):
         compressor_data = pd.DataFrame()
@@ -610,7 +609,7 @@ def compressor_calculation(comp_streams, symbiosis_n):
 
 
     # ----- Mode B : Pin = Pout < Pst -------------
-    elif (Pout / Pin) == 1 and (Pst / Pout) > 1:
+    elif (Pout / Pin) == 1 and (Pst is not None) and (Pst / Pout) > 1:
         # in this mode the compression is required only for storing the gas at HP
         #mode = 'B'
         #print('mode, Pin, Pout, Pst, fluid', mode , Pin, Pout, Pst, fluid)
@@ -642,7 +641,7 @@ def compressor_calculation(comp_streams, symbiosis_n):
 
     # ---- Mode C: Pin< Pout< Pst -------
     # in this mode the main compression (Pin -> Pout) followed by a second compression for the storage.
-    elif (Pout / Pin) > 1 and (Pst / Pout) > 1:
+    elif (Pout / Pin) > 1 and (Pst is not None) and (Pst / Pout) > 1:
         #mode = 'C'
         #print('mode, Pin, Pout, Pst, fluid', mode , Pin, Pout, Pst, fluid)
 
@@ -704,7 +703,7 @@ def compressor_calculation(comp_streams, symbiosis_n):
 
     # ---- Mode D: Pin < Pst_out < Pst < Pout -------
     # in this mode the main compression (Pin -> Pout) followed by a second compression for the storage. The return pressure is assumed > Pout
-    elif (Pst/ Pin) > 1 and (Pout/ Pst) > 1:
+    elif (Pst is not None) and (Pst / Pin) > 1 and (Pout / Pst) > 1:
         #mode = 'D'
         #print('mode, Pin, Pout, Pst, fluid', mode , Pin, Pout, Pst, fluid)
 
@@ -781,7 +780,7 @@ def compressor_calculation(comp_streams, symbiosis_n):
         extra_compression['specific_aftercool_Q_above_split_kWh_per_kg'] +=  extra_compression2['specific_aftercool_Q_above_split_kWh_per_kg']- main_compression['specific_aftercool_Q_above_split_kWh_per_kg']
         extra_compression['specific_aftercool_Q_below_split_kWh_per_kg'] +=  extra_compression2['specific_aftercool_Q_below_split_kWh_per_kg']- main_compression['specific_aftercool_Q_below_split_kWh_per_kg']
     else:
-        print("WARNING: compressor not installed")
+        print(f"WARNING: {fluid} compressor not installed")
         compressor_data = pd.DataFrame()
         return compressor_data
 
@@ -829,7 +828,7 @@ def check_symbiosis_n(symbiosis_n):
     if duplicates:
         print("⚠️ Duplicated bus names found:", duplicates)
     else:
-        print("✅ symbiosis network buses OK")
+        print("✅ symbiosis network buses definition OK")
     return
 
 

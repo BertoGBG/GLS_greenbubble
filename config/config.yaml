@@ -1,23 +1,24 @@
 # config/config.yml
-run_name: test_price_full
+run_name: all_DK_dmd_stoch # keep it short
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
 
-# Others
+# existing CO2 cost (tax) in the reference year (if included in energy prices)
 CO2_cost_ref_year: 0
 
 # Annual Demands or price targets
 # if driver == 'demand': Demands must be present AND Prices are not used in the model
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
+
 targets:
-  driver: 'price' # 'price' | 'demand'.
-  demand_H2 : 270000 # MWh_H2 /y  Demand OR max production
-  demand_CH4 : 260000 # Mwh_CH4 /y Demand OR max production
-  demand_meoh : 36000 # Mwh_meoh /y Demand OR max production
-  price_H2 : 120 # €/MWh prices are required only for driver : 'price'
-  price_bioCH4 : NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
-  price_meoh : 120 # €/MWh prices are required only for driver : 'price'
+  driver: 'demand' # 'price' | 'demand'
+  demand_H2 :  50000 # MWh_H2 /y  Demand OR max production
+  demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
+  demand_meoh : 4000 # Mwh_meoh /y Demand OR max production
+  price_H2 : 90 # €/MWh prices are required only for driver : 'price'
+  price_bioCH4 : 95 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
+  price_meoh : 110 # €/MWh prices are required only for driver : 'price'
 
 # Demand flexibility - H2 grid
 H2_profile_flag: false # 'True': the demand follows NG demand profile: 'False' it is flexible delivery during the period  (see frequency)
@@ -27,12 +28,12 @@ H2_delivery_frequency: 1 # ==1: Single delivery at the end of the 'Year',   ==12
 max_RE_to_grid : 0.1 # # max share of RE production that can be sold to the grid
 
 # Energy & Weather year
-En_price_year: 2024
+En_price_year: 2023
 preprocess_flag: false
 
-# Location
-latitude: 56.566
-longitude: 9.033
+# Location (Skive)
+latitude: 56.566 # 35.50 # Cal Flats
+longitude: 9.033 # -120.10 # Cal Flats
 
 # Network configuration flags
 n_flags:
@@ -40,12 +41,12 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: false
-  methanation: false
+  meoh: true
+  methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
-  storage: true     # activate every storage (from n_config)
+  storage: true     # activate every Thermal and Battery storage (from n_config)
   print: true       # saves svg of prenetwork before optimization
-  export: false     # exports prenetwork before optimization
+  export: true     # exports prenetwork before optimization
 
 # optimization flags
 n_flags_opt:
@@ -60,13 +61,50 @@ outputs_folder: outputs/single_analysis
 rfnbos_dict:
   limit: 'price'         # emissions | price | unlimited | disconnected
   price_threshold: 20      # €/MWh
-  emission_threshold: 0.0648   # tCO2e/MWh  (= 18 * 3.6 / 1000)
+  emission_threshold: 0.0648   # tCO2e/MWh
 
 # Economics
 year_EU: 2030
-USD_to_EUR: 1.0
+USD_to_EUR: 0.85
 DKK_Euro: 7.46
 discount_rate: 0.07
 
+# tariffs
+tariffs_dict:
+  el_transmission_tariff : 9.92   # TSO Tariff from energinet € /MWh
+  el_system_tariff : 6.84   # €/MWh
+  el_afgift : 60 # state tarif set to 45 ore/kWh (DK) previously 72, but 0.8 for 2026 - 2027
+  el_net_tariff_low : 2   # Euro/MWh DSO Tariff for 60/10kV transformer (A_low customer)
+  el_net_tariff_high : 6
+  el_net_tariff_peak : 12
+  el_tariff_sell : 1.4  # Selling tariff
+  NG_dso_tariff : 1.8  #  Eur/MWh - NG grid tariffs DSO : https://evida.dk/tarifblad010125/
+  NG_tso_tariff :  0.01 #  Eur/MWh - NG grid tariff TSO : https://en.energinet.dk/media/fhslybmk/transmission-tariffs-effective-as-of-1st-january-2025-updated-1st-june-2024.pdf
+
 # Stochastic optimization
-stochastic: true # true -> stochastic optimization across scenarios,  false -> deterministic optimization
+stochastic:
+  stochastic: true # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
+  scenarios: {'2022': 0.05, # name of scenarios and their probabilities
+              '2023': 0.25,
+              '2024': 0.35,
+              '2025': 0.35}
+  CO2_cost_s : {"2022": 100,  # CO2 cost (tax) per scenario
+                "2023": 100,
+                "2024": 100,
+                "2025": 100}
+  CO2_cost_ref_year_s: {"2022": 0,  # CO2 cost (tax) per scenario
+                "2023": 0,
+                "2024": 0,
+                "2025": 0}
+  EVPI : true # runs additional deterministic optimization for each scenario and calcualtes EVPI (automatically false if stochastic: false)
+
+# SOLVER
+optimization:
+  solver :  'gurobi'  # 'gurobi' | 'highs'
+  solver_profile : "gurobi-barrier-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
+  collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
+  return_model: true  # returns linopy model
+  overrides: null
+    #overrides:     # examples are illustrative
+     #OutputFlag: 1
+     #BarConvTol: 1e-8

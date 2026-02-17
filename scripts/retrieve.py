@@ -92,14 +92,15 @@ def load_input_data():
     NG_price_year = NG_price_year.set_axis(p.hours_in_period)
     Methanol_demand_max = pd.read_csv(p.Methanol_demand_input_file, sep=';', index_col=0)  # MWh/h y Methanol
     Methanol_demand_max = Methanol_demand_max.set_axis(p.hours_in_period)
-    NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
+    #NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
     #NG_demand_DK = NG_demand_DK.set_axis(p.hours_in_period) # different time scale
-    El_demand_DK1 = pd.read_csv(p.El_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
-    El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
+    #El_demand_DK1 = pd.read_csv(p.El_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
+    #El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
     DH_external_demand = pd.read_csv(p.DH_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
     DH_external_demand = DH_external_demand.set_axis(p.hours_in_period)
+    #return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
 
-    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, NG_demand_DK, El_demand_DK1, DH_external_demand
+    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, bioCH4_prod, CF_wind, CF_solar, NG_price_year, Methanol_demand_max, DH_external_demand
 
 
 # ----- EXTERNAL ENERGY MARKETS
@@ -209,7 +210,7 @@ def pre_processing_energy_data():
     Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
     Elspotprices = Elspotprices_data[['HourDK', 'SpotPrice' + p.currency]].copy()
     Elspotprices.rename(columns={'SpotPrice' + p.currency: 'SpotPrice ' + p.currency}, inplace=True)
-    Elspotprices['HourDK'] = pd.to_datetime(Elspotprices['HourDK'], infer_datetime_format=True)
+    Elspotprices['HourDK'] = pd.to_datetime(Elspotprices['HourDK'])
     Elspotprices.set_index('HourDK', inplace=True)
     Elspotprices = remove_feb_29(Elspotprices)
     Elspotprices.index.name = None
@@ -232,21 +233,21 @@ def pre_processing_energy_data():
 
     CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
     CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
-    CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'], infer_datetime_format=True)
+    CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'])
     CO2_emiss_El.set_index('HourDK', inplace=True)
     CO2_emiss_El = remove_feb_29(CO2_emiss_El)
     CO2_emiss_El.to_csv(p.CO2emis_input_file, sep=';')  # kg/MWh
 
     '''El Demand DK1'''
-    El_demand_DK1 = retrive_entsoe_el_demand(p.entsoe_api, p.start_date.replace("-",""), p.end_date.replace("-",""), p.bidding_zone)
+    #El_demand_DK1 = retrive_entsoe_el_demand(p.entsoe_api, p.start_date.replace("-",""), p.end_date.replace("-",""), p.bidding_zone)
     # source https://data.open-power-system-data.org/time_series/
     # El_demand_DK1 = pd.read_csv('data/time_series_60min_singleindex_filtered_DK1_2019.csv', index_col=0,
     #                            usecols=['cet_cest_timestamp', 'DK_1_load_actual_entsoe_transparency'])
-    El_demand_DK1.rename(columns={'Actual Load': 'DK_1_load_actual_entsoe_transparency MWh'},
-                         inplace=True)
-    El_demand_DK1 = remove_feb_29(El_demand_DK1)
-    El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
-    El_demand_DK1.to_csv(p.El_external_demand_input_file, sep=';')  # MWh/h
+    #El_demand_DK1.rename(columns={'Actual Load': 'DK_1_load_actual_entsoe_transparency MWh'},
+    #                     inplace=True)
+    #El_demand_DK1 = remove_feb_29(El_demand_DK1)
+    #El_demand_DK1 = El_demand_DK1.set_axis(p.hours_in_period)
+    #El_demand_DK1.to_csv(p.El_external_demand_input_file, sep=';')  # MWh/h
 
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
@@ -356,80 +357,6 @@ def pre_processing_energy_data():
     CF_solar.to_csv(p.CF_solar_input_file, sep=';')  # kg/MWh
 
     return
-
-
-def build_electricity_grid_price_w_tariff(Elspotprices):
-    """this function creates the Electricity grid price including the all the tariffs
-    Note that CO2 tax is added separately
-    Tariff system valid for customer conected to 60kV grid via a 60/10kV transformer
-    Tariff system in place from 2025"""
-
-    # for tariff reference check the parameter file
-    # Grid tariff are based on hour of the day, day of the week and season:
-    # high tariff in summer + weekdays + 06:00 to 24.00
-    # high tariff in winter + weekends + 06:00 to 24.00
-    # high tariff in winter + weekdays + 21:00 to 24.00
-    # peak tariff in winter + weekdays + 06:00 to 21.00
-    # Low tariff the rest of the time
-
-    summer_start = str(p.En_price_year) + '-04-01T00:00'  # '2019-04-01 00:00:00+00:00' # Monday
-    summer_end = str(p.En_price_year) + '-10-01T00:00'  # '2019-10-01 00:00:00+00:00'
-    winter_1 = pd.date_range(p.start_date + 'Z', summer_start + 'Z', freq='h')
-    winter_1 = winter_1.drop(winter_1[-1])
-    winter_2 = pd.date_range(summer_end + 'Z', p.end_date + 'Z', freq='h')
-    winter_2 = winter_2.drop(winter_2[-1])
-    winter = winter_1.append(winter_2)
-    winter = winter[~((winter.month == 2) & (winter.day == 29))]
-    summer = pd.date_range(summer_start + 'Z', summer_end + 'Z', freq='h')
-    summer = summer.drop(summer[-1])
-
-    peak_weekday = range(1, 6)
-    peak_hours = range(7, 21 + 1)
-    high_hours_weekday_winter = range(22, 24 + 1)
-    high_hours_weekend_winter = range(7, 24 + 1)
-    high_hours_weekday_summer = range(7, 24 + 1)
-
-    # set the tariff in every hour equal to low and che
-    el_grid_price = Elspotprices + p.el_transmission_tariff + p.el_system_tariff + p.el_afgift
-    el_grid_sell_price = -Elspotprices + p.el_tariff_sell
-
-    # assign tariff to hours
-    for h in winter:
-        day = h.weekday()
-        hour = h.hour
-        net_tariff = 0  # Default value
-
-        if day in [5, 6]:  # weekends
-            if hour in high_hours_weekend_winter:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-        elif day in range(0, 5):  # weekdays
-            if hour in peak_hours:
-                net_tariff = p.el_net_tariff_peak
-            elif hour in high_hours_weekday_winter:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-
-        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
-
-    for h in summer:
-        day = h.weekday()
-        hour = h.hour
-        net_tariff = 0  # Default value
-
-        if day in [5, 6]:  # weekends
-            net_tariff = p.el_net_tariff_low
-        elif day in range(0, 5):  # weekdays
-            if hour in high_hours_weekday_summer:
-                net_tariff = p.el_net_tariff_high
-            else:
-                net_tariff = p.el_net_tariff_low
-
-        el_grid_price.loc[h, :] = el_grid_price.loc[h, :] + net_tariff
-
-    return el_grid_price, el_grid_sell_price
 
 
 # ---- Technology data

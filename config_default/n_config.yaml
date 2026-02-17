@@ -18,9 +18,10 @@ battery: # includes inverter
   ramp limit down: 0.5 # % of total en capacity per hour
   expansion : true
 
-biogas: # (unit: MW CH4,  for simplicity)
+biogas: # (unit: MW CH4, for simplicity)
   <<: *base
-  initial capacity: 0 #
+  initial capacity: 30
+  expansion: false
 
 biogas storage:
   <<: *base
@@ -41,16 +42,16 @@ biomass boiler:
 # TODO add min size for methanation plants matching the cost
 biomethanation biogas: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 1 # % of total power capacity per hour
-  ramp limit down: 1 # % of total power capacity per hour
-  min load: 0.2 # % of max power capacity that must run (otherwise shut-off)
+  ramp limit up: 0.7 # % of total power capacity per hour
+  ramp limit down: 0.7 # % of total power capacity per hour
+  min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
 
 biomethanation CO2: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 1 # % of total power capacity per hour
-  ramp limit down: 1 # % of total power capacity per hour
-  min load: 0.2 # % of max power capacity that must run (otherwise shut-off)
+  ramp limit up: 0.7 # % of total power capacity per hour
+  ramp limit down: 0.7 # % of total power capacity per hour
+  min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
 
 cat methanation biogas: # (bus0 unit: MW H2)
@@ -160,7 +161,7 @@ solar:
 
 TES concrete: #
   <<: *base
-  min capacity: 1.5 # MWh
+  min capacity: 0 # MWh
   ramp limit up: 0.1 # % of total en capacity per hour
   ramp limit down: 0.1 # % of total en capacity per hour
   standing loss: 0.02 # % of total energy  per hour
