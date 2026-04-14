@@ -38,7 +38,7 @@ longitude: 9.033 # -120.10 # Cal Flats
 # Network configuration flags
 n_flags:
   biogas: true
-  central_heat: false
+  central_heat: true
   renewables: true
   electrolysis: true
   meoh: false
@@ -83,7 +83,7 @@ tariffs_dict:
 
 # Stochastic optimization
 stochastic:
-  stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
+  stochastic: true # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
   scenarios: {'2022': 0.05, # name of scenarios and their probabilities
               '2023': 0.25,
               '2024': 0.35,
