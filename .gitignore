@@ -5,6 +5,12 @@ __pycache__/
 # Outputs
 outputs/
 
+# Snakemake intermediates
+resources/
+logs/
+
 # IDE
 .idea/
 
+# text_doc
+text_doc/
