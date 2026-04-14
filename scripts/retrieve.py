@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
-from scripts import config as p
+from scripts import parameters as p
 import os
 from io import StringIO
 import json
