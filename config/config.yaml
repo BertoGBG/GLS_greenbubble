@@ -100,8 +100,8 @@ stochastic:
 
 # SOLVER
 optimization:
-  solver :  'gurobi'  # 'gurobi' | 'highs'
-  solver_profile : "gurobi-barrier-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
+  solver :  'highs'  # 'gurobi' | 'highs'
+  solver_profile : "highs-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
   collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
   return_model: true  # returns linopy model
   overrides: null
