@@ -31,7 +31,6 @@ dependencies:
   - seaborn>=0.13
 
   # workflow + notebooks
-  - snakemake-minimal>=8
   - dask
   - ipython
   - jupyterlab
@@ -59,3 +58,4 @@ dependencies:
   - pip:
       - entsoe-py
       - pypsatopo
+      - snakemake>=8
