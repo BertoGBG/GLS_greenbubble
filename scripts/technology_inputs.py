@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import CoolProp.CoolProp as CP
-import math
 
 # --- Network Inputs  T and P levels -------
 T_max_comp = 160 # maximum discharge temperature for all compressors
@@ -45,15 +44,15 @@ symbiosis_data = {
     'H2 production': {"fluid": 'H2', "T": 50, 'P': 30, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2' , 'H2 distribution', 'H2 delivery']},
     'H2 to methanolisation': {"fluid": 'H2', "T": T_max_comp, 'P': 80 , 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanolisation']},
     'H2 to biomethanation': {"fluid": 'H2', "T": T_ambient, 'P': 1, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to biomethanation']},
-    'H2 to cat methanation': {"fluid": 'H2', "T": T_max_comp, 'P': 20, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to cat methanation']},
+    'H2 to methanation': {"fluid": 'H2', "T": T_max_comp, 'P': 20, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanation']},
     'H2 HP storage': {"fluid": 'H2', "T": T_ambient, 'P': 150, 'LHV': lhv_h2, 'buses' : ['H2 HP storage']},
     'CO2 biogas upgrading': {"fluid": 'CO2', "T": 50, 'P': 1, 'carrier' : 'CO2', 'buses' : ["CO2 sep", "CO2 distribution", 'CO2 to biomethanation']},
     'biogas': {"fluid": "biogas", "T": 50, 'P': 1, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' : ['biogas', 'biogas to biomethanation']}, # coolprop name assigned in function (as a mixture)
-    'biogas to cat methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' :['biogas to cat methanation']},
+    'biogas to methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' :['biogas to methanation']},
     'bioCH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['bioCH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
     'meoh': {"fluid": "Methanol", "T": 50, 'P': 1, 'LHV': lhv_meoh, 'carrier' : 'Methanol', 'buses' : ['Methanol']},
     'CO2 to methanolisation': {"fluid": 'CO2', "T": T_max_comp, 'P': 80, 'carrier' : 'CO2', 'buses' : ['CO2 to methanolisation', 'CO2 to meoh']},
-    'CO2 to cat methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'carrier' : 'CO2', 'buses' :['CO2 to cat methanation']},
+    'CO2 to methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'carrier' : 'CO2', 'buses' :['CO2 to methanation']},
     'CO2 HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 60, 'carrier' : 'CO2', 'buses' : ['CO2 HP storage']},
     'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30,'carrier' : 'CO2'},
     'CO2 from Liq storage': {"fluid": 'CO2', "T": T_ambient, 'P': 16, 'carrier' : 'CO2',},

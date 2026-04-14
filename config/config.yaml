@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: all_DK_dmd_stoch # keep it short
+run_name: H2_meth_dmd_DK # keep it short
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
@@ -13,7 +13,7 @@ CO2_cost_ref_year: 0
 
 targets:
   driver: 'demand' # 'price' | 'demand'
-  demand_H2 :  50000 # MWh_H2 /y  Demand OR max production
+  demand_H2 :  0 # MWh_H2 /y  Demand OR max production
   demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 4000 # Mwh_meoh /y Demand OR max production
   price_H2 : 90 # €/MWh prices are required only for driver : 'price'
@@ -25,11 +25,11 @@ H2_profile_flag: false # 'True': the demand follows NG demand profile: 'False' i
 H2_delivery_frequency: 1 # ==1: Single delivery at the end of the 'Year',   ==12 : 'Month', ==52: 'Week'
 
 # Sales of Electricity
-max_RE_to_grid : 0.1 # # max share of RE production that can be sold to the grid
+max_RE_to_grid : 0.1 # # max share of RE (internal consumption + export) that can be sold to the grid
 
 # Energy & Weather year
 En_price_year: 2023
-preprocess_flag: false
+preprocess_flag: true
 
 # Location (Skive)
 latitude: 56.566 # 35.50 # Cal Flats
@@ -38,15 +38,15 @@ longitude: 9.033 # -120.10 # Cal Flats
 # Network configuration flags
 n_flags:
   biogas: true
-  central_heat: true
+  central_heat: false
   renewables: true
   electrolysis: true
-  meoh: true
+  meoh: false
   methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
   print: true       # saves svg of prenetwork before optimization
-  export: true     # exports prenetwork before optimization
+  export: false     # exports prenetwork before optimization
 
 # optimization flags
 n_flags_opt:
@@ -67,13 +67,13 @@ rfnbos_dict:
 year_EU: 2030
 USD_to_EUR: 0.85
 DKK_Euro: 7.46
-discount_rate: 0.07
+discount_rate: 0.2
 
 # tariffs
 tariffs_dict:
   el_transmission_tariff : 9.92   # TSO Tariff from energinet € /MWh
   el_system_tariff : 6.84   # €/MWh
-  el_afgift : 60 # state tarif set to 45 ore/kWh (DK) previously 72, but 0.8 for 2026 - 2027
+  el_afgift : 45 # state tarif set to 45 ore/kWh (DK) previously 72, but 0.8 for 2026 - 2027
   el_net_tariff_low : 2   # Euro/MWh DSO Tariff for 60/10kV transformer (A_low customer)
   el_net_tariff_high : 6
   el_net_tariff_peak : 12
@@ -83,7 +83,7 @@ tariffs_dict:
 
 # Stochastic optimization
 stochastic:
-  stochastic: true # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
+  stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
   scenarios: {'2022': 0.05, # name of scenarios and their probabilities
               '2023': 0.25,
               '2024': 0.35,

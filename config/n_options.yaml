@@ -11,7 +11,7 @@ CO2 Liq credits: #TODO : stochastic testing
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass
-  price : 0 #19.8676 # EUR/MWh biogas from JRC ENSPRESO
+  price : 0 # 19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
 DH: # TODO : stochastic testing
   enable: false

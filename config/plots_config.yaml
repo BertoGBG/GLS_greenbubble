@@ -65,16 +65,16 @@ plotting:
       selector: biomethanation biogas
       th: LINK_TH
 
-    - label: cat methanation CO2
+    - label: methanation CO2
       kind: Link
       field: p0
-      selector: cat methanation CO2
+      selector: methanation CO2
       th: LINK_TH
 
-    - label: cat methanation biogas
+    - label: methanation biogas
       kind: Link
       field: p0
-      selector: cat methanation biogas
+      selector: methanation biogas
       th: LINK_TH
 
     - label: Battery SOC

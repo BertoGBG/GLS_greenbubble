@@ -13,7 +13,7 @@ lhv_NG = 0.010 # MWh/Nm3
 ''' PARAMETERS FOR RETRIEVING AND PRE PROCESSING'''
 
 # Retrieve Technology-data
-technology_data_url = "https://raw.githubusercontent.com/BertoGBG/technology-data/py-isa/outputs/"
+technology_data_url = "https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/"
 cost_folder = "data/technology-data/outputs"
 cost_file = "costs_" + str(year_EU) + ".csv"
 cost_path = os.path.join(cost_folder, cost_file)

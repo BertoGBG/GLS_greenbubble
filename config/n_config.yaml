@@ -24,7 +24,7 @@ biogas: # (unit: MW CH4,  for simplicity)
   <<: *base
   cost factor : 1
   initial capacity: 30
-  expansion: true
+  expansion: false
 
 biogas storage:
   <<: *base
@@ -55,6 +55,7 @@ biomethanation biogas: # (bus0 unit: MW H2)
   expansion : true
   cost factor : 1
 
+
 biomethanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.7 # % of total power capacity per hour
@@ -63,14 +64,14 @@ biomethanation CO2: # (bus0 unit: MW H2)
   expansion : true
   cost factor: 1
 
-cat methanation biogas: # (bus0 unit: MW H2)
+methanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.2 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
 
-cat methanation CO2: # (bus0 unit: MW H2)
+methanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
@@ -168,7 +169,7 @@ pyrolysis:
 solar:
   <<: *base
 
-TES concrete: # capacity in MW of ourput power. Energy capacity as capacity * max hours
+TES concrete: # capacity in MW of output power. Energy capacity as capacity * max hours
   <<: *base
   max hours : 10
   efficiency store : 0.95
@@ -178,7 +179,7 @@ TES concrete: # capacity in MW of ourput power. Energy capacity as capacity * ma
   standing loss: 0.02 # % of total energy  per hour
   expansion: true
 
-TES DH: # capacity in MW of ourput power. Energy capacity as capacity * max hours
+TES DH: # capacity in MW of output power. Energy capacity as capacity * max hours
   <<: *base
   max hours : 50
   #ramp limit up: 0.02 # % of total en capacity per hour

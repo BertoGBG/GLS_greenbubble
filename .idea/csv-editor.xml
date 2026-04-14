@@ -3,6 +3,13 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="/data/California/Inputs_2022/GasPrices_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/California/Inputs_2023/CF_solar.csv">
           <value>
             <Attribute>
@@ -25,6 +32,20 @@
           </value>
         </entry>
         <entry key="/data/California/Inputs_2023/Elspotprices_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/Inputs_2023/GasPrices_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/Inputs_2023/Methanol_demand_GL_max_input.csv">
           <value>
             <Attribute>
               <option name="separator" value=":" />
@@ -73,6 +94,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/California/Inputs_2024/GasPrices_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/Inputs_2024/Methanol_demand_GL_max_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/California/Inputs_2024/NG_price_year_input.csv">
           <value>
             <Attribute>
@@ -109,6 +144,13 @@
           </value>
         </entry>
         <entry key="/data/California/Inputs_2025/Elspotprices_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/Inputs_2025/Methanol_demand_GL_max_input.csv">
           <value>
             <Attribute>
               <option name="separator" value=":" />
@@ -164,7 +206,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/California/NG_price_year_2019/Daily balancing gas price_07Jul_2019.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/California/NG_price_year_2019/Daily balancing gas price_08Aug_2019.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/NG_price_year_2019/Daily balancing gas price_09Sep_2019.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/California/NG_price_year_2019/Daily balancing gas price_10Oct_2019.csv">
           <value>
             <Attribute>
               <option name="separator" value=";" />
@@ -339,6 +402,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/Inputs_2020/DH_external_demand_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/Inputs_2020/El_demand_input.csv">
           <value>
             <Attribute>
@@ -388,6 +458,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/Inputs_2021/DH_external_demand_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/Inputs_2021/El_demand_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/Inputs_2021/Methanol_demand_GL_max_input.csv">
           <value>
             <Attribute>
@@ -417,6 +501,20 @@
           </value>
         </entry>
         <entry key="/data/Inputs_2022/CO2emis_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/Inputs_2022/DH_external_demand_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/Inputs_2022/El_demand_input.csv">
           <value>
             <Attribute>
               <option name="separator" value=":" />
@@ -462,6 +560,13 @@
           <value>
             <Attribute>
               <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/Inputs_2023/DH_external_demand_input.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
             </Attribute>
           </value>
         </entry>
@@ -668,28 +773,35 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/data/technology-data/outputs/costs_2030_US.csv">
+        <entry key="/outputs/single_analysis/B_RE_H2_MEOH_SN_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_H2_meoh_dmd_DK/csv/TSC_by_carrier.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/outputs/single_analysis/RE_H2_SN_CO2_100_tD_H2_0_MeOH_0_CH4_0_2023_El_0.1_STC_all_DK_demand_stoch/stochastic/csv/TSC_by_agent.csv">
+        <entry key="/outputs/single_analysis/B_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_0_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK/csv/TSC_by_agent.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/outputs/single_analysis/RE_H2_SN_CO2_100_tD_H2_0_MeOH_0_CH4_0_2023_El_0.1_STC_all_DK_demand_stoch/stochastic/csv/TSC_by_carrier.csv">
+        <entry key="/outputs/single_analysis/B_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_0_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK/csv/TSC_by_carrier.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="/outputs/single_analysis/RE_H2_SN_CO2_100_tD_H2_0_MeOH_0_CH4_0_2023_El_0.1_STC_all_DK_demand_stoch/stochastic/csv/optimal_capacities.csv">
+        <entry key="/outputs/single_analysis/B_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_0_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK/csv/opt_capacities_SP_vs_WP.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/outputs/single_analysis/B_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_0_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK/csv/optimal_capacities.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

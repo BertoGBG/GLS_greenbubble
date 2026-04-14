@@ -54,14 +54,14 @@ biomethanation CO2: # (bus0 unit: MW H2)
   min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
 
-cat methanation biogas: # (bus0 unit: MW H2)
+methanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
   expansion : false
 
-cat methanation CO2: # (bus0 unit: MW H2)
+methanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour

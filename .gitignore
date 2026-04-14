@@ -4,3 +4,6 @@ outputs/.DS_Store
 outputs/.DS_Store
 __pycache__/
 *.pyc
+
+# Outputs
+outputs/

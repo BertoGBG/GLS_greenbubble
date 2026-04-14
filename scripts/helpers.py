@@ -1009,7 +1009,8 @@ def add_max_RE_sales_constraint(
             continue
 
         drawn_energy = sum(rhs_terms)
-        rhs = (alpha / (1 - alpha)) * drawn_energy
+        # rhs = (alpha / (1 - alpha)) * drawn_energy
+        rhs = alpha * drawn_energy
         #print('drawn_energy', drawn_energy)
         #print('rhs', rhs)
 
