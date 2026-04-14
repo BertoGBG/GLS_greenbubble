@@ -1,8 +1,4 @@
-"""Snakemake wrapper: assemble network input dictionary and save as pickle.
-
-preprocess_flag is forced False here because raw data download is handled
-by the separate preprocess_inputs rule (snakemake_preprocess.py).
-"""
+"""Snakemake wrapper: assemble network input dictionary and save as pickle."""
 from pathlib import Path
 import sys
 import pickle
@@ -17,7 +13,6 @@ inputs_dict = prepare_all_inputs(
     CO2_cost          = c.CO2_cost,
     CO2_cost_ref_year = c.CO2_cost_ref_year,
     max_RE_to_grid    = c.max_RE_to_grid,
-    preprocess_flag   = False,
 )
 
 with open(snakemake.output.inputs, "wb") as fh:

@@ -50,7 +50,6 @@ targets_dict              = dict(_cfg["targets"])
 
 max_RE_to_grid           = _cfg["max_RE_to_grid"]
 En_price_year            = _cfg["En_price_year"]
-preprocess_flag          = _cfg["preprocess_flag"]
 
 latitude                 = _cfg["latitude"]
 longitude                = _cfg["longitude"]

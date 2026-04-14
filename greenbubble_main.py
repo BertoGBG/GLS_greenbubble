@@ -62,8 +62,7 @@ def main(n_flags=None, run_name=None, outputs_folder=None):
     inputs_dict = prepare_all_inputs(targets_dict = c.targets_dict,
                                      CO2_cost = c.CO2_cost,
                                      CO2_cost_ref_year = c.CO2_cost_ref_year,
-                                     max_RE_to_grid = c.max_RE_to_grid,
-                                     preprocess_flag = c.preprocess_flag)
+                                     max_RE_to_grid = c.max_RE_to_grid)
 
     # ---- Build network (deterministic)
     print('building the network')

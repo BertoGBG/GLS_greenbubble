@@ -79,7 +79,6 @@ def create_inputs_per_scenario(n, s, tech_costs, CO2_cost_s, CO2_cost_ref_year_s
         CO2_cost=CO2_cost,
         CO2_cost_ref_year = CO2_cost_ref_year,
         max_RE_to_grid=c.max_RE_to_grid,
-        preprocess_flag=c.preprocess_flag,
     )
 
     en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, c.n_options)
