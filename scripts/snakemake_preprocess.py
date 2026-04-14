@@ -8,8 +8,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.retrieve import pre_processing_energy_data
+from scripts.preprocessing import pre_processing_energy_data
 
-pre_processing_energy_data()
+year = int(snakemake.wildcards.year)
+pre_processing_energy_data(year=year)
 
 Path(snakemake.output.done).touch()

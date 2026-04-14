@@ -52,6 +52,15 @@ YEAR_EU         = config["year_eu"] if "year_eu" in config else config["year_EU"
 YEAR            = config["En_price_year"]
 OUTDIR          = config["outputs_folder"]
 
+# Years that need preprocessed inputs: always the main year + all scenario years if stochastic
+_stoch_cfg = config["stochastic"]
+if _stoch_cfg["stochastic"]:
+    PREPROCESS_YEARS = sorted(set(
+        [str(YEAR)] + [str(y) for y in _stoch_cfg["scenarios"].keys()]
+    ))
+else:
+    PREPROCESS_YEARS = [str(YEAR)]
+
 
 include: "rules/retrieve.smk"
 include: "rules/build.smk"

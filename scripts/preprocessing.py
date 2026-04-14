@@ -378,6 +378,18 @@ RN_MAX_DATE = pd.Timestamp("2024-12-31").date()
 RN_LAST_END_EXCL_UTC = pd.Timestamp("2025-01-01 00:00", tz="UTC")  # end-exclusive
 
 
+def _rn_get(session, url, params, max_retries=5):
+    """GET with automatic retry/backoff on RN 429 rate-limit responses."""
+    for attempt in range(max_retries):
+        r = session.get(url, params=params)
+        if r.status_code == 429:
+            wait = 2 ** attempt  # 1, 2, 4, 8, 16 s
+            time.sleep(wait)
+            continue
+        return r
+    return r  # return last response if all retries exhausted
+
+
 def retrieve_renewable_capacity_factors(
     token,
     start_date,
@@ -430,22 +442,19 @@ def retrieve_renewable_capacity_factors(
 
     # --- PV ---
     optimal_tilt = latitude * 0.87 + 3.1
-    r = s.get(
-        api_base + "data/pv",
-        params={
-            "lat": latitude,
-            "lon": longitude,
-            "date_from": date_from,
-            "date_to": date_to,
-            "dataset": dataset,
-            "capacity": 1.0,
-            "system_loss": 0.1,
-            "tracking": 0,
-            "tilt": optimal_tilt,
-            "azim": 180,
-            "format": "json",
-        },
-    )
+    r = _rn_get(s, api_base + "data/pv", params={
+        "lat": latitude,
+        "lon": longitude,
+        "date_from": date_from,
+        "date_to": date_to,
+        "dataset": dataset,
+        "capacity": 1.0,
+        "system_loss": 0.1,
+        "tracking": 0,
+        "tilt": optimal_tilt,
+        "azim": 180,
+        "format": "json",
+    })
     if r.status_code != 200:
         raise RuntimeError(f"RN pv failed {r.status_code}: {r.text[:2000]}")
     parsed = r.json()
@@ -453,19 +462,16 @@ def retrieve_renewable_capacity_factors(
     CF_solar.rename(columns={CF_solar.columns[0]: "CF solar"}, inplace=True)
 
     # --- Wind ---
-    r = s.get(
-        api_base + "data/wind",
-        params={
-            "lat": latitude,
-            "lon": longitude,
-            "date_from": date_from,
-            "date_to": date_to,
-            "capacity": 1.0,
-            "height": 100,
-            "turbine": "Vestas V80 2000",
-            "format": "json",
-        },
-    )
+    r = _rn_get(s, api_base + "data/wind", params={
+        "lat": latitude,
+        "lon": longitude,
+        "date_from": date_from,
+        "date_to": date_to,
+        "capacity": 1.0,
+        "height": 100,
+        "turbine": "Vestas V80 2000",
+        "format": "json",
+    })
     if r.status_code != 200:
         raise RuntimeError(f"RN wind failed {r.status_code}: {r.text[:2000]}")
     parsed = r.json()
@@ -617,12 +623,29 @@ def retrive_entsoe_el_demand(API_KEY, start_day, end_day, country_code):
     return ts
 
 
-def pre_processing_energy_data():
+def pre_processing_energy_data(year=None):
     """ function that preprocess all the energy input data and saves in
     NOTE:Some data are not always used depending on the network configuration
     Prices from DK are downlaoded in DKK"""
+    # --- Year-specific setup (supports multi-year stochastic preprocessing) ---
+    from scripts.helpers import build_snapshots, is_eu_or_us
+    _year = int(year) if year is not None else En_price_year
+    hours_in_period, _, _ = build_snapshots(_year)
+    if is_eu_or_us(p.latitude, p.longitude) == 'EU':
+        _folder = f'data/Inputs_{_year}'
+    else:
+        _folder = f'data/California/Inputs_{_year}'
+    os.makedirs(_folder, exist_ok=True)
+    El_price_input_file           = f'{_folder}/Elspotprices_input.csv'
+    CO2emis_input_file            = f'{_folder}/CO2emis_input.csv'
+    NG_price_year_input_file      = f'{_folder}/NG_price_year_input.csv'
+    NG_demand_input_file          = f'{_folder}/NG_demand_DK_input.csv'
+    DH_external_demand_input_file = f'{_folder}/DH_external_demand_input.csv'
+    CF_wind_input_file            = f'{_folder}/CF_wind.csv'
+    CF_solar_input_file           = f'{_folder}/CF_solar.csv'
+    # -------------------------------------------------------------------------
     """ Dates"""
-    dates= p.hours_in_period.date
+    dates = hours_in_period.date
     start_date = dates[0].strftime("%Y-%m-%d")
     end_date = (dates[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
 
@@ -642,41 +665,30 @@ def pre_processing_energy_data():
     Elspotprices.set_index('TimeDK', inplace=True)
     Elspotprices = remove_feb_29(Elspotprices)
     Elspotprices.index.name = None
-    Elspotprices.to_csv(p.El_price_input_file, sep=';')  # currency/MWh
+    Elspotprices.to_csv(El_price_input_file, sep=';')  # currency/MWh
 
     '''CO2 emission from El Grid DK1'''
-    sort_val = 'sort=HourDK%20asc'
-    # filter_area = r'filter={"PriceArea":"DK1"}' # defined in parameters
-    if En_price_year <= 2022:
-        dataset_name = 'DeclarationEmissionHour'
-        CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
-                                           p.filter_area)  # g/kWh = kg/MWh
-        CO2_emiss_El = CO2emis_data[['HourDK', 'CO2PerkWh']].copy()
-
-    elif En_price_year > 2022:
-        dataset_name = 'DeclarationGridEmission'
-        sort_val = "HourDK asc"  # 'sort=HourDK%20asc'
-        CO2emis_data = download_energidata(
-            dataset_name=dataset_name,
-            start_date=start_date,  # "2025-01-01",
-            end_date=end_date,  # "2026-01-01",
-            sort_val=sort_val,
-            price_area=p.price_area,
-            limit=0
-        )
-
-        CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
+    # DeclarationEmissionHour was removed from the API; DeclarationGridEmission covers all years
+    CO2emis_data = download_energidata(
+        dataset_name='DeclarationGridEmission',
+        start_date=start_date,
+        end_date=end_date,
+        sort_val="HourDK asc",
+        price_area=p.price_area,
+        limit=0
+    )
+    CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
 
     CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
     CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
     CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'])
     CO2_emiss_El.set_index('HourDK', inplace=True)
     CO2_emiss_El = remove_feb_29(CO2_emiss_El)
-    CO2_emiss_El.to_csv(p.CO2emis_input_file, sep=';')
+    CO2_emiss_El.to_csv(CO2emis_input_file, sep=';')
 
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
-    if En_price_year <= 2022:
+    if _year <= 2022:
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasMonthlyNeutralPrice'
         #sort_val = 'sort=Month%20ASC'
@@ -694,17 +706,16 @@ def pre_processing_energy_data():
         NG_price_col_name = 'Neutral gas price ' + 'EUR' + '/MWh'
         NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
         NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
-        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'])
-        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
         NG_price_year.set_index('HourDK', inplace=True)
         NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / DKK_Euro  # coversion to €/MWh
         last_rows3 = pd.DataFrame(
-            {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
+            {'HourDK': hours_in_period[-1:len(hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)
         NG_price_year = pd.concat([NG_price_year, last_rows3])
         NG_price_year = NG_price_year.asfreq('h', method='ffill')
 
-    elif En_price_year > 2022:
+    elif _year > 2022:
         # due to different structure of Energinet dataset for the year 2019 and 2022
         dataset_name = 'GasDailyBalancingPrice'
         #sort_val = 'sort=GasDay%20ASC'
@@ -738,7 +749,7 @@ def pre_processing_energy_data():
         THE_daily_NG_prices.index = THE_daily_NG_prices.index.tz_localize(None)
 
         # --- Reindex to your full hourly index and forward fill
-        hours = pd.DatetimeIndex(p.hours_in_period)  # ensures it's a DatetimeIndex
+        hours = pd.DatetimeIndex(hours_in_period)  # ensures it's a DatetimeIndex
         THE_daily_NG_prices = THE_daily_NG_prices.reindex(hours).ffill()
 
         # --- Final series
@@ -746,7 +757,7 @@ def pre_processing_energy_data():
 
     NG_price_year = remove_feb_29(NG_price_year)
     NG_price_year = NG_price_year.interpolate(method='linear')
-    NG_price_year.to_csv(p.NG_price_year_input_file, sep=';')  # €/MWh
+    NG_price_year.to_csv(NG_price_year_input_file, sep=';')  # €/MWh
 
     '''  Estimated NG Demand DK '''
     # source: https://www.energidataservice.dk/tso-gas/Gasflow
@@ -766,10 +777,10 @@ def pre_processing_energy_data():
     NG_demand_DK['KWhToDenmark'] = NG_demand_DK['KWhToDenmark'] / -1000  # kWh-> MWh
     NG_demand_DK.rename(columns={'KWhToDenmark': 'NG Demand DK MWh'}, inplace=True)
     NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'])
-    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay']).dt.tz_localize(None)
     NG_demand_DK.set_index('GasDay', inplace=True)
     NG_demand_DK = remove_feb_29(NG_demand_DK)
-    NG_demand_DK.to_csv(p.NG_demand_input_file, sep=';')  # €/MWh
+    NG_demand_DK.to_csv(NG_demand_input_file, sep=';')  # €/MWh
 
     '''District heating data'''
     # Download weather data near Skive (Mejrup)
@@ -805,9 +816,9 @@ def pre_processing_energy_data():
     DH_Skive['DH demand MWh'] = DH_Skive[
                                     'Capacity Factor DH'] * DH_max_capacity  # estimated demand for DH in Skive municipality
     DH_Skive = remove_feb_29(DH_Skive)
-    DH_Skive = DH_Skive.set_axis(p.hours_in_period)
-    DH_Skive = DH_Skive.interpolate (method='linear')
-    DH_Skive.to_csv(p.DH_external_demand_input_file, sep=';')  # MWh/h
+    DH_Skive = DH_Skive.set_axis(hours_in_period)
+    DH_Skive = DH_Skive.interpolate(method='linear')
+    DH_Skive.to_csv(DH_external_demand_input_file, sep=';')  # MWh/h
 
     '''Onshore Wind and Solar Capacity Factors'''
     # Download CF for wind and solar corresponding to the energy year
@@ -822,8 +833,8 @@ def pre_processing_energy_data():
     )
     CF_wind = remove_feb_29(CF_wind)
     CF_solar = remove_feb_29(CF_solar)
-    CF_wind.to_csv(p.CF_wind_input_file, sep=';')  # kg/MWh
-    CF_solar.to_csv(p.CF_solar_input_file, sep=';')  # kg/MWh
+    CF_wind.to_csv(CF_wind_input_file, sep=';')  # kg/MWh
+    CF_solar.to_csv(CF_solar_input_file, sep=';')  # kg/MWh
 
     return
 

@@ -17,9 +17,11 @@ rule prepare_costs:
 
 
 rule prepare_inputs:
-    """Load and assemble all network inputs: timeseries, demands, efficiencies."""
+    """Load and assemble all network inputs: timeseries, demands, efficiencies.
+    Waits for all scenario years to be preprocessed before assembling.
+    """
     input:
-        done = f"data/Inputs_{YEAR}/.preprocessed",
+        done = expand("data/Inputs_{year}/.preprocessed", year=PREPROCESS_YEARS),
     output:
         inputs = f"resources/inputs_{YEAR}.pkl",
     log:

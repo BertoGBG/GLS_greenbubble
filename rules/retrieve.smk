@@ -14,12 +14,15 @@ rule retrieve_tech_data:
 
 
 rule preprocess_inputs:
-    """Download and preprocess energy-market input data for the run year.
-    Runs once; re-trigger manually with --forcerun preprocess_inputs if data needs refreshing.
+    """Download and preprocess energy-market input data for a given year.
+    Called once per year (En_price_year + all stochastic scenario years).
+    Re-trigger manually with --forcerun preprocess_inputs if data needs refreshing.
     """
     output:
-        done = f"data/Inputs_{YEAR}/.preprocessed",
+        done = "data/Inputs_{year}/.preprocessed",
     log:
-        f"logs/preprocess_inputs_{YEAR}.log",
+        "logs/preprocess_inputs_{year}.log",
+    wildcard_constraints:
+        year = r"\d{4}",
     script:
         "../scripts/snakemake_preprocess.py"
