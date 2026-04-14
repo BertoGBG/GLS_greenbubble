@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from scripts.config import En_price_year, year_EU, latitude, longitude
+from scripts.config import En_price_year, year_EU, latitude, longitude, DKK_Euro
 from scripts.helpers import build_snapshots, is_eu_or_us
 
 # --------------------------------------
@@ -40,9 +40,10 @@ ref_df = pd.DataFrame(index=hours_in_period, columns=[ref_col_name])
 ref_df[ref_col_name] = 0
 
 '''set area to DK1 (for data pre-processing, where applicable)'''
-#filter_area = r'filter={"PriceArea":"DK1"}' # for energidata
+filter_area = r'filter={"PriceArea":"DK1"}'  # for energidata
 price_area = 'DK1'
-bidding_zone = 'DK_1' # for entsoe
+bidding_zone = 'DK_1'  # for entsoe
+currency = 'EUR'        # currency for el spot price column (SpotPriceEUR)
 
 ''' District heating external demand '''
 # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
