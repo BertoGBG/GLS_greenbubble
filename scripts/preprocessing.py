@@ -830,12 +830,9 @@ def pre_processing_energy_data():
 
 # ---- Pre-processing for PyPSA network
 
-def prepare_all_inputs(targets_dict, CO2_cost, CO2_cost_ref_year, max_RE_to_grid, preprocess_flag):
+def prepare_all_inputs(targets_dict, CO2_cost, CO2_cost_ref_year, max_RE_to_grid):
     # functions calling all other functions and build inputs dictionary to the model
     # returns: inputs_dict which contains DataFrames with all inputs for the pypsa network
-
-    if preprocess_flag:
-        pre_processing_energy_data()  # download + preprocessing + save to CSV
 
     # load the inputs form CSV files
     GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, DH_external_demand = load_input_data()

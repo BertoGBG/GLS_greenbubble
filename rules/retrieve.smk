@@ -15,8 +15,7 @@ rule retrieve_tech_data:
 
 rule preprocess_inputs:
     """Download and preprocess energy-market input data for the run year.
-    When config preprocess_flag is False the rule still creates the marker
-    so downstream rules can proceed using existing CSVs in data/Inputs_{year}/.
+    Runs once; re-trigger manually with --forcerun preprocess_inputs if data needs refreshing.
     """
     output:
         done = f"data/Inputs_{YEAR}/.preprocessed",
