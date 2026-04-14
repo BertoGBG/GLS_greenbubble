@@ -1,0 +1,114 @@
+Assuming unrestricted shared filesystem usage.
+host: DTU-G7JF799XDG
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                   count
+------------------  -------
+preprocess_inputs         1
+retrieve_tech_data        1
+prepare_costs             1
+prepare_inputs            1
+build_network             1
+solve_network             1
+plot_results              1
+all                       1
+total                     8
+
+Select jobs to execute...
+Execute 2 jobs...
+[Tue Apr 14 17:41:48 2026]
+localrule retrieve_tech_data:
+    output: data/technology-data/outputs/costs_2030.csv
+    log: logs/retrieve_tech_data_2030.log
+    jobid: 5
+    reason: Code has changed since last execution
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 17:41:48 2026]
+localrule preprocess_inputs:
+    output: data/Inputs_2023/.preprocessed
+    log: logs/preprocess_inputs_2023.log
+    jobid: 7
+    reason: Missing output files: data/Inputs_2023/.preprocessed
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 17:41:53 2026]
+Finished jobid: 7 (Rule: preprocess_inputs)
+1 of 8 steps (12%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 17:41:53 2026]
+localrule prepare_inputs:
+    input: data/Inputs_2023/.preprocessed
+    output: resources/inputs_2023.pkl
+    log: logs/prepare_inputs_2023.log
+    jobid: 6
+    reason: Missing output files: resources/inputs_2023.pkl; Input files updated by another job: data/Inputs_2023/.preprocessed
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 17:42:01 2026]
+Finished jobid: 5 (Rule: retrieve_tech_data)
+2 of 8 steps (25%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 17:42:01 2026]
+localrule prepare_costs:
+    input: data/technology-data/outputs/costs_2030.csv
+    output: resources/tech_costs.pkl
+    log: logs/prepare_costs.log
+    jobid: 4
+    reason: Missing output files: resources/tech_costs.pkl; Input files updated by another job: data/technology-data/outputs/costs_2030.csv
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 17:42:03 2026]
+Finished jobid: 6 (Rule: prepare_inputs)
+3 of 8 steps (38%) done
+[Tue Apr 14 17:42:04 2026]
+Finished jobid: 4 (Rule: prepare_costs)
+4 of 8 steps (50%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 17:42:04 2026]
+localrule build_network:
+    input: resources/tech_costs.pkl, resources/inputs_2023.pkl
+    output: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl
+    log: logs/build_network_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log
+    jobid: 3
+    reason: Missing output files: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc; Input files updated by another job: resources/tech_costs.pkl, resources/inputs_2023.pkl
+    wildcards: network=B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 17:42:19 2026]
+Finished jobid: 3 (Rule: build_network)
+5 of 8 steps (62%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 17:42:20 2026]
+localrule solve_network:
+    input: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/tech_costs.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl
+    output: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    log: logs/solve_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log
+    jobid: 2
+    reason: Missing output files: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc; Input files updated by another job: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/tech_costs.pkl
+    wildcards: network=B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+RuleException:
+CalledProcessError in file "/Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/rules/solve.smk", line 19:
+Command 'set -euo pipefail;  /opt/anaconda3/envs/greenbubble-pypsa107/bin/python3.11 /Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/.snakemake/scripts/tmpblt_ga5y.snakemake_solve.py' returned non-zero exit status 1.
+[Tue Apr 14 17:43:04 2026]
+Error in rule solve_network:
+    message: None
+    jobid: 2
+    input: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/tech_costs.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl
+    output: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    log: logs/solve_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log (check log file(s) for error details)
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look below for error messages
+[Tue Apr 14 17:43:04 2026]
+Error in rule solve_network:
+    message: None
+    jobid: 2
+    input: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/tech_costs.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl
+    output: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    log: logs/solve_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log (check log file(s) for error details)
+Complete log(s): /Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/.snakemake/log/2026-04-14T174146.273282.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

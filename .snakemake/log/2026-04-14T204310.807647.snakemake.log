@@ -1,0 +1,46 @@
+Assuming unrestricted shared filesystem usage.
+host: DTU-G7JF799XDG
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count
+-----------------  -------
+preprocess_inputs        1
+prepare_inputs           1
+build_network            1
+solve_network            1
+plot_results             1
+all                      1
+total                    6
+
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 20:43:12 2026]
+localrule preprocess_inputs:
+    output: data/Inputs_2023/.preprocessed
+    log: logs/preprocess_inputs_2023.log
+    jobid: 7
+    reason: Forced execution
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+RuleException:
+CalledProcessError in file "/Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/rules/retrieve.smk", line 25:
+Command 'set -euo pipefail;  /opt/anaconda3/envs/greenbubble-pypsa107/bin/python3.11 /Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/.snakemake/scripts/tmpa29d_f66.snakemake_preprocess.py' returned non-zero exit status 1.
+[Tue Apr 14 20:43:30 2026]
+Error in rule preprocess_inputs:
+    message: None
+    jobid: 7
+    output: data/Inputs_2023/.preprocessed
+    log: logs/preprocess_inputs_2023.log (check log file(s) for error details)
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look below for error messages
+[Tue Apr 14 20:43:30 2026]
+Error in rule preprocess_inputs:
+    message: None
+    jobid: 7
+    output: data/Inputs_2023/.preprocessed
+    log: logs/preprocess_inputs_2023.log (check log file(s) for error details)
+Complete log(s): /Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/.snakemake/log/2026-04-14T204310.807647.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

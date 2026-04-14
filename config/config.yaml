@@ -41,7 +41,7 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: false
+  meoh: true
   methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
@@ -83,7 +83,7 @@ tariffs_dict:
 
 # Stochastic optimization
 stochastic:
-  stochastic: true # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
+  stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
   scenarios: {'2022': 0.05, # name of scenarios and their probabilities
               '2023': 0.25,
               '2024': 0.35,

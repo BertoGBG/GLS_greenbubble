@@ -1,0 +1,54 @@
+Assuming unrestricted shared filesystem usage.
+host: DTU-G7JF799XDG
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job              count
+-------------  -------
+solve_network        1
+plot_results         1
+all                  1
+total                3
+
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 19:32:26 2026]
+localrule solve_network:
+    input: resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_PRE.nc, resources/tech_costs.pkl, resources/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_comp_alloc.pkl
+    output: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    log: logs/solve_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log
+    jobid: 2
+    reason: Missing output files: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    wildcards: network=B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 19:39:58 2026]
+Finished jobid: 2 (Rule: solve_network)
+1 of 3 steps (33%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 19:39:59 2026]
+localrule plot_results:
+    input: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    output: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/plots/.done
+    log: logs/plot_B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch.log
+    jobid: 1
+    reason: Missing output files: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/plots/.done; Input files updated by another job: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch_OPT.nc
+    wildcards: network=B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 19:40:11 2026]
+Finished jobid: 1 (Rule: plot_results)
+2 of 3 steps (67%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Tue Apr 14 19:40:11 2026]
+localrule all:
+    input: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/plots/.done
+    jobid: 0
+    reason: Input files updated by another job: outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_50_MeOH_4_CH4_300_2023_El_0.1_STC_all_DK_dmd_stoch/plots/.done
+    resources: tmpdir=/var/folders/h1/7n48qbp150gc98q69g6l72vr0000gp/T
+[Tue Apr 14 19:40:11 2026]
+Finished jobid: 0 (Rule: all)
+3 of 3 steps (100%) done
+Complete log(s): /Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble/.snakemake/log/2026-04-14T193225.052500.snakemake.log
