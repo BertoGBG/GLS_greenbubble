@@ -9,6 +9,7 @@ from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 import pytz
 import hashlib
+import urllib.parse
 
 
 # ------ INPUTS PRE-PROCESSING ----
@@ -116,19 +117,31 @@ def remove_feb_29(df):
 
 def download_energidata(dataset_name, start_date, end_date, sort_val, filter_area):
     """ function that download energy data from energidataservice.dk and returns a dataframe"""
-    # start_date and end_data in the format '2019-01-01'
-    if filter_area != '':
-        URL = 'https://api.energidataservice.dk/dataset/%s?start=%s&end=%s&%s&%s' % (
-            dataset_name, start_date, end_date, sort_val, filter_area)
-    elif filter_area == '':
-        URL = 'https://api.energidataservice.dk/dataset/%s?start=%s&end=%s&%s' % (
-            dataset_name, start_date, end_date, sort_val)
+    url = f"https://api.energidataservice.dk/dataset/{dataset_name}"
+    # API expects T separator: "2023-01-01T00:00" not "2023-01-01 00:00"
+    params = {
+        "start": str(start_date).replace(" ", "T"),
+        "end": str(end_date).replace(" ", "T"),
+    }
 
-    response = requests.get(url=URL)
+    if sort_val:
+        # sort_val may already be %-encoded (e.g. "sort=HourDK%20asc") — decode first
+        # so requests doesn't double-encode it
+        params["sort"] = urllib.parse.unquote(sort_val.replace("sort=", "", 1))
+
+    if filter_area:
+        # filter_area is e.g. r'filter={"PriceArea":"DK1"}' — extract the JSON part
+        filter_json_str = filter_area.split("filter=", 1)[1]
+        filter_dict = json.loads(filter_json_str)
+        # API expects array values: {"PriceArea": ["DK1"]}
+        params["filter"] = json.dumps({k: [v] if isinstance(v, str) else v
+                                       for k, v in filter_dict.items()})
+
+    response = requests.get(url=url, params=params, headers={"Accept": "application/json"})
+    response.raise_for_status()
     result = response.json()
     records = result.get('records', [])
-    downloaded_df = pd.json_normalize(records)
-    return downloaded_df
+    return pd.json_normalize(records)
 
 
 def retrieve_renewable_capacity_factors(token, start_date, end_date, latitude, longitude):
@@ -217,19 +230,10 @@ def pre_processing_energy_data():
     Elspotprices.to_csv(p.El_price_input_file, sep=';')  # currency/MWh
 
     '''CO2 emission from El Grid DK1'''
-    sort_val = 'sort=HourDK%20asc'
-    # filter_area = r'filter={"PriceArea":"DK1"}'
-    if p.En_price_year <= 2022:
-        dataset_name = 'DeclarationEmissionHour'
-        CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
-                                           p.filter_area)  # g/kWh = kg/MWh
-        CO2_emiss_El = CO2emis_data[['HourDK', 'CO2PerkWh']].copy()
-
-    elif p.En_price_year > 2022:
-        dataset_name = 'DeclarationGridEmission'
-        CO2emis_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val,
-                                           p.filter_area)  # g/kWh = kg/MWh
-        CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
+    # DeclarationEmissionHour was removed from the API; DeclarationGridEmission covers all years
+    CO2emis_data = download_energidata('DeclarationGridEmission', p.start_date, p.end_date,
+                                       'sort=HourDK%20asc', p.filter_area)
+    CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
 
     CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
     CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
@@ -261,7 +265,7 @@ def pre_processing_energy_data():
         NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
         NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'])
-        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
         NG_price_year.set_index('HourDK', inplace=True)
         NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro  # coversion to €/MWh
         last_rows3 = pd.DataFrame(
@@ -281,7 +285,7 @@ def pre_processing_energy_data():
                                                       THE_daily_NG_prices['ExchangeRateEUR_DKK'] * 100
         THE_daily_NG_prices.rename(columns={'GasDay': 'HourDK'}, inplace=True)
         THE_daily_NG_prices['HourDK'] = pd.to_datetime(THE_daily_NG_prices['HourDK'])
-        THE_daily_NG_prices['HourDK'] = pd.to_datetime(THE_daily_NG_prices['HourDK'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+        THE_daily_NG_prices['HourDK'] = pd.to_datetime(THE_daily_NG_prices['HourDK']).dt.tz_localize(None)
         THE_daily_NG_prices.set_index('HourDK', inplace=True)
         last_rows3 = pd.DataFrame(
             {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], 'THE_NG_pricesEUR_MWh': THE_daily_NG_prices.iloc[-1, 0]})
@@ -306,7 +310,7 @@ def pre_processing_energy_data():
     NG_demand_DK['KWhToDenmark'] = NG_demand_DK['KWhToDenmark'] / -1000  # kWh-> MWh
     NG_demand_DK.rename(columns={'KWhToDenmark': 'NG Demand DK MWh'}, inplace=True)
     NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'])
-    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay']).dt.tz_localize(None)
     NG_demand_DK.set_index('GasDay', inplace=True)
     NG_demand_DK = remove_feb_29(NG_demand_DK)
     NG_demand_DK.to_csv(p.NG_demand_input_file, sep=';')  # €/MWh
