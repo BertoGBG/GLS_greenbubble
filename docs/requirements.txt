@@ -5,17 +5,10 @@
 setuptools
 sphinx
 sphinx_book_theme
-sphinx_rtd_theme
 sphinxcontrib-bibtex
-myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
+myst-parser
+sphinx-copybutton
 
 pypsa
-#atlite>=0.2.9
-matplotlib>3.5.1,<3.6
-
-# HTML map retrieval
-requests
-
-# cartopy
+matplotlib
 pyyaml
-seaborn
