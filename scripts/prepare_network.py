@@ -443,6 +443,8 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
     # heat_bus_list can be only ['Heat MT', 'Heat DH', 'Heat LT']
     # symbiosis_dir =  -1  the plant is receiving from the symbiosis network
     # symbiosis_dir =  1  the plant is supplying heat to the symbiosis network
+    # symbiosis_dir =  0  the plant can supplying and receive heat to the symbiosis network (bidirectional)
+
 
     """
 
