@@ -1,3 +1,23 @@
+# SPDX-License-Identifier: MIT
+"""PyPSA network construction for the GreenBubble industrial cluster.
+
+This module is the core network builder.  It contains:
+
+* :func:`network_dependencies` — resolves implicit technology flag
+  dependencies so that enabling one technology automatically enables its
+  prerequisites (e.g. enabling ``MEOH`` also enables ``H2``).
+* :func:`build_network` — constructs the full PyPSA network with all
+  active technologies (buses, carriers, generators, links, stores and loads),
+  controlled by the ``n_flags`` dict from ``config.yaml``.
+
+The network is built once per run and saved as a NetCDF file
+(``{network}_PRE.nc``) before the optimisation step.
+
+.. note::
+   In stochastic mode, :func:`scripts.create_stoch_scenarios.create_scenarios`
+   couples multiple annual networks into a single LP after this module runs.
+"""
+
 from sys import prefix
 
 import numpy as np
@@ -424,8 +444,6 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
     # symbiosis_dir =  -1  the plant is receiving from the symbiosis network
     # symbiosis_dir =  1  the plant is supplying heat to the symbiosis network
 
-    PyPSA 1.0 notes:
-      - Ensure carriers exist before adding buses.
     """
 
     # --- Ensure required carrier(s) exist ---
@@ -481,6 +499,24 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                         bus1=local_bus,         # plant-local side
                         efficiency=tech_costs.at["DH heat exchanger", "efficiency"],
                         p_min_pu=0,
+                        p_nom_extendable=True,
+                        marginal_cost=loop_tol,
+                        capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
+                                     * n_config.at["DH heat exchanger", "cost factor"],
+                    )
+
+            if int(symbiosis_dir=0):
+                # 2) Heat rejection to symbiosis net (on heat bus)
+                sym_link = f"{b}_{plant_name}_to_symb"
+                if sym_link not in n.links.index:
+                    n.add(
+                        "Link",
+                        sym_link,
+                        carrier = 'symbiosys net',
+                        bus0=local_bus,  # plant-local side
+                        bus1=b,  # symbiosis side
+                        efficiency=tech_costs.at["DH heat exchanger", "efficiency"],
+                        p_min_pu=-1,
                         p_nom_extendable=True,
                         marginal_cost=loop_tol,
                         capital_cost=tech_costs.at["DH heat exchanger", "fixed"]

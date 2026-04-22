@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: download technology-cost CSV (retrieve_technology_data)."""
 from pathlib import Path
 import sys

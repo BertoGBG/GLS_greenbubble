@@ -1,3 +1,19 @@
+# SPDX-License-Identifier: MIT
+"""Project-specific technology parameters not available in the technology-data catalogue.
+
+This module defines techno-economic and physical parameters for technologies
+that are specific to the GreenBubble / GreenLab Skive cluster.  Values are
+compiled into the ``tech_inputs`` dict, which is merged into the standard
+cost DataFrame by :func:`scripts.helpers.read_costs`.
+
+Physical property calculations (compressor work, isentropic efficiency, etc.)
+use `CoolProp <http://www.coolprop.org/>`_ for rigorous thermodynamic data.
+
+.. note::
+   Temperature and pressure levels for compressors are defined at the top of
+   this module and referenced throughout.
+"""
+
 import numpy as np
 import pandas as pd
 import CoolProp.CoolProp as CP

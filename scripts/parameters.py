@@ -1,3 +1,21 @@
+# SPDX-License-Identifier: MIT
+"""Global parameters and file-path constants for the GreenBubble model.
+
+This module centralises every scalar constant, API token, and input/output
+file path used across the pre-processing, network-building and optimisation
+scripts.  It is imported as ``p`` throughout the codebase::
+
+    from scripts import parameters as p
+    p.RN_token          # Renewables.ninja API token
+    p.El_price_input_file  # path to the electricity price CSV
+
+.. note::
+   File paths are derived from ``config.yaml`` (via :mod:`scripts.config`)
+   and the project location coordinates.  EU locations write to
+   ``data/Inputs_{year}/``; US/California locations write to
+   ``data/California/Inputs_{year}/``.
+"""
+
 import pandas as pd
 import os
 from scripts.config import En_price_year, year_EU, latitude, longitude, DKK_Euro

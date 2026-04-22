@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: build technology-cost DataFrame and save as pickle."""
 from pathlib import Path
 import sys

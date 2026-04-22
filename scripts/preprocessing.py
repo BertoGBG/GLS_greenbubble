@@ -1,3 +1,30 @@
+# SPDX-License-Identifier: MIT
+"""Energy-market data preprocessing and network input assembly.
+
+This module contains two groups of functions:
+
+**Data download and preprocessing** (called by :mod:`scripts.snakemake_preprocess`)
+
+* :func:`pre_processing_energy_data` — entry point that downloads and stores
+  all CSV inputs for a given energy-price year (electricity prices, CO₂
+  emission intensities, natural gas prices, district-heating demand, and
+  renewable capacity factors).
+
+**Network input assembly** (called by :mod:`scripts.snakemake_prepare_inputs`)
+
+* :func:`prepare_all_inputs` — loads the preprocessed CSVs for all scenario
+  years and assembles the ``inputs_dict`` consumed by
+  :func:`scripts.prepare_network.build_network`.
+
+All CSV outputs are written to ``data/Inputs_{year}/`` (EU locations) or
+``data/California/Inputs_{year}/`` (US locations), as determined by the
+project coordinates in ``config.yaml``.
+
+.. note::
+   Leap-year days (Feb 29) are dropped to keep all years on the same
+   8 760-hour snapshot index.
+"""
+
 import pandas as pd
 import numpy as np
 import requests
@@ -20,9 +47,29 @@ from scripts.config import (En_price_year,
 
 # ------ INPUTS PRE-PROCESSING ----
 
-def GL_inputs_to_eff(GL_inputs):
-    ''' function that reads csv file with GreenLab energy and material flows for each plant and calculates
-     efficiencies for multilinks in the network'''
+def GL_inputs_to_eff(GL_inputs: "pandas.DataFrame") -> "pandas.DataFrame":
+    """Convert GreenLab energy/material flow table to PyPSA MultiLink efficiencies.
+
+    Parameters
+    ----------
+    GL_inputs : pandas.DataFrame
+        Raw GreenLab flow table read from ``GreenLab_Input_file.xlsx``
+        (sheet ``"Overview_2"``).  Rows are bus names; columns are plant
+        names.  Row ``"bus0"`` indicates the reference bus for each plant.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Efficiency table with the same shape as *GL_inputs* (minus the
+        ``"bus0"`` row and ``"Bus Unit"`` column).  Each value is the
+        bus-to-bus efficiency relative to ``bus0``.  Zero entries are
+        replaced with ``NaN`` to signal unused ports to PyPSA.
+
+    Notes
+    -----
+    * ``(-)`` flow values are energy/material **consumed** by the plant.
+    * ``(+)`` flow values are energy/material **produced** by the plant.
+    """
 
     # NOTE: (-) refers to energy or material flow CONSUMED by the plant
     #      (+) refers to energy or material flow PRODUCED by the plant
@@ -40,7 +87,29 @@ def GL_inputs_to_eff(GL_inputs):
     return GL_eff
 
 
-def build_demands_TS(targets_dict, NG_demand_DK):
+def build_demands_TS(targets_dict: dict, NG_demand_DK: "pandas.DataFrame") -> dict:
+    """Build hourly demand time series for H₂, bioCH₄ and methanol.
+
+    Parameters
+    ----------
+    targets_dict : dict
+        Demand targets from ``config.yaml`` with keys ``"demand_H2"``,
+        ``"demand_CH4"``, ``"demand_meoh"`` (annual MWh) and
+        ``"driver"`` (demand profile mode).
+    NG_demand_DK : pandas.DataFrame
+        Danish natural gas demand used as proxy for the H₂ grid injection
+        profile when ``H2_profile_flag`` is enabled.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+
+        * ``"bioCH4"`` — bioCH₄ demand :class:`pandas.DataFrame`
+        * ``"H2"`` — H₂ demand :class:`pandas.DataFrame`
+        * ``"meoh"`` — methanol demand :class:`pandas.DataFrame`
+        * ``"NG_DK"`` — hourly NG demand proxy :class:`pandas.Series`
+    """
 
     '''Load GreenLab inputs'''
     demand_H2 = targets_dict['demand_H2']
@@ -623,10 +692,46 @@ def retrive_entsoe_el_demand(API_KEY, start_day, end_day, country_code):
     return ts
 
 
-def pre_processing_energy_data(year=None):
-    """ function that preprocess all the energy input data and saves in
-    NOTE:Some data are not always used depending on the network configuration
-    Prices from DK are downlaoded in DKK"""
+def pre_processing_energy_data(year: int = None) -> None:
+    """Download and preprocess all energy-market inputs for one price year.
+
+    Fetches data from the Energi Data Service API (electricity spot prices,
+    CO₂ emission intensities, natural gas prices, district-heating demand)
+    and from the Renewables.ninja API (wind and solar capacity factors), then
+    writes all results as semicolon-delimited CSV files to
+    ``data/Inputs_{year}/`` (EU) or ``data/California/Inputs_{year}/`` (US).
+
+    A ``"HourDK"`` sorted, leap-year-stripped hourly index is enforced on all
+    outputs so they align with the model snapshot index from
+    :func:`scripts.helpers.build_snapshots`.
+
+    Parameters
+    ----------
+    year : int, optional
+        Energy-price year to preprocess (e.g. ``2023``).  Defaults to
+        ``En_price_year`` from ``config.yaml`` when *None*.
+
+    Returns
+    -------
+    None
+        All outputs are written to CSV files; nothing is returned.
+
+    Raises
+    ------
+    requests.HTTPError
+        If an API request fails after retries.
+    RuntimeError
+        If the downloaded time series cannot be aligned to the expected
+        8 760-hour snapshot index.
+
+    Notes
+    -----
+    * DK electricity prices are downloaded in DKK and converted to EUR
+      using ``DKK_Euro`` from ``config.yaml``.
+    * Leap days (Feb 29) are dropped to maintain a uniform 8 760-hour year.
+    * Some CSV outputs are not used by every network configuration but are
+      always written to avoid downstream ``FileNotFoundError`` exceptions.
+    """
     # --- Year-specific setup (supports multi-year stochastic preprocessing) ---
     from scripts.helpers import build_snapshots, is_eu_or_us
     _year = int(year) if year is not None else En_price_year
@@ -841,9 +946,48 @@ def pre_processing_energy_data(year=None):
 
 # ---- Pre-processing for PyPSA network
 
-def prepare_all_inputs(targets_dict, CO2_cost, CO2_cost_ref_year, max_RE_to_grid):
-    # functions calling all other functions and build inputs dictionary to the model
-    # returns: inputs_dict which contains DataFrames with all inputs for the pypsa network
+def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
+                       CO2_cost_ref_year: float, max_RE_to_grid: float) -> dict:
+    """Load preprocessed CSVs and assemble the network input dictionary.
+
+    Calls all lower-level loaders and demand builders and packages their
+    outputs into the single ``inputs_dict`` consumed by
+    :func:`scripts.prepare_network.build_network`.
+
+    Parameters
+    ----------
+    targets_dict : dict
+        Demand targets keyed by carrier name (``"demand_H2"``,
+        ``"demand_CH4"``, ``"demand_meoh"``) and demand driver
+        (``"driver"``).  Corresponds to the ``targets`` block in
+        ``config.yaml``.
+    CO2_cost : float
+        CO₂ price in EUR/t used for the current optimisation scenario.
+    CO2_cost_ref_year : float
+        CO₂ price in the reference (historical) year, used to scale
+        time-series cost signals.
+    max_RE_to_grid : float
+        Maximum fraction of renewable electricity that may be exported to
+        the grid (0–1).
+
+    Returns
+    -------
+    dict
+        ``inputs_dict`` with the following keys (each value is a
+        :class:`pandas.DataFrame` or scalar):
+
+        * ``"GL_inputs"`` — GreenLab energy/material flow table
+        * ``"GL_eff"`` — bus-to-bus efficiency DataFrame
+        * ``"Elspotprices"`` — hourly electricity spot prices (EUR/MWh)
+        * ``"CO2_emiss_El"`` — hourly CO₂ emission intensity (kg/MWh)
+        * ``"CF_wind"`` — hourly wind capacity factors
+        * ``"CF_solar"`` — hourly solar capacity factors
+        * ``"NG_price_year"`` — hourly natural gas price (EUR/MWh)
+        * ``"DH_external_demand"`` — hourly district-heating demand (MWh)
+        * ``"demands"`` — sub-dict with H₂, bioCH₄ and MeOH demand series
+        * ``"CO2_cost"`` — CO₂ price scalar (EUR/t)
+        * ``"max_RE_to_grid"`` — grid export fraction scalar
+    """
 
     # load the inputs form CSV files
     GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, DH_external_demand = load_input_data()

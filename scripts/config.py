@@ -1,3 +1,21 @@
+# SPDX-License-Identifier: MIT
+"""Configuration loader: reads ``config.yaml`` and ``n_config.yaml`` at import time.
+
+All optimisation settings, technology flags, stochastic scenario definitions
+and demand targets are exposed as module-level variables so that any script
+can do::
+
+    from scripts import config as c
+    c.n_flags        # dict of active technology flags
+    c.stochastic     # stochastic scenario config block
+    c.optimization   # solver and profile settings
+
+.. note::
+   Modifying this module's variables at runtime (e.g., in Snakemake wrappers)
+   affects all subsequent imports within the same process, which is the
+   intended behaviour for EVPI wait-and-see runs.
+"""
+
 # LOGIC for results structure
 
 # results_folder = network(s) filename

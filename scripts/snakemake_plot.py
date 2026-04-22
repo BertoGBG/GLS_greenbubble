@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: generate analysis plots and CSV exports (run_plot_and_export).
 
 Touches output .done marker on successful completion.
