@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: assemble network input dictionary and save as pickle."""
 from pathlib import Path
 import sys

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: download and preprocess energy-market input data.
 
 Runs unconditionally when the marker file is absent; Snakemake's DAG

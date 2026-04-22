@@ -1,3 +1,23 @@
+# SPDX-License-Identifier: MIT
+"""Stochastic scenario coupling for the two-stage GreenBubble LP.
+
+This module reads the ``stochastic`` block from ``config.yaml`` and couples
+multiple single-year PyPSA networks into a single probability-weighted LP.
+Key exported symbols:
+
+* ``scenarios`` — dict mapping year strings to scenario probabilities.
+* ``CO2_cost_s`` — dict mapping year strings to CO₂ prices (EUR/t).
+* :func:`create_scenarios` — couples single-year networks into the
+  stochastic network in-place.
+* :func:`set_input_paths` — redirects :mod:`scripts.parameters` file
+  paths to a specific scenario year (used for EVPI wait-and-see solves).
+
+.. note::
+   The EVPI (Expected Value of Perfect Information) calculation requires
+   solving one additional deterministic network per scenario year.  This is
+   orchestrated by :mod:`scripts.snakemake_solve`.
+"""
+
 import scripts.config as c
 import scripts.parameters as p
 import pandas as pd

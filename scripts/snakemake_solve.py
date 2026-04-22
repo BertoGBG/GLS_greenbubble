@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: solve network (deterministic or stochastic).
 
 Handles:

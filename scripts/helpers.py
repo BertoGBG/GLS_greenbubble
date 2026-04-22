@@ -1,3 +1,28 @@
+# SPDX-License-Identifier: MIT
+"""General-purpose helper functions for the GreenBubble model.
+
+This module provides utilities used across the network-building, solving and
+post-processing stages:
+
+* **Snapshot utilities** — :func:`build_snapshots` constructs the UTC-naive
+  hourly index shared by all components.
+* **Techno-economic helpers** — :func:`annuity`, :func:`read_costs`,
+  :func:`prepare_costs` and related functions build the cost DataFrame
+  consumed by :func:`scripts.prepare_network.build_network`.
+* **Location helpers** — :func:`is_eu_or_us` resolves the project site to a
+  cost region (EU or US) via reverse geocoding.
+* **Network solve helpers** — :func:`build_model_solve_network`,
+  :func:`export_network` and related functions wrap the Linopy optimisation
+  call and handle solver profiles.
+* **Stochastic consistency checks** — :func:`assert_stochastic_schema_consistent`
+  validates multi-scenario network structure after scenario coupling.
+
+.. note::
+   This module intentionally imports ``scripts.config`` at the top level.
+   Any call that changes ``config`` variables before importing ``helpers``
+   (e.g. in Snakemake wrappers) will see the updated values.
+"""
+
 import pandas as pd
 import numpy as np
 import pypsatopo
@@ -20,7 +45,29 @@ import warnings
 import pypsa
 
 
-def assert_stochastic_schema_consistent(n, where=""):
+def assert_stochastic_schema_consistent(n: "pypsa.Network", where: str = "") -> None:
+    """Assert that stochastic network time-varying DataFrames have valid column keys.
+
+    For stochastic networks the time-series attributes (``buses_t``,
+    ``generators_t``, etc.) use a :class:`pandas.MultiIndex` with
+    ``(scenario, component_name)`` levels.  This function verifies that every
+    component name referenced in those DataFrames exists in the corresponding
+    static component table.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The (possibly stochastic) PyPSA network to validate.
+    where : str, optional
+        Descriptive label included in error messages to identify the call
+        site (e.g. ``"after create_scenarios"``).
+
+    Raises
+    ------
+    RuntimeError
+        If any time-series column references a component that is not present
+        in the corresponding static table index.
+    """
     # For stochastic networks, every *_t DataFrame with (scenario,name) columns
     # must reference entries that exist in the corresponding component table index.
     checks = [
@@ -56,7 +103,28 @@ def assert_stochastic_schema_consistent(n, where=""):
 
 
 # -------NETWORK ----
-def build_snapshots(year):
+def build_snapshots(year: int):
+    """Build the UTC-naive hourly snapshot index for a calendar year.
+
+    Leap days (Feb 29) are dropped so that all years share the same
+    8 760-hour structure and downstream array operations stay consistent.
+
+    Parameters
+    ----------
+    year : int
+        Calendar year (e.g. ``2023``).
+
+    Returns
+    -------
+    hours : pandas.DatetimeIndex
+        Hourly, tz-naive index from ``{year}-01-01 00:00`` to
+        ``{year}-12-31 23:00`` (inclusive), with Feb 29 removed for
+        leap years.
+    start : str
+        ISO start string ``"{year}-01-01 00:00"``.
+    end : str
+        ISO end string ``"{year+1}-01-01 00:00"`` (exclusive upper bound).
+    """
     start = f"{year}-01-01 00:00"
     end   = f"{year+1}-01-01 00:00"
 
@@ -116,9 +184,27 @@ def ensure_carrier(n, name):
     if name not in n.carriers.index:
         n.add("Carrier", name)
 # -------TECHNO-ECONOMIC DATA & ANNUITY
-def annuity(n, r):
-    """Calculate the annuity factor for an asset with lifetime n years and
-    discount rate of r, e.g. annuity(20,0.05)*20 = 1.6"""
+def annuity(n: float, r: float) -> float:
+    """Calculate the annuity factor for a capital investment.
+
+    Parameters
+    ----------
+    n : float
+        Asset lifetime in years.
+    r : float
+        Annual discount rate as a fraction (e.g. ``0.05`` for 5 %).
+
+    Returns
+    -------
+    float
+        Annuity factor.  Multiply by investment cost to get the annualised
+        capital cost, e.g. ``annuity(20, 0.05) * 1000`` → EUR/kW/year.
+
+    Examples
+    --------
+    >>> annuity(20, 0.05) * 20
+    1.5976...
+    """
 
     if r > 0:
         return r / (1. - 1. / (1. + r) ** n)
@@ -150,7 +236,26 @@ def dict_to_costs_df(tech_inputs: dict, target_columns=None) -> pd.DataFrame:
     return df_new
 
 
-def is_eu_or_us(lat, lon):
+def is_eu_or_us(lat: float, lon: float) -> str:
+    """Determine whether a geographic location is in the EU or the US.
+
+    Uses reverse geocoding to look up the ISO country code and classifies
+    it as ``"EU"``, ``"US"``, or ``"OTHER"``.  The EU set covers all 27
+    member states.
+
+    Parameters
+    ----------
+    lat : float
+        Latitude in decimal degrees.
+    lon : float
+        Longitude in decimal degrees.
+
+    Returns
+    -------
+    str
+        ``"EU"`` if the location is in an EU member state,
+        ``"US"`` if in the United States, or ``"OTHER"`` otherwise.
+    """
     # small function to merge EU and US costs based on cordinares:
     EU_COUNTRIES = {
         "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
@@ -208,13 +313,44 @@ def merge_into_costs(costs: pd.DataFrame, tech_inputs: dict, currency_year=None)
     return costs_out
 
 
-def read_costs(cost_path : str, tech_inputs: dict, USD_to_EUR: float , discount_rate : float, Nyears: int = 1, lifetime: int = 25):
-    """ This function uses, data retrived form the technology catalogue and other sources and compiles a DF used in the model
-    input:
-    - cost_file. as downloaded from technology-data repository
-    - tech_inputs. technical paramaters for various technolgies. usually stored in technology_inputs.py
+def read_costs(cost_path: str, tech_inputs: dict, USD_to_EUR: float,
+               discount_rate: float, Nyears: int = 1, lifetime: int = 25) -> "pandas.DataFrame":
+    """Read the technology-data cost CSV and build the model cost DataFrame.
 
-    output: costs # DF with all cost used in the model"""
+    Loads the CSV downloaded from the
+    `technology-data <https://github.com/BertoGBG/technology-data>`_
+    repository, merges any project-specific overrides from *tech_inputs*,
+    converts units to EUR/MW, annualises investment costs and returns a
+    wide-format DataFrame indexed by technology name.
+
+    Parameters
+    ----------
+    cost_path : str
+        Path to the cost CSV file (e.g. ``"data/technology-data/outputs/costs_2030.csv"``).
+    tech_inputs : dict
+        Project-specific technology parameters keyed as
+        ``("technology", "parameter")`` tuples.  These overwrite or extend
+        entries from *cost_path*.  Pass ``{}`` or ``None`` to use only the
+        technology-data values.
+    USD_to_EUR : float
+        Exchange rate applied to all rows with ``"USD"`` in the unit column.
+    discount_rate : float
+        Project discount rate as a fraction (e.g. ``0.05``).
+    Nyears : int, optional
+        Number of years per optimisation period for myopic planning.
+        Use ``1`` (default) for annual optimisation.
+    lifetime : int, optional
+        Default asset lifetime in years used when the cost CSV does not
+        specify one (default ``25``).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Wide-format cost table indexed by technology name with columns:
+        ``investment``, ``FOM``, ``VOM``, ``efficiency``, ``lifetime``,
+        ``discount rate``, ``CO2 intensity``, ``fuel``, ``fixed``
+        (annualised capital cost in EUR/MW/year).
+    """
 
     # Nyear = nyear in the interval for myoptic optimization--> set to 1 for annual optimization
 
@@ -251,7 +387,39 @@ def read_costs(cost_path : str, tech_inputs: dict, USD_to_EUR: float , discount_
 def prepare_costs(latitude: float, longitude: float, tech_inputs: dict,
                   USD_to_EUR: float, discount_rate: float,
                   cost_path_EU: str, cost_path_US: str = None,
-                  dict_tech_US_EU: dict = None):
+                  dict_tech_US_EU: dict = None) -> "pandas.DataFrame":
+    """Build the technology cost DataFrame for the project location.
+
+    Resolves the project site to EU or US using :func:`is_eu_or_us`.
+    For EU sites, loads only the EU cost CSV.  For US sites, loads both
+    EU and US CSVs and merges them using *dict_tech_US_EU* (US values
+    take precedence for technologies listed in that mapping).
+
+    Parameters
+    ----------
+    latitude : float
+        Site latitude in decimal degrees.
+    longitude : float
+        Site longitude in decimal degrees.
+    tech_inputs : dict
+        Project-specific technology parameters (see :func:`read_costs`).
+    USD_to_EUR : float
+        Exchange rate for USD-denominated cost entries.
+    discount_rate : float
+        Project discount rate as a fraction.
+    cost_path_EU : str
+        Path to the EU technology-data cost CSV.
+    cost_path_US : str, optional
+        Path to the US technology-data cost CSV.  Required for US sites.
+    dict_tech_US_EU : dict, optional
+        Mapping of technology names to their US equivalents.  Technologies
+        mapped to ``""`` retain their EU values.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Merged cost DataFrame (see :func:`read_costs` for column layout).
+    """
 
     if is_eu_or_us(latitude, longitude) == 'EU':
         tech_costs = read_costs(

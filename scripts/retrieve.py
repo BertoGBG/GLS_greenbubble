@@ -1,3 +1,27 @@
+# SPDX-License-Identifier: MIT
+"""Data retrieval utilities for external energy-market APIs.
+
+This module provides functions to download time-series data from three
+external sources used by the GreenBubble preprocessing pipeline:
+
+* **Energi Data Service** (``api.energidataservice.dk``) — Danish electricity
+  spot prices, CO₂ emission intensities and natural gas prices.
+* **Renewables.ninja** — hourly wind and solar capacity-factor profiles for
+  any geographic location (MERRA-2 reanalysis data).
+* **ENTSO-E Transparency Platform** — historical electricity demand for
+  European bidding zones.
+* **EIA / CAISO** — US-side electricity data (California runs).
+
+All functions return :class:`pandas.DataFrame` objects indexed on UTC-naive
+hourly timestamps matching the model snapshot index built by
+:func:`scripts.helpers.build_snapshots`.
+
+.. note::
+   API tokens for Renewables.ninja and ENTSO-E are stored in
+   :mod:`scripts.parameters`.  Obtain your own tokens before running the
+   pipeline on a new machine.
+"""
+
 import pandas as pd
 import numpy as np
 import requests
@@ -116,7 +140,38 @@ def remove_feb_29(df):
 
 
 def download_energidata(dataset_name, start_date, end_date, sort_val, filter_area):
-    """ function that download energy data from energidataservice.dk and returns a dataframe"""
+    """Download a dataset from the Energi Data Service REST API.
+
+    Parameters
+    ----------
+    dataset_name : str
+        Name of the dataset endpoint, e.g. ``"Elspotprices"`` or
+        ``"DeclarationGridEmission"``.
+    start_date : str
+        Start of the requested period in ``"YYYY-MM-DD HH:MM"`` format.
+        Spaces are replaced with ``T`` before sending the request.
+    end_date : str
+        End of the requested period, same format as *start_date*.
+    sort_val : str
+        Pre-encoded sort parameter string, e.g. ``"sort=HourDK%20asc"``.
+        The function URL-decodes this before passing it to *requests* to
+        avoid double-encoding.
+    filter_area : str
+        Filter expression string, e.g. ``r'filter={"PriceArea":"DK1"}'``.
+        String values are automatically wrapped in arrays as required by
+        the API (``{"PriceArea": ["DK1"]}``).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Flat DataFrame of all records returned by the API (``result["records"]``
+        normalised with :func:`pandas.json_normalize`).
+
+    Raises
+    ------
+    requests.HTTPError
+        If the API returns a non-2xx status code.
+    """
     url = f"https://api.energidataservice.dk/dataset/{dataset_name}"
     # API expects T separator: "2023-01-01T00:00" not "2023-01-01 00:00"
     params = {
@@ -145,8 +200,38 @@ def download_energidata(dataset_name, start_date, end_date, sort_val, filter_are
 
 
 def retrieve_renewable_capacity_factors(token, start_date, end_date, latitude, longitude):
-    """Retrieve capacity factors for wind and solar (fixed mount) from Renewable Ninjas based on latitude and longitude.
-    documentation: https://www.renewables.ninja/documentation/api"""
+    """Retrieve hourly wind and solar capacity factors from the Renewables.ninja API.
+
+    Uses MERRA-2 reanalysis data.  Solar tilt is estimated from latitude via
+    ``tilt = 0.87 * lat + 3.1``; wind is modelled as a Vestas V80 2000 kW
+    turbine at 100 m hub height.
+
+    Parameters
+    ----------
+    token : str
+        Personal API token for Renewables.ninja (see
+        ``https://www.renewables.ninja/documentation/api``).
+    start_date : str
+        First day of the period in ``"YYYY-MM-DD"`` format.
+    end_date : str
+        Last day of the period in ``"YYYY-MM-DD"`` format.
+    latitude : float
+        Site latitude in decimal degrees.
+    longitude : float
+        Site longitude in decimal degrees.
+
+    Returns
+    -------
+    CF_solar : pandas.DataFrame
+        Hourly solar capacity factors with column ``"CF solar"``.
+    CF_wind : pandas.DataFrame
+        Hourly wind capacity factors with column ``"CF wind"``.
+
+    Raises
+    ------
+    requests.HTTPError
+        If either API request fails (e.g. 429 rate-limit after retries).
+    """
     api_base = 'https://www.renewables.ninja/api/'
     s = requests.session()
     s.headers = {'Authorization': 'Token ' + token}
@@ -198,7 +283,28 @@ def retrieve_renewable_capacity_factors(token, start_date, end_date, latitude, l
 
 
 def retrive_entsoe_el_demand(API_KEY, start_day, end_day, country_code):
-    """function that retrives historical el demand with hourly resolution from a specific bidding zone"""
+    """Retrieve historical electricity demand from the ENTSO-E Transparency Platform.
+
+    .. note::
+       Country codes are listed at
+       ``https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py``.
+
+    Parameters
+    ----------
+    API_KEY : str
+        ENTSO-E API key (stored in :mod:`scripts.parameters` as ``entsoe_api``).
+    start_day : str
+        Start date in ``"YYYY-MM-DD"`` format.
+    end_day : str
+        End date in ``"YYYY-MM-DD"`` format.
+    country_code : str
+        ENTSO-E bidding-zone code, e.g. ``"DK_1"`` for Western Denmark.
+
+    Returns
+    -------
+    pandas.Series
+        Hourly electricity load in MW, UTC-localised index.
+    """
     # NOTE: list of country codes available here: https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py
 
     client = EntsoePandasClient(api_key= API_KEY)

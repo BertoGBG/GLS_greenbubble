@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Snakemake wrapper: build PyPSA network, add stochastic scenarios if configured.
 
 Outputs:

@@ -38,6 +38,12 @@ GreenBubble Documentation
 
 .. toctree::
    :maxdepth: 1
+   :caption: API Reference
+
+   api
+
+.. toctree::
+   :maxdepth: 1
    :caption: References
 
    references
