@@ -460,7 +460,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
         # direction of the heat flow with respect to the main plant
         symbiosis_dir = heat_bus_dict[b]
 
-        # ensure loca_bus
+        # ensure local_bus
         ensure_bus(n, local_bus, carrier="Heat", unit="MW")
         new_buses.append(local_bus)
 
@@ -2434,6 +2434,150 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
     return n, new_components
 
+def add_biogas_engine(n, n_flags, inputs_dict, tech_costs):
+    """Add engine to burn biogas and produce electricity and potentially heat"""
+
+    #check that biogenci co2 store exists and else create
+    #if district heating or symbioses true then allow heat output
+    #check that high temp heat bus exists and else create
+    #how to connect heating sales to district heating grid revenue
+
+    n0_dict = get_network_status(n)
+
+    if not n_flags.get("biogas_engine", False):
+        empty = {k: [] for k in ["links", "generators", "loads", "stores", "buses"]}
+        return n, empty
+
+    # ----- Shared setup -----
+    t = "biogas engine"
+    ensure_carrier(n, t)
+
+    # Local electricity bus for the engine (output only)
+    local_EL_bus = "El_biogas_engine"
+    ensure_carrier(n, "El")
+    ensure_bus(n, local_EL_bus, carrier="El", unit="MW")
+
+    # One-way link to internal symbiosis grid (El2) if it exists
+    if n_flags.get("symbiosis", False):
+        ensure_bus(n, "El2", carrier="El", unit="MW")
+        if "biogas_engine_to_El2" not in n.links.index:
+            n.add(
+                "Link",
+                "biogas_engine_to_El2",
+                carrier="biogas engine",
+                bus0=local_EL_bus,
+                bus1="El2",
+                efficiency=1.0,
+                p_nom_extendable=True,
+                p_min_pu=0.0,
+            )
+    
+    # One-way selling infrastructure (seperate from RE constraints)
+    en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
+    en_market_prices = {k: v.reindex(n.snapshots).ffill() for k, v in en_market_prices.items()}
+
+    sell_bus = "ElDK1 engine sell bus"
+    sell_store = "Grid engine sell"
+    sell_link = "biogas_engine_to_DK1"
+    # infinite store for sinking
+    if sell_store not in n.stores.index:
+        n.add("Store",
+            sell_store,
+            bus=sell_bus,
+            e_nom_extendable=True,
+            e_nom_max=float("inf"),
+            e_cyclic=False,
+            )
+    # one-way link for selling
+    if sell_link not in n.links.index:
+        n.add("Link",
+            sell_link,
+            carrier="biogas engine",
+            bus0=local_EL_bus,
+            bus1=sell_bus,
+            efficiency=1.0,
+            p_nom_extendable=True,
+            p_min_pu=0.0,
+            marginal_cost=en_market_prices["el_grid_sell_price"],
+            )
+        #n.links_t.marginal_cost[sell_link] = en_market_prices["el_grid_sell_price"]
+
+    # Local heat buses (produces DH or MT heat, receives nothing)
+    # but tech output by DEA only given in 50/100C
+    plant_name = "biogas_engine"
+    if n_flags.get("central_heat", False):
+        heat_bus_dict = {"Heat DH": 1}
+    else:
+        heat_bus_dict = {"Heat MT": 1}
+    n, new_heat_buses = add_local_heat_connections(
+        n, heat_bus_dict, plant_name=plant_name,
+        n_flags=n_flags, tech_costs=tech_costs, n_config=n_config,
+    )
+    local_heat_bus = new_heat_buses[0]
+
+    # Ensure biogenic CO2 store exists (reuse the one created by biogas upgrading
+    # if already present, otherwise create a minimal one here)
+    co2_store_bus = "CO2 pure atm"
+    co2_store = "CO2 biogenic out"
+    ensure_bus(n, co2_store_bus, carrier="CO2", unit="t/h")
+    if co2_store not in n.stores.index:
+        n.add(
+            "Store",
+            co2_store,
+            bus=co2_store_bus,
+            e_nom_extendable=True,
+            e_nom_max=float("inf"),
+            e_cyclic=False,
+        )
+
+    def add_biogas_engine_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
+        co2_emissions = 0.295  # tCO2/MWh, DEA standardfaktorer 2024
+        name = prefix + "biogas engine"
+        n.add(
+            "Link",
+            name,
+            carrier=carrier,
+            bus0="biogas",          # fuel input
+            bus1=new_heat_buses[0], # heat output
+            bus2=local_EL_bus,      # electricity output 
+            bus3=co2_store_bus,     # CO2 output
+            efficiency=tech_costs.at["biogas engine", "efficiency"] * tech_costs.at["biogas engine", "c_b"], 
+            efficiency2=tech_costs.at["biogas engine", "efficiency"], 
+            efficiency3=co2_emissions, # issues setting it in tech.costs csv
+            marginal_cost=tech_costs.at["biogas engine", "VOM"],
+            lifetime=tech_costs.at["biogas engine", "lifetime"],
+            p_min_pu0=n_config.at["biogas engine", "min load"], #min load forced at every hour or only non zero hours?
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            p_nom_max=n_config.at["biogas engine", "max capacity"],
+            capital_cost=capital_cost,
+        )
+        return n
+    
+    # ----- Decide what to add -----
+    techs = ["biogas engine"]
+    cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
+
+    if t in cap_to_add:
+        capacity = n_config.at[t, "initial capacity"]
+        n = add_biogas_engine_cap_exp(
+            n, prefix="EXI_", capital_cost=0,
+            capacity=capacity, expansion=False, carrier=t,
+        )
+
+    if t in exp_to_add:
+        capital_cost = (
+            tech_costs.at["biogas engine", "fixed"]
+            * n_config.at[t, "cost factor"]
+        )
+        n = add_biogas_engine_cap_exp(
+            n, prefix="", capital_cost=capital_cost,
+            capacity=0, expansion=True, carrier=t,
+        )
+
+    new_components = log_new_components(n, n0_dict)
+    return n, new_components
+
 def add_renewables(n, n_flags, inputs_dict, tech_costs):
     """Add renewable generation (wind and PV) and grid connection to the network."""
 
@@ -3838,6 +3982,7 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
     # 3. Add production plants and technologies
     # ---------------------------------------------------------
     network, comp_biogas = add_biogas(network, n_flags, inputs_dict, tech_costs)
+    network, comp_biogas_engine = add_biogas_engine(network, n_flags, inputs_dict, tech_costs)
     network, comp_renewables = add_renewables(network, n_flags, inputs_dict, tech_costs)
     network, comp_electrolysis = add_electrolysis(network, n_flags, inputs_dict, tech_costs)
     network, comp_meoh = add_meoh(network, n_flags, inputs_dict, tech_costs)
@@ -3858,6 +4003,7 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
         "external_grids": comp_external_grids,
         #"targets": comp_targets,
         "biogas": comp_biogas,
+        "biogas_engine": comp_biogas_engine,
         "renewables": comp_renewables,
         "electrolysis": comp_electrolysis,
         "meoh": comp_meoh,
