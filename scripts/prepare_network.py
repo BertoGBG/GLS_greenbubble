@@ -507,7 +507,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                                      * n_config.at["DH heat exchanger", "cost factor"],
                     )
 
-            if int(symbiosis_dir=0):
+            if int(symbiosis_dir==0):
                 # 2) Heat rejection to symbiosis net (on heat bus)
                 sym_link = f"{b}_{plant_name}_to_symb"
                 if sym_link not in n.links.index:
