@@ -554,7 +554,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                                      * n_config.at["DH heat exchanger", "cost factor"],
                     )
 
-            if int(symbiosis_dir=0):
+            if int(symbiosis_dir==0):
                 # 2) Heat rejection to symbiosis net (on heat bus)
                 sym_link = f"{b}_{plant_name}_to_symb"
                 if sym_link not in n.links.index:
@@ -631,7 +631,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
         n.links_t.marginal_cost[link_name1] = mc_series
 
     # --- Optional internal connection to symbiosis network ---
-    if n_flags['renewables'] and n_flags['symbiosis']:
+    if (n_flags.get('renewables', False) or n_flags.get('biogas_engine', False)) and n_flags.get('symbiosis', False):
         el_bus_symbiosis = "El3" #"El3 bus"
 
         if el_bus_symbiosis not in n.buses.index:
@@ -2437,7 +2437,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             }, symbiosis_n)
 
             # heatbus while bidirectionality is not working
-            n, local_heat_bus = add_local_heat_connections(
+            n, new_heat_buses_engine = add_local_heat_connections(
                 n, {"Heat MT": 1}, plant_name="biogas_engine",
                 n_flags=n_flags, tech_costs=tech_costs, n_config=n_config,
             )
@@ -2447,7 +2447,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 name,
                 carrier=carrier,
                 bus0="biogas",
-                bus1=local_heat_bus[0], # reused MT_biogas
+                bus1=new_heat_buses_engine[0], # reused MT_biogas
                 bus2="El3", # renewables electricity bus
                 bus3="CO2 pure atm",
                 efficiency=tech_costs.at["biogas engine", "efficiency"] * tech_costs.at["biogas engine", "c_b"],
@@ -2536,19 +2536,6 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             n = add_biogas_engine_cap_exp(n, prefix='', capital_cost=capital_cost, capacity=0, expansion=True, carrier=t)
         # add grid connections for both cases
         if t in cap_to_add + exp_to_add:
-            # add connection to symbioses net
-            if n_flags.get('symbiosis', False):
-                ensure_bus(n, 'El2', carrier='El', unit='MW')
-                ensure_carrier(n, 'symbiosys net')
-                el3_to_el2_kwargs = dict(
-                    carrier='symbiosys net',
-                    bus0='El3',
-                    bus1='El2',
-                    efficiency=1.0,
-                    p_nom_extendable=True,
-                    p_min_pu=0.0,
-                )
-                n, _, _ = add_link_if_new(n, 'El3_to_El2', el3_to_el2_kwargs)
             # add connection to the external grid (based on "add_local_el_connections")
             gc_init = n_config.at['grid connection', 'initial capacity']
             if gc_init > 0:
