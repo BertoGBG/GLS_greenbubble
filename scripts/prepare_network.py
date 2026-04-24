@@ -86,19 +86,6 @@ def network_dependencies(n_flags, ):
     else:
         n_flags_OK['central_heat'] = False
 
-    # Biogas engine dependencies
-    # needs biogas (fuel source)
-    # needs at least one electricity outlet: grid connection OR symbiosis
-    cond_fuel = n_flags_OK.get('biogas', False)
-    cond_outlet = (n_config.at['grid connection', 'expansion'] == True or
-                n_config.at['grid connection', 'initial capacity'] > 0 or
-                n_flags.get('symbiosis', False))
-
-    if n_flags.get('biogas_engine', False) and cond_fuel and cond_outlet:
-        n_flags_OK['biogas_engine'] = True
-    else:
-        n_flags_OK['biogas_engine'] = False
-
     print('n_flags_OK', n_flags_OK)
 
     return n_flags_OK
@@ -555,7 +542,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
                     )
 
             if int(symbiosis_dir==0):
-                # 2) Heat rejection to symbiosis net (on heat bus)
+                # 2) bidirectional heat link from/to symbiosis net (on heat bus)
                 sym_link = f"{b}_{plant_name}_to_symb"
                 if sym_link not in n.links.index:
                     n.add(
@@ -631,7 +618,11 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
         n.links_t.marginal_cost[link_name1] = mc_series
 
     # --- Optional internal connection to symbiosis network ---
-    if (n_flags.get('renewables', False) or n_flags.get('biogas_engine', False)) and n_flags.get('symbiosis', False):
+    biogas_engine_active = (
+        n_config.at['biogas engine', 'initial capacity'] > 0 or
+        n_config.at['biogas engine', 'expansion'] == True
+    )
+    if (n_flags.get('renewables', False) or biogas_engine_active) and n_flags.get('symbiosis', False):
         el_bus_symbiosis = "El3" #"El3 bus"
 
         if el_bus_symbiosis not in n.buses.index:
@@ -2220,7 +2211,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         # -----add local heat connections
         plant_name = 'biogas'
-        heat_bus_dict = {'Heat MT': -1, # testing bidirectionality with 0, gave infeasibility issues
+        heat_bus_dict = {'Heat MT': 0, # testing bidirectionality with 0, gave infeasibility issues
                          'Heat LT': 1}
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=plant_name, n_flags=n_flags,
                                                        tech_costs=tech_costs, n_config=n_config)
@@ -2420,39 +2411,22 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
             name = prefix + "biogas engine"
 
-            # ensure co2 sink exists
-            ensure_bus(n, "CO2 pure atm", carrier="CO2", unit="t/h")
-            if "CO2 biogenic out" not in n.stores.index:
-                n.add("Store", "CO2 biogenic out",
-                    bus="CO2 pure atm",
-                    e_nom_extendable=True,
-                    e_nom_max=float("inf"),
-                    e_cyclic=False)
-
             # ensure electricity bus exists
             n = add_requirements_buses(n, {
                 'bus_list': ['El3'],
                 'carrier_list': ['El'],
                 'unit_list': ['MW']
             }, symbiosis_n)
-
-            # heatbus while bidirectionality is not working
-            n, new_heat_buses_engine = add_local_heat_connections(
-                n, {"Heat MT": 1}, plant_name="biogas_engine",
-                n_flags=n_flags, tech_costs=tech_costs, n_config=n_config,
-            )
             
             # biogas engine as link
             n.add("Link",
                 name,
                 carrier=carrier,
                 bus0="biogas",
-                bus1=new_heat_buses_engine[0], # reused MT_biogas
+                bus1=new_heat_buses[0], # reused MT_biogas
                 bus2="El3", # renewables electricity bus
-                bus3="CO2 pure atm",
                 efficiency=tech_costs.at["biogas engine", "efficiency"] * tech_costs.at["biogas engine", "c_b"],
                 efficiency2=tech_costs.at["biogas engine", "efficiency"],
-                efficiency3=0.295, # hardcoed bc issues implementing into tech_costs
                 marginal_cost=tech_costs.at["biogas engine", "VOM"],
                 lifetime=tech_costs.at["biogas engine", "lifetime"],
                 p_min_pu=n_config.at["biogas engine", "min load"],
@@ -2551,7 +2525,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                     n, 'El3_to_DK1', cost, 0, True,
                     carrier='grid connection',
                     en_market_prices=en_market_prices,
-                )
+            )
         
         # log new components
         new_components = log_new_components(n, n0_dict)

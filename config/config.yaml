@@ -37,9 +37,8 @@ longitude: 9.033 # -120.10 # Cal Flats
 # Network configuration flags
 n_flags:
   biogas: true
-  biogas_engine: true # when true either gridconnection (with max_RE_to_grid>0) and/or symbioses should be true as well
   central_heat: false
-  renewables: false
+  renewables: true
   electrolysis: false
   meoh: false
   methanation: false
