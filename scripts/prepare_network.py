@@ -2211,7 +2211,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         # -----add local heat connections
         plant_name = 'biogas'
-        heat_bus_dict = {'Heat MT': 0, # testing bidirectionality with 0, gave infeasibility issues
+        heat_bus_dict = {'Heat MT': 0,
                          'Heat LT': 1}
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=plant_name, n_flags=n_flags,
                                                        tech_costs=tech_costs, n_config=n_config)

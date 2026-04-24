@@ -528,18 +528,18 @@ def retrieve_technology_data(local_file_path, base_url):
             print(f"{file_name} is already up-to-date. Skipping download.")
             return None  # File is unchanged, no need to download
 
-    # # Download the file
-    # try:
-    #     response = requests.get(file_url, stream=True)
-    #     response.raise_for_status()
+    # Download the file
+    try:
+        response = requests.get(file_url, stream=True)
+        response.raise_for_status()
 
-    #     with open(local_file_path, "wb") as file:
-    #         for chunk in response.iter_content(chunk_size=8192):
-    #             file.write(chunk)
+        with open(local_file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
 
-    #     print(f"Technology-data updated: {file_name}")
-    #     return local_file_path
+        print(f"Technology-data updated: {file_name}")
+        return local_file_path
 
-    # except requests.exceptions.RequestException as e:
-    #     print(f"Error downloading {file_name}: {e}")
-    #     return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading {file_name}: {e}")
+        return None
