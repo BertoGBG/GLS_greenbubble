@@ -38,7 +38,7 @@ longitude: 9.033 # -120.10 # Cal Flats
 n_flags:
   biogas: true
   central_heat: false
-  renewables: true
+  renewables: false
   electrolysis: false
   meoh: false
   methanation: false

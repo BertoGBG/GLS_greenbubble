@@ -49,10 +49,10 @@ biomass boiler:
 
 biogas engine:
   <<: *base
-  initial capacity: 30
+  initial capacity: 0
   cost factor: 1       # override
   min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
-  expansion : true
+  expansion : false
 
 biomethanation biogas: # (bus0 unit: MW H2)
   <<: *base
