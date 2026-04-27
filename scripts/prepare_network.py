@@ -431,6 +431,40 @@ def add_store_if_new(n, name_prefix: str, store_kwargs: dict, nd=10):
 # ------- BUILD PYPSA NETWORK AUXILIARY FUNCTIONS-------------
 
 #  -------COMMON FUNCTIONS -----------
+def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carrier, en_market_prices):
+    """Reusable grid selling connection from El3 to DK1. Uses add_link_if_new to avoid duplicates.
+    Moved out of add_renewables function to allow for biogas_engine electricity output.
+    """
+    ensure_carrier(n, carrier)
+    bus_dict = {'bus_list': ['El3', 'ElDK1 sell bus'],
+                'carrier_list': ['El', 'El'],
+                'unit_list': ['MW', 'MW']}
+    n = add_requirements_buses(n, bus_dict, symbiosis_n)  # module-level global
+
+    if 'Grid RE sell' not in n.stores.index:
+        n.add("Store",
+              'Grid RE sell',
+              bus='ElDK1 sell bus',
+              e_nom_extendable=True,
+              e_cyclic=False,
+              e_nom_max=float('inf'),
+              )
+
+    link_kwargs = dict(
+        carrier=carrier,
+        bus0="El3",
+        bus1='ElDK1 sell bus',
+        efficiency=1,
+        p_nom_extendable=expansion,
+        p_nom=capacity,
+        p_nom_max=n_config.at['grid connection', 'max capacity'],  # module-level global
+        capital_cost=capital_cost,
+        marginal_cost=en_market_prices["el_grid_sell_price"],
+    )
+
+    n, link_name, added = add_link_if_new(n, name, link_kwargs)
+    return n
+
 def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs, n_config=None):
     """
     Create plant-local heat buses, a rejection link to 'Heat amb',
@@ -460,7 +494,7 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
         # direction of the heat flow with respect to the main plant
         symbiosis_dir = heat_bus_dict[b]
 
-        # ensure loca_bus
+        # ensure local_bus
         ensure_bus(n, local_bus, carrier="Heat", unit="MW")
         new_buses.append(local_bus)
 
@@ -584,7 +618,11 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
         n.links_t.marginal_cost[link_name1] = mc_series
 
     # --- Optional internal connection to symbiosis network ---
-    if n_flags['renewables'] and n_flags['symbiosis']:
+    biogas_engine_active = (
+        n_config.at['biogas engine', 'initial capacity'] > 0 or
+        n_config.at['biogas engine', 'expansion'] == True
+    )
+    if (n_flags.get('renewables', False) or biogas_engine_active) and n_flags.get('symbiosis', False):
         el_bus_symbiosis = "El3" #"El3 bus"
 
         if el_bus_symbiosis not in n.buses.index:
@@ -2173,7 +2211,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         # -----add local heat connections
         plant_name = 'biogas'
-        heat_bus_dict = {'Heat MT': -1,
+        heat_bus_dict = {'Heat MT': 0,
                          'Heat LT': 1}
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=plant_name, n_flags=n_flags,
                                                        tech_costs=tech_costs, n_config=n_config)
@@ -2365,9 +2403,43 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   p_nom_max = n_config.at['dewatering', 'max capacity'],
                   capital_cost=capital_cost)
             return n
+        
+        def add_biogas_engine_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
+            """Add engine to burn biogas and produce electricity and heat.
+            Coupled directly to renewable output. CO2 into CO2 sink.
+            """
+
+            name = prefix + "biogas engine"
+
+            # ensure electricity bus exists
+            n = add_requirements_buses(n, {
+                'bus_list': ['El3'],
+                'carrier_list': ['El'],
+                'unit_list': ['MW']
+            }, symbiosis_n)
+            
+            # biogas engine as link
+            n.add("Link",
+                name,
+                carrier=carrier,
+                bus0="biogas",
+                bus1=new_heat_buses[0], # reused MT_biogas
+                bus2="El3", # renewables electricity bus
+                efficiency=tech_costs.at["biogas engine", "efficiency"] * tech_costs.at["biogas engine", "c_b"],
+                efficiency2=tech_costs.at["biogas engine", "efficiency"],
+                marginal_cost=tech_costs.at["biogas engine", "VOM"],
+                lifetime=tech_costs.at["biogas engine", "lifetime"],
+                p_min_pu=n_config.at["biogas engine", "min load"],
+                p_nom_extendable=expansion,
+                p_nom=capacity,
+                p_nom_max=n_config.at["biogas engine", "max capacity"],
+                capital_cost=capital_cost,
+            )
+
+            return n
 
         # ------- Check techs to add ------------
-        techs = ['biogas','biogas storage', 'biogas upgrading', 'dewatering']
+        techs = ['biogas','biogas storage', 'biogas upgrading', 'dewatering', 'biogas engine']
         cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
         # add biogas plant
@@ -2425,6 +2497,36 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             capital_cost = tech_costs.at['centrifugal dewatering', "fixed"] * n_config.at['dewatering', 'cost factor']
             n = add_dewatering_cap_exp(n=n, prefix='', capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
 
+        # biogas engine
+        t = 'biogas engine'
+        ensure_carrier(n, t)
+        # add exisitng capacity
+        if t in cap_to_add:
+            capacity = n_config.at[t, 'initial capacity']
+            n = add_biogas_engine_cap_exp(n, prefix='EXI_', capital_cost=0, capacity=capacity, expansion=False, carrier=t)
+        # add expandable engine
+        if t in exp_to_add:
+            capital_cost = tech_costs.at['biogas engine', 'fixed'] * n_config.at[t, 'cost factor']
+            n = add_biogas_engine_cap_exp(n, prefix='', capital_cost=capital_cost, capacity=0, expansion=True, carrier=t)
+        # add grid connections for both cases
+        if t in cap_to_add + exp_to_add:
+            # add connection to the external grid (based on "add_local_el_connections")
+            gc_init = n_config.at['grid connection', 'initial capacity']
+            if gc_init > 0:
+                n = add_grid_connection_cap_exp(
+                    n, 'EXI_El3_to_DK1', 0, gc_init, False,
+                    carrier='grid connection',
+                    en_market_prices=en_market_prices,
+                )
+            if n_config.at['grid connection', 'expansion']:
+                cost = (tech_costs.at['electricity grid connection', 'fixed']
+                        * n_config.at['grid connection', 'cost factor'])
+                n = add_grid_connection_cap_exp(
+                    n, 'El3_to_DK1', cost, 0, True,
+                    carrier='grid connection',
+                    en_market_prices=en_market_prices,
+            )
+        
         # log new components
         new_components = log_new_components(n, n0_dict)
 
@@ -2455,37 +2557,6 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # Helper functions
     # ----------------------------------------------------------------------
-
-    def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carrier):
-
-        bus_dict = {'bus_list': ['El3', 'ElDK1 sell bus'],
-                    'carrier_list': ['El', 'El'],
-                    'unit_list': ['MW', 'MW']}
-        n = add_requirements_buses(n, bus_dict, symbiosis_n)
-
-        if 'Grid RE sell' not in n.stores.index:
-            n.add("Store",
-                  'Grid RE sell',
-                  bus='ElDK1 sell bus',
-                  e_nom_extendable=True,
-                  e_cyclic=False,
-                  e_nom_max=float('inf'),  # 657000
-                  )
-
-        n.add("Link",
-              name=name,
-              carrier = carrier,
-              bus0="El3",
-              bus1='ElDK1 sell bus',
-              efficiency=1,
-              p_nom_extendable=expansion,
-              p_nom=capacity,
-              p_nom_max=n_config.at['grid connection', 'max capacity'],
-              capital_cost=capital_cost)
-        n.links_t.marginal_cost[name] = en_market_prices["el_grid_sell_price"]
-
-        return n
-
     def add_onwind_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
         n = add_requirements_buses(n, {
             'bus_list': ['El3'],
@@ -2567,10 +2638,10 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'grid connection' in cap_to_add:
         cap = n_config.at['grid connection', 'initial capacity']
-        n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', 0, cap, False, carrier = t)
+        n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', 0, cap, False, carrier = t, en_market_prices=en_market_prices)
     if 'grid connection' in exp_to_add:
         cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor']
-        n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t)
+        n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t, en_market_prices=en_market_prices)
 
     # ----------------------------------------------------------------------
     new_components = log_new_components(n, n0_dict)
