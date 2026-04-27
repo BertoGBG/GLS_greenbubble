@@ -7,6 +7,9 @@ __pycache__/
 
 # Outputs
 outputs/
-
+.snakemake/
+logs/
+memory/
+text_docs/
 # Resources
 resources/
