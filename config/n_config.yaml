@@ -47,6 +47,13 @@ biomass boiler:
   <<: *base
   expansion : true
 
+biogas engine:
+  <<: *base
+  initial capacity: 0
+  cost factor: 1       # override
+  min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
+  expansion : true
+
 biomethanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.7 # % of total power capacity per hour
@@ -145,6 +152,7 @@ H2 HP storage:
 
 heat pump:
   <<: *base
+  expansion : false
 
 methanolisation: # (bus0 unit: t/h CO2)
   <<: *base
@@ -154,6 +162,7 @@ methanolisation: # (bus0 unit: t/h CO2)
 
 NG boiler:
   <<: *base
+  expansion : false
 
 onwind:
   <<: *base
