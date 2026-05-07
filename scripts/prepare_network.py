@@ -1868,15 +1868,16 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 price_ts = p_meoh
 
         elif driver == "demand":
-            # ---- Import and align demand time series / max production limits ----
+            # Each tech gets its own intermediate bus, then a pass-through link to the shared demand bus.
+            # Mirrors price mode so product_bus is always bus_list[0] (per-tech intermediate).
             if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list = ["bioCH4"]
+                bus_list = [f"bioCH4 {plant}", "bioCH4"]
                 demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
             if any(k in plant.lower() for k in ["electrolysis"]):
-                bus_list = ["H2"]
+                bus_list = [f"H2 {plant}", "H2"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
             if any(k in plant.lower() for k in ["Methanol", "methanolisation", "meoh"]):
-                bus_list = ["Methanol"]
+                bus_list = [f"Methanol {plant}", "Methanol"]
                 demand_ts = clean_series(inputs_dict["Methanol_input_demand"], n)
 
         else:
@@ -1900,7 +1901,23 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
         n = add_requirements_buses(n, bus_dict, symbiosis_n)
 
         if driver == "demand":
-            # Load and store representing CH4 demand (
+            lk_name = f"{plant}_to_demand"
+            ensure_carrier(n, product)
+
+            # Pass-through link from per-tech intermediate bus to shared demand bus (no selling, zero cost).
+            if lk_name not in n.links.index:
+                n.add(
+                    "Link",
+                    lk_name,
+                    carrier=product,
+                    bus0=bus_list[0],
+                    bus1=bus_list[-1],
+                    efficiency=1.0,
+                    p_nom_extendable=True,
+                    marginal_cost=0.0,
+                )
+
+            # Load and Store on the shared demand bus — added only once across all techs.
             if product not in n.loads.index:
                 n.add("Load", product, bus=bus_list[-1], carrier=carrier)
                 n.loads_t.p_set[product] = demand_ts.reindex(n.snapshots)
@@ -2726,7 +2743,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
     for t in techs:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             ensure_carrier(n, t)
 
             # create connections for plant
@@ -2967,8 +2984,9 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_biomethanation_biogas_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here —
+        # add_targets() sets it correctly per-tech before this function runs (price mode needs the intermediate bus).
         methanation_buses.at['H2 in bus', 'biomethanation biogas'] = methanation_buses.at['H2 in bus', 'methanation']
-        methanation_buses.at['product bus', 'biomethanation biogas'] = methanation_buses.at['product bus', 'methanation']
         methanation_buses.at['biogas in bus', 'biomethanation biogas'] = methanation_buses.at['biogas in bus', 'methanation']
         methanation_buses.at['local EL bus', 'biomethanation biogas'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['H2 storage bus', 'biomethanation biogas'] = methanation_buses.at['H2 storage bus', 'methanation']
@@ -3037,8 +3055,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_biomethanation_CO2_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here — see add_biomethanation_biogas_cap_exp.
         methanation_buses.at['H2 in bus', 'biomethanation CO2'] = methanation_buses.at['H2 in bus', 'methanation']
-        methanation_buses.at['product bus', 'biomethanation CO2'] = methanation_buses.at['product bus', 'methanation']
         methanation_buses.at['CO2 in bus', 'biomethanation CO2'] = methanation_buses.at['CO2 in bus', 'methanation']
         methanation_buses.at['local EL bus', 'biomethanation CO2'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['CO2 storage bus', 'biomethanation CO2'] = methanation_buses.at[
@@ -3141,8 +3159,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_cat_methanation_biogas_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here — see add_biomethanation_biogas_cap_exp.
         methanation_buses.at['H2 in bus', 'methanation biogas'] = methanation_buses.at['H2 in bus', 'methanation']
-        methanation_buses.at['product bus', 'methanation biogas'] = methanation_buses.at['product bus', 'methanation']
         methanation_buses.at['biogas in bus', 'methanation biogas'] = 'biogas to methanation'
         methanation_buses.at['local EL bus', 'methanation biogas'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['H2 storage bus', 'methanation biogas'] = methanation_buses.at['H2 storage bus', 'methanation']
@@ -3229,8 +3247,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_cat_methanation_CO2_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here — see add_biomethanation_biogas_cap_exp.
         methanation_buses.at['H2 in bus', 'methanation CO2'] = methanation_buses.at['H2 in bus', 'methanation']
-        methanation_buses.at['product bus', 'methanation CO2'] = methanation_buses.at['product bus', 'methanation']
         methanation_buses.at['CO2 in bus', 'methanation CO2'] = 'CO2 to methanation'
         methanation_buses.at['local EL bus', 'methanation CO2'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['CO2 storage bus', 'methanation CO2'] = methanation_buses.at['CO2 storage bus', 'methanation']
@@ -3388,7 +3406,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         ("methanation biogas", add_cat_methanation_biogas_cap_exp),
         ("methanation CO2", add_cat_methanation_CO2_cap_exp),
     ]:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             n.add('Carrier', t)
             n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
                                          n_options=n_options, targets_dict=targets_dict)
@@ -3557,7 +3575,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
     for t in techs:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             n.add('Carrier', t)
             n = add_biochar_sequestration(n)
 
@@ -3597,7 +3615,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     techs = ["biomass boiler"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
     for t in techs:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             n.add('Carrier', t)
 
             if t in cap_to_add:
@@ -3633,7 +3651,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     techs = ["NG boiler"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
     for t in techs:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             n.add('Carrier', t)
 
             if t in cap_to_add:
@@ -3668,7 +3686,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
     techs = ["El boiler"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
     for t in techs:
-        if t in (cap_to_add or exp_to_add):
+        if t in cap_to_add or t in exp_to_add:
             n.add('Carrier', t)
 
             if t in cap_to_add:
