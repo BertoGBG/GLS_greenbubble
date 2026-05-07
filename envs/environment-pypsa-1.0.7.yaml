@@ -29,6 +29,7 @@ dependencies:
   # plotting
   - matplotlib>=3.10
   - seaborn>=0.13
+  - graphviz
 
   # workflow + notebooks
   - dask
