@@ -41,6 +41,7 @@ dependencies:
   - dask>=2025.10
   - matplotlib>=3.10
   - seaborn>=0.13
+  - graphviz
 
   # notebooks + utilities
   - ipython
