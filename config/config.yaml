@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: bg_eng_D # keep it short
+run_name: bg_eng_P # keep it short
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
@@ -12,7 +12,7 @@ CO2_cost_ref_year: 0
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
 
 targets:
-  driver: 'demand' # 'price' | 'demand'
+  driver: 'price' # 'price' | 'demand'
   demand_H2 :  0 # MWh_H2 /y  Demand OR max production
   demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 4000 # Mwh_meoh /y Demand OR max production
