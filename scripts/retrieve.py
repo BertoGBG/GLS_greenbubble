@@ -472,74 +472,78 @@ def pre_processing_energy_data():
 # ---- Technology data
 
 def retrieve_technology_data(local_file_path, base_url):
+    """Download a cost CSV from the pypsa-eur_AA branch of technology-data.
+
+    Uses the GitHub Contents API to fetch the git blob SHA for the remote file
+    with a single lightweight request, then compares it against a locally cached
+    SHA.  The file is only re-downloaded when the SHA differs, avoiding the
+    double-download of the previous hash-comparison approach.
+
+    The cached SHA is written to ``<local_file_path>.sha`` next to the CSV.
+
+    Parameters
+    ----------
+    local_file_path : str
+        Destination path for the downloaded CSV.
+    base_url : str
+        Raw GitHub URL prefix, e.g.
+        ``"https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/"``.
+
+    Returns
+    -------
+    str or None
+        Path to the (possibly freshly downloaded) file, or ``None`` if already
+        up-to-date.
     """
-    Downloads a specific .CSV cost file from the PyPSA technology-data GitHub repository
-    and saves it in a specified local folder. If the file already exists locally, it checks
-    if the remote file is different before downloading.
-
-    Parameters:
-    - file_name (str): The name of the CSV file to download (e.g., "costs.csv").
-    - local_folder (str): The local directory where the file will be saved.
-
-    Returns:
-    - str: Path to the downloaded file if successful, None if skipped.
-    """
-
-    # Extract folder
-    local_folder  = os.path.dirname(local_file_path)
-
-    # Extract file name
+    local_file_path = str(local_file_path)
+    local_folder = os.path.dirname(local_file_path)
     file_name = os.path.basename(local_file_path)
+    sha_cache_path = local_file_path + ".sha"
 
-    # GitHub raw file URL
-    # base_url = "https://raw.githubusercontent.com/PyPSA/technology-data/py-isa/outputs/"
-    file_url = base_url + file_name
-
-    # Create the local folder if it does not exist
     os.makedirs(local_folder, exist_ok=True)
 
-    # Function to compute file hash
-    def compute_file_hash(file_path):
-        hasher = hashlib.sha256()
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
+    # Derive GitHub Contents API URL from the raw URL.
+    # raw:  https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}
+    # api:  https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}
+    raw_prefix = "https://raw.githubusercontent.com/"
+    if base_url.startswith(raw_prefix):
+        parts = base_url[len(raw_prefix):].split("/", 3)  # owner, repo, branch, path_prefix
+        owner, repo, branch = parts[0], parts[1], parts[2]
+        path_prefix = parts[3] if len(parts) > 3 else ""
+        api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path_prefix}{file_name}?ref={branch}"
+    else:
+        api_url = None
 
-    # Function to get GitHub file hash
-    def get_github_file_hash(url):
+    remote_sha = None
+    if api_url:
         try:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            hasher = hashlib.sha256()
-            for chunk in response.iter_content(chunk_size=8192):
-                hasher.update(chunk)
-            return hasher.hexdigest()
+            resp = requests.get(api_url, headers={"Accept": "application/vnd.github+json"}, timeout=10)
+            resp.raise_for_status()
+            remote_sha = resp.json().get("sha")
         except requests.exceptions.RequestException as e:
-            print(f" Error checking GitHub file hash: {e}")
+            print(f"[retrieve_technology_data] Could not reach GitHub API: {e}. Falling back to download.")
+
+    # Compare cached SHA — skip download if unchanged.
+    if remote_sha and os.path.exists(local_file_path) and os.path.exists(sha_cache_path):
+        with open(sha_cache_path) as f:
+            cached_sha = f.read().strip()
+        if cached_sha == remote_sha:
+            print(f"{file_name} is already up-to-date (git blob SHA unchanged). Skipping download.")
             return None
 
-    # Check if file exists locally
-    if os.path.exists(local_file_path):
-        local_hash = compute_file_hash(local_file_path)
-        github_hash = get_github_file_hash(file_url)
-
-        if github_hash and local_hash == github_hash:
-            print(f"{file_name} is already up-to-date. Skipping download.")
-            return None  # File is unchanged, no need to download
-
-    # Download the file
+    # Download the file.
+    file_url = base_url + file_name
     try:
-        response = requests.get(file_url, stream=True)
+        response = requests.get(file_url, stream=True, timeout=30)
         response.raise_for_status()
-
-        with open(local_file_path, "wb") as file:
+        with open(local_file_path, "wb") as fh:
             for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
-
-        print(f"Technology-data updated: {file_name}")
+                fh.write(chunk)
+        if remote_sha:
+            with open(sha_cache_path, "w") as fh:
+                fh.write(remote_sha)
+        print(f"Technology-data updated: {file_name} (SHA: {remote_sha or 'unknown'})")
         return local_file_path
-
     except requests.exceptions.RequestException as e:
         print(f"Error downloading {file_name}: {e}")
         return None
