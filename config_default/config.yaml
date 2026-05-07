@@ -40,7 +40,7 @@ n_flags:
   renewables: true
   electrolysis: false
   meoh: false
-  methanation: false
+  methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: false     # activate every storage (from n_config)
   print: true       # saves svg of prenetwork before optimization
