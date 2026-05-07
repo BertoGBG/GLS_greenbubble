@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: H2_meth_dmd_DK # keep it short
+run_name: bg_eng_test # keep it short
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
@@ -40,7 +40,7 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: true
+  meoh: false
   methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
