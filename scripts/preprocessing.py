@@ -37,7 +37,7 @@ from timezonefinder import TimezoneFinder
 from entsoe import EntsoePandasClient
 from datetime import datetime, timedelta
 from scripts.config import (En_price_year,
-                            DKK_Euro,
+                            EUR_to_DKK,
                             latitude,
                             longitude,
                             H2_delivery_frequency,
@@ -727,7 +727,7 @@ def pre_processing_energy_data(year: int = None) -> None:
     Notes
     -----
     * DK electricity prices are downloaded in DKK and converted to EUR
-      using ``DKK_Euro`` from ``config.yaml``.
+      using ``EUR_to_DKK`` from ``config.yaml``.
     * Leap days (Feb 29) are dropped to maintain a uniform 8 760-hour year.
     * Some CSV outputs are not used by every network configuration but are
       always written to avoid downstream ``FileNotFoundError`` exceptions.
@@ -813,7 +813,7 @@ def pre_processing_energy_data(year: int = None) -> None:
         NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
         NG_price_year.set_index('HourDK', inplace=True)
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / DKK_Euro  # coversion to €/MWh
+        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / EUR_to_DKK  # coversion to €/MWh
         last_rows3 = pd.DataFrame(
             {'HourDK': hours_in_period[-1:len(hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)

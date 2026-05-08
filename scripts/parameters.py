@@ -18,7 +18,7 @@ scripts.  It is imported as ``p`` throughout the codebase::
 
 import pandas as pd
 import os
-from scripts.config import En_price_year, year_EU, latitude, longitude, DKK_Euro
+from scripts.config import En_price_year, year_EU, latitude, longitude, EUR_to_DKK
 from scripts.helpers import build_snapshots, is_eu_or_us
 
 # --------------------------------------

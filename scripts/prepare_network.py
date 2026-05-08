@@ -2072,7 +2072,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   e_cyclic=False)
             return n
 
-        def add_biogas_exp_cap(n, prefix, capital_cost, capacity, expansion, carrier):
+        def add_biogas_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
             bus_dict = {'bus_list': ['Dig biomass', 'Digestate', 'biogas'],
                         'carrier_list': ['Dig biomass', 'Digestate', 'gas'],
                         'unit_list': ['t/h', 't/h DM', 'MW'],
@@ -2101,7 +2101,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   capital_cost = capital_cost )
             return n
 
-        def add_biogas_storage_exp_cap(n, prefix, capital_cost, capacity, expansion, carrier):
+        def add_biogas_storage_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
             bus_dict = {'bus_list': ['biogas'],
                         'carrier_list': ['gas'],
                         'unit_list': ['MW'],
@@ -2147,7 +2147,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
             return n
 
-        def add_biogas_upgrading_exp_cap(n, product_bus, prefix, capital_cost, capacity, expansion, carrier):
+        def add_biogas_upgrading_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier):
             """ product_bus: str # is the bus for deliver of bioCH4, set by the add_targets function"""
 
             bus_dict = {'bus_list': ['NG', 'CO2 sep', 'biogas', 'bioCH4'],
@@ -2277,11 +2277,11 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity'] / GL_eff.loc["bioCH4", "SkiveBiogas"]
-            n = add_biogas_exp_cap(n= n, prefix = 'EXI_', capital_cost = 0, capacity = capacity, expansion= False, carrier = t)
+            n = add_biogas_cap_exp(n= n, prefix = 'EXI_', capital_cost = 0, capacity = capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
             capital_cost = tech_costs.at['biogas', 'fixed'] / GL_eff.loc["bioCH4", "SkiveBiogas"] * n_config.at[t,'cost factor']
-            n = add_biogas_exp_cap(n=n, prefix = '', capital_cost=capital_cost, capacity = 0, expansion=True, carrier = t)
+            n = add_biogas_cap_exp(n=n, prefix = '', capital_cost=capital_cost, capacity = 0, expansion=True, carrier = t)
 
         # Add biogas storage
         t = 'biogas storage'
@@ -2289,11 +2289,11 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity']
-            n = add_biogas_storage_exp_cap(n= n, prefix = 'EXI_', capital_cost = 0, capacity= capacity, expansion= False, carrier = t)
+            n = add_biogas_storage_cap_exp(n= n, prefix = 'EXI_', capital_cost = 0, capacity= capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
             capital_cost = tech_costs.at['biogas storage', 'fixed'] * n_config.at[t,'cost factor']
-            n = add_biogas_storage_exp_cap(n=n, prefix = '', capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
+            n = add_biogas_storage_cap_exp(n=n, prefix = '', capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
 
         # Biogas upgrading
         t = 'biogas upgrading'
@@ -2305,11 +2305,11 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t,'initial capacity']
-            n = add_biogas_upgrading_exp_cap(n= n, product_bus = product_bus, prefix = 'EXI_', capital_cost = 0, capacity= capacity, expansion= False, carrier = t)
+            n = add_biogas_upgrading_cap_exp(n= n, product_bus = product_bus, prefix = 'EXI_', capital_cost = 0, capacity= capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
             capital_cost = tech_costs.at['biogas upgrading', 'fixed'] * n_config.at[t,'cost factor']
-            n = add_biogas_upgrading_exp_cap(n=n, product_bus = product_bus, prefix = '', capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
+            n = add_biogas_upgrading_cap_exp(n=n, product_bus = product_bus, prefix = '', capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
 
         # dewatering of digestate fibers
         t = 'dewatering'
