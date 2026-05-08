@@ -1394,8 +1394,9 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
                      comp_dict['storage expansion'] * n_config.at[f"{fluid} HP storage", 'expansion']]
 
         # check if the components are already present in the network (sanity check)
-        cap_missing = ['EXI_' + t for t in techs if 'EXI_' + t not in {x for k in ('links', 'stores') for x in n0_dict.get(k, [])}]
-        exp_missing = [t for t in techs if t not in {x for k in ('links', 'stores') for x in n0_dict.get(k, [])}]
+        _existing = {x for k in ('links', 'stores') for x in n0_dict.get(k, [])}
+        cap_missing = ['EXI_' + t not in _existing for t in techs]
+        exp_missing = [t not in _existing for t in techs]
 
         # Add t if, it has a capacity to be installed from the plant call and if it is missing in the network
         cap_to_add = [t for t, b, m in zip(techs, capacity, cap_missing) if b and m] # Initial capacities to be added
