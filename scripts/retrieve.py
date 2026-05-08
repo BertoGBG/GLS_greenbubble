@@ -373,7 +373,7 @@ def pre_processing_energy_data():
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK'])
         NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
         NG_price_year.set_index('HourDK', inplace=True)
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.DKK_Euro  # coversion to €/MWh
+        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / p.EUR_to_DKK  # coversion to €/MWh
         last_rows3 = pd.DataFrame(
             {'HourDK': p.hours_in_period[-1:len(p.hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
         last_rows3.set_index('HourDK', inplace=True)
