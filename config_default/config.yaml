@@ -64,7 +64,7 @@ rfnbos_dict:
 # Economics
 year_EU: 2030
 USD_to_EUR: 1.0
-DKK_Euro: 7.46
+EUR_to_DKK: 7.46
 discount_rate: 0.07
 
 # Stochastic optimization

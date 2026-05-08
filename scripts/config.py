@@ -89,7 +89,7 @@ rfnbos_dict              = dict(_cfg["rfnbos_dict"])
 
 year_EU                  = _cfg["year_EU"]
 USD_to_EUR               = _cfg["USD_to_EUR"]
-DKK_Euro                 = _cfg["DKK_Euro"]
+EUR_to_DKK                 = _cfg["EUR_to_DKK"]
 discount_rate            = _cfg["discount_rate"]
 
 stochastic               = dict(_cfg["stochastic"])
