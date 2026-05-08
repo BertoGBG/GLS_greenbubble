@@ -186,14 +186,15 @@ def tech_to_add(techs, n0_dict):
     # techs : list  e.g.     tech = ['CO2 compressor', 'Biogas']
     # n0_dict = get_network_status(n)
 
+    # compute once for all uses
+    all_components = {x for k in ('links', 'generators', 'stores') for x in n0_dict.get(k, [])}
+
     cap = [n_config.at[t,'initial capacity'] for t in techs]  # existing initial capacity for each tech
     exp = [n_config.at[t, 'expansion'] for t in techs]   # capacity expansion for each tech
 
-    cap_missing = ['EXI_' + t for t in techs
-               if 'EXI_' + t not in {x for k in ('links', 'generators', 'stores') for x in n0_dict.get(k, [])}]
-
-    exp_missing = [t for t in techs
-               if t not in {x for k in ('links', 'generators', 'stores') for x in n0_dict.get(k, [])}]
+    # Bolean mask
+    cap_missing = ['EXI_' + t not in all_components for t in techs]
+    exp_missing = [t not in all_components for t in techs]
 
     cap_to_add = [t for t, c, m in zip(techs, cap, cap_missing) if m and (c is not None) and (c > 0)] # Initial capacities to be added
     exp_to_add = [t for t, c, m in zip(techs, exp, exp_missing) if m and (c is not None) and (c > 0)] # capacity expansion to be added
