@@ -69,3 +69,13 @@ discount_rate: 0.07
 
 # Stochastic optimization
 stochastic: false # true -> stochastic optimization across scenarios,  false -> deterministic optimization
+
+# Rolling horizon dispatch optimisation
+# Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
+# When enabled, `snakemake` targets the RH output and does NOT run solve_network.
+rolling_horizon:
+  enabled: false
+  horizon: 168        # window size in hours (e.g. 168 = 1 week)
+  overlap: 24         # overlap in hours between consecutive windows
+  network_path: null  # REQUIRED when enabled — path to a .nc network to load
+  rh_year: null       # optional: year for RH inputs/weather; defaults to En_price_year
