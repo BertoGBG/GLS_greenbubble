@@ -115,6 +115,82 @@ def create_inputs_per_scenario(n, s, tech_costs, CO2_cost_s, CO2_cost_ref_year_s
     return CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_bioCH4
 
 
+def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
+    """Replace all year-dependent time series on *n* with data from *inputs_dict*.
+
+    Sets ``n.snapshots`` to the new year's time index (derived from the
+    electricity price series) and overwrites:
+      - solar / wind capacity factors (``generators_t.p_max_pu``)
+      - electricity buy/sell prices, NG price, bioCH4 sale price
+        (``links_t.marginal_cost``)
+      - RFNBO hourly import constraint (``links_t.p_max_pu``)
+      - CO2 sequestration and biochar credits (``links_t.marginal_cost``)
+
+    Static component data (capacities, efficiencies, topology) is untouched.
+    Used by the cross-year rolling-horizon pipeline.
+    """
+    en_market_prices   = en_market_prices_w_CO2(inputs_dict, tech_costs, c.n_options)
+    p_max_pu_rfnbos    = add_el_grid_import_RFNBOs(inputs_dict, c.rfnbos_dict)
+
+    CF_wind            = inputs_dict["CF_wind"].astype(float).interpolate("linear").loc[:, "CF wind"]
+    CF_solar           = inputs_dict["CF_solar"].astype(float).interpolate("linear").loc[:, "CF solar"]
+    el_price           = en_market_prices["el_grid_price"].astype(float).interpolate("linear")
+    el_grid_sell_price = en_market_prices["el_grid_sell_price"].astype(float).interpolate("linear")
+    NG_price           = en_market_prices["NG_grid_price"].astype(float).interpolate("linear")
+    p_bioCH4           = en_market_prices["bioCH4_grid_sell_price"].astype(float).interpolate("linear")
+
+    # Update snapshots to the new year (reindexes all _t DataFrames to NaN first)
+    n.set_snapshots(el_price.index)
+
+    # Identify components by name pattern (same as create_scenarios)
+    solar_gens     = n.generators.index[n.generators.index.str.contains("solar", regex=True)]
+    wind_gens      = n.generators.index[n.generators.index.str.contains("wind", regex=True)]
+    dk1_buy_links  = n.links.index[n.links.index.str.contains(r"DK1_to_", regex=True)]
+    dk1_sell_links = n.links.index[n.links.index.str.contains(r"_to_DK1", regex=True)]
+    dk1_NG_links   = n.links.index[n.links.index.str.contains(r"NG boiler", regex=True)]
+    co2_liq_links  = n.links.index[n.links.index.str.contains(r"CO2 Liq seq", regex=True)]
+    biochar_links  = n.links.index[n.links.index.str.contains(r"biochar sequestration", regex=True)]
+    rfnbos_links   = list(n.links.index[n.links.carrier.eq("rfnbos_grid_import")])
+
+    sale_links_by_product = {}
+    if "is_product_sale" in n.links.columns:
+        mask = n.links["is_product_sale"].fillna(False).astype(bool)
+        sale = n.links.loc[mask].dropna(subset=["carrier"])
+        if not sale.empty:
+            sale_links_by_product = sale.groupby("carrier").apply(lambda df: list(df.index)).to_dict()
+
+    # Patch capacity factors
+    for g in solar_gens:
+        n.generators_t.p_max_pu[g] = CF_solar.reindex(n.snapshots)
+    for g in wind_gens:
+        n.generators_t.p_max_pu[g] = CF_wind.reindex(n.snapshots)
+
+    # Patch electricity / gas prices
+    for lk in dk1_buy_links:
+        n.links_t.marginal_cost[lk] = el_price.reindex(n.snapshots)
+    for lk in dk1_sell_links:
+        n.links_t.marginal_cost[lk] = el_grid_sell_price.reindex(n.snapshots)
+    for lk in dk1_NG_links:
+        n.links_t.marginal_cost[lk] = NG_price.reindex(n.snapshots)
+
+    # Patch product sale prices
+    for lk in sale_links_by_product.get("bioCH4", []):
+        n.links_t.marginal_cost[lk] = p_bioCH4.reindex(n.snapshots)
+
+    # Patch RFNBO constraint
+    for lk in rfnbos_links:
+        n.links_t.p_max_pu[lk] = p_max_pu_rfnbos.reindex(n.snapshots).astype(float)
+
+    # Patch credits (CO2-cost dependent, not year-dependent per se)
+    co2_credits = -1 * c.n_options.at["CO2 Liq credits", "enable"] * pd.Series(float(CO2_cost), index=n.snapshots)
+    for lk in co2_liq_links:
+        n.links_t.marginal_cost[lk] = co2_credits
+
+    biochar_credits = -1 * c.n_options.at["biochar credits", "enable"] * pd.Series(float(CO2_cost), index=n.snapshots)
+    for lk in biochar_links:
+        n.links_t.marginal_cost[lk] = biochar_credits
+
+
 def create_scenarios(n, scenarios, CO2_cost_s, CO2_cost_ref_year_s, n_flags_OK, tech_costs):
     # Guard: do not allow scenario expansion twice
     if isinstance(n.buses.index, pd.MultiIndex) and "scenario" in n.buses.index.names:

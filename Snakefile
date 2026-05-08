@@ -62,13 +62,26 @@ else:
     PREPROCESS_YEARS = [str(YEAR)]
 
 
+_rh_cfg    = config.get("rolling_horizon", {}) or {}
+RH_ENABLED = bool(_rh_cfg.get("enabled", False))
+_rh_year_raw = _rh_cfg.get("rh_year", None)
+RH_YEAR    = int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else YEAR
+
+if RH_ENABLED and RH_YEAR != YEAR:
+    PREPROCESS_YEARS = sorted(set(list(PREPROCESS_YEARS) + [str(RH_YEAR)]))
+
 include: "rules/retrieve.smk"
 include: "rules/build.smk"
 include: "rules/solve.smk"
 include: "rules/plot.smk"
+include: "rules/rolling_horizon.smk"
 
 
 rule all:
     input:
+        expand(
+            "{outdir}/{network}/networks/rolling_horizon/{network}_RH.nc",
+            outdir=OUTDIR, network=NETWORK,
+        ) if RH_ENABLED else
         expand("{outdir}/{network}/plots/.done", outdir=OUTDIR, network=NETWORK),
     default_target: True

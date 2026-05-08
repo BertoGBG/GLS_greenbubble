@@ -117,6 +117,21 @@ if isinstance(optimization["overrides"], str) and optimization["overrides"].lowe
 if isinstance(optimization["solver_profile"], str) and optimization["solver_profile"].strip() == "":
     optimization["solver_profile"] = None
 
+# ---------------- Rolling horizon config ----------------
+
+_rh = _cfg.get("rolling_horizon", {}) or {}
+_rh_year_raw = _rh.get("rh_year", None)
+rolling_horizon = {
+    "enabled":      bool(_rh.get("enabled", False)),
+    "horizon":      int(_rh.get("horizon", 168)),
+    "overlap":      int(_rh.get("overlap", 24)),
+    "network_path": _rh.get("network_path", None),
+    "rh_year":      int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else None,
+}
+
+if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:
+    raise ValueError("rolling_horizon.network_path must be set when rolling_horizon.enabled is true.")
+
 # ---------------- Plotting/Export config ----------------
 
 plot_cfg = plt_config["plotting"]
