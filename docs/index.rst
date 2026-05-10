@@ -42,6 +42,7 @@ GreenBubble Documentation
 
    workflow
    guide_new_technology
+   guide_rolling_horizon
 
 .. toctree::
    :maxdepth: 1
