@@ -2821,7 +2821,6 @@ def figure_heatmaps_compare_scenarios_actual(
     scenario_weight_col="weight",
     add_stochastic_column=True,
     stochastic_col_label="stochastic",
-    min_cap_threshold=1.0,           # MW/MWh — skip components below this capacity
 ):
     """
     Same scenario logic as figure_heatmaps_compare_scenarios, but:
@@ -2885,6 +2884,7 @@ def figure_heatmaps_compare_scenarios_actual(
             cand_union.update(_available_names_from_tcols(ts_df_default, scen))
         cand_union = sorted(cand_union)
 
+        th = it.get("th", 0)
         matches = _match_names(cand_union, selector)
         for name in matches:
             expanded.append({
@@ -2892,6 +2892,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 "kind": kind,
                 "field": field,
                 "name": name,
+                "th": th,
             })
 
     if not expanded:
@@ -2912,7 +2913,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.generators_t, field, None) if field else getattr(n.generators_t, "p", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or float(cap) < min_cap_threshold:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2922,7 +2923,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.links_t, field, None) if field else getattr(n.links_t, "p0", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or float(cap) < min_cap_threshold:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             s = pd.Series(s, copy=False)
             if abs_links:
@@ -2935,7 +2936,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.stores_t, field, None) if field else getattr(n.stores_t, "e", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["e_nom_opt", "e_nom"])
-            if s is None or cap is None or float(cap) < min_cap_threshold:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2949,7 +2950,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
                 mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
                 cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
-                if s is None or cap is None or float(cap) < min_cap_threshold:
+                if s is None or cap is None or float(cap) < row["th"]:
                     return NONE5
                 cap = float(cap)
                 norm = Normalize(vmin=0.0, vmax=cap)
@@ -2960,7 +2961,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 ts_df = getattr(n.storage_units_t, "p", None)
                 s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
                 cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-                if s is None or cap is None or float(cap) < min_cap_threshold:
+                if s is None or cap is None or float(cap) < row["th"]:
                     return NONE5
                 cap = float(cap)
                 norm = TwoSlopeNorm(vmin=-cap, vcenter=0.0, vmax=cap)
