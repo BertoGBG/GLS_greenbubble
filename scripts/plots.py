@@ -4290,3 +4290,146 @@ def run_plot_and_export(
         print("[plot/export] Finished successfully.")
 
     return failures
+
+
+def run_plot_operational(
+    *,
+    n,
+    c,
+    plot_folder: str | Path,
+    items: list[dict],
+    thresholds: dict,
+    bus_list_mp: list[str],
+) -> Dict[str, Exception]:
+    """Run only the operational (dispatch) plots.
+
+    Produces the same three operational figures as ``run_plot_and_export``
+    (utilisation LDCs, CF heatmaps, actual-value heatmaps) plus the input
+    LDC and shadow-price plots.  Capacity and cost steps are skipped because
+    they are not meaningful for a dispatch-only RH result.
+
+    Intended to be called from the rolling-horizon plotting script.
+    """
+    if not c.n_flags_opt.get("plot", False):
+        return {}
+
+    plot_folder = Path(plot_folder)
+    plot_folder.mkdir(parents=True, exist_ok=True)
+
+    failures: Dict[str, Exception] = {}
+
+    def _safe(name: str, fn: Callable[[], None]) -> None:
+        try:
+            fn()
+        except Exception as e:
+            failures[name] = e
+            warnings.warn(
+                f"[plot/rh] Step failed: {name}\n  {type(e).__name__}: {e}",
+                category=RuntimeWarning,
+                stacklevel=2,
+            )
+
+    items_f_holder: Dict[str, Any] = {}
+
+    def step_filter_items() -> None:
+        items_f_holder["items_f"] = filter_items_by_capacity_threshold(
+            n, items, default_th=0.0, include_exi=True, verbose=True,
+        )
+
+    def step_inputs_ldc() -> None:
+        plot_ldc_inputs_by_scenario(
+            n,
+            outpath=plot_folder / "inputs_LDC_by_scenario.png",
+            ncols=3,
+            price_links=[
+                {"label": "El purchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
+                {"label": "El selling price",  "name": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"},   "ls": "-", "lw": 1.8},
+                {"label": "NG selling price",  "name": "bioCH4_to_delivery",            "ls": "-", "lw": 1.8},
+                {"label": "DH selling price",  "name": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "name": "biochar sequestration",     "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
+            ],
+            price_gens=[
+                {"label": "Pellets price",  "selector": "pellets market",       "ls": "-.", "lw": 1.8},
+                {"label": "Biomass chips",  "selector": "moist biomass market", "ls": "-.", "lw": 1.8},
+            ],
+            cf_gens=[
+                {"label": "Wind CF",  "name": "onshorewind", "ls": "--", "lw": 1.8},
+                {"label": "Solar CF", "name": "solar",       "ls": "--", "lw": 1.8},
+            ],
+        )
+
+    def step_shadow_prices() -> None:
+        shadow_prices_violinplot_stoch(
+            n,
+            bus_list=bus_list_mp,
+            folder=str(plot_folder),
+            link_mc_items=[
+                {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"}},
+            ],
+            handle_spikes="clip",
+            quantile_hi=0.98,
+            n_draws=25000,
+        )
+        shadow_prices_ldc_stoch(
+            n,
+            bus_list=bus_list_mp,
+            folder=str(plot_folder),
+            link_mc_items=[
+                {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"}},
+            ],
+            handle_spikes="clip",
+            quantile_hi=0.98,
+            n_points=1001,
+            fname="shd_prices_ldc.png",
+        )
+
+    def step_operation_plots() -> None:
+        items_f = items_f_holder.get("items_f")
+        if items_f is None:
+            raise RuntimeError("items_f not available; filter_items step likely failed.")
+
+        plot_utilization_ldc_by_scenario(
+            n,
+            items=items_f,
+            outpath=plot_folder / "CF_operation_by_scenario.png",
+            title="Utilization LDCs (rolling horizon)",
+            ncols=3,
+        )
+
+        figure_heatmaps_compare_scenarios(
+            n,
+            items_f,
+            outpath=plot_folder / "CF_operation_heat_maps_by_scenario.png",
+            title="CF patterns — rolling horizon (normalized 0–1)",
+            cmap="viridis",
+            abs_links=True,
+        )
+
+        figure_heatmaps_compare_scenarios_actual(
+            n,
+            items,
+            outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
+            title="Operational heatmaps — rolling horizon (actual values)",
+            cmap_pos="viridis",
+            cmap_div="coolwarm",
+            abs_links=True,
+            snapshot_weight_col="objective",
+            scenario_weight_col="weight",
+            add_stochastic_column=False,
+        )
+
+    _safe("filter_items",       step_filter_items)
+    _safe("inputs_ldc",         step_inputs_ldc)
+    _safe("shadow_prices",      step_shadow_prices)
+    _safe("operation_plots",    step_operation_plots)
+
+    if failures:
+        print(f"[plot/rh] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
+    else:
+        print("[plot/rh] Finished successfully.")
+
+    return failures

@@ -1,7 +1,7 @@
 # rules/rolling_horizon.smk
 # Dispatch-only rolling horizon optimisation on a fixed-capacity network.
 # Only runs when rolling_horizon.enabled: true in config.yaml.
-# When active, rule all targets this output and solve_network is never triggered.
+# When active, rule all targets the RH plots .done and solve_network is never triggered.
 
 _rh = config.get("rolling_horizon", {}) or {}
 
@@ -19,7 +19,7 @@ if _rh.get("enabled", False):
     rule solve_rolling_horizon:
         """Dispatch-only rolling horizon solve on a provided fixed-capacity network.
 
-        When rh_year differs from En_price_year a fresh PRE network is built from
+        When rh_year differs from En_price_year a fresh network is built from
         year-2 inputs; capacities are then transferred from the OPT network before
         the rolling-horizon dispatch runs.
         """
@@ -35,3 +35,17 @@ if _rh.get("enabled", False):
             network = NETWORK_PATTERN,
         script:
             "../scripts/snakemake_rolling_horizon.py"
+
+
+    rule plot_rolling_horizon:
+        """Generate operational plots for a rolling horizon result."""
+        input:
+            network = f"{OUTDIR}/{{network}}/networks/rolling_horizon/{{network}}_RH.nc",
+        output:
+            done = f"{OUTDIR}/{{network}}/networks/rolling_horizon/plots_rh/.done",
+        log:
+            f"logs/plot_rolling_horizon_{{network}}.log",
+        wildcard_constraints:
+            network = NETWORK_PATTERN,
+        script:
+            "../scripts/snakemake_plot_rolling_horizon.py"
