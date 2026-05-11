@@ -118,7 +118,7 @@ solver      = c.optimization["solver"]
 solver_opts = {}
 if c.optimization["solver_profile"]:
     from scripts.solver_profiles import get_solver_options
-    solver_opts = get_solver_options(c.optimization["solver_profile"])
+    solver_opts = get_solver_options(solver, c.optimization["solver_profile"])
 
 print(f"[rolling_horizon] solving with {solver}, {len(n.snapshots)} snapshots ...")
 
