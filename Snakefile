@@ -67,6 +67,10 @@ RH_ENABLED = bool(_rh_cfg.get("enabled", False))
 _rh_year_raw = _rh_cfg.get("rh_year", None)
 RH_YEAR    = int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else YEAR
 
+if RH_ENABLED:
+    NETWORK         = NETWORK + "_RH"
+    NETWORK_PATTERN = re.escape(NETWORK)
+
 if RH_ENABLED and RH_YEAR != YEAR:
     PREPROCESS_YEARS = sorted(set(list(PREPROCESS_YEARS) + [str(RH_YEAR)]))
 
