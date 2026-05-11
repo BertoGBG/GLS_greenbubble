@@ -33,6 +33,27 @@ print(f"[rolling_horizon] horizon={horizon} h  overlap={overlap} h")
 print(f"[rolling_horizon] main year={main_year}  rh_year={rh_year or 'same'}")
 
 
+# ── Disable cyclic storage constraints ───────────────────────────────────────
+def disable_cyclic_constraints(n):
+    """Remove end-of-period = start-of-period constraints from all storage.
+
+    In a full-year perfect-foresight solve these constraints are meaningful.
+    In rolling horizon, PyPSA carries the end-of-window state forward as the
+    initial condition for the next window, so enforcing a cyclic constraint
+    within each window would incorrectly force every window to return to its
+    opening state of charge.
+    """
+    if not n.stores.empty and "e_cyclic" in n.stores.columns:
+        n_cyclic = n.stores["e_cyclic"].sum()
+        n.stores["e_cyclic"] = False
+        print(f"[rolling_horizon] disabled e_cyclic on {n_cyclic} stores")
+
+    if not n.storage_units.empty and "cyclic_state_of_charge" in n.storage_units.columns:
+        n_cyclic = n.storage_units["cyclic_state_of_charge"].sum()
+        n.storage_units["cyclic_state_of_charge"] = False
+        print(f"[rolling_horizon] disabled cyclic_state_of_charge on {n_cyclic} storage_units")
+
+
 # ── Fix all capacities (dispatch-only) ────────────────────────────────────────
 def fix_capacities(n):
     """Copy p_nom_opt → p_nom and disable expansion for all extendable components."""
@@ -68,6 +89,7 @@ def fix_capacities(n):
 n_opt = pypsa.Network(snakemake.input.network)
 n = n_opt.copy()
 fix_capacities(n)
+disable_cyclic_constraints(n)
 
 if rh_year and rh_year != main_year:
     print(f"[rolling_horizon] patching time series to rh_year={rh_year} ...")
