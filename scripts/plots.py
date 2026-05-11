@@ -2898,6 +2898,22 @@ def figure_heatmaps_compare_scenarios_actual(
     if not expanded:
         raise ValueError("No matching components found for the provided items/selectors.")
 
+    # ---- Pre-filter: drop rows whose capacity is below threshold in every scenario
+    # This prevents empty panels appearing in the figure for near-zero components.
+    def _cap_passes_threshold(row):
+        comp_df, _, cap_cols = kind_map[row["kind"]]
+        for scen in scenarios:
+            cap = _cap_from_component_table(comp_df, scen, row["name"], cap_cols)
+            if cap is not None and float(cap) >= row["th"]:
+                return True
+        return False
+
+    expanded = [row for row in expanded if _cap_passes_threshold(row)]
+
+    if not expanded:
+        print("Warning: all components filtered out by capacity threshold — nothing to plot.")
+        return
+
     # ---- Get actual series + capacity-based norm (per row)
     def _get_series_and_norm(scen, row):
 
