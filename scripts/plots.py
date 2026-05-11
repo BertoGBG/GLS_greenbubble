@@ -2821,6 +2821,7 @@ def figure_heatmaps_compare_scenarios_actual(
     scenario_weight_col="weight",
     add_stochastic_column=True,
     stochastic_col_label="stochastic",
+    min_cap_threshold=1.0,           # MW/MWh — skip components below this capacity
 ):
     """
     Same scenario logic as figure_heatmaps_compare_scenarios, but:
@@ -2911,7 +2912,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.generators_t, field, None) if field else getattr(n.generators_t, "p", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < min_cap_threshold:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2921,7 +2922,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.links_t, field, None) if field else getattr(n.links_t, "p0", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < min_cap_threshold:
                 return NONE5
             s = pd.Series(s, copy=False)
             if abs_links:
@@ -2934,7 +2935,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.stores_t, field, None) if field else getattr(n.stores_t, "e", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["e_nom_opt", "e_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < min_cap_threshold:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2948,7 +2949,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
                 mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
                 cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
-                if s is None or cap is None or cap <= 0:
+                if s is None or cap is None or float(cap) < min_cap_threshold:
                     return NONE5
                 cap = float(cap)
                 norm = Normalize(vmin=0.0, vmax=cap)
@@ -2959,7 +2960,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 ts_df = getattr(n.storage_units_t, "p", None)
                 s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
                 cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-                if s is None or cap is None or cap <= 0:
+                if s is None or cap is None or float(cap) < min_cap_threshold:
                     return NONE5
                 cap = float(cap)
                 norm = TwoSlopeNorm(vmin=-cap, vcenter=0.0, vmax=cap)
@@ -3161,7 +3162,7 @@ def figure_heatmaps_compare_scenarios_actual(
 
         for i, row in enumerate(expanded):
             ax = axes[i]
-            s, norm, cmap_use, _, _ = _get_series_and_norm(None, row)
+            s, norm, cmap_use, quantity, cap = _get_series_and_norm(None, row)
 
             im = heatmap_day_hour_actual(
                 s if s is not None else pd.Series(dtype=float),
@@ -3172,9 +3173,27 @@ def figure_heatmaps_compare_scenarios_actual(
                 show_months=(i // n_cols == n_rows - 1)
             )
 
+            if norm is not None and im is not None:
+                from matplotlib.cm import ScalarMappable
+                from matplotlib.colors import TwoSlopeNorm
+                sm = ScalarMappable(norm=norm, cmap=cmap_use or cmap_pos)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
+                comp_df, _, _ = kind_map[row["kind"]]
+                unit = _row_unit_from_bus(
+                    n=n, kind=row["kind"], comp_df=comp_df,
+                    scen=None, name=row["name"],
+                    quantity=quantity, field=row.get("field"),
+                ) or ""
+                if isinstance(norm, TwoSlopeNorm):
+                    lbl = f"{unit} (±{cap:g})" if unit else f"(±{cap:g})"
+                else:
+                    lbl = f"{unit} (0–{cap:g})" if unit else f"(0–{cap:g})"
+                cbar.set_label(lbl, fontsize=8)
+                cbar.ax.tick_params(labelsize=8)
+
         for j in range(n_plots, len(axes)):
             axes[j].set_visible(False)
-
 
         fig.suptitle(title, y=1.02)
         fig.subplots_adjust(bottom=0.12)
