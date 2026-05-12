@@ -33,25 +33,94 @@ print(f"[rolling_horizon] horizon={horizon} h  overlap={overlap} h")
 print(f"[rolling_horizon] main year={main_year}  rh_year={rh_year or 'same'}")
 
 
+# ── Identify demand-buffer buses ──────────────────────────────────────────────
+def find_demand_buffer_buses(n, concentration_threshold=0.95):
+    """Return buses that carry a concentrated annual demand load.
+
+    These buses have a virtual buffer store (e.g. 'bioCH4 delivery') that
+    accumulates flexible production and discharges it at a point-in-time demand
+    event.  Their e_cyclic constraint must be preserved in rolling horizon so
+    that each window is self-balancing (net production = net discharge = demand
+    per window) and the store does not accumulate across windows.
+    """
+    demand_buses = set()
+    for name in n.loads_t.p_set.columns:
+        ts = n.loads_t.p_set[name]
+        total = ts.sum()
+        if total <= 0:
+            continue
+        if ts.max() / total >= concentration_threshold:
+            demand_buses.add(n.loads.loc[name, "bus"])
+    return demand_buses
+
+
 # ── Disable cyclic storage constraints ───────────────────────────────────────
-def disable_cyclic_constraints(n):
-    """Remove end-of-period = start-of-period constraints from all storage.
+def disable_cyclic_constraints(n, preserve_buses=None):
+    """Remove end-of-period = start-of-period constraints from real storage.
 
     In a full-year perfect-foresight solve these constraints are meaningful.
     In rolling horizon, PyPSA carries the end-of-window state forward as the
     initial condition for the next window, so enforcing a cyclic constraint
     within each window would incorrectly force every window to return to its
     opening state of charge.
+
+    Exception — demand buffer stores (preserve_buses): their e_cyclic is kept
+    True so that each window is self-balancing.  Without it, the optimizer
+    over-fills the buffer when RE is cheap and the year-end SOC drifts far from
+    zero (seen as ~70 % over-production in practice).
     """
+    preserve_buses = preserve_buses or set()
+
     if not n.stores.empty and "e_cyclic" in n.stores.columns:
-        n_cyclic = n.stores["e_cyclic"].sum()
-        n.stores["e_cyclic"] = False
-        print(f"[rolling_horizon] disabled e_cyclic on {n_cyclic} stores")
+        preserve_mask = n.stores["bus"].isin(preserve_buses)
+        disable_mask  = n.stores["e_cyclic"] & ~preserve_mask
+        n.stores.loc[disable_mask, "e_cyclic"] = False
+        print(
+            f"[rolling_horizon] disabled e_cyclic on {disable_mask.sum()} stores, "
+            f"preserved on {preserve_mask.sum()} demand-buffer stores "
+            f"({list(n.stores.index[preserve_mask])})"
+        )
 
     if not n.storage_units.empty and "cyclic_state_of_charge" in n.storage_units.columns:
         n_cyclic = n.storage_units["cyclic_state_of_charge"].sum()
         n.storage_units["cyclic_state_of_charge"] = False
         print(f"[rolling_horizon] disabled cyclic_state_of_charge on {n_cyclic} storage_units")
+
+
+# ── Distribute point demands ──────────────────────────────────────────────────
+def distribute_point_demands(n, concentration_threshold=0.95):
+    """Redistribute annual demands that are concentrated in a single time step.
+
+    Annual demands are often modelled as a lump discharge at the last snapshot
+    (backed by a virtual store that accumulates flexible production).  In
+    rolling horizon every window except the last would see zero demand and
+    therefore have no incentive to produce, making the problem infeasible or
+    heavily sub-optimal.
+
+    This function detects such loads (>= concentration_threshold share of total
+    demand in a single timestep) and replaces them with a constant hourly
+    demand so every window has a proportional production incentive.  The total
+    annual demand is preserved exactly.
+    """
+    if n.loads_t.p_set.empty:
+        return
+
+    n_snapshots = len(n.snapshots)
+    modified = []
+    for name in n.loads_t.p_set.columns:
+        ts = n.loads_t.p_set[name]
+        total = ts.sum()
+        if total <= 0:
+            continue
+        max_share = ts.max() / total
+        if max_share >= concentration_threshold:
+            n.loads_t.p_set[name] = total / n_snapshots
+            modified.append(f"{name} ({total:.0f} MWh → {total/n_snapshots:.2f} MW constant)")
+
+    if modified:
+        print(f"[rolling_horizon] redistributed point demands to uniform rate:")
+        for m in modified:
+            print(f"  {m}")
 
 
 # ── Fix all capacities (dispatch-only) ────────────────────────────────────────
@@ -88,8 +157,10 @@ def fix_capacities(n):
 # ── Build dispatch network ────────────────────────────────────────────────────
 n_opt = pypsa.Network(snakemake.input.network)
 n = n_opt.copy()
+demand_buses = find_demand_buffer_buses(n)
 fix_capacities(n)
-disable_cyclic_constraints(n)
+disable_cyclic_constraints(n, preserve_buses=demand_buses)
+distribute_point_demands(n)
 
 if rh_year and rh_year != main_year:
     print(f"[rolling_horizon] patching time series to rh_year={rh_year} ...")
