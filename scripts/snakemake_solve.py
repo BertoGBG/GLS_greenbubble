@@ -21,9 +21,11 @@ from scripts.helpers import (
     save_network_comp_allocation,
     create_folder_if_not_exists,
     compare_objective,
+    prepare_costs,
 )
 from scripts.plots import print_network
 from scripts import config as c, parameters as p
+from scripts.technology_inputs import tech_inputs
 
 # ---- Folder layout derived from the declared output path
 networks_folder = str(Path(snakemake.output.network).parent)
@@ -37,10 +39,22 @@ network_name = snakemake.wildcards.network
 # ---- Load pre-built network and supporting data
 n = pypsa.Network(snakemake.input.network)
 
-with open(snakemake.input.tech_costs, "rb") as fh:
-    tech_costs = pickle.load(fh)
+tech_costs = prepare_costs(
+    latitude        = c.latitude,
+    longitude       = c.longitude,
+    tech_inputs     = tech_inputs,
+    USD_to_EUR      = c.USD_to_EUR,
+    discount_rate   = c.discount_rate,
+    cost_path_EU    = snakemake.input.costs_eu,
+    cost_path_US    = p.cost_path_US,
+    dict_tech_US_EU = p.dict_tech_US_EU,
+)
 with open(snakemake.input.comp_alloc, "rb") as fh:
-    network_comp_allocation = pickle.load(fh)
+    _alloc_payload = pickle.load(fh)
+if isinstance(_alloc_payload, dict) and "allocation" in _alloc_payload:
+    network_comp_allocation = _alloc_payload["allocation"]
+else:
+    network_comp_allocation = _alloc_payload  # backward compat
 
 # ---- Assemble networks dict (main + WS for EVPI)
 networks_dict = {}

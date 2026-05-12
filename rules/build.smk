@@ -1,19 +1,6 @@
 # rules/build.smk
-# Step 3 – build technology-cost DataFrame
-# Step 4 – assemble network input dictionary
-# Step 5 – build PyPSA network (+ stochastic scenarios)
-
-
-rule prepare_costs:
-    """Build tech_costs DataFrame from retrieved cost CSV (EU/US blend by location)."""
-    input:
-        costs_eu = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
-    output:
-        tech_costs = "resources/tech_costs.pkl",
-    log:
-        "logs/prepare_costs.log",
-    script:
-        "../scripts/snakemake_prepare_costs.py"
+# Step 3 – assemble network input dictionary
+# Step 4 – build PyPSA network (+ stochastic scenarios)
 
 
 rule prepare_inputs:
@@ -33,11 +20,13 @@ rule prepare_inputs:
 rule build_network:
     """Build PyPSA network; add stochastic scenarios if configured. Saves PRE network."""
     input:
-        tech_costs = "resources/tech_costs.pkl",
-        inputs     = f"resources/inputs_{YEAR}.pkl",
+        costs_eu = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
+        inputs   = f"resources/inputs_{YEAR}.pkl",
     output:
         network    = "resources/{network}_PRE.nc",
         comp_alloc = "resources/{network}_comp_alloc.pkl",
+    params:
+        plot_folder = f"{OUTDIR}/{{network}}/plots",
     log:
         "logs/build_network_{network}.log",
     wildcard_constraints:

@@ -5,7 +5,8 @@
 rule plot_results:
     """Run run_plot_and_export on the solved network; touch .done marker on completion."""
     input:
-        network = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
+        network    = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
+        comp_alloc = "resources/{network}_comp_alloc.pkl",
     output:
         done = f"{OUTDIR}/{{network}}/plots/.done",
     log:

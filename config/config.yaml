@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: bg_eng_P # keep it short
+run_name: bg_eng_D # keep it short
 
 # CO2 tax for fossil emissions and reward for negative emissions
 CO2_cost: 100 # €/t (CO2_cost)
@@ -12,12 +12,12 @@ CO2_cost_ref_year: 0
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
 
 targets:
-  driver: 'price' # 'price' | 'demand'
+  driver: 'demand' # 'price' | 'demand'
   demand_H2 :  0 # MWh_H2 /y  Demand OR max production
   demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 4000 # Mwh_meoh /y Demand OR max production
   price_H2 : 90 # €/MWh prices are required only for driver : 'price'
-  price_bioCH4 : 95 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
+  price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
   price_meoh : 110 # €/MWh prices are required only for driver : 'price'
 
 # Demand flexibility - H2 grid
@@ -28,7 +28,7 @@ H2_delivery_frequency: 1 # ==1: Single delivery at the end of the 'Year',   ==12
 max_RE_to_grid : 0.1 # # max share of RE (internal consumption + export) that can be sold to the grid
 
 # Energy & Weather year
-En_price_year: 2025
+En_price_year: 2024
 
 # Location (Skive)
 latitude: 56.566 # 35.50 # Cal Flats
@@ -66,7 +66,7 @@ rfnbos_dict:
 year_EU: 2030
 USD_to_EUR: 0.85
 EUR_to_DKK: 7.46
-discount_rate: 0.2
+discount_rate: 0.07
 
 # tariffs
 tariffs_dict:
@@ -80,7 +80,7 @@ tariffs_dict:
   NG_dso_tariff : 1.8  #  Eur/MWh - NG grid tariffs DSO : https://evida.dk/tarifblad010125/
   NG_tso_tariff :  0.01 #  Eur/MWh - NG grid tariff TSO : https://en.energinet.dk/media/fhslybmk/transmission-tariffs-effective-as-of-1st-january-2025-updated-1st-june-2024.pdf
 
-# Stochastic optimization
+# Stochastic capacity and dispatch optimization
 stochastic:
   stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
   scenarios: {'2022': 0.05, # name of scenarios and their probabilities
@@ -112,8 +112,8 @@ optimization:
 # Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
 # When enabled, `snakemake` targets the RH output and does NOT run solve_network.
 rolling_horizon:
-  enabled: false
+  enabled: true
   horizon: 168        # window size in hours (e.g. 168 = 1 week)
-  overlap: 24         # overlap in hours between consecutive windows
-  network_path: null  # REQUIRED when enabled — path to a .nc network to load
+  overlap: 48         # overlap in hours between consecutive windows
+  network_path: 'outputs/single_analysis/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D/networks/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D_OPT.nc'  # REQUIRED when enabled — path to a .nc network to load
   rh_year: null       # optional: year for RH inputs/weather; defaults to En_price_year

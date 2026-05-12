@@ -71,7 +71,7 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 # --------------------------------------
 '''Location of CSV files as input to the model'''
-# retrieve data from to these folder and files AND loads these csv files in the preprocessign for the network
+# retrieve data from to these folder and files AND loads these csv files in the preprocessing for the network
 
 folder_model_inputs='data' # folder where csv files for model input are saved after the pre-processing
 if is_eu_or_us(latitude,longitude)  == 'EU':
