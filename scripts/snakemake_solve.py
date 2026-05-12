@@ -56,6 +56,17 @@ if isinstance(_alloc_payload, dict) and "allocation" in _alloc_payload:
 else:
     network_comp_allocation = _alloc_payload  # backward compat
 
+# ---- Print PRE network topology (before solving mutates n)
+print_network(
+    n             = n,
+    n_flags       = c.n_flags,
+    nc_path       = snakemake.input.network,
+    network_name  = network_name,
+    suffix        = "_PRE",
+    plot_folder   = plot_folder,
+    is_stochastic = c.stochastic["stochastic"],
+)
+
 # ---- Assemble networks dict (main + WS for EVPI)
 networks_dict = {}
 n_names_dict  = {}
