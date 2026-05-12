@@ -477,18 +477,18 @@ def print_network(n, n_flags, nc_path, network_name, suffix, plot_folder, is_sto
     if not n_flags.get("print", False):
         return None
 
+    if nc_path is None:
+        print("[WARN] No nc_path provided; skipping network plot.")
+        return None
+
     if is_stochastic:
-        # Reload ONLY to safely collapse scenarios for plotting
-        if nc_path is None:
-            print("[WARN] No nc_path provided; skipping network plot.")
-            return None
         n_plot = pypsa.Network(nc_path)
         n_plot = extract_deterministic_from_stochastic(
             n_plot, scenario=None, slice_timeseries=False
         )
     else:
-        # Deterministic network can be plotted directly (no scenario slicing needed)
-        n_plot = n
+        # Always reload from saved NC to avoid any in-memory state issues with pypsatopo
+        n_plot = pypsa.Network(nc_path)
 
     filename = f"{network_name}{suffix}.svg"
     svg_path = os.path.join(plot_folder, filename)
