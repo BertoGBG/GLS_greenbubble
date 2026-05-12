@@ -471,15 +471,67 @@ def pre_processing_energy_data():
 
 # ---- Technology data
 
-def retrieve_technology_data(local_file_path, base_url):
-    """Download a cost CSV from the pypsa-eur_AA branch of technology-data.
+def _raw_url_to_api_url(base_url, file_name):
+    """Convert a raw.githubusercontent.com URL to a GitHub Contents API URL."""
+    raw_prefix = "https://raw.githubusercontent.com/"
+    if not base_url.startswith(raw_prefix):
+        return None
+    parts = base_url[len(raw_prefix):].split("/", 3)  # owner, repo, branch, path_prefix
+    owner, repo, branch = parts[0], parts[1], parts[2]
+    path_prefix = parts[3] if len(parts) > 3 else ""
+    return f"https://api.github.com/repos/{owner}/{repo}/contents/{path_prefix}{file_name}?ref={branch}"
 
-    Uses the GitHub Contents API to fetch the git blob SHA for the remote file
-    with a single lightweight request, then compares it against a locally cached
-    SHA.  The file is only re-downloaded when the SHA differs, avoiding the
-    double-download of the previous hash-comparison approach.
 
-    The cached SHA is written to ``<local_file_path>.sha`` next to the CSV.
+def fetch_remote_sha(base_url, file_name):
+    """Return the git blob SHA for *file_name* in the remote GitHub repo.
+
+    Parameters
+    ----------
+    base_url : str
+        Raw GitHub URL prefix (``https://raw.githubusercontent.com/...``).
+    file_name : str
+        Bare file name, e.g. ``"costs_2030.csv"``.
+
+    Returns
+    -------
+    str or None
+        The blob SHA string, or ``None`` if the API is unreachable.
+    """
+    api_url = _raw_url_to_api_url(base_url, file_name)
+    if api_url is None:
+        return None
+    try:
+        resp = requests.get(api_url, headers={"Accept": "application/vnd.github+json"}, timeout=10)
+        resp.raise_for_status()
+        return resp.json().get("sha")
+    except requests.exceptions.RequestException as e:
+        print(f"[fetch_remote_sha] Could not reach GitHub API: {e}")
+        return None
+
+
+def get_cached_sha(local_file_path):
+    """Return the SHA stored in ``<local_file_path>.sha``, or ``None``."""
+    sha_path = str(local_file_path) + ".sha"
+    if os.path.exists(sha_path):
+        with open(sha_path) as f:
+            return f.read().strip()
+    return None
+
+
+def _git_blob_sha(content: bytes) -> str:
+    """Compute the git blob SHA1 for raw file bytes (matches GitHub's blob SHA)."""
+    header = f"blob {len(content)}\0".encode()
+    return hashlib.sha1(header + content).hexdigest()
+
+
+def retrieve_technology_data(local_file_path, base_url, max_retries: int = 3):
+    """Download a cost CSV from the remote technology-data repo.
+
+    Downloads and verifies the git blob SHA of the content against the GitHub
+    Contents API.  Retries up to *max_retries* times if the CDN serves stale
+    content (blob SHA mismatch).  Writes the verified SHA to
+    ``<local_file_path>.sha`` so the Snakefile ``onstart`` block can detect
+    future changes without downloading.
 
     Parameters
     ----------
@@ -488,12 +540,13 @@ def retrieve_technology_data(local_file_path, base_url):
     base_url : str
         Raw GitHub URL prefix, e.g.
         ``"https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/"``.
+    max_retries : int
+        Number of download attempts before giving up on SHA verification.
 
     Returns
     -------
     str or None
-        Path to the (possibly freshly downloaded) file, or ``None`` if already
-        up-to-date.
+        Path to the downloaded file, or ``None`` on network error.
     """
     local_file_path = str(local_file_path)
     local_folder = os.path.dirname(local_file_path)
@@ -502,48 +555,45 @@ def retrieve_technology_data(local_file_path, base_url):
 
     os.makedirs(local_folder, exist_ok=True)
 
-    # Derive GitHub Contents API URL from the raw URL.
-    # raw:  https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}
-    # api:  https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}
-    raw_prefix = "https://raw.githubusercontent.com/"
-    if base_url.startswith(raw_prefix):
-        parts = base_url[len(raw_prefix):].split("/", 3)  # owner, repo, branch, path_prefix
-        owner, repo, branch = parts[0], parts[1], parts[2]
-        path_prefix = parts[3] if len(parts) > 3 else ""
-        api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path_prefix}{file_name}?ref={branch}"
-    else:
-        api_url = None
-
-    remote_sha = None
-    if api_url:
-        try:
-            resp = requests.get(api_url, headers={"Accept": "application/vnd.github+json"}, timeout=10)
-            resp.raise_for_status()
-            remote_sha = resp.json().get("sha")
-        except requests.exceptions.RequestException as e:
-            print(f"[retrieve_technology_data] Could not reach GitHub API: {e}. Falling back to download.")
-
-    # Compare cached SHA — skip download if unchanged.
-    if remote_sha and os.path.exists(local_file_path) and os.path.exists(sha_cache_path):
-        with open(sha_cache_path) as f:
-            cached_sha = f.read().strip()
-        if cached_sha == remote_sha:
-            print(f"{file_name} is already up-to-date (git blob SHA unchanged). Skipping download.")
-            return None
-
-    # Download the file.
+    remote_sha = fetch_remote_sha(base_url, file_name)
     file_url = base_url + file_name
-    try:
-        response = requests.get(file_url, stream=True, timeout=30)
-        response.raise_for_status()
-        with open(local_file_path, "wb") as fh:
-            for chunk in response.iter_content(chunk_size=8192):
-                fh.write(chunk)
-        if remote_sha:
-            with open(sha_cache_path, "w") as fh:
-                fh.write(remote_sha)
-        print(f"Technology-data updated: {file_name} (SHA: {remote_sha or 'unknown'})")
-        return local_file_path
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading {file_name}: {e}")
-        return None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.get(
+                file_url,
+                stream=True,
+                timeout=30,
+                headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
+            )
+            response.raise_for_status()
+            content = response.content
+
+            # Verify content against the git blob SHA from the API.
+            # raw.githubusercontent.com can serve CDN-cached stale content
+            # right after a push, causing us to store old data with a new SHA.
+            if remote_sha:
+                actual_sha = _git_blob_sha(content)
+                if actual_sha != remote_sha:
+                    print(
+                        f"[retrieve] Attempt {attempt}/{max_retries}: "
+                        f"SHA mismatch for {file_name} "
+                        f"(expected {remote_sha[:8]}..., got {actual_sha[:8]}...). "
+                        f"CDN likely served stale content — retrying."
+                    )
+                    if attempt < max_retries:
+                        continue
+                    print(f"[retrieve] Giving up SHA verification after {max_retries} attempts. Saving anyway.")
+
+            with open(local_file_path, "wb") as fh:
+                fh.write(content)
+            if remote_sha:
+                with open(sha_cache_path, "w") as fh:
+                    fh.write(remote_sha)
+            print(f"Technology-data downloaded: {file_name} (SHA: {remote_sha or 'unknown'})")
+            return local_file_path
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading {file_name} (attempt {attempt}/{max_retries}): {e}")
+            if attempt == max_retries:
+                return None

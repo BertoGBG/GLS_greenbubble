@@ -14,12 +14,12 @@ script is the target — Snakemake's DAG guarantees it.
 """
 from pathlib import Path
 import sys
-import pickle
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pypsa
 from scripts import config as c, parameters as p
+from scripts.helpers import prepare_costs
+from scripts.technology_inputs import tech_inputs
 
 
 rh        = c.rolling_horizon
@@ -97,8 +97,16 @@ if rh_year and rh_year != main_year:
     from scripts.create_stoch_scenarios import set_input_paths, patch_timeseries
     from scripts.preprocessing import prepare_all_inputs
 
-    with open(snakemake.input.tech_costs, "rb") as fh:
-        tech_costs = pickle.load(fh)
+    tech_costs = prepare_costs(
+        latitude        = c.latitude,
+        longitude       = c.longitude,
+        tech_inputs     = tech_inputs,
+        USD_to_EUR      = c.USD_to_EUR,
+        discount_rate   = c.discount_rate,
+        cost_path_EU    = snakemake.input.costs_eu,
+        cost_path_US    = p.cost_path_US,
+        dict_tech_US_EU = p.dict_tech_US_EU,
+    )
 
     set_input_paths(p, rh_year)
 

@@ -11,8 +11,8 @@ plotting:
     LINK_MASS_TH: 0.2  # t/h
     STORE_TH: 1.0      # MWh
     STORE_MASS_TH: 0.1 # t
-    SU_TH: 0.2         # MW
-    SU_MASS_TH: 0.2    # t/h   (only for StorageUnits on mass-flow buses)
+    SU_TH: 0.1         # MW
+    SU_MASS_TH: 0.1    # t/h   (only for StorageUnits on mass-flow buses)
     NO_TH : 0           # Optional no tolerance
 
   capacity_items:
@@ -77,9 +77,8 @@ plotting:
       selector: methanation biogas
       th: LINK_TH
 
-    - label: Battery SOC
+    - label: Battery Power
       kind: StorageUnit
-      field: state_of_charge
       selector: battery
       th: SU_TH
 
@@ -119,15 +118,13 @@ plotting:
       selector: CO2 Liq sequestration
       th: LINK_MASS_TH
 
-    - label: TES DH SOC
+    - label: TES DH Power
       kind: StorageUnit
-      field: state_of_charge
       selector: TES DH
       th: SU_TH
 
-    - label: TES concrete SOC
+    - label: TES concrete Power
       kind: StorageUnit
-      field: state_of_charge
       selector: TES concrete
       th: SU_TH
 

@@ -33,6 +33,7 @@ biogas storage:
 biogas upgrading: # (unit: MW CH4,  for simplicity)
   <<: *base
   cost factor: 1
+  max capacity: 30
 
 biogas compressor: # applies to methanation
   <<: *base
@@ -41,7 +42,7 @@ biomass belt dryer:
   <<: *base
   cost factor: 1.2       # override
   min load: 0.2 # % of max power capacity that must run (otherwise shut-off)
-  expansion : true
+  expansion : false
 
 biomass boiler:
   <<: *base
@@ -60,7 +61,7 @@ biomethanation biogas: # (bus0 unit: MW H2)
   ramp limit down: 0.7 # % of total power capacity per hour
   min load: 0.05 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
-  cost factor : 1
+  cost factor : 0.8
 
 
 biomethanation CO2: # (bus0 unit: MW H2)
@@ -69,7 +70,7 @@ biomethanation CO2: # (bus0 unit: MW H2)
   ramp limit down: 0.7 # % of total power capacity per hour
   min load: 0.05 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
-  cost factor: 1
+  cost factor: 0.8
 
 methanation biogas: # (bus0 unit: MW H2)
   <<: *base
@@ -108,6 +109,7 @@ CO2 pipe:
 
 dewatering:
   <<: *base
+  expansion : false
 
 El boiler:
   <<: *base
@@ -115,7 +117,7 @@ El boiler:
 
 electrolysis: # (bus0 unit: MW el )
   <<: *base
-  cost factor: 1.5      # according to IEA (last pypsa-eur inputs)
+  cost factor: 1      # according to IEA (last pypsa-eur inputs)
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)

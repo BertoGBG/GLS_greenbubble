@@ -425,6 +425,52 @@ def extract_deterministic_from_stochastic(n, scenario=None, slice_timeseries=Fal
 
     return n_det
 
+def _filter_network_for_topo(n, threshold: float = 0.5):
+    """Remove near-zero-capacity components and orphaned buses from n in-place.
+
+    Modifies n directly (no copy) — matches the original optimal_network_only()
+    approach which avoids PyPSA's restriction on copying a network with an
+    attached solver model.  The network must already be exported before calling.
+
+    Uses p_nom_opt / e_nom_opt (OPT) when available, falls back to p_nom / e_nom (PRE).
+    Also removes buses that become orphaned after component removal.
+    """
+    comp_map = [
+        ("generators",    "p_nom", "p_nom_opt", "Generator"),
+        ("links",         "p_nom", "p_nom_opt", "Link"),
+        ("stores",        "e_nom", "e_nom_opt", "Store"),
+        ("storage_units", "p_nom", "p_nom_opt", "StorageUnit"),
+    ]
+    total_removed = 0
+    for attr, nom_col, opt_col, cls_name in comp_map:
+        df = getattr(n, attr, None)
+        if df is None or df.empty:
+            continue
+        cap_col = opt_col if opt_col in df.columns else nom_col
+        if cap_col not in df.columns:
+            continue
+        to_remove = df.index[df[cap_col].fillna(0.0).abs() < threshold].tolist()
+        for name in to_remove:
+            n.remove(cls_name, name)
+        total_removed += len(to_remove)
+
+    # Remove buses no longer referenced by any remaining component
+    bus_ok = set()
+    for bus_col in ("bus", "bus0", "bus1", "bus2", "bus3", "bus4"):
+        for attr in ("generators", "links", "stores", "storage_units", "loads"):
+            df = getattr(n, attr, None)
+            if df is not None and not df.empty and bus_col in df.columns:
+                bus_ok.update(df[bus_col].dropna().values)
+    orphan_buses = [b for b in n.buses.index if b not in bus_ok]
+    for b in orphan_buses:
+        n.remove("Bus", b)
+
+    if total_removed or orphan_buses:
+        print(f"[print_network] removed {total_removed} near-zero components, "
+              f"{len(orphan_buses)} orphaned buses (threshold={threshold})")
+    return n
+
+
 def print_network(n, n_flags, nc_path, network_name, suffix, plot_folder, is_stochastic):
     # function that prints .svg of network topology with pypsatopo
 
@@ -710,6 +756,326 @@ def save_opt_capacity_components(
     df.attrs["chosen_scenario"] = str(chosen_scenario) if chosen_scenario is not None else None
     return df
 
+
+def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3, comp_tech_map=None):
+    """Save a comprehensive human-readable table of all optimal-capacity components.
+
+    Main output: full_component_table.csv — one row per component.
+    Summary output: cost_summary_by_plant.csv — per-plant and grand-total cost sums.
+
+    Filters components whose optimal capacity < num_tol (solver numerical noise only).
+    For stochastic networks the first scenario slice is used for static tables;
+    variable costs are summed across all snapshots weighted by snapshot_weightings.
+    """
+
+    # ---- helpers ----
+    def _slice_static(df):
+        if df is None or df.empty:
+            return df if df is not None else pd.DataFrame()
+        if not isinstance(df.index, pd.MultiIndex):
+            return df
+        return df.xs(df.index.get_level_values(0)[0], level=0)
+
+    def _get_buses_static():
+        if isinstance(n.buses.index, pd.MultiIndex):
+            return n.buses.xs(n.buses.index.get_level_values(0)[0], level=0)
+        return n.buses
+
+    buses_s = _get_buses_static()
+
+    def _unit_of_bus(bus_name):
+        b = bus_name[-1] if isinstance(bus_name, tuple) else bus_name
+        if "unit" in buses_s.columns and b in buses_s.index:
+            u = buses_s.at[b, "unit"]
+            if pd.notna(u) and str(u).strip():
+                return str(u).strip()
+        return "MW"
+
+    # ---- reverse lookup: component name -> plant ----
+    comp_to_plant: dict = {}
+    for plant, alloc in (network_comp_allocation or {}).items():
+        for kind_key in ("generators", "links", "stores", "storage_units"):
+            for cname in (alloc or {}).get(kind_key, []) or []:
+                comp_to_plant[cname] = plant
+
+    _tech_map = comp_tech_map or {}
+
+    # ---- snapshot weightings ----
+    sw = n.snapshot_weightings
+    weights = sw.get("generators", sw.get("objective", sw.iloc[:, 0]))
+    total_hours = float(weights.sum())
+
+    def _weighted_sum(ts):
+        if ts is None:
+            return 0.0
+        return float(ts.reindex(weights.index).fillna(0.0).mul(weights).sum())
+
+    def _get_ts(ts_df, name):
+        if ts_df is None or ts_df.empty:
+            return None
+        if isinstance(ts_df.columns, pd.MultiIndex):
+            matches = [col for col in ts_df.columns if col[-1] == name]
+            return ts_df[matches].sum(axis=1) / max(len(matches), 1) if matches else None
+        return ts_df[name] if name in ts_df.columns else None
+
+    def _capacity_factor(dispatch_wsum, cap):
+        if cap <= 0 or total_hours <= 0:
+            return np.nan
+        return round(dispatch_wsum / (cap * total_hours), 3)
+
+    def _vre_curtailment(name, cap):
+        """Curtailment fraction = (available - produced) / available for VRE generators."""
+        p_max_pu_df = getattr(n.generators_t, "p_max_pu", None)
+        if p_max_pu_df is None:
+            return np.nan
+        ts_avail = _get_ts(p_max_pu_df, name)
+        if ts_avail is None:
+            return np.nan
+        ts_p = _get_ts(n.generators_t.get("p"), name)
+        if ts_p is None:
+            return np.nan
+        avail_wsum = _weighted_sum(ts_avail * cap)
+        prod_wsum  = _weighted_sum(ts_p)
+        if avail_wsum <= 0:
+            return np.nan
+        return round((avail_wsum - prod_wsum) / avail_wsum, 3)
+
+    def _is_vre(carrier):
+        c = str(carrier).lower()
+        return any(k in c for k in ("wind", "solar", "pv"))
+
+    # ---- static slices ----
+    gens_s   = _slice_static(n.generators)
+    links_s  = _slice_static(n.links)
+    stores_s = _slice_static(n.stores)
+    sus_s    = _slice_static(n.storage_units) if hasattr(n, "storage_units") else pd.DataFrame()
+
+    rows = []
+
+    # --- Generators ---
+    cap_col = "p_nom_opt" if "p_nom_opt" in gens_s.columns else "p_nom"
+    for name, row in gens_s.iterrows():
+        cap = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc      = float(row.get("capital_cost", 0.0))
+        mc      = float(row.get("marginal_cost", 0.0))
+        bus     = str(row.get("bus", ""))
+        carrier = row.get("carrier", "")
+        ts      = _get_ts(n.generators_t.get("p"), name)
+        disp    = _weighted_sum(ts)
+        var     = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Generator",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        carrier,
+            "Reference inlet":                bus,
+            "Unit":                           _unit_of_bus(bus),
+            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    _vre_curtailment(name, cap) if _is_vre(carrier) else np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":               round(cap * cc + var, 0),
+        })
+
+    # --- Links ---
+    cap_col = "p_nom_opt" if "p_nom_opt" in links_s.columns else "p_nom"
+    for name, row in links_s.iterrows():
+        cap  = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc   = float(row.get("capital_cost", 0.0))
+        mc   = float(row.get("marginal_cost", 0.0))
+        bus0 = str(row.get("bus0", ""))
+        ts   = _get_ts(n.links_t.get("p0"), name)
+        ts_pos = ts.clip(lower=0) if ts is not None else None
+        disp = _weighted_sum(ts_pos)
+        var  = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Link",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        row.get("carrier", ""),
+            "Reference inlet":                bus0,
+            "Unit":                           _unit_of_bus(bus0),
+            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":              round(cap * cc + var, 0),
+        })
+
+    # --- Stores ---
+    cap_col = "e_nom_opt" if "e_nom_opt" in stores_s.columns else "e_nom"
+    for name, row in stores_s.iterrows():
+        cap = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc  = float(row.get("capital_cost", 0.0))
+        mc  = float(row.get("marginal_cost", 0.0))
+        bus = str(row.get("bus", ""))
+        ts  = _get_ts(n.stores_t.get("p"), name)
+        ts_pos = ts.clip(lower=0) if ts is not None else None
+        disp = _weighted_sum(ts_pos)
+        var  = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Store",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        row.get("carrier", ""),
+            "Reference inlet":                bus,
+            "Unit":                           _unit_of_bus(bus),
+            "Expandable":                     bool(row.get("e_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("e_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":               round(cap * cc + var, 0),
+        })
+
+    # --- StorageUnits ---
+    if not sus_s.empty:
+        cap_col = "p_nom_opt" if "p_nom_opt" in sus_s.columns else "p_nom"
+        for name, row in sus_s.iterrows():
+            cap = float(row.get(cap_col, 0.0))
+            if cap < num_tol:
+                continue
+            cc   = float(row.get("capital_cost", 0.0))
+            mc   = float(row.get("marginal_cost", 0.0))
+            bus  = str(row.get("bus", ""))
+            mh   = row.get("max_hours", np.nan)
+            e_cap = round(cap * float(mh), 3) if pd.notna(mh) else np.nan
+            ts   = _get_ts(n.storage_units_t.get("p"), name)
+            ts_pos = ts.clip(lower=0) if ts is not None else None
+            disp = _weighted_sum(ts_pos)
+            var  = mc * disp
+            rows.append({
+                "Plant":                          comp_to_plant.get(name, "Unallocated"),
+                "Component":                      "StorageUnit",
+                "Asset":                          name,
+                "Cost input":                     _tech_map.get(name, ""),
+                "Carrier":                        row.get("carrier", ""),
+                "Reference inlet":                bus,
+                "Unit":                           _unit_of_bus(bus),
+                "Expandable":                     bool(row.get("p_nom_extendable", False)),
+                "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+                "Optimal capacity":               round(cap, 3),
+                "Optimal energy capacity":        e_cap,
+                "Capacity factor":                _capacity_factor(disp, cap),
+                "Curtailment":                    np.nan,
+                "Specific fixed cost (€/(unit y))":   round(cc, 2),
+                "Specific variable cost (€/(unit h))": round(mc, 4),
+                "Fixed cost (€/y)":               round(cap * cc, 0),
+                "Variable cost (€/y)":            round(var, 0),
+                "Total cost (€/y)":               round(cap * cc + var, 0),
+            })
+
+    df = pd.DataFrame(rows).sort_values("Plant", kind="stable").reset_index(drop=True)
+
+    # ---- objective function check ----
+    total_fixed = df["Fixed cost (€/y)"].sum()
+    total_var   = df["Variable cost (€/y)"].sum()
+    total_cost  = df["Total cost (€/y)"].sum()
+    obj = getattr(n, "objective", None)
+    if obj is not None:
+        try:
+            obj_f = float(obj)
+            diff  = total_cost - obj_f
+            pct   = 100.0 * diff / obj_f if obj_f != 0 else float("nan")
+            print(
+                f"[full_component_table] Cost check: "
+                f"table total={total_cost:.0f} €/y  |  "
+                f"network objective={obj_f:.0f} €/y  |  "
+                f"diff={diff:+.0f} €/y ({pct:+.1f}%)"
+            )
+        except Exception:
+            pass
+
+    # ---- save main CSV ----
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out, index=False)
+
+    # ---- build per-plant summary ----
+    _cost_cols = ["Fixed cost (€/y)", "Variable cost (€/y)", "Total cost (€/y)"]
+    summary_rows = []
+    for plant, grp in df.groupby("Plant", sort=True):
+        summary_rows.append({
+            "Plant": plant,
+            "Fixed cost (€/y)":    round(grp["Fixed cost (€/y)"].sum(), 0),
+            "Variable cost (€/y)": round(grp["Variable cost (€/y)"].sum(), 0),
+            "Total cost (€/y)":    round(grp["Total cost (€/y)"].sum(), 0),
+        })
+    summary_rows.append({
+        "Plant":               "SYSTEM TOTAL",
+        "Fixed cost (€/y)":    round(total_fixed, 0),
+        "Variable cost (€/y)": round(total_var, 0),
+        "Total cost (€/y)":    round(total_cost, 0),
+    })
+    df_summary = pd.DataFrame(summary_rows)
+    summary_path = out.parent / "cost_summary_by_plant.csv"
+    df_summary.to_csv(summary_path, index=False)
+    print(f"[full_component_table] Saved summary to {summary_path}")
+
+    return df
+
+
+def save_cost_assumptions_csv(tech_costs_used, file_path):
+    """Save the technology cost assumptions used in the model as a CSV.
+
+    tech_costs_used is a DataFrame (subset of tech_costs) with rows indexed
+    by technology name and columns of cost/efficiency parameters. Columns that
+    are all-NaN for the selected technologies are dropped for readability.
+    """
+    if tech_costs_used is None or tech_costs_used.empty:
+        print("[save_cost_assumptions_csv] No tech_costs_used data available — skipping.")
+        return None
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tech_costs_used.dropna(axis=1, how="all").to_csv(out)
+    return tech_costs_used
+
+
+def save_pypsa_statistics(n, file_path):
+    """Save n.statistics() DataFrame as CSV."""
+    try:
+        stats = n.statistics()
+    except Exception as e:
+        print(f"[save_pypsa_statistics] n.statistics() failed: {e}")
+        return None
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    stats.to_csv(out)
+    return stats
+
+
 # Filter very small capacities:
 def filter_items_by_capacity_threshold(
     n,
@@ -864,6 +1230,14 @@ def _cap_series_one(n, kind):
         sus = _slice_df_first_scenario(n.storage_units)
         col = "p_nom_opt" if "p_nom_opt" in sus.columns else ("p_nom" if "p_nom" in sus.columns else None)
         return sus[col] if col else None
+    if kind == "StorageUnit_E":
+        sus = _slice_df_first_scenario(n.storage_units)
+        col = "p_nom_opt" if "p_nom_opt" in sus.columns else ("p_nom" if "p_nom" in sus.columns else None)
+        if col is None:
+            return None
+        p_nom = sus[col]
+        mh = sus["max_hours"].reindex(p_nom.index, fill_value=1.0) if "max_hours" in sus.columns else 1.0
+        return p_nom * mh
     raise ValueError(kind)
 
 def _bus_unit_and_carrier(n, bus_name):
@@ -913,13 +1287,15 @@ def _carrier_unit_for_item(n, kind, name):
         carrier, unit = _bus_unit_and_carrier(n, bus)
         return carrier, _convert_store_unit_to_energy(unit)
 
-    # NEW
-    if kind == "StorageUnit":
+    if kind in ("StorageUnit", "StorageUnit_E"):
         sus = _slice_df_first_scenario(n.storage_units)
         if sus is None or name not in sus.index or "bus" not in sus.columns:
             return ("", "")
         bus = sus.at[name, "bus"]
-        return _bus_unit_and_carrier(n, bus)
+        carrier, unit = _bus_unit_and_carrier(n, bus)
+        if kind == "StorageUnit_E":
+            unit = _convert_store_unit_to_energy(unit)
+        return carrier, unit
 
     return ("", "")
 
@@ -968,6 +1344,13 @@ def build_capacity_compare_from_items(
             if key not in meta:  # preserve order, avoid duplicates
                 rows.append(key)
                 meta[key] = {"label": label, "th": th}
+
+            # Auto-add energy capacity row for every StorageUnit power row
+            if kind == "StorageUnit":
+                e_key = ("StorageUnit_E", nm)
+                if e_key not in meta:
+                    rows.append(e_key)
+                    meta[e_key] = {"label": label + " [Energy]", "th": th}
 
     idx = pd.MultiIndex.from_tuples(rows, names=["kind", "name"])
     out = pd.DataFrame(index=idx)
@@ -1045,7 +1428,7 @@ def plot_capacity_compare_from_items(
         keep = d[value_cols].max(axis=1).sort_values(ascending=False).head(max_items).index
         d = d.loc[keep]
 
-    comp_order = {"Link": 0, "Store": 1, "Generator": 2, "StorageUnit" :3}
+    comp_order = {"Link": 0, "Store": 1, "Generator": 2, "StorageUnit": 3, "StorageUnit_E": 4}
     d = d.sort_index(key=lambda idx: [comp_order.get(i[0], 99) for i in idx])
 
     xlabels = [d.at[i, "label"] if d.at[i, "label"] else i[1] for i in d.index]
@@ -1908,7 +2291,7 @@ def plot_utilization_ldc_by_scenario(
     # Build curve specs
     for it in items:
         kind = it["kind"]
-        field = it["field"]
+        field = it.get("field", "p")
         base_label = it["label"]
         selector = it.get("selector")
         lw0 = it.get("lw", 1.8)
@@ -2126,7 +2509,8 @@ def plot_utilization_ldc_by_scenario(
         ax.set_xlabel("Percent of hours (%)")
         if any_plotted:
             ax.set_ylabel("Utilization / capacity factor (-)")
-        ax.set_ylim(0, 1)
+        ax.set_ylim(0, 1.05)
+        ax.axhline(1.0, color="gray", lw=0.8, ls="--", alpha=0.45, zorder=0)
         ax.grid(True, alpha=0.25)
 
     # Hide unused axes
@@ -2660,9 +3044,6 @@ def figure_heatmaps_compare_scenarios(
             cbar.set_label("Normalized (0–1)")
 
         fig.suptitle(title, y=1.02)
-
-        # Give a little extra bottom margin for rotated month labels
-        fig.subplots_adjust(bottom=0.12)
 
     if outpath:
         outpath = Path(outpath)
@@ -3213,7 +3594,6 @@ def figure_heatmaps_compare_scenarios_actual(
             axes[j].set_visible(False)
 
         fig.suptitle(title, y=1.02)
-        fig.subplots_adjust(bottom=0.12)
 
     if outpath:
         outpath = Path(outpath)
@@ -4047,6 +4427,8 @@ def run_plot_and_export(
     thresholds: dict,
     bus_list_mp: list[str],
     network_comp_allocation: Optional[dict] = None,
+    comp_tech_map: Optional[dict] = None,
+    tech_costs_used=None,
     scenarios: Optional[Dict[Any, float]] = None,
     networks_dict: Optional[Dict[Any, Any]] = None,
 ) -> Dict[str, Exception]:
@@ -4271,12 +4653,30 @@ def run_plot_and_export(
             stochastic_col_label="stochastic",
         )
 
+    def step_full_component_table() -> None:
+        alloc = _require_allocation("full_component_table")
+        save_full_component_csv(
+            n,
+            alloc,
+            csv_folder / "full_component_table.csv",
+            comp_tech_map=comp_tech_map,
+        )
+
+    def step_cost_assumptions() -> None:
+        save_cost_assumptions_csv(tech_costs_used, csv_folder / "cost_assumptions.csv")
+
+    def step_pypsa_statistics() -> None:
+        save_pypsa_statistics(n, csv_folder / "pypsa_statistics.csv")
+
     # ---------------- Run in order ----------------
 
     _safe_step("cost_by_carrier", step_cost_by_carrier)
     _safe_step("cost_by_agent", step_cost_by_agent)
 
     _safe_step("save_optimal_capacities", step_save_opt_caps)
+    _safe_step("full_component_table", step_full_component_table)
+    _safe_step("cost_assumptions", step_cost_assumptions)
+    _safe_step("pypsa_statistics", step_pypsa_statistics)
     _safe_step("filter_items", step_filter_items)
     _safe_step("capacity_compare_sp_vs_ws", step_capacity_compare_sp_vs_ws)
 

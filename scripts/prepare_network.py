@@ -37,6 +37,57 @@ from scripts.technology_inputs import symbiosis_n, mixture_database
 import CoolProp.CoolProp as CP
 from pypsa.optimization.constraints import define_total_supply_constraints
 
+# ---- Component → tech_costs key mapping helpers ----
+# Maps carrier names that differ from their tech_costs index entry.
+_CARRIER_TO_TECH: dict[str, str] = {
+    "wind":            "onwind",
+    "grid connection": "electricity grid connection",
+}
+# Maps component names (including EXI_ variants) that differ from their tech_costs entry.
+_NAME_TO_TECH: dict[str, str] = {
+    "onshorewind":      "onwind",
+    "EXI_onshorewind":  "onwind",
+    "El3_to_DK1":       "electricity grid connection",
+    "EXI_El3_to_DK1":   "electricity grid connection",
+}
+
+
+def _build_comp_tech_map(network, tech_costs_index: set) -> dict[str, str]:
+    """Build component-name → tech_costs-index mapping after the network is assembled.
+
+    Matching priority (first match wins):
+      1. Known name alias  (_NAME_TO_TECH)
+      2. Base name (strip 'EXI_') exact match in tech_costs
+      3. Known carrier alias (_CARRIER_TO_TECH)
+      4. Carrier exact match in tech_costs
+    Only maps components with capital_cost > 0 (non-costed helpers are skipped).
+    """
+    mapping: dict[str, str] = {}
+    for comp_attr in ("generators", "links", "stores", "storage_units"):
+        df = getattr(network, comp_attr, None)
+        if df is None or df.empty:
+            continue
+        cc_col  = "capital_cost"
+        car_col = "carrier"
+        for name, row in df.iterrows():
+            cc = float(row.get(cc_col, 0.0) or 0.0)
+            if cc <= 0:
+                continue
+            carrier = str(row.get(car_col, "") or "")
+            base    = str(name).removeprefix("EXI_").strip()
+
+            if name in _NAME_TO_TECH:
+                mapping[name] = _NAME_TO_TECH[name]
+            elif base in tech_costs_index:
+                mapping[name] = base
+            elif carrier in _CARRIER_TO_TECH:
+                mapping[name] = _CARRIER_TO_TECH[carrier]
+            elif carrier in tech_costs_index:
+                mapping[name] = carrier
+            # else: unmatched → leave out (Cost input will be blank)
+    return mapping
+
+
 # ------- BUILD PYPSA NETWORK HANDLING FUNCTIONS-------------
 def network_dependencies(n_flags, ):
     """Check if all required dependencies are satisfied when building the network based on n_flags dictionary in main,
@@ -2828,15 +2879,15 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus1=methanation_buses.at['product bus', 'biomethanation biogas'],
             bus2=methanation_buses.at['biogas in bus', 'biomethanation biogas'],
             bus3=methanation_buses.at['local EL bus', 'biomethanation biogas'],
-            efficiency=tech_costs.at["biomethanation", "methane-output"],
-            efficiency2=-tech_costs.at["biomethanation", "biogas-input"],
-            efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
+            efficiency=tech_costs.at["biomethanation biogas", "methane-output"],
+            efficiency2=-tech_costs.at["biomethanation biogas", "biogas-input"],
+            efficiency3=-tech_costs.at["biomethanation biogas", "electricity-input"],
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["biomethanation biogas", "max capacity"],
             p_min_pu0=n_config.at["biomethanation biogas", "min load"],
             capital_cost=capital_cost,
-            marginal_cost=tech_costs.at["biomethanation", "VOM"],
+            marginal_cost=tech_costs.at["biomethanation biogas", "VOM"],
             ramp_limit_up0 = n_config.at['biomethanation biogas', 'ramp limit up'],
             ramp_limit_down0 = n_config.at['biomethanation biogas', 'ramp limit down'],
             )
@@ -2892,23 +2943,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         methanation_buses.at['Heat LT', 'methanation'] = new_heat_buses[1]
         methanation_buses.at['Heat LT', 'biomethanation CO2'] = new_heat_buses[1]
 
-        fl1 = n.buses.loc[methanation_buses.at['product bus', 'biomethanation CO2'], 'properties']
-        fl2 = n.buses.loc[methanation_buses.at['CO2 in bus', 'biomethanation CO2'], 'properties']
-        fl3 = n.buses.loc[methanation_buses.at['H2 in bus', 'biomethanation CO2'], 'properties']
-
-        lhv_h2 = symbiosis_n.at[fl3, 'LHV']
-        density_co2 = CP.PropsSI("D", "T", symbiosis_n.at[fl2, 'T'] + 273, "P", symbiosis_n.at[fl2, 'P'] * 1e5,
-                                 symbiosis_n.at[fl2, 'fluid'])
-        density_h2 = CP.PropsSI("D", "T", symbiosis_n.at[fl3, 'T'] + 273, "P", symbiosis_n.at[fl3, 'P'] * 1e5,
-                                symbiosis_n.at[fl2, 'fluid'])
-
-        v_ch4_v_co2 = mixture_database['biogas']['Methane'] / mixture_database['biogas']['CarbonDioxide']
-        v_h2 = 1 / lhv_h2 * 1e3 / density_h2
-        v_co2 = tech_costs.at["biomethanation", "CO2-input"] / density_co2 * 1e3
-        v_ch4 = v_co2 * v_ch4_v_co2
-        vol_ratio = (v_h2 + v_co2) / (v_h2 + v_co2 + v_ch4)
-        # print('vol_ratio', vol_ratio)
-
         name = f"{prefix}biomethanation CO2"
 
         n.add(
@@ -2919,16 +2953,15 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus1=methanation_buses.at['product bus', 'biomethanation CO2'],
             bus2=methanation_buses.at['CO2 in bus', 'biomethanation CO2'],
             bus3=methanation_buses.at['local EL bus', 'biomethanation CO2'],
-            efficiency=tech_costs.at["biomethanation", "methane-output"]
-                       - tech_costs.at["biomethanation", "biogas-input"],
-            efficiency2=-tech_costs.at["biomethanation", "CO2-input"],
-            efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
+            efficiency=tech_costs.at["biomethanation CO2", "methane-output"],
+            efficiency2=-tech_costs.at["biomethanation CO2", "CO2-input"],
+            efficiency3=-tech_costs.at["biomethanation CO2", "electricity-input"],
             p_nom_extendable=expansion,
             p_nom=capacity,
             p_nom_max=n_config.at["biomethanation CO2", "max capacity"],
             p_min_pu0=n_config.at["biomethanation CO2", "min load"],
-            capital_cost=capital_cost * vol_ratio,
-            marginal_cost=tech_costs.at["biomethanation", "VOM"] * vol_ratio,
+            capital_cost=capital_cost,
+            marginal_cost=tech_costs.at["biomethanation CO2", "VOM"],
             ramp_limit_up0=n_config.at['biomethanation CO2', 'ramp limit up'],
             ramp_limit_down0=n_config.at['biomethanation CO2', 'ramp limit down'],
         )
@@ -2941,7 +2974,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                             'IN bus': methanation_buses.at['CO2 in bus', 'methanation'],
                             'OUT bus': methanation_buses.at['CO2 in bus', 'biomethanation CO2'],
                             'ST bus': methanation_buses.at['CO2 storage bus', 'methanation'],
-                            'compressor capacity': capacity * tech_costs.at["biomethanation", "CO2-input"],
+                            'compressor capacity': capacity * tech_costs.at["biomethanation CO2", "CO2-input"],
                             'storage capacity': 0,
                             'compressor expansion': expansion,
                             'storage expansion': expansion,
@@ -3006,16 +3039,16 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['biogas in bus', 'methanation biogas'],
             bus3=methanation_buses.at['local EL bus', 'methanation biogas'],
             bus4=methanation_buses.at['Heat MT', 'methanation biogas'],
-            efficiency=1/tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            efficiency2=-tech_costs.at["biogas plus hydrogen", "biogas input"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            efficiency3=-tech_costs.at["biogas plus hydrogen", "electricity input"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            efficiency4=tech_costs.at["biogas plus hydrogen", "heat output"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
+            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
+            efficiency2=-tech_costs.at["methanation biogas","biogas-input"],
+            efficiency3=-tech_costs.at["methanation biogas","electricity-input"] ,
+            efficiency4=tech_costs.at["methanation biogas","heat-output"],
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["methanation biogas", "max capacity"],
             p_min_pu0=n_config.at["methanation biogas", "min load"],
-            capital_cost=capital_cost / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            marginal_cost=tech_costs.at["biogas plus hydrogen", "VOM"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
+            capital_cost=capital_cost,
+            marginal_cost=tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up0 = n_config.at['methanation biogas', 'ramp limit up'],
             ramp_limit_down0 = n_config.at['methanation biogas', 'ramp limit down']
             )
@@ -3028,7 +3061,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                    'IN bus' : methanation_buses.at['biogas in bus', 'methanation'],
                    'OUT bus' : methanation_buses.at['biogas in bus', 'methanation biogas'],
                    'storage bus' : '',
-                   'compressor capacity' :   capacity * tech_costs.at["biogas plus hydrogen", "biogas input"] ,
+                   'compressor capacity' :   capacity * tech_costs.at["methanation biogas","biogas-input"] ,
                    'storage capacity' : 0,
                    'compressor expansion' :   expansion,
                    'storage expansion' : 0,
@@ -3085,24 +3118,26 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         methanation_buses.at['Heat LT', 'methanation CO2'] = new_heat_buses[2]
 
         # adjust volume flows from biogas to pure CO2
-        fl1 = n.buses.loc["bioCH4", 'properties']
-        fl2 = n.buses.loc['CO2 distribution', 'properties']
-        fl3 = n.buses.loc['H2 distribution', 'properties']
+        fl1 = 'CH4 normal'
+        fl2 = 'CO2 normal'
+        fl3 = 'H2 normal'
 
         lhv_biomethane = symbiosis_n.at[fl1, 'LHV']
         lhv_h2 = symbiosis_n.at[fl3, 'LHV']
+
         density_biomethane = CP.PropsSI("D", "T", symbiosis_n.at[fl1, 'T'] + 273, "P", symbiosis_n.at[fl1, 'P'] * 1e5,
-                                        symbiosis_n.at['bioCH4', 'fluid'])
+                                        symbiosis_n.at[fl1, 'fluid'])
         density_co2 = CP.PropsSI("D", "T", symbiosis_n.at[fl2, 'T'] + 273, "P", symbiosis_n.at[fl2, 'P'] * 1e5,
                                  symbiosis_n.at[fl2, 'fluid'])
         density_h2 = CP.PropsSI("D", "T", symbiosis_n.at[fl3, 'T'] + 273, "P", symbiosis_n.at[fl3, 'P'] * 1e5,
-                                symbiosis_n.at[fl2, 'fluid'])
+                                symbiosis_n.at[fl3, 'fluid'])
 
         v_ch4_v_co2 = mixture_database['biogas']['Methane'] / mixture_database['biogas']['CarbonDioxide']
-        v_h2 = 1 / lhv_h2 * 1e3 / density_h2
-        v_co2 = (tech_costs.at["biomethanation", "biogas input"] / lhv_biomethane / density_biomethane) / (tech_costs.at["biogas plus hydrogen", "hydrogen input"])  / (v_ch4_v_co2) # (m3_ch4_in/MWh_ch4_out) / (MWh_h2_in/MWh_ch4_out) / (m3_ch4_in/m3_co2_in) = m3_co2_in/MWh_h2_in
-        v_ch4 = v_co2 * v_ch4_v_co2 # m3_ch4_in/MWh_h2_in
-        vol_ratio = (v_h2 + v_co2) / (v_h2 + v_co2 + v_ch4) # between CO2-only input volumne flow and reference input volume flow (technology-data)
+        v_h2 = 1 / lhv_h2 * 1e3 / density_h2 # Nm3_H2/Mwh_H2
+        v_ch4 = (tech_costs.at["methanation biogas","biogas-input"] / lhv_biomethane * 1e3 / density_biomethane) # Nm3_CH4/MWh_H2
+        v_co2 = v_ch4  / v_ch4_v_co2 # (m3_ch4_in/MWh_H2_in)  / (m3_ch4_in/m3_co2_in) = # Nm3_CO2/Mwh_H2
+        vol_ratio = (v_h2 + v_co2) / (v_h2 + v_co2 + v_ch4) # between CO2-only input volume flow and reference input volume flow (technology-data)
+        CO2_input = v_co2 * density_co2 * 1e-3 # tCO2/MWh_H2
 
         # add plant
         name = f"{prefix}methanation CO2"
@@ -3116,15 +3151,15 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['CO2 in bus', 'methanation CO2'],
             bus3=methanation_buses.at['local EL bus', 'methanation CO2'],
             bus4=methanation_buses.at['Heat MT', 'methanation CO2'],
-            efficiency=(1 - tech_costs.at["biogas plus hydrogen", "biogas input"]) / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            efficiency2= - v_co2 * density_co2 ,
-            efficiency3=-tech_costs.at["biogas plus hydrogen", "electricity input"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            efficiency4=tech_costs.at["biogas plus hydrogen", "heat output"] / tech_costs.at["biogas plus hydrogen", "hydrogen input"],
-            p_nom_extendable=expansion,
-            p_nom=capacity,
+            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
+            efficiency2= - CO2_input,
+            efficiency3= - tech_costs.at["methanation biogas","electricity-input"] ,
+            efficiency4= tech_costs.at["methanation biogas","heat-output"] ,
+            p_nom_extendable= expansion,
+            p_nom= capacity,
             p_min_pu0=n_config.at["methanation CO2", "min load"],
-            capital_cost=capital_cost * vol_ratio,
-            marginal_cost=tech_costs.at["biogas plus hydrogen", "VOM"] * vol_ratio,
+            capital_cost= capital_cost * vol_ratio,
+            marginal_cost= tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up0 = n_config.at['methanation CO2', 'ramp limit up'],
             ramp_limit_down0 = n_config.at['methanation CO2', 'ramp limit down']
             )
@@ -3137,7 +3172,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                    'IN bus' : methanation_buses.at['CO2 in bus', 'methanation'],
                    'OUT bus' : methanation_buses.at['CO2 in bus', 'methanation CO2'],
                    'ST bus' : methanation_buses.at['CO2 storage bus', 'methanation'],
-                   'compressor capacity' :   capacity * tech_costs.at["methanation", "carbondioxide-input"] ,
+                   'compressor capacity' :   capacity * CO2_input,
                    'storage capacity' : 0,
                    'compressor expansion' :   expansion,
                    'storage expansion' : expansion,
@@ -3231,10 +3266,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             n, methanation_buses = add_fn(n, "EXI_", 0, cap, False, carrier=t, methanation_buses=methanation_buses)
 
         if t in exp_to_add:
-            if "cat" in t:
-                cost = tech_costs.at["biogas plus hydrogen", "fixed"]
+            if "methanation biogas" in t:
+                cost = tech_costs.at["methanation biogas","fixed"] * n_config.at[t, "cost factor"]
+            if "methanation CO2" in t:
+                cost = tech_costs.at["methanation biogas","fixed"] * n_config.at[t, "cost factor"]
             elif "biomethanation biogas" in t:
-                cost = tech_costs.at["biomethanation", "fixed"] * n_config.at[t, "cost factor"]
+                cost = tech_costs.at["biomethanation biogas", "fixed"] * n_config.at[t, "cost factor"]
             elif "biomethanation CO2" in t:
                 cost = tech_costs.at["biomethanation CO2", "fixed"] * n_config.at[t, "cost factor"]
 
@@ -3602,7 +3639,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
         def get_product_collection_bus(n, product, fallback):
             """Return the collection bus tagged by add_targets for this product, or fallback."""
             col = n.buses.get("product", pd.Series(dtype=str))
-            mask = (col == product) & (n.buses.get("is_product_bus", pd.Series(dtype=bool)).fillna(False))
+            mask = (col == product) & (n.buses.get("is_product_bus", pd.Series(dtype=bool)).eq(True))
             if mask.any():
                 return n.buses.index[mask][0]
             return fallback
@@ -3767,7 +3804,6 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
     # ---------------------------------------------------------
     network_comp_allocation = {
         "external_grids": comp_external_grids,
-        #"targets": comp_targets,
         "biogas": comp_biogas,
         "renewables": comp_renewables,
         "electrolysis": comp_electrolysis,
@@ -3780,6 +3816,11 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
 
     # Store allocation inside network object
     network.network_comp_allocation = network_comp_allocation
+
+    # ---------------------------------------------------------
+    # 5b. Build component → tech_costs key mapping
+    # ---------------------------------------------------------
+    network.comp_tech_map = _build_comp_tech_map(network, set(tech_costs.index))
 
     # ---------------------------------------------------------
     # 6. Return full network
