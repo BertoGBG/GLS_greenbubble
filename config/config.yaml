@@ -112,7 +112,7 @@ optimization:
 # Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
 # When enabled, `snakemake` targets the RH output and does NOT run solve_network.
 rolling_horizon:
-  enabled: true
+  enabled: false
   horizon: 168        # window size in hours (e.g. 168 = 1 week)
   overlap: 48         # overlap in hours between consecutive windows
   network_path: 'outputs/single_analysis/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D/networks/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D_OPT.nc'  # REQUIRED when enabled — path to a .nc network to load
