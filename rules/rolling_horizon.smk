@@ -1,7 +1,8 @@
 # rules/rolling_horizon.smk
 # Dispatch-only rolling horizon optimisation on a fixed-capacity network.
-# Only runs when rolling_horizon.enabled: true in config.yaml.
-# When active, rule all targets the RH plots .done and solve_network is never triggered.
+# Only active when rolling_horizon.enabled: true in config.yaml.
+# ruleorder: solve_rolling_horizon > solve_network resolves the ambiguity that
+# arises because both rules produce {network}_OPT.nc for the _RH network name.
 
 _rh = config.get("rolling_horizon", {}) or {}
 
@@ -28,7 +29,7 @@ if _rh.get("enabled", False):
             costs_eu     = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
             extra_inputs = _rh_extra_inputs,
         output:
-            network = f"{OUTDIR}/{{network}}/networks/rolling_horizon/{{network}}_RH.nc",
+            network = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
         log:
             f"logs/rolling_horizon_{{network}}.log",
         wildcard_constraints:
@@ -38,14 +39,20 @@ if _rh.get("enabled", False):
 
 
     rule plot_rolling_horizon:
-        """Generate operational plots for a rolling horizon result."""
+        """Generate full plots and PF vs RH comparison for a rolling horizon result."""
         input:
-            network = f"{OUTDIR}/{{network}}/networks/rolling_horizon/{{network}}_RH.nc",
+            network    = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
+            network_pf = _rh["network_path"],
         output:
-            done = f"{OUTDIR}/{{network}}/networks/rolling_horizon/plots_rh/.done",
+            done = f"{OUTDIR}/{{network}}/plots_rh/.done",
         log:
             f"logs/plot_rolling_horizon_{{network}}.log",
         wildcard_constraints:
             network = NETWORK_PATTERN,
         script:
             "../scripts/snakemake_plot_rolling_horizon.py"
+
+    # When RH is enabled both solve_network and solve_rolling_horizon match the
+    # same output path ({network}_OPT.nc).  This directive tells Snakemake to
+    # always prefer the RH rule so the DAG is unambiguous.
+    ruleorder: solve_rolling_horizon > solve_network

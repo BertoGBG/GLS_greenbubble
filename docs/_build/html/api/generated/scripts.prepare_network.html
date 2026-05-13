@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>scripts.prepare_network &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/scripts.prepare_network';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Fapi/generated/scripts.prepare_network.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/api/generated/scripts.prepare_network.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>scripts.prepare_network</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-scripts.prepare_network">
+<span id="scripts-prepare-network"></span><h1>scripts.prepare_network<a class="headerlink" href="#module-scripts.prepare_network" title="Link to this heading">#</a></h1>
+<p>PyPSA network construction for the GreenBubble industrial cluster.</p>
+<p>This module is the core network builder.  It contains:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../api.html#scripts.prepare_network.network_dependencies" title="scripts.prepare_network.network_dependencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">network_dependencies()</span></code></a> — resolves implicit technology flag
+dependencies so that enabling one technology automatically enables its
+prerequisites (e.g. enabling <code class="docutils literal notranslate"><span class="pre">MEOH</span></code> also enables <code class="docutils literal notranslate"><span class="pre">H2</span></code>).</p></li>
+<li><p><a class="reference internal" href="../../api.html#scripts.prepare_network.build_network" title="scripts.prepare_network.build_network"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_network()</span></code></a> — constructs the full PyPSA network with all
+active technologies (buses, carriers, generators, links, stores and loads),
+controlled by the <code class="docutils literal notranslate"><span class="pre">n_flags</span></code> dict from <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>.</p></li>
+</ul>
+<p>The network is built once per run and saved as a NetCDF file
+(<code class="docutils literal notranslate"><span class="pre">{network}_PRE.nc</span></code>) before the optimisation step.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In stochastic mode, <a class="reference internal" href="../../api.html#scripts.create_stoch_scenarios.create_scenarios" title="scripts.create_stoch_scenarios.create_scenarios"><code class="xref py py-func docutils literal notranslate"><span class="pre">scripts.create_stoch_scenarios.create_scenarios()</span></code></a>
+couples multiple annual networks into a single LP after this module runs.</p>
+</div>
+<p class="rubric">Functions</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_CO2_liquefaction" title="scripts.prepare_network.add_CO2_liquefaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_CO2_liquefaction</span></code></a>(n, n_flags, ...)</p></td>
+<td><p>Add CO₂ liquefaction and storage modules.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_battery" title="scripts.prepare_network.add_battery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_battery</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add a battery storage system connected to the main or renewable electricity bus.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_battery_old" title="scripts.prepare_network.add_battery_old"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_battery_old</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add a battery storage system connected to the main or renewable electricity bus.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_biogas" title="scripts.prepare_network.add_biogas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_biogas</span></code></a>(n, n_flags, inputs_dict, tech_costs)</p></td>
+<td><p>function that add the biogas plant to the network and all the dependecies if not preset in the network yet</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_biomass_drying" title="scripts.prepare_network.add_biomass_drying"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_biomass_drying</span></code></a>(n, tech_costs, n_flags, ...)</p></td>
+<td><p>Add a biomass belt dryer and auxiliary processes: - dewatering (for digestate fibers) - pelletization (for digestate fibers or wood chips)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_central_heat_MT" title="scripts.prepare_network.add_central_heat_MT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_central_heat_MT</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add central heating technologies (biomass, gas, electric, pyrolysis) to the Heat MT bus.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_component_if_new" title="scripts.prepare_network.add_component_if_new"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_component_if_new</span></code></a>(n, component, ...[, nd])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_compressor_and_storage" title="scripts.prepare_network.add_compressor_and_storage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_compressor_and_storage</span></code></a>(n, n_flags, ...)</p></td>
+<td><p>Add general compression and gas storage (cylinders/vessels/baloon) systems.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_electrolysis" title="scripts.prepare_network.add_electrolysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_electrolysis</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add electrolysis system (H2 production) to the network.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_external_grids" title="scripts.prepare_network.add_external_grids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_external_grids</span></code></a>(network, inputs_dict, ...)</p></td>
+<td><p>Build external grids and loads according to configuration flags.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_grid_connection_cap_exp" title="scripts.prepare_network.add_grid_connection_cap_exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_grid_connection_cap_exp</span></code></a>(n, name, ...)</p></td>
+<td><p>Reusable grid selling connection from El3 to DK1.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_heat_pump" title="scripts.prepare_network.add_heat_pump"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_heat_pump</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add an industrial heat pump connecting LT and DH heat networks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_link_if_new" title="scripts.prepare_network.add_link_if_new"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_link_if_new</span></code></a>(n, name_prefix, link_kwargs)</p></td>
+<td><p>Add a Link only if an identical one (by signature) is not already present.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_local_boilers" title="scripts.prepare_network.add_local_boilers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_local_boilers</span></code></a>(n, local_EL_bus, ...)</p></td>
+<td><p>Add local NG and electric boilers for a reference plant requiring heating but not connected to the symbiosis network.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_local_el_connections" title="scripts.prepare_network.add_local_el_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_local_el_connections</span></code></a>(n, local_EL_bus, ...)</p></td>
+<td><p>Add electricity connections for a plant: - connection to the DK1 grid - optional connection to El2 bus (symbiosis network)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_local_heat_connections" title="scripts.prepare_network.add_local_heat_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_local_heat_connections</span></code></a>(n, heat_bus_dict, ...)</p></td>
+<td><p>Create plant-local heat buses, a rejection link to 'Heat amb', and (optionally) a bidirectional connection to the symbiosis heat grid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_meoh" title="scripts.prepare_network.add_meoh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_meoh</span></code></a>(n, n_flags, inputs_dict, tech_costs)</p></td>
+<td><p>Add methanol synthesis system and required auxiliary units.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_methanation" title="scripts.prepare_network.add_methanation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_methanation</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add methanation facilities (biological and catalytic) to the network.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_renewables" title="scripts.prepare_network.add_renewables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_renewables</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add renewable generation (wind and PV) and grid connection to the network.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_requirements_buses" title="scripts.prepare_network.add_requirements_buses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_requirements_buses</span></code></a>(n, bus_dict[, ...])</p></td>
+<td><p>Ensure carriers exist, then add any missing buses with the specified attributes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_storage" title="scripts.prepare_network.add_storage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_storage</span></code></a>(n, n_flags, inputs_dict, tech_costs)</p></td>
+<td><p>Add all storage-related technologies to the network:</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_store_if_new" title="scripts.prepare_network.add_store_if_new"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_store_if_new</span></code></a>(n, name_prefix, store_kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_symbiosis" title="scripts.prepare_network.add_symbiosis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_symbiosis</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Build the industrial symbiosis network connecting:</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_targets" title="scripts.prepare_network.add_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_targets</span></code></a>(n, plant, inputs_dict, ...)</p></td>
+<td><p>Add exogenous energy demands/ or selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.add_thermal_storage" title="scripts.prepare_network.add_thermal_storage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_thermal_storage</span></code></a>(n, n_flags, inputs_dict, ...)</p></td>
+<td><p>Add thermal energy storage systems:</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.build_network" title="scripts.prepare_network.build_network"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_network</span></code></a>(tech_costs, inputs_dict, ...)</p></td>
+<td><p>Build the full PyPSA network (Greenbubble) using all modular plant functions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.get_network_status" title="scripts.prepare_network.get_network_status"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_network_status</span></code></a>(n)</p></td>
+<td><p>Return a snapshot of current component names in the network.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.link_signature" title="scripts.prepare_network.link_signature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">link_signature</span></code></a>(kwargs[, nd])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.log_new_components" title="scripts.prepare_network.log_new_components"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_new_components</span></code></a>(n, n0_dict)</p></td>
+<td><p>Compare the network before/after adding components and log new items.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.mass_energy_balance_drying" title="scripts.prepare_network.mass_energy_balance_drying"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mass_energy_balance_drying</span></code></a>([...])</p></td>
+<td><p>function that calculates the water removed and the head demand from a biomass drying process, given the initial and final moisture inputs: - initial moisture (kg_H2O/kg_tot)         - final moisture (kg_H2O/kg_tot)         - heat for drying including, heat recovery and losses (MWh/tH2O)         - el for drying including fans outputs:         - moisture eveaporated : # t H2O remove / t DM         - heat-input : # MW_th/ tDM         - electricity-input : # MW_e/ tDM</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.network_dependencies" title="scripts.prepare_network.network_dependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">network_dependencies</span></code></a>(n_flags)</p></td>
+<td><p>Check if all required dependencies are satisfied when building the network based on n_flags dictionary in main, modifies n_flag dict</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.set_plant_connection" title="scripts.prepare_network.set_plant_connection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_plant_connection</span></code></a>(n, buses, tech, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.store_signature" title="scripts.prepare_network.store_signature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">store_signature</span></code></a>(kwargs[, nd])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../api.html#scripts.prepare_network.tech_to_add" title="scripts.prepare_network.tech_to_add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tech_to_add</span></code></a>(techs, n0_dict)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

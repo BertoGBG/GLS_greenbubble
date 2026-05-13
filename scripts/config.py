@@ -76,13 +76,6 @@ n_flags                  = dict(_cfg["n_flags"])
 n_flags_opt              = dict(_cfg["n_flags_opt"])
 outputs_folder           = _cfg["outputs_folder"]
 
-if targets_dict['driver'] == 'demand':
-    H2_profile_flag = False
-    H2_delivery_frequency = 1
-else:
-    H2_profile_flag          = _cfg["H2_profile_flag"]
-    H2_delivery_frequency    = _cfg["H2_delivery_frequency"]
-
 CO2_cost_ref_year        = _cfg["CO2_cost_ref_year"]
 
 rfnbos_dict              = dict(_cfg["rfnbos_dict"])

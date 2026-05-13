@@ -31,8 +31,7 @@ from scripts.config import (n_options,
                             n_config,
                             rfnbos_dict,
                             run_name,
-                            targets_dict,
-                            H2_profile_flag)
+                            targets_dict)
 from scripts.technology_inputs import symbiosis_n, mixture_database
 import CoolProp.CoolProp as CP
 from pypsa.optimization.constraints import define_total_supply_constraints
@@ -835,7 +834,7 @@ def add_external_grids(network, inputs_dict, n_options):
 
         if "DH load" not in network.loads.index:
             network.add("Load", "DH load", bus="DH grid")
-            network.loads_t.p_set["DH load"] = dh * n_options.at['DH','dh_load_multiplier']
+            network.loads_t.p_set["DH load"] = dh * n_options.at['DH','load multiplier']
 
         if "DH gen" not in network.generators.index:
             network.add("Generator",
@@ -2000,15 +1999,18 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 n.add("Load", product, bus=bus_list[2], carrier=carrier)
                 n.loads_t.p_set[product] = demand_ts.reindex(n.snapshots)
 
-                # TODO: constrain for less flexible demand profiles (all products, not only H2)
-                if not (product == "H2" and H2_profile_flag):
-                    n.add(
-                        "Store",
-                        f"{product} delivery",
-                        bus=bus_list[2],
-                        e_nom_extendable=True,
-                        e_cyclic=True,
+                # Delivery store: sized by inputs_dict; None or 0 → rigid demand (no store)
+                _store_key = f"{product}_store_e_nom_max"
+                store_e_nom_max = inputs_dict.get(_store_key, float("inf"))
+                if store_e_nom_max is not None and store_e_nom_max > 0:
+                    store_kwargs = dict(
+                        bus              = bus_list[2],
+                        e_nom_extendable = True,
+                        e_cyclic         = True,
                     )
+                    if store_e_nom_max != float("inf"):
+                        store_kwargs["e_nom_max"] = store_e_nom_max
+                    n.add("Store", f"{product} delivery", **store_kwargs)
 
         elif driver == "price":
             lk_ext = f"{product}_collection_to_delivery"

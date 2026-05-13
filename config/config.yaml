@@ -1,11 +1,5 @@
 # config/config.yml
-run_name: bg_eng_D # keep it short
-
-# CO2 tax for fossil emissions and reward for negative emissions
-CO2_cost: 100 # €/t (CO2_cost)
-
-# existing CO2 cost (tax) in the reference year (if included in energy prices)
-CO2_cost_ref_year: 0
+run_name: D_test_all # keep it short
 
 # Annual Demands or price targets
 # if driver == 'demand': Demands must be present AND Prices are not used in the model
@@ -13,16 +7,45 @@ CO2_cost_ref_year: 0
 
 targets:
   driver: 'demand' # 'price' | 'demand'
-  demand_H2 :  0 # MWh_H2 /y  Demand OR max production
+  demand_H2 :  100000 # MWh_H2 /y  Demand OR max production
   demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 4000 # Mwh_meoh /y Demand OR max production
   price_H2 : 90 # €/MWh prices are required only for driver : 'price'
   price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
   price_meoh : 110 # €/MWh prices are required only for driver : 'price'
 
-# Demand flexibility - H2 grid
-H2_profile_flag: false # 'True': the demand follows NG demand profile: 'False' it is flexible delivery during the period  (see frequency)
-H2_delivery_frequency: 1 # ==1: Single delivery at the end of the 'Year',   ==12 : 'Month', ==52: 'Week'
+  # Demand shape per product (applied in both 'demand' and 'price' driver modes)
+  # mode: flat | profile | bins_flat | bins_profile
+  #   flat         – constant MW every hour; flexibility store sized to CH4_flexibility * annual
+  #   profile      – continuous TS scaled via NG_DK profile; same store sizing
+  #   bins_flat    – zero except at n-bin endpoints, equal delivery per bin;
+  #                  store capped to annual/n_bins (one bin's worth)
+  #   bins_profile – zero except at endpoints, delivery ∝ NG_DK integral in bin;
+  #                  store capped to max_bin_demand * (1 + demand_store_buffer)
+  # flexibility: fraction of annual demand used as e_nom_max for flat/profile stores
+  #              (0 = rigid demand, no store added)
+  CH4_demand_mode: flat
+  CH4_bins: 1            # 1=year-end | 12=monthly | 52=weekly | N=N equal bins
+  CH4_flexibility: 0.00   # only for flat OR profile modes
+  CH4_profile: null      # path to seasonal profile CSV (data/common/); null = built-in NG_DK
+
+  H2_demand_mode: profile
+  H2_bins: 12
+  H2_flexibility: 0.03
+  H2_profile: data/common/NG_demand_DK_profile.csv
+
+  MeOH_demand_mode: bins_profile
+  MeOH_bins: 52
+  MeOH_flexibility: 0.0
+  MeOH_profile: data/common/NG_demand_DK_profile.csv
+
+  demand_store_buffer: 0.0   # extra headroom for bins_profile store (e.g. 0.05 = +5%)
+
+# CO2 tax for fossil emissions and reward for negative emissions
+CO2_cost: 100 # €/t (CO2_cost)
+
+# existing CO2 cost (tax) in the reference year (if included in energy prices)
+CO2_cost_ref_year: 0
 
 # Sales of Electricity
 max_RE_to_grid : 0.1 # # max share of RE (internal consumption + export) that can be sold to the grid
@@ -40,7 +63,7 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: false
+  meoh: true
   methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
@@ -58,7 +81,7 @@ outputs_folder: outputs/single_analysis
 
 # RFNBOs
 rfnbos_dict:
-  limit: 'price'         # emissions | price | unlimited | disconnected
+  limit: 'unlimited'         # emissions | price | unlimited | disconnected
   price_threshold: 20      # €/MWh
   emission_threshold: 0.0648   # tCO2e/MWh
 
@@ -112,8 +135,8 @@ optimization:
 # Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
 # When enabled, `snakemake` targets the RH output and does NOT run solve_network.
 rolling_horizon:
-  enabled: false
+  enabled: true
   horizon: 168        # window size in hours (e.g. 168 = 1 week)
   overlap: 48         # overlap in hours between consecutive windows
-  network_path: 'outputs/single_analysis/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D/networks/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2024_El_0.1_DET_bg_eng_D_OPT.nc'  # REQUIRED when enabled — path to a .nc network to load
-  rh_year: null       # optional: year for RH inputs/weather; defaults to En_price_year
+  network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_100_MeOH_4_CH4_300_2024_El_0.1_DET_D_test_all/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_100_MeOH_4_CH4_300_2024_El_0.1_DET_D_test_all_OPT.nc'  # REQUIRED when enabled — path to a .nc network to load
+  rh_year: 2024       # optional: year for RH inputs/weather; defaults to En_price_year

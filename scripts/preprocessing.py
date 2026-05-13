@@ -28,6 +28,7 @@ project coordinates in ``config.yaml``.
 import pandas as pd
 import numpy as np
 import requests
+from pathlib import Path
 from scripts import parameters as p
 import os
 from io import StringIO
@@ -40,9 +41,12 @@ from scripts.config import (En_price_year,
                             EUR_to_DKK,
                             latitude,
                             longitude,
-                            H2_delivery_frequency,
-                            H2_profile_flag,
                             )
+
+# ── Demand profiles ─────────────────────────────────────────────────────────
+# Year-agnostic seasonal demand profiles live here (not in Inputs_{year}/).
+_COMMON_DIR = Path("data/common")
+_DEFAULT_PROFILE_PATH = _COMMON_DIR / "NG_demand_DK_profile.csv"
 
 
 # ------ INPUTS PRE-PROCESSING ----
@@ -87,56 +91,261 @@ def GL_inputs_to_eff(GL_inputs: "pandas.DataFrame") -> "pandas.DataFrame":
     return GL_eff
 
 
-def build_demands_TS(targets_dict: dict, NG_demand_DK: "pandas.DataFrame") -> dict:
-    """Build hourly demand time series for H₂, bioCH₄ and methanol.
+def _load_profile_ts(
+    path: "str | None",
+    snapshots: "pd.DatetimeIndex | None" = None,
+) -> "pd.Series":
+    """Load a seasonal demand profile CSV and return an hourly Series.
+
+    Parameters
+    ----------
+    path : str or None
+        Path to a semicolon-separated CSV with a datetime index (daily or
+        sub-daily) and one numeric column.  ``None`` falls back to the
+        built-in NG DK profile at ``data/common/NG_demand_DK_profile.csv``.
+    snapshots : pd.DatetimeIndex, optional
+        Optimization snapshot index.  When provided the profile's year is
+        remapped to the optimization year so that year-agnostic profiles
+        (e.g. from a different historical year) align correctly.
+
+    Returns
+    -------
+    pd.Series
+        Hourly values (daily originals divided by 24).  Index is tz-naive.
+    """
+    src = Path(path) if path else _DEFAULT_PROFILE_PATH
+    if not src.exists():
+        raise FileNotFoundError(
+            f"Demand profile not found: {src}\n"
+            "Run `snakemake preprocess_inputs` first, or place a custom\n"
+            "semicolon-separated CSV at that path."
+        )
+    df = pd.read_csv(src, sep=";", index_col=0)
+    _s = df.iloc[:, 0].astype(float)
+    _idx = pd.DatetimeIndex(_s.index)
+    if _idx.tz is not None:
+        _idx = _idx.tz_convert("UTC").tz_localize(None)
+    _s.index = _idx
+    _hi = pd.date_range(
+        _s.index.min(),
+        _s.index.max() + pd.Timedelta(days=1),
+        freq="h",
+        inclusive="left",
+    )
+    result = _s.reindex(_hi, method="ffill") / 24.0
+
+    if snapshots is not None:
+        opt_year = pd.DatetimeIndex(snapshots).year[0]
+        profile_year = result.index.year[0]
+        if profile_year != opt_year:
+            result.index = result.index.map(lambda t: t.replace(year=opt_year))
+
+    return result
+
+
+def build_product_demand_ts(
+    annual_demand: float,
+    mode: str,
+    snapshots: "pandas.DatetimeIndex",
+    profile_ts: "pandas.Series | None" = None,
+    n_bins: int = 1,
+    flexibility_fraction: float = 0.0,
+    store_buffer: float = 0.0,
+    col_name: str = "demand MWh",
+) -> "tuple[pandas.DataFrame, float | None]":
+    """Build an hourly demand time series and the delivery-store ``e_nom_max``.
+
+    Parameters
+    ----------
+    annual_demand : float
+        Total demand over the full snapshot period (MWh or equivalent).
+    mode : str
+        ``"flat"``         — constant MW every hour.
+        ``"profile"``      — continuous TS scaled to *annual_demand* via *profile_ts*.
+        ``"bins_flat"``    — zero except at *n_bins* endpoints; equal delivery per bin.
+        ``"bins_profile"`` — zero except at endpoints; delivery ∝ *profile_ts* integral
+                             within each bin.
+    snapshots : pandas.DatetimeIndex
+        Network snapshot index (typically 8 760 hourly steps).
+    profile_ts : pandas.Series, optional
+        Reference time series for ``"profile"`` and ``"bins_profile"`` modes.
+        Must cover the same period as *snapshots* (reindexed + forward-filled).
+    n_bins : int
+        Number of equal delivery intervals (only for ``"bins_*"`` modes).
+        1 = single year-end delivery; 12 ≈ monthly; 52 ≈ weekly.
+    flexibility_fraction : float
+        For ``"flat"``/``"profile"`` modes: fraction of *annual_demand* used as
+        ``e_nom_max`` for the delivery store.  0 → no store (rigid demand).
+    store_buffer : float
+        For ``"bins_profile"`` mode: extra headroom added on top of the largest
+        bin delivery (e.g. 0.05 → 5 % capacity margin).
+    col_name : str
+        Column label in the returned DataFrame.
+
+    Returns
+    -------
+    demand_df : pandas.DataFrame
+        Single-column DataFrame indexed by *snapshots*.
+    e_nom_max : float or None
+        Delivery-store ``e_nom_max``.  ``None`` → no store (rigid demand).
+    """
+    n_snap = len(snapshots)
+
+    if annual_demand <= 0:
+        return pd.DataFrame({col_name: 0.0}, index=snapshots), None
+
+    # ── Continuous modes ──────────────────────────────────────────────────────
+    if mode == "flat":
+        ts = pd.Series(annual_demand / n_snap, index=snapshots)
+        e_nom_max = flexibility_fraction * annual_demand if flexibility_fraction > 0 else None
+        return ts.to_frame(col_name), e_nom_max
+
+    if mode == "profile":
+        if profile_ts is None:
+            raise ValueError("profile_ts is required for mode='profile'")
+        prof = profile_ts.reindex(snapshots).ffill().bfill()
+        total = prof.sum()
+        if total <= 0:
+            raise ValueError("profile_ts sums to zero — cannot scale to annual_demand")
+        ts = prof / total * annual_demand
+        e_nom_max = flexibility_fraction * annual_demand if flexibility_fraction > 0 else None
+        return ts.to_frame(col_name), e_nom_max
+
+    # ── Bin modes ─────────────────────────────────────────────────────────────
+    if mode not in ("bins_flat", "bins_profile"):
+        raise ValueError(
+            f"Unknown demand mode '{mode}'. Choose: flat | profile | bins_flat | bins_profile"
+        )
+
+    ts = pd.Series(0.0, index=snapshots)
+
+    # Divide snapshot index into n_bins equal parts and snap to actual timestamps
+    endpoints = []
+    for i in range(n_bins):
+        end_idx = min(int(round((i + 1) * n_snap / n_bins)) - 1, n_snap - 1)
+        endpoints.append(snapshots[end_idx])
+    endpoints[-1] = snapshots[-1]  # guarantee last bin ends at final snapshot
+
+    if mode == "bins_flat":
+        delivery = annual_demand / n_bins
+        for ep in endpoints:
+            ts[ep] += delivery
+        e_nom_max = float(delivery)  # store sized to one bin's delivery
+
+    else:  # bins_profile
+        if profile_ts is None:
+            raise ValueError("profile_ts is required for mode='bins_profile'")
+        prof = profile_ts.reindex(snapshots).ffill().bfill()
+        total_prof = prof.sum()
+        if total_prof <= 0:
+            raise ValueError("profile_ts sums to zero — cannot compute bin weights")
+
+        bin_deliveries = []
+        prev_idx = 0
+        for ep in endpoints:
+            ep_idx = snapshots.get_loc(ep)
+            bin_prof = prof.iloc[prev_idx : ep_idx + 1].sum()
+            delivery = bin_prof / total_prof * annual_demand
+            bin_deliveries.append(delivery)
+            ts[ep] += delivery
+            prev_idx = ep_idx + 1
+
+        max_bin = max(bin_deliveries) if bin_deliveries else annual_demand
+        e_nom_max = max_bin * (1.0 + store_buffer)
+
+    return ts.to_frame(col_name), e_nom_max
+
+
+def build_demands_TS(targets_dict: dict) -> dict:
+    """Build hourly demand time series for bioCH₄, H₂ and methanol.
+
+    Demand shape (flat, profile, or periodic bins) and delivery-store sizing are
+    controlled by ``targets_dict`` keys set in ``config.yaml``.  No intermediate
+    CSV files are written — all values are computed in-memory and returned.
+
+    Seasonal profiles are loaded from CSV files under ``data/common/``.  Each
+    product can point to its own profile via the ``*_profile`` key in
+    ``targets``; ``null`` uses ``data/common/NG_demand_DK_profile.csv``.
 
     Parameters
     ----------
     targets_dict : dict
-        Demand targets from ``config.yaml`` with keys ``"demand_H2"``,
-        ``"demand_CH4"``, ``"demand_meoh"`` (annual MWh) and
-        ``"driver"`` (demand profile mode).
-    NG_demand_DK : pandas.DataFrame
-        Danish natural gas demand used as proxy for the H₂ grid injection
-        profile when ``H2_profile_flag`` is enabled.
+        Demand targets from ``config.yaml`` (``targets`` block).  Required keys:
+        ``"demand_CH4"``, ``"demand_H2"``, ``"demand_meoh"``.  Optional shape
+        keys: ``"CH4_demand_mode"``, ``"CH4_bins"``, ``"CH4_flexibility"``,
+        ``"CH4_profile"``, and their ``H2_*`` / ``MeOH_*`` equivalents, plus
+        ``"demand_store_buffer"``.
 
     Returns
     -------
     dict
-        Dictionary with keys:
-
-        * ``"bioCH4"`` — bioCH₄ demand :class:`pandas.DataFrame`
-        * ``"H2"`` — H₂ demand :class:`pandas.DataFrame`
-        * ``"meoh"`` — methanol demand :class:`pandas.DataFrame`
-        * ``"NG_DK"`` — hourly NG demand proxy :class:`pandas.Series`
+        Keys: ``"bioCH4"``, ``"bioCH4_e_nom_max"``, ``"H2"``,
+        ``"H2_e_nom_max"``, ``"meoh"``, ``"meoh_e_nom_max"``, ``"NG_DK"``.
     """
+    snapshots     = p.hours_in_period
+    store_buffer  = float(targets_dict.get("demand_store_buffer", 0.0))
 
-    '''Load GreenLab inputs'''
-    demand_H2 = targets_dict['demand_H2']
-    demand_CH4 = targets_dict['demand_CH4']
-    demand_meoh = targets_dict['demand_meoh']
+    # ── bioCH4 ────────────────────────────────────────────────────────────────
+    CH4_mode = targets_dict.get("CH4_demand_mode", "bins_flat")
+    CH4_bins = int(targets_dict.get("CH4_bins", 1))
+    CH4_flex = float(targets_dict.get("CH4_flexibility", 0.0))
+    bioCH4_demand, bioCH4_e_nom_max = build_product_demand_ts(
+        annual_demand        = targets_dict["demand_CH4"],
+        mode                 = CH4_mode,
+        snapshots            = snapshots,
+        profile_ts           = _load_profile_ts(targets_dict.get("CH4_profile"), snapshots) if "profile" in CH4_mode else None,
+        n_bins               = CH4_bins,
+        flexibility_fraction = CH4_flex,
+        store_buffer         = store_buffer,
+        col_name             = "bioCH4 demand MWh",
+    )
 
-    '''bioCH4 demand '''
-    bioCH4_demand = p.ref_df.copy()
-    bioCH4_demand = bioCH4_demand.rename(columns={p.ref_col_name: 'bioCH4 demand MWh'})
-    bioCH4_demand.at[bioCH4_demand.index[-1], 'bioCH4 demand MWh'] = demand_CH4
-    bioCH4_demand.to_csv(p.bioCH4_prod_input_file, sep=';')  # MWh/h
+    # ── Methanol ──────────────────────────────────────────────────────────────
+    MeOH_mode = targets_dict.get("MeOH_demand_mode", "bins_flat")
+    MeOH_bins = int(targets_dict.get("MeOH_bins", 1))
+    MeOH_flex = float(targets_dict.get("MeOH_flexibility", 0.0))
+    Methanol_demand, Methanol_e_nom_max = build_product_demand_ts(
+        annual_demand        = targets_dict["demand_meoh"],
+        mode                 = MeOH_mode,
+        snapshots            = snapshots,
+        profile_ts           = _load_profile_ts(targets_dict.get("MeOH_profile"), snapshots) if "profile" in MeOH_mode else None,
+        n_bins               = MeOH_bins,
+        flexibility_fraction = MeOH_flex,
+        store_buffer         = store_buffer,
+        col_name             = "Methanol demand MWh",
+    )
 
-    '''Methanol demand'''
-    Methanol_demand = p.ref_df.copy()
-    Methanol_demand.rename(columns={p.ref_col_name: 'Methanol demand MWh'}, inplace=True)
-    Methanol_demand.at[Methanol_demand.index[-1], 'Methanol demand MWh'] = demand_meoh
-    Methanol_demand.to_csv(p.Methanol_demand_input_file, sep=';')  # t/h
+    # ── H2 ────────────────────────────────────────────────────────────────────
+    H2_mode = targets_dict.get("H2_demand_mode", "bins_flat")
+    H2_bins = int(targets_dict.get("H2_bins", 1))
+    H2_flex = float(targets_dict.get("H2_flexibility", 0.0))
 
-    '''H2 demand with annual profile'''
-    H2_input_demand, NG_demand_DK_h = build_H2_grid_demand(targets_dict, NG_demand_DK, profile_flag=H2_profile_flag, n=H2_delivery_frequency)
+    H2_input_demand, H2_e_nom_max = build_product_demand_ts(
+        annual_demand        = targets_dict["demand_H2"],
+        mode                 = H2_mode,
+        snapshots            = snapshots,
+        profile_ts           = _load_profile_ts(targets_dict.get("H2_profile"), snapshots) if "profile" in H2_mode else None,
+        n_bins               = H2_bins,
+        flexibility_fraction = H2_flex,
+        store_buffer         = store_buffer,
+        col_name             = "H2_demand_MWh",
+    )
 
-    demands = {'bioCH4': bioCH4_demand,
-               'H2' : H2_input_demand,
-               'meoh' : Methanol_demand,
-               'NG_DK' : NG_demand_DK_h}
+    # ── Default NG_DK profile (kept in inputs_dict for downstream reference) ──
+    try:
+        NG_DK_h = _load_profile_ts(None, snapshots)
+    except FileNotFoundError:
+        NG_DK_h = None
 
-    return demands
+    return {
+        "bioCH4":           bioCH4_demand,
+        "bioCH4_e_nom_max": bioCH4_e_nom_max,
+        "H2":               H2_input_demand,
+        "H2_e_nom_max":     H2_e_nom_max,
+        "meoh":             Methanol_demand,
+        "meoh_e_nom_max":   Methanol_e_nom_max,
+        "NG_DK":            NG_DK_h,
+    }
 
 
 def load_input_data():
@@ -154,128 +363,13 @@ def load_input_data():
     CF_solar = CF_solar.set_axis(p.hours_in_period)
     NG_price_year = pd.read_csv(p.NG_price_year_input_file, sep=';', index_col=0)  # MWh/h y
     NG_price_year = NG_price_year.set_axis(p.hours_in_period)
-    NG_demand_DK = pd.read_csv(p.NG_demand_input_file, sep=';', index_col=0)  # currency/MWh
     DH_external_demand = pd.read_csv(p.DH_external_demand_input_file, sep=';', index_col=0)  # currency/MWh
     DH_external_demand = DH_external_demand.set_axis(p.hours_in_period)
 
-
-    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, DH_external_demand
+    return GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, DH_external_demand
 
 
 # ---- DEMANDS for H2, MeOH and El_DK1_GLS
-
-def build_H2_grid_demand(targets_dict, NG_demand_DK, profile_flag, n):
-    """
-    Calculate H2 demand distribution over a given number of intervals (n),
-    ensuring deliveries align with the last hour of each interval.
-
-    Parameters:
-    - H2_size: Hydrogen capacity size
-    - flh_H2: Full load hours of H2 system
-    - NG_demand_DK: DataFrame containing natural gas demand data
-    - col_name: Column name for storing H2 demand
-    - profile_flag: Boolean flag for profile-based allocation
-    - n: Number of intervals (default: 12 for months, 52 for weeks, 1 for single year-end delivery)
-
-    Returns:
-    - H2_demand_y: DataFrame aligned with p.ref_df, with deliveries at correct timestamps
-    """
-    demand_H2 = targets_dict['demand_H2']
-
-    # Initialize output DataFrame with the same structure and index as p.ref_df
-    H2_demand_y = p.ref_df.copy()
-    col_name= 'H2_demand_MWh'
-    H2_demand_y.rename(columns={'ref col': col_name}, inplace=True)
-    H2_demand_y[col_name] = 0.0
-
-    # NG_demand_DK align timestamp
-    s = NG_demand_DK.iloc[:, 0].astype(float)
-    idx = pd.DatetimeIndex(s.index)
-    if idx.tz is not None:
-        idx = idx.tz_convert("UTC").tz_localize(None)
-    s.index = idx
-    start = s.index.min()
-    end = s.index.max() + pd.Timedelta(days=1)  # include the entire last day
-    hourly_index = pd.date_range(start, end, freq="h", inclusive="left")
-    NG_demand_DK_2 = (s.reindex(hourly_index, method="ffill") / 24.0)
-
-    # Convert start_date and end_date from ISO 8601 format
-    start_date = datetime.strptime(p.start_date, "%Y-%m-%d %H:%M")
-    end_date = datetime.strptime(p.end_date, "%Y-%m-%d %H:%M")
-
-    # Determine the time step based on n (monthly or weekly)
-    if n == 12:
-        step = timedelta(days=30)  # Approximate monthly step
-
-    elif n == 52:
-        step = timedelta(weeks=1)  # Weekly step
-    elif n == 1:
-        step = end_date - start_date  # Single delivery at the end of the year
-    else:
-        raise ValueError("Invalid value for n. Use 1 (yearly), 12 (monthly), or 52 (weekly).")
-
-    # Generate delivery timestamps
-    delivery_dates = []
-    current_time = start_date
-
-    for i in range(n):
-        # Calculate next delivery time
-        if n == 1:
-            next_time = end_date  # One delivery at year-end
-        else:
-            next_time = (current_time + step).replace(hour=23, minute=0, second=0)  # Last hour of the interval
-
-        if next_time > end_date or i == n - 1:  # Ensure last delivery is exactly at year-end
-            next_time = end_date.replace(hour=23, minute=0, second=0)
-
-        # Find the last available hour within the reference DataFrame index
-        valid_times = H2_demand_y.index[H2_demand_y.index <= next_time]
-        if valid_times.empty:
-            continue
-        last_hour = valid_times[-1]  # Ensures delivery at the last available hour
-
-        delivery_dates.append(last_hour)
-        #current_time = next_time  # Move to next interval start
-
-    if profile_flag :
-        # Assign H2 demand values at the correct timestamps
-        def slice_by_month_day_hour(df, start, end):
-            mask = (
-                           (df.index.month > start.month) |
-                           ((df.index.month == start.month) &
-                            ((df.index.day > start.day) |
-                             ((df.index.day == start.day) & (df.index.hour >= start.hour))))
-                   ) & (
-                           (df.index.month < end.month) |
-                           ((df.index.month == end.month) &
-                            ((df.index.day < end.day) |
-                             ((df.index.day == end.day) & (df.index.hour <= end.hour))))
-                   )
-            return df.loc[mask]
-
-
-        for i in range(len(delivery_dates)):
-            end_time = delivery_dates[i]
-            st_time = delivery_dates[i - 1] if i > 0 else start_date  # Ensure first interval starts from start_date
-
-            # Compute H2_val based only on NG demand within the current interval
-            period_data = slice_by_month_day_hour(NG_demand_DK_2, st_time, end_time)
-            total_demand = NG_demand_DK_2.sum() # Total demand for normalization
-
-            if total_demand > 0:  # Avoid division by zero
-                H2_val = period_data.sum() / total_demand * demand_H2 # H2_size * flh_H2
-            else:
-                H2_val = 0  # If there's no demand data, keep it zero
-
-            H2_demand_y.loc[delivery_dates[i], :] = H2_val
-
-    else:
-        H2_val = demand_H2 / n
-        H2_demand_y.loc[delivery_dates, :] = H2_val
-
-    H2_demand_y.to_csv(p.H2_demand_input_file, sep=';')
-
-    return H2_demand_y, NG_demand_DK_2
 
 # ----- EXTERNAL ENERGY MARKETS
 
@@ -744,8 +838,7 @@ def pre_processing_energy_data(year: int = None) -> None:
     El_price_input_file           = f'{_folder}/Elspotprices_input.csv'
     CO2emis_input_file            = f'{_folder}/CO2emis_input.csv'
     NG_price_year_input_file      = f'{_folder}/NG_price_year_input.csv'
-    NG_demand_input_file          = f'{_folder}/NG_demand_DK_input.csv'
-    DH_external_demand_input_file = f'{_folder}/DH_external_demand_input.csv'
+    DH_external_demand_input_file = str(_COMMON_DIR / 'DH_external_demand_input.csv')
     CF_wind_input_file            = f'{_folder}/CF_wind.csv'
     CF_solar_input_file           = f'{_folder}/CF_solar.csv'
     # -------------------------------------------------------------------------
@@ -885,45 +978,51 @@ def pre_processing_energy_data(year: int = None) -> None:
     NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay']).dt.tz_localize(None)
     NG_demand_DK.set_index('GasDay', inplace=True)
     NG_demand_DK = remove_feb_29(NG_demand_DK)
-    NG_demand_DK.to_csv(NG_demand_input_file, sep=';')  # €/MWh
+    # Save to data/common/ as the year-agnostic seasonal demand profile
+    _COMMON_DIR.mkdir(parents=True, exist_ok=True)
+    if not _DEFAULT_PROFILE_PATH.exists():
+        NG_demand_DK.to_csv(_DEFAULT_PROFILE_PATH, sep=';')
 
     '''District heating data'''
-    # Download weather data near Skive (Mejrup)
-    # https://www.dmi.dk/friedata/observationer/
-    data_folder = p.DH_data_folder  # prices in currency/kWh
-    name_files = os.listdir(data_folder)
-    DH_Skive = pd.DataFrame()
+    # Profile is derived from fixed 2019 Skive weather data — year-agnostic.
+    # Skip if already present in data/common/ to avoid re-reading local DMI files
+    # on non-EU (e.g. California) machines where p.DH_data_folder may be absent.
+    if not Path(DH_external_demand_input_file).exists():
+        # https://www.dmi.dk/friedata/observationer/
+        data_folder = p.DH_data_folder
+        name_files = os.listdir(data_folder)
+        DH_Skive = pd.DataFrame()
 
-    for name in name_files:
-        df_temp_2 = pd.read_csv(os.path.join(data_folder, name), sep=';', usecols=['DateTime', 'Middeltemperatur'])
-        DH_Skive = pd.concat([DH_Skive, df_temp_2])
+        for name in name_files:
+            df_temp_2 = pd.read_csv(os.path.join(data_folder, name), sep=';', usecols=['DateTime', 'Middeltemperatur'])
+            DH_Skive = pd.concat([DH_Skive, df_temp_2])
 
-    DH_Skive = DH_Skive.drop_duplicates(subset='DateTime', keep='first')
-    DH_Skive = DH_Skive.sort_values(by=['DateTime'], ascending=True)
-    DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'])
-    DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
-    hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='h')
-    hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
-    DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
+        DH_Skive = DH_Skive.drop_duplicates(subset='DateTime', keep='first')
+        DH_Skive = DH_Skive.sort_values(by=['DateTime'], ascending=True)
+        DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'])
+        DH_Skive['DateTime'] = pd.to_datetime(DH_Skive['DateTime'].dt.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+        hours_in_2019 = pd.date_range('2019-01-01T00:00' + 'Z', '2020-01-01T00:00' + 'Z', freq='h')
+        hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
+        DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
 
-    DH_max_capacity = p.DH_Skive_Capacity  # MW
-    # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
-    DH_Tamb_min = p.DH_Tamb_min  # minimum outdoor temp --> maximum Capacity Factor
-    DH_Tamb_max = p.DH_Tamb_max  # maximum outdoor temp--> capacity Factor = 0
-    CF_DH = (DH_Tamb_max - DH_Skive['Middeltemperatur'].values) / (DH_Tamb_max - DH_Tamb_min)
-    CF_DH[CF_DH < 0] = 0
-    DH_Skive['Capacity Factor DH'] = CF_DH
-    # adjust for base load in summer months due to sanitary water
-    # assumption: mean heat load in January/July = 6 (from Aarhus data).
-    DH_CFmean_Jan = np.mean(DH_Skive.loc['2019-01', 'Capacity Factor DH'])
-    DH_CFbase_load = DH_CFmean_Jan / 4
-    DH_Skive['Capacity Factor DH'] = DH_Skive['Capacity Factor DH'] + DH_CFbase_load
-    DH_Skive['DH demand MWh'] = DH_Skive[
-                                    'Capacity Factor DH'] * DH_max_capacity  # estimated demand for DH in Skive municipality
-    DH_Skive = remove_feb_29(DH_Skive)
-    DH_Skive = DH_Skive.set_axis(hours_in_period)
-    DH_Skive = DH_Skive.interpolate(method='linear')
-    DH_Skive.to_csv(DH_external_demand_input_file, sep=';')  # MWh/h
+        DH_max_capacity = p.DH_Skive_Capacity  # MW
+        # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
+        DH_Tamb_min = p.DH_Tamb_min  # minimum outdoor temp --> maximum Capacity Factor
+        DH_Tamb_max = p.DH_Tamb_max  # maximum outdoor temp--> capacity Factor = 0
+        CF_DH = (DH_Tamb_max - DH_Skive['Middeltemperatur'].values) / (DH_Tamb_max - DH_Tamb_min)
+        CF_DH[CF_DH < 0] = 0
+        DH_Skive['Capacity Factor DH'] = CF_DH
+        # adjust for base load in summer months due to sanitary water
+        # assumption: mean heat load in January/July = 6 (from Aarhus data).
+        DH_CFmean_Jan = np.mean(DH_Skive.loc['2019-01', 'Capacity Factor DH'])
+        DH_CFbase_load = DH_CFmean_Jan / 4
+        DH_Skive['Capacity Factor DH'] = DH_Skive['Capacity Factor DH'] + DH_CFbase_load
+        DH_Skive['DH demand MWh'] = DH_Skive[
+                                        'Capacity Factor DH'] * DH_max_capacity
+        DH_Skive = remove_feb_29(DH_Skive)
+        DH_Skive = DH_Skive.set_axis(hours_in_period)
+        DH_Skive = DH_Skive.interpolate(method='linear')
+        DH_Skive.to_csv(DH_external_demand_input_file, sep=';')  # MWh/h
 
     '''Onshore Wind and Solar Capacity Factors'''
     # Download CF for wind and solar corresponding to the energy year
@@ -990,34 +1089,37 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
     """
 
     # load the inputs form CSV files
-    GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, NG_demand_DK, DH_external_demand = load_input_data()
+    GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, DH_external_demand = load_input_data()
 
     '''Build all demands'''
     # build demands TS (considers targets_dict['driver'])
-    demands = build_demands_TS (targets_dict, NG_demand_DK)
+    demands = build_demands_TS(targets_dict)
     NG_DK = demands['NG_DK']
 
-    H2_input_demand = demands['H2']
-    bioCH4_demand = demands['bioCH4']
-    Methanol_demand = demands['meoh']
+    H2_input_demand   = demands['H2']
+    bioCH4_demand     = demands['bioCH4']
+    Methanol_demand   = demands['meoh']
 
-
-    inputs_dict = {'GL_inputs': GL_inputs,
-                   'GL_eff': GL_eff,
-                   'Elspotprices': Elspotprices,
-                   'CO2_emiss_El': CO2_emiss_El,
-                   'bioCH4_demand': bioCH4_demand,
-                   'CF_wind': CF_wind,
-                   'CF_solar': CF_solar,
-                   'NG_price_year': NG_price_year,
-                   'Methanol_input_demand': Methanol_demand,
-                   'NG_demand_DK': NG_DK,
-                   'DH_external_demand': DH_external_demand,
-                   'H2_input_demand': H2_input_demand,
-                   'CO2 cost': CO2_cost,
-                   'CO2 cost ref year' : CO2_cost_ref_year,
-                   'max_RE_to_grid': max_RE_to_grid,
-                   }
+    inputs_dict = {
+        'GL_inputs':               GL_inputs,
+        'GL_eff':                  GL_eff,
+        'Elspotprices':            Elspotprices,
+        'CO2_emiss_El':            CO2_emiss_El,
+        'bioCH4_demand':           bioCH4_demand,
+        'bioCH4_store_e_nom_max':  demands['bioCH4_e_nom_max'],
+        'CF_wind':                 CF_wind,
+        'CF_solar':                CF_solar,
+        'NG_price_year':           NG_price_year,
+        'Methanol_input_demand':   Methanol_demand,
+        'Methanol_store_e_nom_max': demands['meoh_e_nom_max'],
+        'NG_demand_DK':            NG_DK,
+        'DH_external_demand':      DH_external_demand,
+        'H2_input_demand':         H2_input_demand,
+        'H2_store_e_nom_max':      demands['H2_e_nom_max'],
+        'CO2 cost':                CO2_cost,
+        'CO2 cost ref year':       CO2_cost_ref_year,
+        'max_RE_to_grid':          max_RE_to_grid,
+    }
 
     if targets_dict["driver"] == "price":
         idx = Elspotprices.index  # <- align with scenario/year data

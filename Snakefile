@@ -114,7 +114,7 @@ include: "rules/rolling_horizon.smk"
 rule all:
     input:
         expand(
-            "{outdir}/{network}/networks/rolling_horizon/plots_rh/.done",
+            "{outdir}/{network}/plots_rh/.done",
             outdir=OUTDIR, network=NETWORK,
         ) if RH_ENABLED else
         expand("{outdir}/{network}/plots/.done", outdir=OUTDIR, network=NETWORK),

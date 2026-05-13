@@ -1,0 +1,669 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scripts.create_stoch_scenarios &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scripts/create_stoch_scenarios';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2F_modules/scripts/create_stoch_scenarios.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scripts.create_stoch_scenarios</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: MIT</span>
+<span class="sd">&quot;&quot;&quot;Stochastic scenario coupling for the two-stage GreenBubble LP.</span>
+
+<span class="sd">This module reads the ``stochastic`` block from ``config.yaml`` and couples</span>
+<span class="sd">multiple single-year PyPSA networks into a single probability-weighted LP.</span>
+<span class="sd">Key exported symbols:</span>
+
+<span class="sd">* ``scenarios`` — dict mapping year strings to scenario probabilities.</span>
+<span class="sd">* ``CO2_cost_s`` — dict mapping year strings to CO₂ prices (EUR/t).</span>
+<span class="sd">* :func:`create_scenarios` — couples single-year networks into the</span>
+<span class="sd">  stochastic network in-place.</span>
+<span class="sd">* :func:`set_input_paths` — redirects :mod:`scripts.parameters` file</span>
+<span class="sd">  paths to a specific scenario year (used for EVPI wait-and-see solves).</span>
+
+<span class="sd">.. note::</span>
+<span class="sd">   The EVPI (Expected Value of Perfect Information) calculation requires</span>
+<span class="sd">   solving one additional deterministic network per scenario year.  This is</span>
+<span class="sd">   orchestrated by :mod:`scripts.snakemake_solve`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">scripts.config</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">c</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scripts.parameters</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">p</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_all_inputs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">en_market_prices_w_CO2</span><span class="p">,</span> <span class="n">add_el_grid_import_RFNBOs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="c1"># Example</span>
+<span class="c1">#scenarios = {&quot;2020&quot;: 0.25, &quot;2021&quot;: 0.25, &quot;2023&quot;: 0.25, &quot;2024&quot;: 0.25}</span>
+<span class="c1">#CO2_cost_s = {&quot;2020&quot;: 100, &quot;2021&quot;: 100, &quot;2023&quot;: 100, &quot;2024&quot;: 100}</span>
+
+<span class="n">scenarios</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">stochastic</span><span class="p">[</span><span class="s1">&#39;scenarios&#39;</span><span class="p">]</span>
+<span class="n">CO2_cost_s</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">stochastic</span><span class="p">[</span><span class="s1">&#39;CO2_cost_s&#39;</span><span class="p">]</span>
+<span class="n">CO2_cost_ref_year_s</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">stochastic</span><span class="p">[</span><span class="s1">&#39;CO2_cost_ref_year_s&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="scenarios_check">
+<a class="viewcode-back" href="../../api.html#scripts.create_stoch_scenarios.scenarios_check">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scenarios_check</span><span class="p">(</span><span class="n">scenarios</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;norm&#39;</span><span class="p">):</span>
+    <span class="c1"># function that checks if probability of scenarios are summing to 1</span>
+    <span class="c1"># a == &#39;norm&#39;: normalize probability to sum 1</span>
+
+    <span class="n">prob_tot</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scenarios</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">total_prob</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">prob_tot</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">total_prob</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s1">&#39;norm&#39;</span><span class="p">:</span>
+            <span class="n">new_probs</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">/</span><span class="nb">sum</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prob_tot</span><span class="p">]</span>
+            <span class="n">checked_scenarios</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">scenarios</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">new_probs</span><span class="p">))</span>
+            <span class="nb">print</span> <span class="p">(</span><span class="s1">&#39;WARNING: sum of scenarios probability not 1. Probability were normalized&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;sum of scenarios probability&#39;</span> <span class="p">,</span> <span class="nb">sum</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;WARNING: sum of scenarios probability not 1&#39;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">checked_scenarios</span> <span class="o">=</span> <span class="n">scenarios</span>
+
+    <span class="c1"># check CO2 cost per scenario</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scenarios</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">CO2_cost_s</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Length of scenarios and CO2 cost per scenario not equal&quot;</span><span class="p">)</span>
+
+    <span class="c1"># check CO2 cost per scenario</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scenarios</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">CO2_cost_ref_year_s</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Length of scenarios and CO2 cost ref per scenario not equal&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">checked_scenarios</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span></div>
+
+
+
+<div class="viewcode-block" id="set_input_paths">
+<a class="viewcode-back" href="../../api.html#scripts.create_stoch_scenarios.set_input_paths">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_input_paths</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;Inputs&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace the last path component with f&quot;{prefix}_{year}&quot;.</span>
+<span class="sd">    Works even if folder_data has a trailing slash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+
+    <span class="c1"># normalize (remove trailing slash)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">folder_data</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+    <span class="n">parent</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>        <span class="c1"># e.g. &quot;data&quot; or &quot;data/California&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">folder_data</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># update derived file paths</span>
+    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">folder_data</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">El_price_input_file</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;Elspotprices_input.csv&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">CF_wind_input_file</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;CF_wind.csv&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">CF_solar_input_file</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;CF_solar.csv&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">NG_price_year_input_file</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;NG_price_year_input.csv&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;el file path&#39;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">El_price_input_file</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;base dir&#39;</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+
+<div class="viewcode-block" id="create_inputs_per_scenario">
+<a class="viewcode-back" href="../../api.html#scripts.create_stoch_scenarios.create_inputs_per_scenario">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_inputs_per_scenario</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">):</span>
+    <span class="n">CO2_cost</span> <span class="o">=</span> <span class="n">CO2_cost_s</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="n">CO2_cost_ref_year</span> <span class="o">=</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="n">set_input_paths</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+    <span class="n">inputs_dict</span> <span class="o">=</span> <span class="n">prepare_all_inputs</span><span class="p">(</span>
+        <span class="n">targets_dict</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">targets_dict</span><span class="p">,</span>
+        <span class="n">CO2_cost</span><span class="o">=</span><span class="n">CO2_cost</span><span class="p">,</span>
+        <span class="n">CO2_cost_ref_year</span> <span class="o">=</span> <span class="n">CO2_cost_ref_year</span><span class="p">,</span>
+        <span class="n">max_RE_to_grid</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_RE_to_grid</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">en_market_prices</span> <span class="o">=</span> <span class="n">en_market_prices_w_CO2</span><span class="p">(</span><span class="n">inputs_dict</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="p">)</span>
+    <span class="n">p_max_pu_rfnbos</span> <span class="o">=</span> <span class="n">add_el_grid_import_RFNBOs</span><span class="p">(</span><span class="n">inputs_dict</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">rfnbos_dict</span><span class="p">)</span>
+
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;CF_wind&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;CF wind&quot;</span><span class="p">]</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;CF_solar&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;CF solar&quot;</span><span class="p">]</span>
+    <span class="n">el_price</span> <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;el_grid_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">el_grid_sell_price</span> <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;el_grid_sell_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">NG_price</span> <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;NG_grid_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">p_bioCH4</span> <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;bioCH4_grid_sell_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">p_max_pu_rfnbos</span> <span class="o">=</span> <span class="n">p_max_pu_rfnbos</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CF_wind</span><span class="p">,</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">el_price</span><span class="p">,</span> <span class="n">el_grid_sell_price</span><span class="p">,</span> <span class="n">NG_price</span><span class="p">,</span> <span class="n">p_max_pu_rfnbos</span><span class="p">,</span> <span class="n">p_bioCH4</span></div>
+
+
+
+<div class="viewcode-block" id="patch_timeseries">
+<a class="viewcode-back" href="../../api.html#scripts.create_stoch_scenarios.patch_timeseries">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">patch_timeseries</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">inputs_dict</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">,</span> <span class="n">CO2_cost</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace all year-dependent time series on *n* with data from *inputs_dict*.</span>
+
+<span class="sd">    Sets ``n.snapshots`` to the new year&#39;s time index (derived from the</span>
+<span class="sd">    electricity price series) and overwrites:</span>
+<span class="sd">      - solar / wind capacity factors (``generators_t.p_max_pu``)</span>
+<span class="sd">      - electricity buy/sell prices, NG price, bioCH4 sale price</span>
+<span class="sd">        (``links_t.marginal_cost``)</span>
+<span class="sd">      - RFNBO hourly import constraint (``links_t.p_max_pu``)</span>
+<span class="sd">      - CO2 sequestration and biochar credits (``links_t.marginal_cost``)</span>
+
+<span class="sd">    Static component data (capacities, efficiencies, topology) is untouched.</span>
+<span class="sd">    Used by the cross-year rolling-horizon pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">en_market_prices</span>   <span class="o">=</span> <span class="n">en_market_prices_w_CO2</span><span class="p">(</span><span class="n">inputs_dict</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="p">)</span>
+    <span class="n">p_max_pu_rfnbos</span>    <span class="o">=</span> <span class="n">add_el_grid_import_RFNBOs</span><span class="p">(</span><span class="n">inputs_dict</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">rfnbos_dict</span><span class="p">)</span>
+
+    <span class="n">CF_wind</span>            <span class="o">=</span> <span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;CF_wind&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;CF wind&quot;</span><span class="p">]</span>
+    <span class="n">CF_solar</span>           <span class="o">=</span> <span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;CF_solar&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;CF solar&quot;</span><span class="p">]</span>
+    <span class="n">el_price</span>           <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;el_grid_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">el_grid_sell_price</span> <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;el_grid_sell_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">NG_price</span>           <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;NG_grid_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+    <span class="n">p_bioCH4</span>           <span class="o">=</span> <span class="n">en_market_prices</span><span class="p">[</span><span class="s2">&quot;bioCH4_grid_sell_price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Update snapshots to the new year (reindexes all _t DataFrames to NaN first)</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">set_snapshots</span><span class="p">(</span><span class="n">el_price</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="c1"># Identify components by name pattern (same as create_scenarios)</span>
+    <span class="n">solar_gens</span>     <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;solar&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">wind_gens</span>      <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;wind&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">dk1_buy_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;DK1_to_&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">dk1_sell_links</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;_to_DK1&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">dk1_NG_links</span>   <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;NG boiler&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">co2_liq_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;CO2 Liq seq&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">biochar_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;biochar sequestration&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">rfnbos_links</span>   <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">carrier</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;rfnbos_grid_import&quot;</span><span class="p">)])</span>
+
+    <span class="n">sale_links_by_product</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s2">&quot;is_product_sale&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="s2">&quot;is_product_sale&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">sale</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;carrier&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sale</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">sale_links_by_product</span> <span class="o">=</span> <span class="n">sale</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;carrier&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">))</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+    <span class="c1"># Patch capacity factors</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">solar_gens</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">generators_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">wind_gens</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">generators_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+    <span class="c1"># Patch electricity / gas prices</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_buy_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">el_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_sell_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">el_grid_sell_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_NG_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">NG_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+    <span class="c1"># Patch product sale prices</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">sale_links_by_product</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bioCH4&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_bioCH4</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+    <span class="c1"># Patch RFNBO constraint</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">rfnbos_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_max_pu_rfnbos</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="c1"># Patch credits (CO2-cost dependent, not year-dependent per se)</span>
+    <span class="n">co2_credits</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;CO2 Liq credits&quot;</span><span class="p">,</span> <span class="s2">&quot;enable&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">CO2_cost</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">co2_liq_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">co2_credits</span>
+
+    <span class="n">biochar_credits</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;biochar credits&quot;</span><span class="p">,</span> <span class="s2">&quot;enable&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">CO2_cost</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">biochar_links</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="p">[</span><span class="n">lk</span><span class="p">]</span> <span class="o">=</span> <span class="n">biochar_credits</span></div>
+
+
+
+<div class="viewcode-block" id="create_scenarios">
+<a class="viewcode-back" href="../../api.html#scripts.create_stoch_scenarios.create_scenarios">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_scenarios</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">scenarios</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">,</span> <span class="n">n_flags_OK</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">):</span>
+    <span class="c1"># Guard: do not allow scenario expansion twice</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">buses</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;scenario&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">buses</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Network already has scenarios set (buses index has &#39;scenario&#39; level). &quot;</span>
+            <span class="s2">&quot;Do not call n.set_scenarios twice.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">checked_scenarios</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span> <span class="o">=</span> <span class="n">scenarios_check</span><span class="p">(</span><span class="n">scenarios</span><span class="o">=</span><span class="n">scenarios</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="o">=</span><span class="n">CO2_cost_s</span> <span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span> <span class="o">=</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;stop&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Identify components BEFORE adding scenarios</span>
+    <span class="n">solar_gens</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;solar&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">wind_gens</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;wind&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+
+    <span class="n">dk1_buy_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;DK1_to_&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">dk1_sell_links</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;_to_DK1&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">dk1_NG_links</span>   <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;NG boiler&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">co2_liq_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;CO2 Liq seq&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="n">biochar_links</span>  <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;biochar sequestration&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+
+    <span class="c1"># Identify sales links</span>
+    <span class="n">sale_links_by_product</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="s2">&quot;is_product_sale&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="s2">&quot;is_product_sale&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">sale</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sale</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="c1"># carrier might be missing for some links; drop those</span>
+            <span class="n">sale</span> <span class="o">=</span> <span class="n">sale</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;carrier&quot;</span><span class="p">])</span>
+            <span class="n">sale_links_by_product</span> <span class="o">=</span> <span class="n">sale</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;carrier&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">))</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+    <span class="c1"># find RFNBOS links</span>
+    <span class="n">rfnbos_links</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">carrier</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;rfnbos_grid_import&quot;</span><span class="p">)])</span>
+
+    <span class="c1"># Set scenarios (broadcast component tables)</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">set_scenarios</span><span class="p">(</span><span class="n">scenarios</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">scenarios</span><span class="p">:</span>
+        <span class="n">CF_wind</span><span class="p">,</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">el_price</span><span class="p">,</span> <span class="n">el_grid_sell_price</span><span class="p">,</span> <span class="n">NG_price</span><span class="p">,</span> <span class="n">p_max_pu_rfnbos</span><span class="p">,</span> <span class="n">p_bioCH4</span> <span class="o">=</span> \
+            <span class="n">create_inputs_per_scenario</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">tech_costs</span><span class="p">,</span> <span class="n">CO2_cost_s</span><span class="p">,</span> <span class="n">CO2_cost_ref_year_s</span><span class="p">)</span>
+
+        <span class="c1"># Solar / wind CFs</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">solar_gens</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">generators_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">g</span><span class="p">)]</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">wind_gens</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">generators_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">g</span><span class="p">)]</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+        <span class="c1"># purchasing links - prices</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_buy_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">el_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_sell_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">el_grid_sell_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">dk1_NG_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">NG_price</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+        <span class="c1"># selling links - prices</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">sale_links_by_product</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bioCH4&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">p_bioCH4</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+        <span class="c1"># RFNBO constraint</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">rfnbos_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">p_max_pu</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">p_max_pu_rfnbos</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+
+        <span class="c1"># Credits</span>
+        <span class="n">co2_credits</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;CO2 Liq credits&quot;</span><span class="p">,</span> <span class="s2">&quot;enable&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">CO2_cost_s</span><span class="p">[</span><span class="n">s</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">co2_liq_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">co2_credits</span>
+
+        <span class="n">biochar_credits</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">n_options</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;biochar credits&quot;</span><span class="p">,</span> <span class="s2">&quot;enable&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">CO2_cost_s</span><span class="p">[</span><span class="n">s</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">lk</span> <span class="ow">in</span> <span class="n">biochar_links</span><span class="p">:</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">links_t</span><span class="o">.</span><span class="n">marginal_cost</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lk</span><span class="p">)]</span> <span class="o">=</span> <span class="n">biochar_credits</span></div>
+
+
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
