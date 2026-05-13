@@ -46,11 +46,8 @@ RN_token = "3665f7dcb14437156a2071ac917e37a9165f9be8"  #
 entsoe_api = "5f634ee5-faa2-4257-8a63-9cb21a1c356d" # EU
 eia_api = 's9EmSaPvrh8X3CYL5GjsznA3JfaueLUWjmNvXGlB' # US
 
-""" Crete an external NG demand"""
-NG_demand_year = 2019 # year for NG demand
-
 '''Build snapshots Time Period in DK'''
-hours_in_period, start_date, end_date = build_snapshots (En_price_year)
+hours_in_period, start_date, end_date = build_snapshots(En_price_year)
 
 '''Define reference empty data frame''' #  used in preprocessing
 ref_col_name = 'ref col'
@@ -84,17 +81,10 @@ os.makedirs(folder_data, exist_ok=True)  # Create the folder if it doesn't exist
 GL_input_file = folder_model_inputs + '/GreenLab_Input_file.xlsx'
 El_price_input_file = folder_data + '/Elspotprices_input.csv'
 CO2emis_input_file = folder_data + '/CO2emis_input.csv'
-El_external_demand_input_file = folder_data + '/El_demand_input.csv'
 NG_price_year_input_file = folder_data + '/NG_price_year_input.csv'
-NG_demand_input_file = folder_data + '/NG_demand_DK_input.csv'
-Methanol_demand_input_file = folder_data + '/Methanol_demand_GL_max_input.csv'
-Methanation_demand_input_file = folder_data + '/Methanation_demand_GL_max_input.csv'
-DH_external_demand_input_file = folder_data + '/DH_external_demand_input.csv'
+DH_external_demand_input_file = 'data/common/DH_external_demand_input.csv'
 CF_wind_input_file = folder_data + '/CF_wind.csv'
 CF_solar_input_file = folder_data + '/CF_solar.csv'
-bioCH4_prod_input_file = folder_data + '/bioCH4_demand.csv'
-H2_demand_input_file = folder_data + '/H2_demand_input.csv'
-NG_price_data_folder = folder_model_inputs + '/NG_price_year_2019'
 DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/kWh
 
 # --------------------------------------
@@ -116,7 +106,6 @@ DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/
 # --------------------------
 '''Tolerances to avoid free-energy loops in model'''
 loop_tol = 5e-6
-
 
 # --------------------------
 """mapping to US costs """

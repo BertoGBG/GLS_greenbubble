@@ -1,0 +1,1398 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scripts.technology_inputs &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scripts/technology_inputs';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2F_modules/scripts/technology_inputs.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scripts.technology_inputs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: MIT</span>
+<span class="sd">&quot;&quot;&quot;Project-specific technology parameters not available in the technology-data catalogue.</span>
+
+<span class="sd">This module defines techno-economic and physical parameters for technologies</span>
+<span class="sd">that are specific to the GreenBubble / GreenLab Skive cluster.  Values are</span>
+<span class="sd">compiled into the ``tech_inputs`` dict, which is merged into the standard</span>
+<span class="sd">cost DataFrame by :func:`scripts.helpers.read_costs`.</span>
+
+<span class="sd">Physical property calculations (compressor work, isentropic efficiency, etc.)</span>
+<span class="sd">use `CoolProp &lt;http://www.coolprop.org/&gt;`_ for rigorous thermodynamic data.</span>
+
+<span class="sd">.. note::</span>
+<span class="sd">   Temperature and pressure levels for compressors are defined at the top of</span>
+<span class="sd">   this module and referenced throughout.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">CoolProp.CoolProp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">CP</span>
+
+<span class="c1"># --- Network Inputs  T and P levels -------</span>
+<span class="n">T_max_comp</span> <span class="o">=</span> <span class="mi">160</span> <span class="c1"># maximum discharge temperature for all compressors</span>
+<span class="n">T_ambient</span> <span class="o">=</span> <span class="mi">20</span> <span class="c1">#</span>
+
+<span class="c1"># biogas composition (used only locally)</span>
+<span class="n">biogas_mix</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Methane&quot;</span><span class="p">:</span> <span class="mf">0.65</span><span class="p">,</span> <span class="s2">&quot;CarbonDioxide&quot;</span><span class="p">:</span> <span class="mf">0.35</span><span class="p">}</span>
+<span class="n">M_CH4</span> <span class="o">=</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="s2">&quot;Methane&quot;</span><span class="p">)</span>       <span class="c1"># [kg/mol]</span>
+<span class="n">M_CO2</span> <span class="o">=</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">,</span> <span class="s2">&quot;CarbonDioxide&quot;</span><span class="p">)</span> <span class="c1"># [kg/mol]</span>
+<span class="n">M_mix</span> <span class="o">=</span> <span class="n">biogas_mix</span><span class="p">[</span><span class="s1">&#39;Methane&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">M_CH4</span> <span class="o">+</span> <span class="n">biogas_mix</span><span class="p">[</span><span class="s1">&#39;CarbonDioxide&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">M_CO2</span>
+<span class="n">w_CH4</span> <span class="o">=</span> <span class="n">biogas_mix</span><span class="p">[</span><span class="s1">&#39;Methane&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">M_CH4</span> <span class="o">/</span> <span class="n">M_mix</span>
+<span class="n">w_CO2</span> <span class="o">=</span> <span class="n">biogas_mix</span><span class="p">[</span><span class="s1">&#39;CarbonDioxide&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">M_CO2</span> <span class="o">/</span> <span class="n">M_mix</span>
+
+<span class="n">lhv_ch4</span> <span class="o">=</span> <span class="mf">13.9</span> <span class="c1"># MWh/t</span>
+<span class="n">lhv_biogas</span> <span class="o">=</span> <span class="n">lhv_ch4</span> <span class="o">*</span> <span class="n">w_CH4</span>
+<span class="n">lhv_h2</span> <span class="o">=</span> <span class="mf">33.33</span> <span class="c1"># MWh/t</span>
+<span class="n">lhv_meoh</span> <span class="o">=</span> <span class="mf">5.54</span> <span class="c1"># MWh/t</span>
+<span class="n">lhv_pellets</span> <span class="o">=</span> <span class="mf">14.5</span><span class="o">/</span><span class="mf">3.6</span> <span class="c1">#  MWh/t @ moisture pellets (straw pellets)</span>
+<span class="n">lhv_chips</span> <span class="o">=</span> <span class="mf">2.3</span> <span class="c1">#  MWh/t @ moisture moist biomass (straw pellets)</span>
+
+<span class="c1"># CoolProp -  cache to avoid rebuilding phase envelopes for mixtures repeatedly (needed for not pure fluids)</span>
+<span class="n">_AS_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># ------ List of stream in symbiosis network</span>
+<span class="c1"># if a value is missing is either calculated or constrained by a global value (e.g. T_max_comp)</span>
+<span class="c1"># fluid nomenclature must follow the Greenbube model, but it is matched to CoolProp standards: https://coolprop.org/fluid_properties/PurePseudoPure.html#list-of-fluids  within compressor_calculation</span>
+<span class="c1"># fluid field must match the nomenclature in n_config (e.g. H2 --&gt; H2 compressor, do not use Hydrogen --&gt; H2 compressor # TODO : make it more general</span>
+<span class="c1"># biogas is handles direclty from mixture defined in p</span>
+
+<span class="c1"># network of fluid streams : index is a UNIQUE NAME and is used for look-up in the model and add buses</span>
+<span class="c1"># T : Celsius</span>
+<span class="c1"># P : bar(a)</span>
+
+<span class="n">symbiosis_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Heat MT max&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;Water&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span> <span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Heat&#39;</span><span class="p">},</span> <span class="c1"># production</span>
+    <span class="s1">&#39;Heat MT min&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;Water&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">140</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Heat&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Heat MT&#39;</span><span class="p">,</span> <span class="s2">&quot;Heat MT storage&quot;</span><span class="p">]</span> <span class="p">},</span> <span class="c1"># return</span>
+    <span class="s1">&#39;Heat DH min&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;Water&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Heat&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Heat DH&#39;</span> <span class="p">,</span><span class="s1">&#39;DH grid&#39;</span><span class="p">,</span> <span class="s2">&quot;Heat DH storage&quot;</span><span class="p">]</span> <span class="p">},</span>
+    <span class="s1">&#39;Heat LT min&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;Water&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Heat&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Heat LT&#39;</span><span class="p">]</span> <span class="p">},</span>
+    <span class="s1">&#39;Ambient&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;Air&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Heat&#39;</span> <span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Heat amb&#39;</span><span class="p">]</span> <span class="p">},</span>
+    <span class="s1">&#39;H2 normal&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;CO2 normal&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;CH4 normal&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CH4&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_ch4</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span><span class="p">:</span> <span class="s1">&#39;gas&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s1">&#39;NG grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CH4&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_ch4</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;gas&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;NG&#39;</span><span class="p">]</span> <span class="p">},</span>
+    <span class="s1">&#39;H2 production&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;H2&#39;</span> <span class="p">,</span> <span class="s1">&#39;H2 distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;H2 delivery&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;H2 to methanolisation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_max_comp</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">80</span> <span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;H2 to methanolisation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;H2 to biomethanation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;H2 to biomethanation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;H2 to methanation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_max_comp</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;H2 to methanation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;H2 HP storage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_h2</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;H2 HP storage&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;CO2 biogas upgrading&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CO2 sep&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2 distribution&quot;</span><span class="p">,</span> <span class="s1">&#39;CO2 to biomethanation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;biogas&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;biogas&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_biogas</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;gas&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;biogas to biomethanation&#39;</span><span class="p">]},</span> <span class="c1"># coolprop name assigned in function (as a mixture)</span>
+    <span class="s1">&#39;biogas to methanation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;biogas&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_max_comp</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_biogas</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;gas&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:[</span><span class="s1">&#39;biogas to methanation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;bioCH4&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;CH4&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_ch4</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;gas&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;bioCH4&#39;</span><span class="p">,</span> <span class="s1">&#39;biomethane&#39;</span><span class="p">,</span> <span class="s1">&#39;bio methane&#39;</span><span class="p">,</span> <span class="s1">&#39;bio CH4&#39;</span><span class="p">]},</span>  <span class="c1"># coolprop name assigned in function (as a mixture)</span>
+    <span class="s1">&#39;meoh&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;Methanol&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_meoh</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;Methanol&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Methanol&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;CO2 to methanolisation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_max_comp</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CO2 to methanolisation&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2 to meoh&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;CO2 to methanation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_max_comp</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:[</span><span class="s1">&#39;CO2 to methanation&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;CO2 HP storage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CO2 HP storage&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;CO2 from HP storage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span><span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;CO2 from Liq storage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,},</span>
+    <span class="s1">&#39;CO2 Liq storage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">26</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CO2 Liq sequestration&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2 Liq storage&#39;</span><span class="p">]},</span>
+    <span class="s1">&#39;pellets&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;pellets&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_pellets</span><span class="p">,</span> <span class="s1">&#39;moisture&#39;</span> <span class="p">:</span> <span class="mf">0.13</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;pellets&#39;</span><span class="p">,</span><span class="s1">&#39;buses&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;pellets&#39;</span><span class="p">]},</span> <span class="c1"># name NOT valid in coolprop</span>
+    <span class="s1">&#39;chips&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fluid&quot;</span><span class="p">:</span> <span class="s2">&quot;pellets&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T_ambient</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">:</span> <span class="n">lhv_chips</span><span class="p">,</span> <span class="s1">&#39;moisture&#39;</span> <span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;carrier&#39;</span> <span class="p">:</span> <span class="s1">&#39;moist biomass&#39;</span><span class="p">,</span> <span class="s1">&#39;buses&#39;</span> <span class="p">:[</span><span class="s2">&quot;moist biomass&quot;</span><span class="p">]},</span>  <span class="c1"># name NOT valid in coolprop</span>
+<span class="p">}</span>
+
+<span class="n">symbiosis_n</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">symbiosis_data</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+
+<span class="c1"># list of mixtures defined in the model</span>
+<span class="n">mixture_database</span> <span class="o">=</span><span class="p">{</span><span class="s1">&#39;biogas&#39;</span> <span class="p">:</span> <span class="n">biogas_mix</span><span class="p">}</span>
+
+<span class="c1"># --- Component specific Calculations &amp; HELPERS</span>
+
+<div class="viewcode-block" id="belt_dryer_investment">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.belt_dryer_investment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">belt_dryer_investment</span><span class="p">(</span><span class="n">DM_flow_guess</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">bed_height</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">dry_bulk_density</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.130</span><span class="p">,</span> <span class="n">residence_time</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span> <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;Calcualtes the cost of a biomass belt dryier using the correlation from:</span>
+<span class="sd">    &#39;Techno-economic evaluation of biomass drying in moving beds: The effect of drying kinetics</span>
+<span class="sd">    on drying costs&#39; </span>
+<span class="sd">    DOI: 10.1080/07373937.2018.1492615 </span>
+
+<span class="sd">    inputs:</span>
+<span class="sd">    -   biomass_moisture_content (kg_h2o /kg_tot)</span>
+<span class="sd">    -   final_moisture (kg_h2o /kg_tot)</span>
+<span class="sd">    -   DM_flow_guess (t/h)</span>
+<span class="sd">    </span>
+<span class="sd">    Outputs:</span>
+<span class="sd">    -   investment : €/ MW dryed biomass</span>
+<span class="sd">    -   A_belt : m3/MW dryed biomass</span>
+
+<span class="sd">    industrial example: https://www.andritz.com/resource/blob/471276/94850607aea0f43b0f160ef4a1c827ed/pas-belt-dryers-for-sludge-biomass-rdf-en-web-data.pdf?utm_source=chatgpt.com</span>
+<span class="sd">    &quot;&quot;&quot;</span><span class="s2">&quot;&quot;</span>
+    <span class="c1"># assumptions</span>
+    <span class="c1"># bed_height = 0.1  # m</span>
+    <span class="c1"># dry_bulk_density = 0.130  # t/m3 straw</span>
+    <span class="c1"># residence_time = 50  # min</span>
+    <span class="c1"># DM_flow_guess = 3 # t/h</span>
+    <span class="c1"># LHV_final = 15/3.6 MWh/t</span>
+
+    <span class="c1"># Cross-sectional Area of the continous running belt (m2)</span>
+    <span class="n">A_belt</span> <span class="o">=</span> <span class="n">DM_flow_guess</span> <span class="o">/</span> <span class="mi">3600</span> <span class="o">*</span> <span class="n">residence_time</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="p">(</span><span class="n">dry_bulk_density</span> <span class="o">*</span> <span class="n">bed_height</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">A_belt</span> <span class="o">&gt;</span> <span class="mi">480</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;belt dryer area too large for one line&#39;</span><span class="p">)</span>
+
+    <span class="n">investment</span> <span class="o">=</span> <span class="p">(</span><span class="n">A_belt</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">3095</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">A_belt</span> <span class="o">/</span> <span class="mi">480</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5838</span><span class="p">))</span> <span class="o">/</span> <span class="n">DM_flow_guess</span> <span class="c1"># €/(t/h DM)</span>
+
+    <span class="n">belt_dryer</span> <span class="o">=</span><span class="p">{</span><span class="s1">&#39;investment&#39;</span> <span class="p">:</span> <span class="n">investment</span><span class="p">,</span> <span class="c1"># €/(t/h DM)</span>
+                 <span class="s1">&#39;belt area&#39;</span> <span class="p">:</span> <span class="n">A_belt</span><span class="o">/</span> <span class="n">DM_flow_guess</span> <span class="p">}</span> <span class="c1"># m2/(t/h DM)</span>
+    <span class="k">return</span> <span class="n">belt_dryer</span></div>
+
+
+
+
+<div class="viewcode-block" id="match_fluid_name_coolprop">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.match_fluid_name_coolprop">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">match_fluid_name_coolprop</span><span class="p">(</span><span class="n">fluid</span><span class="p">,</span> <span class="n">mixture_db</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return both a CoolProp AbstractState (ready to use) and the canonical fluid name.</span>
+
+<span class="sd">    If a mixture (e.g. &#39;biogas&#39;) is defined in mixture_db, create the mixture state automatically.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fluid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fluid</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="c1"># Default mixture database (can be overridden)</span>
+    <span class="k">if</span> <span class="n">mixture_db</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mixture_db</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># -----------------------------</span>
+    <span class="c1"># 1. Check if fluid is a user-defined mixture</span>
+    <span class="c1"># -----------------------------</span>
+    <span class="n">mixture</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">mix_name</span><span class="p">,</span> <span class="n">mix_def</span> <span class="ow">in</span> <span class="n">mixture_db</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">fluid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">mix_name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">mixture</span> <span class="o">=</span> <span class="n">mix_def</span>
+            <span class="k">break</span>
+
+    <span class="c1"># -----------------------------</span>
+    <span class="c1"># 2. If it’s a mixture, build the state</span>
+    <span class="c1"># -----------------------------</span>
+    <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">comps</span><span class="p">,</span> <span class="n">fracs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">comps</span><span class="p">,</span> <span class="n">fracs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">mixture</span><span class="p">)</span>
+        <span class="n">fracs</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fracs</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fracs</span><span class="p">]</span>
+        <span class="n">AS</span> <span class="o">=</span> <span class="n">CP</span><span class="o">.</span><span class="n">AbstractState</span><span class="p">(</span><span class="s2">&quot;HEOS&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">comps</span><span class="p">))</span>
+        <span class="n">AS</span><span class="o">.</span><span class="n">set_mole_fractions</span><span class="p">(</span><span class="n">fracs</span><span class="p">)</span>
+
+        <span class="c1"># 🔧 build phase envelope to enable PS updates</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">AS</span><span class="o">.</span><span class="n">build_phase_envelope</span><span class="p">(</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Could not build phase envelope for </span><span class="si">{</span><span class="n">comps</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">resolved_name</span> <span class="o">=</span> <span class="s2">&quot;&amp;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">comps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AS</span><span class="p">,</span> <span class="n">resolved_name</span>
+
+    <span class="c1"># -----------------------------</span>
+    <span class="c1"># 3. Otherwise, handle as pure fluid</span>
+    <span class="c1"># -----------------------------</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;Hydrogen&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;H2&quot;</span><span class="p">,</span> <span class="s2">&quot;hydrogen&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;Methane&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CH4&quot;</span><span class="p">,</span> <span class="s2">&quot;methane&quot;</span><span class="p">,</span> <span class="s2">&quot;biomethane&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;CarbonDioxide&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CO2&quot;</span><span class="p">,</span> <span class="s2">&quot;carbon dioxide&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;Water&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;H2O&quot;</span><span class="p">,</span> <span class="s2">&quot;water&quot;</span><span class="p">,</span> <span class="s2">&quot;steam&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;Air&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Air&quot;</span><span class="p">,</span> <span class="s2">&quot;air&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;Methanol&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;methanol&quot;</span><span class="p">,</span> <span class="s2">&quot;meoh&quot;</span><span class="p">,</span> <span class="s2">&quot;ch3oh&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;Nitrogen&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;N2&quot;</span><span class="p">,</span> <span class="s2">&quot;nitrogen&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Resolve alias</span>
+    <span class="k">for</span> <span class="n">canonical</span><span class="p">,</span> <span class="n">aliases</span> <span class="ow">in</span> <span class="n">match</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">fluid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">canonical</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="n">fluid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aliases</span><span class="p">]:</span>
+            <span class="n">fluid</span> <span class="o">=</span> <span class="n">canonical</span>
+            <span class="k">break</span>
+
+    <span class="c1"># Build CoolProp state for the pure fluid</span>
+    <span class="n">AS</span> <span class="o">=</span> <span class="n">CP</span><span class="o">.</span><span class="n">AbstractState</span><span class="p">(</span><span class="s2">&quot;HEOS&quot;</span><span class="p">,</span> <span class="n">fluid</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">AS</span><span class="p">,</span> <span class="n">fluid</span></div>
+
+
+
+<div class="viewcode-block" id="compress_multistage_with_Tcap">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.compress_multistage_with_Tcap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compress_multistage_with_Tcap</span><span class="p">(</span><span class="n">fluid_state</span><span class="p">,</span> <span class="n">fluid_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                                  <span class="n">p_in_bar</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p_out_bar</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                  <span class="n">T_in_C</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">T_max_C</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">160</span><span class="p">,</span>
+                                  <span class="n">eta_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">r_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
+                                  <span class="n">T_cool_C</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">T_split_C</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multi-stage compressor with max stage ratio and max discharge temperature.</span>
+<span class="sd">    Intercools to T_cool (default: T_in) after each stage.</span>
+<span class="sd">    Works with both pure fluids (str) and CoolProp mixtures (AbstractState).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fluid_state : str or CoolProp.AbstractState</span>
+<span class="sd">        Either a pure fluid name (e.g., &quot;CO2&quot;, &quot;Hydrogen&quot;)</span>
+<span class="sd">        or a prebuilt CoolProp.AbstractState for mixtures.</span>
+<span class="sd">    fluid_name : str</span>
+<span class="sd">        Human-readable fluid name, used in output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">math</span><span class="o">,</span><span class="w"> </span><span class="nn">CoolProp.CoolProp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">CP</span>
+
+    <span class="c1"># --- Temperature &amp; pressure conversions ---</span>
+    <span class="k">if</span> <span class="n">T_cool_C</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">T_cool_C</span> <span class="o">=</span> <span class="n">T_in_C</span>
+    <span class="n">T_in_K</span> <span class="o">=</span> <span class="n">T_in_C</span> <span class="o">+</span> <span class="mf">273.15</span>
+    <span class="n">T_max_K</span> <span class="o">=</span> <span class="n">T_max_C</span> <span class="o">+</span> <span class="mf">273.15</span>
+    <span class="n">T_cool_K</span> <span class="o">=</span> <span class="n">T_cool_C</span> <span class="o">+</span> <span class="mf">273.15</span>
+    <span class="n">T_split_K</span> <span class="o">=</span> <span class="n">T_split_C</span> <span class="o">+</span> <span class="mf">273.15</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">p_in</span> <span class="o">=</span> <span class="n">p_in_bar</span> <span class="o">*</span> <span class="mf">1e5</span>
+    <span class="n">p_out_target</span> <span class="o">=</span> <span class="n">p_out_bar</span> <span class="o">*</span> <span class="mf">1e5</span>
+
+    <span class="c1"># ===============================================================</span>
+    <span class="c1"># Define unified CoolProp property functions</span>
+    <span class="c1"># ===============================================================</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fluid_state</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># --- Pure fluid path ---</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_s</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span> <span class="k">return</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">fluid_state</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span> <span class="k">return</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">fluid_state</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_T</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span> <span class="k">return</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">fluid_state</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h_PS</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span> <span class="k">return</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">fluid_state</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># --- Mixture path ---</span>
+        <span class="n">AS</span> <span class="o">=</span> <span class="n">fluid_state</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_s</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+            <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">PT_INPUTS</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">AS</span><span class="o">.</span><span class="n">smass</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+            <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">PT_INPUTS</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">AS</span><span class="o">.</span><span class="n">hmass</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_T</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Robustly compute temperature from (H, P) for mixtures.</span>
+<span class="sd">            Avoids CoolProp &#39;stationary point&#39; errors by bounding and recovering gracefully.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">HmassP_INPUTS</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">AS</span><span class="o">.</span><span class="n">T</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Hard fallback: monotonic temperature search with guarded CoolProp calls</span>
+                <span class="n">T_low</span><span class="p">,</span> <span class="n">T_high</span> <span class="o">=</span> <span class="mf">80.0</span><span class="p">,</span> <span class="n">T_max_K</span> <span class="o">+</span> <span class="mf">50.0</span>
+                <span class="n">last_good_T</span><span class="p">,</span> <span class="n">last_good_h</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">80</span><span class="p">):</span>
+                    <span class="n">T_mid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">T_low</span> <span class="o">+</span> <span class="n">T_high</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">PT_INPUTS</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">T_mid</span><span class="p">)</span>
+                        <span class="n">h_mid</span> <span class="o">=</span> <span class="n">AS</span><span class="o">.</span><span class="n">hmass</span><span class="p">()</span>
+                        <span class="n">last_good_T</span><span class="p">,</span> <span class="n">last_good_h</span> <span class="o">=</span> <span class="n">T_mid</span><span class="p">,</span> <span class="n">h_mid</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="c1"># Handle the &#39;stationary point&#39; and other failures</span>
+                        <span class="k">if</span> <span class="s2">&quot;stationary&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;One stationary&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                            <span class="c1"># Move downwards in temperature to stay within stable region</span>
+                            <span class="n">T_high</span> <span class="o">=</span> <span class="n">T_mid</span> <span class="o">-</span> <span class="mf">10.0</span>
+                            <span class="k">continue</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># Non-recoverable CoolProp error → skip this T</span>
+                            <span class="n">T_mid</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">T_mid</span> <span class="o">+</span> <span class="mf">5.0</span><span class="p">,</span> <span class="n">T_high</span><span class="p">)</span>
+                            <span class="k">continue</span>
+
+                    <span class="c1"># Normal bisection logic</span>
+                    <span class="k">if</span> <span class="n">h_mid</span> <span class="o">&gt;</span> <span class="n">H</span><span class="p">:</span>
+                        <span class="n">T_high</span> <span class="o">=</span> <span class="n">T_mid</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">T_low</span> <span class="o">=</span> <span class="n">T_mid</span>
+
+                    <span class="c1"># Converged closely enough</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">h_mid</span> <span class="o">-</span> <span class="n">H</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">H</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-5</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">T_mid</span>
+
+                <span class="c1"># Fallback: return last good temperature if available</span>
+                <span class="k">if</span> <span class="n">last_good_T</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">last_good_T</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to compute T from H=</span><span class="si">{</span><span class="n">H</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">, P=</span><span class="si">{</span><span class="n">P</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e5</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> bar (mixture region unstable)&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h_PS</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">S_target</span><span class="p">,</span> <span class="n">T_max_K</span><span class="o">=</span><span class="mi">160</span> <span class="o">+</span> <span class="mf">273.15</span><span class="p">):</span>
+            <span class="n">T_low</span><span class="p">,</span> <span class="n">T_high</span> <span class="o">=</span> <span class="mf">80.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1500.0</span><span class="p">,</span> <span class="n">T_max_K</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">h_last</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="p">):</span>
+                <span class="n">T_mid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">T_low</span> <span class="o">+</span> <span class="n">T_high</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">PT_INPUTS</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">T_mid</span><span class="p">)</span>
+                    <span class="n">S_mid</span> <span class="o">=</span> <span class="n">AS</span><span class="o">.</span><span class="n">smass</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;stationary&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                        <span class="n">T_mid</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">T_mid</span> <span class="o">+</span> <span class="mf">5.0</span><span class="p">,</span> <span class="n">T_high</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                <span class="k">if</span> <span class="n">S_mid</span> <span class="o">&gt;</span> <span class="n">S_target</span><span class="p">:</span>
+                    <span class="n">T_high</span> <span class="o">=</span> <span class="n">T_mid</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">T_low</span> <span class="o">=</span> <span class="n">T_mid</span>
+                <span class="n">h_last</span> <span class="o">=</span> <span class="n">AS</span><span class="o">.</span><span class="n">hmass</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">h_last</span>
+
+    <span class="c1"># ===============================================================</span>
+    <span class="c1"># Stage compression logic</span>
+    <span class="c1"># ===============================================================</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stage_compress</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span> <span class="n">Tin</span><span class="p">,</span> <span class="n">pout_desired</span><span class="p">):</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">get_s</span><span class="p">(</span><span class="n">Tin</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="n">h1</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">Tin</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">discharge_T_and_work</span><span class="p">(</span><span class="n">pout</span><span class="p">):</span>
+            <span class="n">h2s</span> <span class="o">=</span> <span class="n">get_h_PS</span><span class="p">(</span><span class="n">pout</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="n">h2s</span> <span class="o">-</span> <span class="n">h1</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">ws</span> <span class="o">/</span> <span class="n">eta_s</span>
+            <span class="n">h2</span> <span class="o">=</span> <span class="n">h1</span> <span class="o">+</span> <span class="n">w</span>
+            <span class="n">T2</span> <span class="o">=</span> <span class="n">get_T</span><span class="p">(</span><span class="n">pout</span><span class="p">,</span> <span class="n">h2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">T2</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">ws</span>
+
+        <span class="c1"># --- respect max stage ratio ---</span>
+        <span class="n">pout_cap</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">pout_desired</span><span class="p">,</span> <span class="n">pin</span> <span class="o">*</span> <span class="n">r_max</span><span class="p">)</span>
+        <span class="n">T2_try</span><span class="p">,</span> <span class="n">w_try</span><span class="p">,</span> <span class="n">ws_try</span> <span class="o">=</span> <span class="n">discharge_T_and_work</span><span class="p">(</span><span class="n">pout_cap</span><span class="p">)</span>
+
+        <span class="c1"># --- limit discharge temperature ---</span>
+        <span class="k">if</span> <span class="n">T2_try</span> <span class="o">&lt;=</span> <span class="n">T_max_K</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">pout</span><span class="p">,</span> <span class="n">T2</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">pout_cap</span><span class="p">,</span> <span class="n">T2_try</span><span class="p">,</span> <span class="n">w_try</span><span class="p">,</span> <span class="n">ws_try</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_lo</span><span class="p">,</span> <span class="n">p_hi</span> <span class="o">=</span> <span class="n">pin</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">),</span> <span class="n">pout_cap</span>
+            <span class="n">T2_lo</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">discharge_T_and_work</span><span class="p">(</span><span class="n">p_lo</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="p">):</span>
+                <span class="n">p_mid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">p_lo</span> <span class="o">+</span> <span class="n">p_hi</span><span class="p">)</span>
+                <span class="n">T2_mid</span><span class="p">,</span> <span class="n">w_mid</span><span class="p">,</span> <span class="n">ws_mid</span> <span class="o">=</span> <span class="n">discharge_T_and_work</span><span class="p">(</span><span class="n">p_mid</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">T2_mid</span> <span class="o">&gt;</span> <span class="n">T_max_K</span><span class="p">:</span>
+                    <span class="n">p_hi</span> <span class="o">=</span> <span class="n">p_mid</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">p_lo</span> <span class="o">=</span> <span class="n">p_mid</span>
+                    <span class="n">T2_lo</span> <span class="o">=</span> <span class="n">T2_mid</span>
+                    <span class="n">w_try</span><span class="p">,</span> <span class="n">ws_try</span> <span class="o">=</span> <span class="n">w_mid</span><span class="p">,</span> <span class="n">ws_mid</span>
+            <span class="n">pout</span><span class="p">,</span> <span class="n">T2</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">p_lo</span><span class="p">,</span> <span class="n">T2_lo</span><span class="p">,</span> <span class="n">w_try</span><span class="p">,</span> <span class="n">ws_try</span>
+
+        <span class="c1"># --- aftercooling ---</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">h1</span> <span class="o">+</span> <span class="n">w</span>
+        <span class="n">h_cool</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">T_cool_K</span><span class="p">,</span> <span class="n">pout</span><span class="p">)</span>
+        <span class="n">Q_after</span> <span class="o">=</span> <span class="n">h2</span> <span class="o">-</span> <span class="n">h_cool</span>
+
+        <span class="c1"># --- split duty if needed ---</span>
+        <span class="n">Q_above</span><span class="p">,</span> <span class="n">Q_below</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">T_split_K</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">T2</span> <span class="o">&gt;</span> <span class="n">T_cool_K</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="n">T_hi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">T2</span><span class="p">,</span> <span class="n">T_split_K</span><span class="p">),</span> <span class="n">T_cool_K</span><span class="p">)</span>
+            <span class="n">h_split</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">T_hi</span><span class="p">,</span> <span class="n">pout</span><span class="p">)</span>
+            <span class="n">Q_above</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">h2</span> <span class="o">-</span> <span class="n">h_split</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">Q_below</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">h_split</span> <span class="o">-</span> <span class="n">h_cool</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">((</span><span class="n">Q_above</span> <span class="o">+</span> <span class="n">Q_below</span><span class="p">)</span> <span class="o">-</span> <span class="n">Q_after</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">Q_after</span><span class="p">):</span>
+                <span class="n">h_split</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">T_split_K</span><span class="p">,</span> <span class="n">T_cool_K</span><span class="p">),</span> <span class="n">pout</span><span class="p">)</span>
+                <span class="n">Q_above</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">h2</span> <span class="o">-</span> <span class="n">h_split</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">Q_below</span> <span class="o">=</span> <span class="n">Q_after</span> <span class="o">-</span> <span class="n">Q_above</span>
+
+        <span class="c1">#print(&#39;T_in_C&#39;,Tin - 273.15 )</span>
+        <span class="c1">#print(&#39;T_out_C&#39;, T2 - 273.15)</span>
+        <span class="c1">#print(&#39;p_in_bar&#39;,pin / 1e5 )</span>
+        <span class="c1">#print(&#39;p_out_bar&#39;, pout / 1e5)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;p_in_bar&#39;</span><span class="p">:</span> <span class="n">pin</span> <span class="o">/</span> <span class="mf">1e5</span><span class="p">,</span>
+            <span class="s1">&#39;T_in_C&#39;</span><span class="p">:</span> <span class="n">Tin</span> <span class="o">-</span> <span class="mf">273.15</span><span class="p">,</span>
+            <span class="s1">&#39;p_out_bar&#39;</span><span class="p">:</span> <span class="n">pout</span> <span class="o">/</span> <span class="mf">1e5</span><span class="p">,</span>
+            <span class="s1">&#39;T_out_C&#39;</span><span class="p">:</span> <span class="n">T2</span> <span class="o">-</span> <span class="mf">273.15</span><span class="p">,</span>
+            <span class="s1">&#39;w_actual_J_per_kg&#39;</span><span class="p">:</span> <span class="n">w</span><span class="p">,</span>
+            <span class="s1">&#39;w_isentropic_J_per_kg&#39;</span><span class="p">:</span> <span class="n">ws</span><span class="p">,</span>
+            <span class="s1">&#39;Q_aftercool_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_after</span><span class="p">,</span>
+            <span class="s1">&#39;Q_after_above_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_above</span><span class="p">,</span>
+            <span class="s1">&#39;Q_after_below_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_below</span><span class="p">,</span>
+            <span class="s1">&#39;ratio&#39;</span><span class="p">:</span> <span class="n">pout</span> <span class="o">/</span> <span class="n">pin</span>
+        <span class="p">}</span>
+
+    <span class="c1"># ===============================================================</span>
+    <span class="c1"># Compute number of stages</span>
+    <span class="c1"># ===============================================================</span>
+    <span class="n">total_ratio</span> <span class="o">=</span> <span class="n">p_out_target</span> <span class="o">/</span> <span class="n">p_in</span>
+    <span class="n">n_min_ratio</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">total_ratio</span><span class="p">,</span> <span class="n">r_max</span><span class="p">))</span> <span class="k">if</span> <span class="n">total_ratio</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">n_min_ratio</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p_out must be greater than p_in for compression.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ===============================================================</span>
+    <span class="c1"># Run compression sequence</span>
+    <span class="c1"># ===============================================================</span>
+    <span class="n">stages</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pin</span><span class="p">,</span> <span class="n">Tin</span> <span class="o">=</span> <span class="n">p_in</span><span class="p">,</span> <span class="n">T_in_K</span>
+    <span class="n">remaining_ratio</span> <span class="o">=</span> <span class="n">p_out_target</span> <span class="o">/</span> <span class="n">pin</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_min_ratio</span> <span class="o">+</span> <span class="mi">20</span><span class="p">):</span>
+        <span class="n">stages_left_guess</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">remaining_ratio</span><span class="p">,</span> <span class="n">r_max</span><span class="p">)))</span>
+        <span class="n">r_eq</span> <span class="o">=</span> <span class="n">remaining_ratio</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">stages_left_guess</span><span class="p">)</span>
+        <span class="n">pout_desired</span> <span class="o">=</span> <span class="n">pin</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span><span class="n">r_max</span><span class="p">,</span> <span class="n">r_eq</span><span class="p">)</span>
+
+        <span class="n">st</span> <span class="o">=</span> <span class="n">stage_compress</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span> <span class="n">Tin</span><span class="p">,</span> <span class="n">pout_desired</span><span class="p">)</span>
+        <span class="n">stages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+        <span class="n">pin</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="s1">&#39;p_out_bar&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e5</span>
+        <span class="n">Tin</span> <span class="o">=</span> <span class="n">T_cool_K</span>
+        <span class="n">remaining_ratio</span> <span class="o">=</span> <span class="n">p_out_target</span> <span class="o">/</span> <span class="n">pin</span>
+
+        <span class="k">if</span> <span class="n">pin</span> <span class="o">&gt;=</span> <span class="n">p_out_target</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">):</span>
+            <span class="k">break</span>
+
+    <span class="c1"># ===============================================================</span>
+    <span class="c1"># Aggregate results</span>
+    <span class="c1"># ===============================================================</span>
+    <span class="n">eta_motor</span> <span class="o">=</span> <span class="mf">0.97</span>
+    <span class="n">w_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;w_actual_J_per_kg&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">)</span> <span class="o">/</span> <span class="n">eta_motor</span>
+    <span class="n">ws_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;w_isentropic_J_per_kg&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">)</span> <span class="o">/</span> <span class="n">eta_motor</span>
+    <span class="n">Q_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;Q_aftercool_J_per_kg&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">)</span>
+    <span class="n">Q_above_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;Q_after_above_split_J_per_kg&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">)</span>
+    <span class="n">Q_below_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;Q_after_below_split_J_per_kg&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;fluid&#39;</span><span class="p">:</span> <span class="n">fluid_name</span><span class="p">,</span>
+        <span class="s1">&#39;eta_s&#39;</span><span class="p">:</span> <span class="n">eta_s</span><span class="p">,</span>
+        <span class="s1">&#39;r_max&#39;</span><span class="p">:</span> <span class="n">r_max</span><span class="p">,</span>
+        <span class="s1">&#39;T_cool_K&#39;</span><span class="p">:</span> <span class="n">T_cool_K</span><span class="p">,</span>
+        <span class="s1">&#39;T_split_K&#39;</span><span class="p">:</span> <span class="n">T_split_K</span><span class="p">,</span>
+        <span class="s1">&#39;n_stages&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stages</span><span class="p">),</span>
+        <span class="s1">&#39;stages&#39;</span><span class="p">:</span> <span class="n">stages</span><span class="p">,</span>
+        <span class="s1">&#39;specific_work_J_per_kg&#39;</span><span class="p">:</span> <span class="n">w_total</span><span class="p">,</span>
+        <span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">:</span> <span class="n">w_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">,</span>
+        <span class="s1">&#39;specific_isentropic_work_J_per_kg&#39;</span><span class="p">:</span> <span class="n">ws_total</span><span class="p">,</span>
+        <span class="s1">&#39;specific_isentropic_work_kWh_per_kg&#39;</span><span class="p">:</span> <span class="n">ws_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_total</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_kWh_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_above_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_above_total</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Q_above_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">)</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_below_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_below_total</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Q_below_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">)</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="aftercomp_cool_duty">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.aftercomp_cool_duty">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aftercomp_cool_duty</span><span class="p">(</span><span class="n">fluid_state</span><span class="p">,</span> <span class="n">fluid_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                        <span class="n">p_const</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">T_in_C</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">T_cool_C</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                        <span class="n">T_split_C</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clamp_to_zero</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compression after-cooler duty at fixed outlet pressure, with optional split around T_split_C.</span>
+
+<span class="sd">    Works with both:</span>
+<span class="sd">      - pure fluids (fluid_state = &quot;CO2&quot;, &quot;Methane&quot;, etc.)</span>
+<span class="sd">      - mixtures (fluid_state = CoolProp.AbstractState with mole fractions set)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fluid_state : str or CoolProp.AbstractState</span>
+<span class="sd">        Either the CoolProp fluid name or an initialized mixture state.</span>
+<span class="sd">    fluid_name : str</span>
+<span class="sd">        Canonical name for logging or output.</span>
+<span class="sd">    p_const : float</span>
+<span class="sd">        Constant outlet pressure [bar].</span>
+<span class="sd">    T_in_C, T_cool_C, T_split_C : float</span>
+<span class="sd">        Temperatures in °C.</span>
+<span class="sd">    clamp_to_zero : bool</span>
+<span class="sd">        If True, negative (heating) duties are set to zero.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Heat duties and splits in J/kg and kWh/kg.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Convert units</span>
+    <span class="n">T_discharge_K</span> <span class="o">=</span> <span class="n">T_in_C</span> <span class="o">+</span> <span class="mf">273.15</span>
+    <span class="n">T_cool_K</span> <span class="o">=</span> <span class="n">T_cool_C</span> <span class="o">+</span> <span class="mf">273.15</span>
+    <span class="n">T_split_K</span> <span class="o">=</span> <span class="n">T_split_C</span> <span class="o">+</span> <span class="mf">273.15</span> <span class="k">if</span> <span class="n">T_split_C</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">p_const</span> <span class="o">*</span> <span class="mf">1e5</span>  <span class="c1"># bar → Pa</span>
+
+    <span class="c1"># Unified property access</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fluid_state</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span> <span class="k">return</span> <span class="n">CP</span><span class="o">.</span><span class="n">PropsSI</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">fluid_state</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">AS</span> <span class="o">=</span> <span class="n">fluid_state</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_h</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+            <span class="n">AS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">PT_INPUTS</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">AS</span><span class="o">.</span><span class="n">hmass</span><span class="p">()</span>
+
+    <span class="c1"># Main enthalpy values</span>
+    <span class="n">h_hot</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">T_discharge_K</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+    <span class="n">h_cold</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">T_cool_K</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+    <span class="n">Q_total</span> <span class="o">=</span> <span class="n">h_hot</span> <span class="o">-</span> <span class="n">h_cold</span>  <span class="c1"># J/kg</span>
+
+    <span class="k">if</span> <span class="n">clamp_to_zero</span> <span class="ow">and</span> <span class="n">Q_total</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">Q_total</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="c1"># Default split outputs</span>
+    <span class="n">Q_above</span><span class="p">,</span> <span class="n">Q_below</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">T_split_K</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">T_discharge_K</span> <span class="o">&gt;</span> <span class="n">T_cool_K</span><span class="p">:</span>
+        <span class="c1"># Clamp T_split to range [T_cool, T_discharge]</span>
+        <span class="n">T_eff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">T_split_K</span><span class="p">,</span> <span class="n">T_cool_K</span><span class="p">),</span> <span class="n">T_discharge_K</span><span class="p">)</span>
+        <span class="n">h_split</span> <span class="o">=</span> <span class="n">get_h</span><span class="p">(</span><span class="n">T_eff</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+
+        <span class="n">Q_above_raw</span> <span class="o">=</span> <span class="n">h_hot</span> <span class="o">-</span> <span class="n">h_split</span>
+        <span class="n">Q_below_raw</span> <span class="o">=</span> <span class="n">h_split</span> <span class="o">-</span> <span class="n">h_cold</span>
+
+        <span class="k">if</span> <span class="n">clamp_to_zero</span><span class="p">:</span>
+            <span class="n">Q_above</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">Q_above_raw</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">Q_below</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">Q_below_raw</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Q_above</span><span class="p">,</span> <span class="n">Q_below</span> <span class="o">=</span> <span class="n">Q_above_raw</span><span class="p">,</span> <span class="n">Q_below_raw</span>
+
+        <span class="c1"># Numerical consistency</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">Q_above</span> <span class="o">+</span> <span class="n">Q_below</span><span class="p">)</span> <span class="o">-</span> <span class="n">Q_total</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">Q_total</span><span class="p">)):</span>
+            <span class="n">Q_below</span> <span class="o">-=</span> <span class="n">err</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># No meaningful cooling</span>
+        <span class="n">Q_above</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">clamp_to_zero</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">Q_below</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">clamp_to_zero</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="c1"># Assemble outputs</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;fluid&#39;</span><span class="p">:</span> <span class="n">fluid_name</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_total</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_kWh_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_total</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_above_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_above</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Q_above</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">)</span> <span class="k">if</span> <span class="n">Q_above</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_below_split_J_per_kg&#39;</span><span class="p">:</span> <span class="n">Q_below</span><span class="p">,</span>
+        <span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">Q_below</span> <span class="o">/</span> <span class="mf">3.6e6</span><span class="p">)</span> <span class="k">if</span> <span class="n">Q_below</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">&#39;T_cool_C&#39;</span><span class="p">:</span> <span class="n">T_cool_C</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="compressor_calculation">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.compressor_calculation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compressor_calculation</span><span class="p">(</span><span class="n">comp_streams</span><span class="p">,</span> <span class="n">symbiosis_n</span><span class="p">):</span>
+    <span class="c1"># The function adresses HP storage with three different logic (Mode B, C, D) or simple compressor.</span>
+    <span class="c1"># input comp_streams: dict (must match symbiosis_n)</span>
+    <span class="c1"># returns</span>
+    <span class="c1"># 1) main_compression: DF with electricity demand and heat rejected to DH and LT for the compression between Pin and Pout</span>
+    <span class="c1"># 2) extra compression:  DF with electricity demand and heat rejected to DH and LT for the compression requested by a cycle of storage</span>
+
+    <span class="c1"># NOTE: This function does not create any pypsa components,only executes the calculations for compressors, intercooling between stages and final cooling.</span>
+
+    <span class="c1">##### Calculation for compressor and heat exchangers:</span>
+    <span class="n">IN_stream</span> <span class="o">=</span> <span class="n">comp_streams</span><span class="p">[</span><span class="s1">&#39;IN stream&#39;</span><span class="p">]</span>
+    <span class="n">OUT_stream</span> <span class="o">=</span> <span class="n">comp_streams</span><span class="p">[</span><span class="s1">&#39;OUT stream&#39;</span><span class="p">]</span>
+
+    <span class="n">fluid</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;fluid&#39;</span><span class="p">]</span>
+    <span class="n">fluid_state</span><span class="p">,</span> <span class="n">fluid_name</span> <span class="o">=</span> <span class="n">match_fluid_name_coolprop</span><span class="p">(</span><span class="n">fluid</span><span class="p">,</span> <span class="n">mixture_db</span> <span class="o">=</span> <span class="n">mixture_database</span><span class="p">)</span>
+
+    <span class="n">Pin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+    <span class="n">Tin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span><span class="s1">&#39;T&#39;</span><span class="p">]</span>
+    <span class="n">Pout</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s1">&#39;ST stream&#39;</span> <span class="ow">in</span> <span class="n">comp_streams</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ST_stream</span> <span class="o">=</span> <span class="n">comp_streams</span><span class="p">[</span><span class="s1">&#39;ST stream&#39;</span><span class="p">]</span>
+        <span class="n">Pst</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">ST_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Pst</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="s1">&#39;ST OUT stream&#39;</span> <span class="ow">in</span> <span class="n">comp_streams</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ST_OUT_stream</span> <span class="o">=</span> <span class="n">comp_streams</span><span class="p">[</span><span class="s1">&#39;ST OUT stream&#39;</span><span class="p">]</span> <span class="c1"># needed only in Mode D</span>
+        <span class="n">Pst_out</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">ST_OUT_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Pst_out</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># ---- Mode Zero : compressor not needed -------</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Pout</span> <span class="o">/</span> <span class="n">Pin</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">Pst</span> <span class="ow">or</span> <span class="n">Pst</span> <span class="o">&lt;</span> <span class="n">Pout</span><span class="p">):</span>
+        <span class="n">compressor_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: Pout &lt;= Pin and NO storage: compressor not needed&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">compressor_data</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># apply pre-cooling if needed</span>
+        <span class="n">T_in_max</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="c1"># compressor temp input limit</span>
+        <span class="k">if</span> <span class="n">Tin</span> <span class="o">&gt;</span> <span class="n">T_in_max</span><span class="p">:</span>
+            <span class="n">pre_cooling</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+                <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+                <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+                <span class="n">p_const</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+                <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+                <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+                <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+                <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">Tin</span> <span class="o">=</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;T_cool_C&#39;</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pre_cooling</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                           <span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="c1"># ----- Mode A : Pin &lt; Pout,  Pst = None -------------</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Pout</span> <span class="o">/</span> <span class="n">Pin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">Pst</span><span class="p">:</span>
+        <span class="c1"># in this mode only compression is required</span>
+        <span class="c1">#mode = &#39;A&#39;</span>
+        <span class="c1">#print(&#39;mode, Pin, Pout, fluid&#39;, mode , Pin, Pout, fluid)</span>
+
+        <span class="c1">### main compression:</span>
+        <span class="n">main_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- Cooling after compression if requested</span>
+        <span class="k">if</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="o">&lt;</span>  <span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">]:</span>
+            <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+                <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+                <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+                <span class="n">p_const</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+                <span class="n">T_in_C</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+                <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+                <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+                <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                                        <span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">extra_compression</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">main_compression</span><span class="p">}</span>
+
+
+    <span class="c1"># ----- Mode B : Pin = Pout &lt; Pst -------------</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">Pout</span> <span class="o">/</span> <span class="n">Pin</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pst</span> <span class="o">/</span> <span class="n">Pout</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># in this mode the compression is required only for storing the gas at HP</span>
+        <span class="c1">#mode = &#39;B&#39;</span>
+        <span class="c1">#print(&#39;mode, Pin, Pout, Pst, fluid&#39;, mode , Pin, Pout, Pst, fluid)</span>
+
+        <span class="c1">### storage compression:</span>
+        <span class="n">extra_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pst</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- Cooling before storage</span>
+        <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_const</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">main_compression</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">extra_compression</span><span class="p">}</span>
+
+    <span class="c1"># ---- Mode C: Pin&lt; Pout&lt; Pst -------</span>
+    <span class="c1"># in this mode the main compression (Pin -&gt; Pout) followed by a second compression for the storage.</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">Pout</span> <span class="o">/</span> <span class="n">Pin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pst</span> <span class="o">/</span> <span class="n">Pout</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1">#mode = &#39;C&#39;</span>
+        <span class="c1">#print(&#39;mode, Pin, Pout, Pst, fluid&#39;, mode , Pin, Pout, Pst, fluid)</span>
+
+        <span class="c1">### main compression:</span>
+        <span class="n">main_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- Cooling after compression if requested</span>
+        <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_const</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="o">&gt;</span>  <span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">]:</span>
+            <span class="n">cooling_before_extra_compression</span> <span class="o">=</span> <span class="n">cooling_after_main_comp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">])</span>
+
+
+        <span class="c1"># ----- extra compression for storage ---</span>
+        <span class="n">extra_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">ST_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;T_cool_C&#39;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- final Cooling before storage ----</span>
+        <span class="n">final_cooling</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_const</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_before_extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">final_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">])</span>
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">cooling_before_extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">final_cooling</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">])</span>
+
+
+    <span class="c1"># ---- Mode D: Pin &lt; Pst_out &lt; Pst &lt; Pout -------</span>
+    <span class="c1"># in this mode the main compression (Pin -&gt; Pout) followed by a second compression for the storage. The return pressure is assumed &gt; Pout</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">Pst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pst</span> <span class="o">/</span> <span class="n">Pin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Pout</span> <span class="o">/</span> <span class="n">Pst</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1">#mode = &#39;D&#39;</span>
+        <span class="c1">#print(&#39;mode, Pin, Pout, Pst, fluid&#39;, mode , Pin, Pout, Pst, fluid)</span>
+
+        <span class="c1">### main compression:</span>
+        <span class="n">main_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- Cooling after compression if requested</span>
+        <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_const</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="o">&lt;</span>  <span class="n">main_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">]:</span>
+            <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span>
+            <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cooling_after_main_comp</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                                       <span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+            <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span>
+                    <span class="s1">&#39;specific_Q_above_split_kWh_per_kg&#39;</span><span class="p">])</span>
+            <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="n">cooling_after_main_comp</span><span class="p">[</span><span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">pre_cooling</span><span class="p">[</span>
+                    <span class="s1">&#39;specific_Q_below_split_kWh_per_kg&#39;</span><span class="p">])</span>
+
+
+        <span class="c1"># ----- extra compression for storage (Pin - Pst)  ---</span>
+        <span class="n">extra_compression</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pst</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- final Cooling before storage ----</span>
+        <span class="n">cooling_before_storage</span> <span class="o">=</span> <span class="n">aftercomp_cool_duty</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_const</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;p_out_bar&quot;</span><span class="p">],</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">extra_compression</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;T_out_C&quot;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">clamp_to_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># ----- extra compression2 for storage (Pst_out - Pout)  ---</span>
+        <span class="n">extra_compression2</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+            <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+            <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+            <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pst_out</span><span class="p">,</span>
+            <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+            <span class="n">T_in_C</span><span class="o">=</span><span class="n">cooling_before_storage</span><span class="p">[</span><span class="s1">&#39;T_cool_C&#39;</span><span class="p">],</span>
+            <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+            <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+        <span class="p">)</span>
+
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">extra_compression2</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span>
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span>  <span class="n">extra_compression2</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span><span class="o">-</span> <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span>
+        <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">+=</span>  <span class="n">extra_compression2</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span><span class="o">-</span> <span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;WARNING: </span><span class="si">{</span><span class="n">fluid</span><span class="si">}</span><span class="s2"> compressor not installed&quot;</span><span class="p">)</span>
+        <span class="n">compressor_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">compressor_data</span>
+
+    <span class="c1"># get LHV or keep mass based stream (e.g. CO2)</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;LHV&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="n">div_val</span> <span class="o">=</span> <span class="n">val</span>  <span class="c1"># energy-based stream</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">div_val</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># mass-based stream</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">,</span>
+         <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">],</span>  <span class="c1"># electricity-input</span>
+        <span class="p">[</span><span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">,</span>
+         <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_above_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">],</span>  <span class="c1"># heat-output DH</span>
+        <span class="p">[</span><span class="n">main_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">,</span>
+         <span class="n">extra_compression</span><span class="p">[</span><span class="s1">&#39;specific_aftercool_Q_below_split_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">div_val</span><span class="p">],</span>  <span class="c1"># heat-output LT</span>
+    <span class="p">]</span>
+
+    <span class="n">compressor_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;electricity-input&#39;</span><span class="p">,</span> <span class="s1">&#39;heat-output DH&#39;</span><span class="p">,</span> <span class="s1">&#39;heat-output LT&#39;</span><span class="p">],</span>
+                                   <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;main compression&#39;</span><span class="p">,</span> <span class="s1">&#39;storage compression&#39;</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">compressor_data</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fluid</span>
+    <span class="n">compressor_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;Pin&#39;</span><span class="p">,:</span> <span class="p">]</span> <span class="o">=</span> <span class="n">Pin</span>
+    <span class="n">compressor_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;Pout&#39;</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">Pout</span>
+
+    <span class="k">if</span> <span class="n">Pst</span><span class="p">:</span>
+        <span class="n">compressor_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;Pst&#39;</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">Pst</span>
+    <span class="k">if</span> <span class="n">Pst_out</span><span class="p">:</span>
+        <span class="n">compressor_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;Pst_out&#39;</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">Pst_out</span>
+
+    <span class="k">return</span> <span class="n">compressor_data</span></div>
+
+
+
+
+<div class="viewcode-block" id="check_symbiosis_n">
+<a class="viewcode-back" href="../../api.html#scripts.technology_inputs.check_symbiosis_n">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_symbiosis_n</span><span class="p">(</span><span class="n">symbiosis_n</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+    <span class="n">all_buses</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+        <span class="n">buses</span> <span class="k">for</span> <span class="n">buses</span> <span class="ow">in</span> <span class="n">symbiosis_n</span><span class="p">[</span><span class="s1">&#39;buses&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buses</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="p">))</span>
+
+    <span class="c1"># Find duplicates</span>
+    <span class="n">duplicates</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_buses</span><span class="p">)</span> <span class="k">if</span> <span class="n">all_buses</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">duplicates</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;⚠️ Duplicated bus names found:&quot;</span><span class="p">,</span> <span class="n">duplicates</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ symbiosis network buses definition OK&quot;</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+
+<span class="c1"># ----- sanity check for col buses not having repetitions</span>
+<span class="n">check_symbiosis_n</span><span class="p">(</span><span class="n">symbiosis_n</span><span class="p">)</span>
+
+<span class="c1"># ---- Technology and process specific inputs ---------</span>
+<span class="n">tech_inputs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s1">&#39;biomass belt dryer&#39;</span><span class="p">,</span> <span class="s1">&#39;T_min_heat&#39;</span><span class="p">):</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;min temp for heat supply&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biomass belt dryer&#39;</span><span class="p">,</span> <span class="s1">&#39;DM flow reference&#39;</span><span class="p">):</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;t/h&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;manual input&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;reference for investment calculation &#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM feedstock input&#39;</span><span class="p">):</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.12</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;% DM &#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Danish Energy Agency, PFD for renewable fuels.xlsx&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;manure mix &#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM conversion&#39;</span><span class="p">)</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span> <span class="p">:</span> <span class="mf">0.4632</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span> <span class="p">:</span> <span class="s1">&#39;</span><span class="si">% i</span><span class="s1">nut DM to biogas&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Danish Energy Agency, PFD renewable fuels.xlsx&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM flow reference&#39;</span><span class="p">):</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;t/h DM&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Own assumption&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM digestate&#39;</span><span class="p">):</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.068</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;% DM in Digestate&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Danish Energy Agency, PFD for renewable fuels.xlsx&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM output&#39;</span><span class="p">):</span> <span class="p">{</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.135</span><span class="p">,</span>
+        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;(tDM) digestate / MWhCH4&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Calculation from: Danish Energy Agency, PFD for renewable fuels.xlsx&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># inputs for pre-estimation of electricity demand for MeOh production.</span>
+<span class="n">IN_stream</span> <span class="o">=</span> <span class="s1">&#39;H2 production&#39;</span>
+<span class="n">OUT_stream</span> <span class="o">=</span> <span class="s1">&#39;H2 to methanolisation&#39;</span>
+<span class="n">fluid</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;fluid&#39;</span><span class="p">]</span>
+<span class="n">fluid_state</span><span class="p">,</span> <span class="n">fluid_name</span> <span class="o">=</span> <span class="n">match_fluid_name_coolprop</span><span class="p">(</span><span class="n">fluid</span><span class="p">,</span> <span class="n">mixture_db</span><span class="o">=</span><span class="n">mixture_database</span><span class="p">)</span>
+
+<span class="n">Pin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+<span class="n">Tin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>
+<span class="n">Pout</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+
+<span class="c1">### main compression H2:</span>
+<span class="n">H2_comp_res</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+    <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+    <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+    <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+    <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+    <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+    <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+    <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+<span class="p">)</span>
+
+<span class="c1">### main compression CO2:</span>
+<span class="n">IN_stream</span> <span class="o">=</span> <span class="s1">&#39;CO2 biogas upgrading&#39;</span>
+<span class="n">OUT_stream</span> <span class="o">=</span> <span class="s1">&#39;CO2 to methanolisation&#39;</span>
+<span class="n">fluid</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;fluid&#39;</span><span class="p">]</span>
+<span class="n">fluid_state</span><span class="p">,</span> <span class="n">fluid_name</span> <span class="o">=</span> <span class="n">match_fluid_name_coolprop</span><span class="p">(</span><span class="n">fluid</span><span class="p">,</span> <span class="n">mixture_db</span><span class="o">=</span><span class="n">mixture_database</span><span class="p">)</span>
+
+<span class="n">Pin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+<span class="n">Tin</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">IN_stream</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>
+<span class="n">Pout</span> <span class="o">=</span> <span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">OUT_stream</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
+
+<span class="n">CO2_comp_res</span> <span class="o">=</span> <span class="n">compress_multistage_with_Tcap</span><span class="p">(</span>
+    <span class="n">fluid_state</span><span class="o">=</span><span class="n">fluid_state</span><span class="p">,</span>
+    <span class="n">fluid_name</span><span class="o">=</span><span class="n">fluid_name</span><span class="p">,</span>
+    <span class="n">p_in_bar</span><span class="o">=</span><span class="n">Pin</span><span class="p">,</span>
+    <span class="n">p_out_bar</span><span class="o">=</span><span class="n">Pout</span><span class="p">,</span>
+    <span class="n">T_in_C</span><span class="o">=</span><span class="n">Tin</span><span class="p">,</span>
+    <span class="n">T_cool_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat LT min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">],</span>
+    <span class="n">T_split_C</span><span class="o">=</span><span class="n">symbiosis_n</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s1">&#39;Heat DH min&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">]</span>  <span class="c1"># default to T_in</span>
+<span class="p">)</span>
+
+<span class="c1"># ---- Update tech_inputs:</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;hydrogen storage compressor MeOH&#39;</span><span class="p">,</span> <span class="s1">&#39;electricity-input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">H2_comp_res</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">lhv_h2</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;MW/MW_H2&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated &#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated based on: Isoentropic efficiency and max comp ratio, max outlet temp. CoolProp&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;CO2 industrial compressor MeOH&#39;</span><span class="p">,</span> <span class="s1">&#39;electricity-input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">CO2_comp_res</span><span class="p">[</span><span class="s1">&#39;specific_work_kWh_per_kg&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;MWh/t_CO2&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated &#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated based on: Isoentropic efficiency and max comp ratio, max outlet temp. CoolProp&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="c1">#  -----TECHNOLOGIES TO ADD TO TECHNOLOGY-DATA (ALSO AFTER CALCULATIONS) ----</span>
+<span class="c1">#  PWH pipe</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;PWH pipe&#39;</span><span class="p">,</span> <span class="s1">&#39;heat loss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;MW/MW&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Technology Data for transport of energy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;Heat exchanged for DH transmission, sheet 113_11. constant for all years&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;PWH pipe&#39;</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;km&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;own assumption&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;based on estiamtion at GreenLab Skive&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="c1"># CO2 pipe</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;CO2 gas pipe&#39;</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;km&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;own assumption&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;based on estimation at GreenLab Skive&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="c1"># H2 pipe</span>
+<span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;H2 pipe&#39;</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;km&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;own assumption&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;based on estimation at GreenLab Skive&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="c1"># ----- INVESTMENT Calculation for biomass dryer (based on size guess).</span>
+<span class="c1"># Biomass dryer</span>
+<span class="n">DM_flow_guess</span> <span class="o">=</span> <span class="n">tech_inputs</span><span class="p">[</span><span class="s1">&#39;biogas&#39;</span><span class="p">,</span> <span class="s1">&#39;DM flow reference&#39;</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+<span class="n">belt_dryer</span> <span class="o">=</span> <span class="n">belt_dryer_investment</span><span class="p">(</span><span class="n">DM_flow_guess</span> <span class="o">=</span> <span class="n">DM_flow_guess</span><span class="p">)</span>
+<span class="n">tech_inputs</span><span class="p">[(</span><span class="s1">&#39;biomass belt dryer&#39;</span><span class="p">,</span> <span class="s1">&#39;investment&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">belt_dryer</span><span class="p">[</span><span class="s1">&#39;investment&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;€/ (t/h DM)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated based on: DOI: 10.1080/07373937.2018.1492615&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;further description&#39;</span><span class="p">:</span> <span class="s1">&#39;calculated based on: DM flow reference&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;currency_year&#39;</span><span class="p">:</span> <span class="mi">2025</span><span class="p">}</span>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

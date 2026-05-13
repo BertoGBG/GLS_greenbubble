@@ -6,9 +6,11 @@
 rule prepare_inputs:
     """Load and assemble all network inputs: timeseries, demands, efficiencies.
     Waits for all scenario years to be preprocessed before assembling.
+    Re-runs whenever config.yaml changes (demand targets, CO2 cost, etc. live there).
     """
     input:
-        done = expand("data/Inputs_{year}/.preprocessed", year=PREPROCESS_YEARS),
+        done   = expand("data/Inputs_{year}/.preprocessed", year=PREPROCESS_YEARS),
+        config = "config/config.yaml",
     output:
         inputs = f"resources/inputs_{YEAR}.pkl",
     log:

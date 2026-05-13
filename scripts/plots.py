@@ -2807,6 +2807,12 @@ def figure_heatmaps_compare_scenarios(
         cand_union = set()
         for scen in scenarios:
             cand_union.update(_available_names_from_tcols(ts_df, scen))
+            # StorageUnit: state_of_charge may be absent/empty after some solvers;
+            # also scan the dispatch (p) timeseries so candidates are never missed.
+            if kind == "StorageUnit":
+                _p_ts = getattr(n.storage_units_t, "p", None)
+                if _p_ts is not None:
+                    cand_union.update(_available_names_from_tcols(_p_ts, scen))
         cand_union = sorted(cand_union)
 
         matches = _match_names(cand_union, selector)
@@ -2848,14 +2854,20 @@ def figure_heatmaps_compare_scenarios(
             cap = _cap_from_component_table(comp_df, scen, name, ["e_nom_opt", "e_nom"])
 
         elif kind == "StorageUnit":
-            # SOC time series
-            ts_df = getattr(n.storage_units_t, field, None) if field else getattr(n.storage_units_t, "state_of_charge", None)
-            s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
-
-            # energy capacity = p_nom * max_hours
-            p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
-            cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
+            if field in ("p", "dispatch"):
+                ts_df = getattr(n.storage_units_t, "p", None)
+                s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
+                s = pd.Series(s, copy=False).abs() if s is not None else None
+                cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
+                if cap is not None:
+                    cap = float(cap)
+            else:
+                # state_of_charge (default)
+                ts_df = getattr(n.storage_units_t, "state_of_charge", None) if not field else getattr(n.storage_units_t, field, None)
+                s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
+                p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
+                mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
+                cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
 
         else:
             return None
@@ -3263,6 +3275,12 @@ def figure_heatmaps_compare_scenarios_actual(
         cand_union = set()
         for scen in scenarios:
             cand_union.update(_available_names_from_tcols(ts_df_default, scen))
+            # StorageUnit: state_of_charge may be absent/empty after some solvers;
+            # also scan the dispatch (p) timeseries so candidates are never missed.
+            if kind == "StorageUnit":
+                _p_ts = getattr(n.storage_units_t, "p", None)
+                if _p_ts is not None:
+                    cand_union.update(_available_names_from_tcols(_p_ts, scen))
         cand_union = sorted(cand_union)
 
         th = it.get("th", 0)
@@ -4831,5 +4849,146 @@ def run_plot_operational(
         print(f"[plot/rh] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
     else:
         print("[plot/rh] Finished successfully.")
+
+    return failures
+
+
+def run_plot_rh_comparison(
+    *,
+    n_pf,
+    n_rh,
+    plot_folder: str | Path,
+    csv_folder:  str | Path,
+    c,
+) -> Dict[str, Exception]:
+    """Generate side-by-side PF vs RH cost comparison plots and CSV.
+
+    Produces three outputs:
+
+    * ``PF_vs_RH_total_cost.png``  — stacked-bar total system cost (PF | RH)
+      broken down by carrier, reusing :func:`plot_total_system_cost_stacked`.
+    * ``PF_vs_RH_opex_delta.png``  — per-carrier OPEX difference (RH − PF).
+      Red = RH costs more, green = RH costs less.
+    * ``PF_vs_RH_costs.csv``       — wide comparison table with capex/opex/total
+      for both networks and the delta per carrier.
+
+    Both networks must have correct ``statistics.capex()`` / ``statistics.opex()``
+    — for the RH network this requires that the extendability flags were restored
+    after the dispatch solve (done in ``snakemake_rolling_horizon.py``).
+    """
+    if not c.n_flags_opt.get("plot", False):
+        return {}
+
+    plot_folder = Path(plot_folder)
+    csv_folder  = Path(csv_folder)
+    plot_folder.mkdir(parents=True, exist_ok=True)
+    csv_folder.mkdir(parents=True, exist_ok=True)
+
+    failures: Dict[str, Exception] = {}
+
+    def _safe(name: str, fn: Callable[[], None]) -> None:
+        try:
+            fn()
+        except Exception as e:
+            failures[name] = e
+            warnings.warn(
+                f"[plot/rh_compare] Step failed: {name}\n  {type(e).__name__}: {e}",
+                category=RuntimeWarning, stacklevel=2,
+            )
+
+    # ── Shared data ────────────────────────────────────────────────────────────
+    summary_pf = make_global_summary_costs(n_pf)
+    summary_rh = make_global_summary_costs(n_rh)
+
+    def _rename_scenario(costs_long: pd.DataFrame, new_name: str) -> pd.DataFrame:
+        """Rename all scenario-level values in a (scenario, group) MultiIndex."""
+        if not isinstance(costs_long.index, pd.MultiIndex):
+            return costs_long
+        mapper = {v: new_name for v in costs_long.index.get_level_values("scenario").unique()}
+        return costs_long.rename(index=mapper, level="scenario")
+
+    costs_pf = _rename_scenario(summary_pf["costs_long"].copy(), "PF")
+    costs_rh = _rename_scenario(summary_rh["costs_long"].copy(), "RH")
+    combined_long = pd.concat([costs_pf, costs_rh])
+
+    combined_summary = {
+        "costs_long":       combined_long,
+        "expected_long":    None,
+        "total_by_scenario": combined_long["total"].groupby(level="scenario").sum(),
+        "total_expected":   None,
+        "scenario_weights": None,
+    }
+
+    # ── Steps ─────────────────────────────────────────────────────────────────
+
+    def step_comparison_csv() -> None:
+        pf_df = costs_pf.droplevel("scenario").rename(
+            columns={"capex": "capex_pf", "opex": "opex_pf", "total": "total_pf"}
+        )
+        rh_df = costs_rh.droplevel("scenario").rename(
+            columns={"capex": "capex_rh", "opex": "opex_rh", "total": "total_rh"}
+        )
+        merged = pf_df.join(rh_df, how="outer").fillna(0.0)
+        merged["delta_opex"]  = merged["opex_rh"]  - merged["opex_pf"]
+        merged["delta_total"] = merged["total_rh"] - merged["total_pf"]
+
+        totals = merged.sum(numeric_only=True)
+        totals.name = "TOTAL"
+        merged = pd.concat([merged, totals.to_frame().T])
+        merged.index.name = "carrier"
+        merged["unit"] = "€/y"
+        merged.to_csv(csv_folder / "PF_vs_RH_costs.csv")
+
+    def step_total_cost_bar() -> None:
+        plot_total_system_cost_stacked(
+            combined_summary,
+            outpath=str(plot_folder / "PF_vs_RH_total_cost.png"),
+            title="Total system cost: Perfect Foresight vs Rolling Horizon",
+            which="total",
+            add_expected=False,
+            figsize=(10, 5),
+        )
+
+    def step_opex_delta() -> None:
+        pf_opex = costs_pf.droplevel("scenario")["opex"]
+        rh_opex = costs_rh.droplevel("scenario")["opex"]
+        all_idx = pf_opex.index.union(rh_opex.index)
+        delta   = (rh_opex.reindex(all_idx, fill_value=0.0)
+                   - pf_opex.reindex(all_idx, fill_value=0.0)).sort_values()
+
+        total_pf_opex  = pf_opex.sum()
+        total_rh_opex  = rh_opex.sum()
+        total_pf_total = n_pf.statistics.capex().sum() + total_pf_opex
+        total_rh_total = n_rh.statistics.capex().sum() + total_rh_opex
+
+        fig, ax = plt.subplots(figsize=(max(8, len(delta) * 0.65 + 2), 5))
+        colors = ["#d73027" if v > 0 else "#1a9850" for v in delta.values]
+        ax.bar(range(len(delta)), delta.values / 1e3, color=colors,
+               edgecolor="black", linewidth=0.5)
+        ax.set_xticks(range(len(delta)))
+        ax.set_xticklabels(delta.index, rotation=45, ha="right", fontsize=9)
+        ax.axhline(0, color="black", linewidth=0.8)
+        ax.set_ylabel("k€/y   (positive = RH costs more)")
+        ax.set_title(
+            "OPEX delta per carrier: RH − PF\n"
+            f"OPEX  PF={total_pf_opex/1e6:.2f} M€   RH={total_rh_opex/1e6:.2f} M€   "
+            f"Δ={(total_rh_opex - total_pf_opex)/1e6:+.3f} M€\n"
+            f"Total PF={total_pf_total/1e6:.2f} M€   RH={total_rh_total/1e6:.2f} M€   "
+            f"Δ={(total_rh_total - total_pf_total)/1e6:+.3f} M€  "
+            f"({(total_rh_total / total_pf_total - 1) * 100:+.2f} %)",
+            fontsize=10,
+        )
+        fig.tight_layout()
+        fig.savefig(str(plot_folder / "PF_vs_RH_opex_delta.png"), dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+    _safe("comparison_csv",  step_comparison_csv)
+    _safe("total_cost_bar",  step_total_cost_bar)
+    _safe("opex_delta",      step_opex_delta)
+
+    if failures:
+        print(f"[plot/rh_compare] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
+    else:
+        print("[plot/rh_compare] Finished successfully.")
 
     return failures

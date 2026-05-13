@@ -39,9 +39,8 @@ def find_demand_buffer_buses(n, concentration_threshold=0.95):
 
     These buses have a virtual buffer store (e.g. 'bioCH4 delivery') that
     accumulates flexible production and discharges it at a point-in-time demand
-    event.  Their e_cyclic constraint must be preserved in rolling horizon so
-    that each window is self-balancing (net production = net discharge = demand
-    per window) and the store does not accumulate across windows.
+    event.  Call this before distribute_point_demands() — after redistribution
+    all loads are uniform and detection no longer works.
     """
     demand_buses = set()
     for name in n.loads_t.p_set.columns:
@@ -55,7 +54,7 @@ def find_demand_buffer_buses(n, concentration_threshold=0.95):
 
 
 # ── Disable cyclic storage constraints ───────────────────────────────────────
-def disable_cyclic_constraints(n, preserve_buses=None):
+def disable_cyclic_constraints(n):
     """Remove end-of-period = start-of-period constraints from real storage.
 
     In a full-year perfect-foresight solve these constraints are meaningful.
@@ -64,22 +63,16 @@ def disable_cyclic_constraints(n, preserve_buses=None):
     within each window would incorrectly force every window to return to its
     opening state of charge.
 
-    Exception — demand buffer stores (preserve_buses): their e_cyclic is kept
-    True so that each window is self-balancing.  Without it, the optimizer
-    over-fills the buffer when RE is cheap and the year-end SOC drifts far from
-    zero (seen as ~70 % over-production in practice).
+    Demand buffer stores are handled separately by cap_demand_buffer_stores():
+    their e_cyclic is also set False here, but their e_nom is capped to ~2×
+    per-window demand so the optimizer cannot massively over-produce early.
+    Setting e_cyclic=True is NOT used — PyPSA treats it as a free initial SOC
+    optimisation variable, causing systematic under-production.
     """
-    preserve_buses = preserve_buses or set()
-
     if not n.stores.empty and "e_cyclic" in n.stores.columns:
-        preserve_mask = n.stores["bus"].isin(preserve_buses)
-        disable_mask  = n.stores["e_cyclic"] & ~preserve_mask
-        n.stores.loc[disable_mask, "e_cyclic"] = False
-        print(
-            f"[rolling_horizon] disabled e_cyclic on {disable_mask.sum()} stores, "
-            f"preserved on {preserve_mask.sum()} demand-buffer stores "
-            f"({list(n.stores.index[preserve_mask])})"
-        )
+        n_cyclic = n.stores["e_cyclic"].sum()
+        n.stores["e_cyclic"] = False
+        print(f"[rolling_horizon] disabled e_cyclic on {n_cyclic} stores")
 
     if not n.storage_units.empty and "cyclic_state_of_charge" in n.storage_units.columns:
         n_cyclic = n.storage_units["cyclic_state_of_charge"].sum()
@@ -123,6 +116,74 @@ def distribute_point_demands(n, concentration_threshold=0.95):
             print(f"  {m}")
 
 
+# ── Cap demand-buffer store capacity to per-window scale ─────────────────────
+def cap_demand_buffer_stores(n, demand_buses, horizon):
+    """Limit e_nom of demand-buffer stores to 2× per-window demand.
+
+    These stores are sized for full-year accumulation (e_nom ≈ annual demand).
+    With e_cyclic=False and no capacity cap, the optimizer can massively
+    over-produce early in the year (when RE is cheap) and coast afterwards,
+    because there is nothing to stop the store from filling to annual capacity.
+
+    Capping e_nom to 2× per-window demand (2 × horizon × avg_rate) limits the
+    surplus carry-over to at most two windows and forces the optimizer to spread
+    production over the full year.  e_initial is set to 0 so each fresh solve
+    starts from an empty store.
+    """
+    if n.stores.empty or not demand_buses:
+        return
+
+    # Bus → total annual demand (loads_t.p_set already redistributed to uniform)
+    bus_demand = {}
+    weights = n.snapshot_weightings.generators
+    for name in n.loads_t.p_set.columns:
+        bus = n.loads.loc[name, "bus"]
+        if bus in demand_buses:
+            annual = (n.loads_t.p_set[name] * weights).sum()
+            bus_demand[bus] = bus_demand.get(bus, 0.0) + annual
+
+    n_snapshots = len(n.snapshots)
+    store_mask = n.stores["bus"].isin(demand_buses)
+    for store_name in n.stores.index[store_mask]:
+        bus = n.stores.loc[store_name, "bus"]
+        annual_demand = bus_demand.get(bus, 0.0)
+        if annual_demand <= 0:
+            continue
+        per_window = annual_demand / n_snapshots * horizon
+        cap = 2.0 * per_window
+        old_e_nom = n.stores.loc[store_name, "e_nom"]
+        n.stores.loc[store_name, "e_nom"]     = cap
+        n.stores.loc[store_name, "e_initial"] = 0.0
+        print(
+            f"[rolling_horizon] capped '{store_name}' e_nom: "
+            f"{old_e_nom:,.0f} → {cap:,.0f} MWh  "
+            f"(2× {per_window:,.0f} MWh/window × {horizon} h)"
+        )
+
+
+# ── Post-solve annual balance diagnostic ─────────────────────────────────────
+def check_annual_balance(n):
+    """Print annual delivery and store SOC drift to verify RH energy closure."""
+    weights = n.snapshot_weightings.generators
+    print("[rolling_horizon] annual demand balance check:")
+    for name in n.loads_t.p_set.columns:
+        delivered = (n.loads_t.p_set[name] * weights).sum()
+        print(f"  load '{name}': delivered = {delivered:,.0f} MWh")
+
+    if not n.stores_t.e.empty:
+        e_start = n.stores_t.e.iloc[0]
+        e_end   = n.stores_t.e.iloc[-1]
+        delta   = e_end - e_start
+        significant = delta[delta.abs() > 1.0]
+        if significant.empty:
+            print("  ✓ no significant SOC drift — production ≈ demand")
+        else:
+            print("  store SOC drift (end − start):")
+            for store, d in significant.items():
+                sign = "over-produced" if d > 0 else "under-produced"
+                print(f"    '{store}': Δ = {d:+,.0f} MWh  [{sign}]")
+
+
 # ── Fix all capacities (dispatch-only) ────────────────────────────────────────
 def fix_capacities(n):
     """Copy p_nom_opt → p_nom and disable expansion for all extendable components."""
@@ -157,10 +218,11 @@ def fix_capacities(n):
 # ── Build dispatch network ────────────────────────────────────────────────────
 n_opt = pypsa.Network(snakemake.input.network)
 n = n_opt.copy()
-demand_buses = find_demand_buffer_buses(n)
+demand_buses = find_demand_buffer_buses(n)   # detect before redistribution
 fix_capacities(n)
-disable_cyclic_constraints(n, preserve_buses=demand_buses)
+disable_cyclic_constraints(n)
 distribute_point_demands(n)
+cap_demand_buffer_stores(n, demand_buses, horizon)
 
 if rh_year and rh_year != main_year:
     print(f"[rolling_horizon] patching time series to rh_year={rh_year} ...")
@@ -209,6 +271,40 @@ n.optimize.optimize_with_rolling_horizon(
 )
 
 print(f"[rolling_horizon] solve complete.")
+check_annual_balance(n)
+
+# ── Restore extendability flags so statistics.capex() works in post-processing ─
+# fix_capacities() set p_nom_extendable=False on all components so the RH solver
+# treats them as fixed.  Restoring the original flags (from n_opt) means
+# n.statistics.capex() returns the correct per-carrier breakdown, and the same
+# CSV/plot functions used for the PF result work unchanged on the RH network.
+for _comp, _ext_col in [
+    ("generators",    "p_nom_extendable"),
+    ("links",         "p_nom_extendable"),
+    ("storage_units", "p_nom_extendable"),
+    ("stores",        "e_nom_extendable"),
+]:
+    _df     = getattr(n,     _comp)
+    _df_opt = getattr(n_opt, _comp)
+    if _df.empty or _ext_col not in _df_opt.columns:
+        continue
+    _df[_ext_col] = _df_opt[_ext_col]
+
+# ── Cost summary ──────────────────────────────────────────────────────────────
+# n.objective after RH solve contains only OPEX (all capacities were fixed).
+# Use n.statistics.capex() + n.statistics.opex() for full comparable totals;
+# statistics.capex() works here because extendability flags were restored above.
+_pf_capex = n_opt.statistics.capex().sum()
+_pf_opex  = n_opt.statistics.opex().sum()
+_rh_capex = n.statistics.capex().sum()   # == _pf_capex (same capacities)
+_rh_opex  = n.statistics.opex().sum()
+_pf_total = _pf_capex + _pf_opex
+_rh_total = _rh_capex + _rh_opex
+print(f"[rolling_horizon] ── cost comparison ────────────────")
+print(f"[rolling_horizon]   CAPEX (shared) : {_pf_capex/1e6:>10.3f} M€")
+print(f"[rolling_horizon]   PF OPEX        : {_pf_opex/1e6:>10.3f} M€   → PF total: {_pf_total/1e6:.3f} M€")
+print(f"[rolling_horizon]   RH OPEX        : {_rh_opex/1e6:>10.3f} M€   → RH total: {_rh_total/1e6:.3f} M€")
+print(f"[rolling_horizon]   OPEX premium   : {(_rh_opex - _pf_opex)/1e6:>+10.3f} M€  ({(_rh_total/_pf_total - 1)*100:+.2f} %)")
 
 
 # ── Export ────────────────────────────────────────────────────────────────────
