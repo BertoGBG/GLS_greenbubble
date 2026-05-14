@@ -13,8 +13,8 @@ Dig biomass:
   max capacity: .inf # t/y of manure and biomass
   price : 0 # 19.8676 # EUR/MWh biogas from JRC ENSPRESO
 
-DH: # TODO : test in stochastic
-  enable: true
+DH: #
+  enable: false
   price : 30 # €/MWh
   load multiplier : 1 # keeps the load profile but multiplies the demand to represent new locations
 

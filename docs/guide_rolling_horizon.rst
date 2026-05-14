@@ -224,3 +224,100 @@ For higher delivery frequencies no redistribution is needed. Each bin's
 delivery fits within a single rolling window, so the store fills and empties
 naturally within each window. The store cap is the per-bin size set during
 network building.
+
+---
+
+Custom constraints in rolling horizon
+--------------------------------------
+
+The capacity expansion solve applies several custom constraints via
+``extra_functionality`` that are not part of the standard PyPSA model.
+The RH solve must replicate these constraints in every window, otherwise
+the RH dispatch is less constrained than the PF solve and the cost
+comparison is meaningless.
+
+RE export fraction constraint
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The most important custom constraint limits how much renewable electricity
+the site may sell back to the grid relative to the amount it consumes
+on-site:
+
+.. math::
+
+   E_{\text{export, window}} \leq \alpha \times E_{\text{consumed, window}}
+
+where :math:`\alpha` is ``max_RE_to_grid`` from ``config.yaml``.
+
+**In the perfect-foresight (PF) solve** this is a single annual constraint:
+the full-year export total must not exceed :math:`\alpha` times the full-year
+on-site consumption total.
+
+**In rolling horizon** the constraint cannot be applied as a single annual
+expression, because each window is solved as an independent optimisation
+problem with its own linopy model that only contains the window's snapshots.
+Instead the same constraint is added to *every window* using the window's own
+snapshot set — effectively enforcing the fraction locally within each 168-hour
+(or chosen ``horizon``) period.
+
+This per-window enforcement is **strictly tighter** than the original annual
+constraint: if the fraction is satisfied in every window it is guaranteed to be
+satisfied over the full year.  The practical consequence is that the RH
+dispatch may curtail slightly more RE or shift slightly more production
+internally compared to a hypothetical annual-constraint RH, but the direction
+of the bound is always conservative.
+
+.. warning::
+
+   Omitting this constraint from the RH solve causes the optimizer to export
+   far more electricity to the grid than the PF solve (observed: 2.5× more
+   annual export in an unconstrained RH run), making the RH total system cost
+   appear lower than PF.  This is an artefact — the system is "profiting" from
+   unplanned grid exports rather than using the electricity for green fuel
+   production.  The constraint must always be applied to both solves to ensure
+   a fair comparison.
+
+Implementation
+^^^^^^^^^^^^^^
+
+The constraint is injected via the ``extra_functionality`` hook that PyPSA's
+``optimize_with_rolling_horizon`` passes to each per-window ``n.optimize()``
+call:
+
+.. code-block:: python
+
+   def _rh_extra_functionality(n, snapshots):
+       m = getattr(n, "model", None)
+       if m is None:
+           return
+       add_max_RE_sales_constraint(
+           n, m,
+           bus="El3",
+           export_pattern="El3_to",
+           export_bus="ElDK1 sell bus",
+           alpha=c.max_RE_to_grid,
+           name="El3_export_fraction_of_total_RE",
+           n_flags=c.n_flags,
+           include_agents=["biogas", "electrolysis", "methanation", "meoh"],
+           snapshots=snapshots,   # <-- window snapshots, not full-year
+       )
+
+   n.optimize.optimize_with_rolling_horizon(
+       ...
+       extra_functionality=_rh_extra_functionality,
+   )
+
+The ``snapshots`` argument is critical: without it,
+``add_max_RE_sales_constraint`` would call ``_snapshots_by_scenario(n)`` and
+receive the full 8760-snapshot index, but the linopy model variables only
+contain the current window's timestamps, causing a ``KeyError`` when the
+function tries to select non-existent snapshots from the model variables.
+
+Adding a new custom constraint to the PF solve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you add a new ``extra_functionality`` constraint to ``helpers.py`` for the
+capacity expansion run, you **must** also add it to ``_rh_extra_functionality``
+in ``scripts/snakemake_rolling_horizon.py``, passing ``snapshots=snapshots``
+(or an equivalent window-aware argument) so the constraint operates on the
+current window's snapshot set rather than the full network index.

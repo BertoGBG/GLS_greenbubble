@@ -131,6 +131,7 @@ plot_cfg = plt_config["plotting"]
 thresholds = plot_cfg["thresholds"]
 items = plot_cfg["capacity_items"]
 bus_list_mp = plot_cfg["bus_list_mp"]
+carrier_colors = dict(plt_config.get("carrier_colors", {}))
 
 # Replace symbolic thresholds (GEN_TH → numeric)
 for it in items:

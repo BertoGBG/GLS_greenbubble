@@ -6,9 +6,9 @@
 rule solve_network:
     """Solve the network; export OPT .nc and EVPI CSV (if stochastic EVPI enabled)."""
     input:
-        network    = "resources/{network}_PRE.nc",
+        network    = "resources/{network}/{network}_PRE.nc",
         costs_eu   = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
-        comp_alloc = "resources/{network}_comp_alloc.pkl",
+        comp_alloc = "resources/{network}/{network}_comp_alloc.pkl",
     output:
         network = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
     log:

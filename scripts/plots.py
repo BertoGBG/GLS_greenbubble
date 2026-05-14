@@ -2148,6 +2148,7 @@ def plot_utilization_ldc_by_scenario(
     scenario_weight_col="weight",
     stochastic_label="stochastic (scenario×snapshot weighted)",
     n_points_stochastic=1001,  # resolution for the weighted LDC
+    carrier_colors=None,
 ):
     """
     items = [{"label","kind","field","selector"}, ...]
@@ -2330,13 +2331,33 @@ def plot_utilization_ldc_by_scenario(
                 })
 
     # Stable colors per (kind,name) across scenarios and modes
+    # Look up carrier for each component and use fixed carrier_colors when available.
+    _carrier_colors = carrier_colors or {}
+    _comp_tables = {
+        "Generator":   getattr(n, "generators",    None),
+        "Link":        getattr(n, "links",          None),
+        "StorageUnit": getattr(n, "storage_units",  None),
+        "Store":       getattr(n, "stores",         None),
+    }
+
+    def _get_carrier(kind, name):
+        df = _comp_tables.get(kind)
+        if df is None or df.empty or name not in df.index:
+            return None
+        return df.at[name, "carrier"] if "carrier" in df.columns else None
+
     uniq_keys, seen = [], set()
     for spec in curve_specs:
         key = (spec["kind"], spec["name"])
         if key not in seen:
             seen.add(key)
             uniq_keys.append(key)
-    color_map = {k: cmap(i % cmap.N) for i, k in enumerate(uniq_keys)}
+
+    color_map = {}
+    for i, k in enumerate(uniq_keys):
+        kind, name = k
+        carrier = _get_carrier(kind, name)
+        color_map[k] = _carrier_colors.get(carrier, cmap(i % cmap.N))
 
     # -------- Legend handles (global)
     legend_map = {}  # label -> handle (first occurrence) for non-SU + SU names (colors)
@@ -4646,6 +4667,7 @@ def run_plot_and_export(
             outpath=plot_folder / "CF_operation_by_scenario.png",
             title="Utilization LDCs by scenario (exact + EXI only)",
             ncols=3,
+            carrier_colors=c.carrier_colors,
         )
 
         figure_heatmaps_compare_scenarios(
@@ -4816,6 +4838,7 @@ def run_plot_operational(
             outpath=plot_folder / "CF_operation_by_scenario.png",
             title="Utilization LDCs (rolling horizon)",
             ncols=3,
+            carrier_colors=c.carrier_colors,
         )
 
         figure_heatmaps_compare_scenarios(

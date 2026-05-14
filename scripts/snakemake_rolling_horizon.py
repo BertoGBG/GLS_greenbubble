@@ -215,11 +215,50 @@ def fix_capacities(n):
         df[ext_col] = False
 
 
+# ── Re-enable committable for RH dispatch ─────────────────────────────────────
+def enable_committable_for_rh(n, n_config):
+    """Re-enable committable=True for links whose tech has committable: true in n_config.
+
+    During PF capacity expansion committable is forced to False (MILP + extendable is
+    unsupported in PyPSA).  After fix_capacities() all p_nom are fixed, so unit
+    commitment can safely be activated for the dispatch-only RH solve.
+
+    Matching is by link carrier == n_config index (e.g. 'electrolysis', 'biogas engine').
+    Both EXI_ and new-build links with the same carrier are enabled.
+    """
+    if "committable" not in n_config.columns:
+        print("[rolling_horizon] n_config has no 'committable' column — skipping")
+        return
+
+    committable_techs = n_config.index[n_config["committable"] == True].tolist()
+    if not committable_techs:
+        print("[rolling_horizon] no committable techs in n_config — RH is pure LP")
+        return
+
+    enabled = []
+    for tech in committable_techs:
+        mask = n.links["carrier"] == tech
+        if not mask.any():
+            continue
+        n.links.loc[mask, "committable"] = True
+        if "min load" in n_config.columns:
+            min_load = n_config.at[tech, "min load"]
+            if min_load == min_load:  # False for NaN
+                n.links.loc[mask, "p_min_pu"] = float(min_load)
+        enabled.extend(n.links.index[mask].tolist())
+
+    if enabled:
+        print(f"[rolling_horizon] committable enabled (MILP) for links: {enabled}")
+    else:
+        print(f"[rolling_horizon] committable techs {committable_techs} not found in network links")
+
+
 # ── Build dispatch network ────────────────────────────────────────────────────
 n_opt = pypsa.Network(snakemake.input.network)
 n = n_opt.copy()
 demand_buses = find_demand_buffer_buses(n)   # detect before redistribution
 fix_capacities(n)
+enable_committable_for_rh(n, c.n_config)
 disable_cyclic_constraints(n)
 distribute_point_demands(n)
 cap_demand_buffer_stores(n, demand_buses, horizon)
