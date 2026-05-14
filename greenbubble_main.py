@@ -19,7 +19,6 @@ from scripts.retrieve import retrieve_technology_data
 from scripts.helpers import (prepare_costs,
                              build_model_solve_network,
                              export_network,
-                             file_name_network,
                              save_network_comp_allocation,
                              create_folder_if_not_exists,
                              save_config,

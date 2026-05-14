@@ -2310,6 +2310,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 efficiency2=tech_costs.at["biogas engine", "efficiency"],
                 marginal_cost=tech_costs.at["biogas engine", "VOM"],
                 lifetime=tech_costs.at["biogas engine", "lifetime"],
+                committable=(n_config.at["biogas engine", "committable"] == True) and not expansion,
                 p_min_pu=n_config.at["biogas engine", "min load"],
                 p_nom_extendable=expansion,
                 p_nom=capacity,
@@ -2595,9 +2596,10 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=expansion,
               p_nom=capacity,
               p_nom_max=n_config.at['electrolysis', 'max capacity'],
-              p_min_pu0= n_config.at['electrolysis', 'min load'],
-              ramp_limit_up0 = n_config.at['electrolysis', 'ramp limit up'],
-              ramp_limit_down0 = n_config.at['electrolysis', 'ramp limit down']
+              committable=(n_config.at['electrolysis', 'committable'] == True) and not expansion,
+              p_min_pu=n_config.at['electrolysis', 'min load'],
+              ramp_limit_up=n_config.at['electrolysis', 'ramp limit up'],
+              ramp_limit_down=n_config.at['electrolysis', 'ramp limit down']
               )
 
         return n
@@ -2706,9 +2708,10 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             lifetime = tech_costs.at["methanolisation", "lifetime"],
             p_nom_max=n_config.at["methanolisation", "max capacity"],
             capital_cost=capital_cost,
-            p_min_pu0=n_config.at["methanolisation", "min load"],
-            ramp_limit_up0 = n_config.at['methanolisation', 'ramp limit up'],
-            ramp_limit_down0 = n_config.at['methanolisation', 'ramp limit down'],
+            committable=(n_config.at["methanolisation", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanolisation", "min load"],
+            ramp_limit_up=n_config.at['methanolisation', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanolisation', 'ramp limit down'],
             )
 
 
@@ -2887,11 +2890,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["biomethanation biogas", "max capacity"],
-            p_min_pu0=n_config.at["biomethanation biogas", "min load"],
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["biomethanation biogas", "VOM"],
-            ramp_limit_up0 = n_config.at['biomethanation biogas', 'ramp limit up'],
-            ramp_limit_down0 = n_config.at['biomethanation biogas', 'ramp limit down'],
+            ramp_limit_up=n_config.at['biomethanation biogas', 'ramp limit up'],
+            ramp_limit_down=n_config.at['biomethanation biogas', 'ramp limit down'],
             )
 
 
@@ -2961,11 +2963,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             p_nom_extendable=expansion,
             p_nom=capacity,
             p_nom_max=n_config.at["biomethanation CO2", "max capacity"],
-            p_min_pu0=n_config.at["biomethanation CO2", "min load"],
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["biomethanation CO2", "VOM"],
-            ramp_limit_up0=n_config.at['biomethanation CO2', 'ramp limit up'],
-            ramp_limit_down0=n_config.at['biomethanation CO2', 'ramp limit down'],
+            ramp_limit_up=n_config.at['biomethanation CO2', 'ramp limit up'],
+            ramp_limit_down=n_config.at['biomethanation CO2', 'ramp limit down'],
         )
 
         # Call compressor for CO2 w/ storage
@@ -3048,11 +3049,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["methanation biogas", "max capacity"],
-            p_min_pu0=n_config.at["methanation biogas", "min load"],
+            committable=(n_config.at["methanation biogas", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanation biogas", "min load"],
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["methanation biogas","VOM"],
-            ramp_limit_up0 = n_config.at['methanation biogas', 'ramp limit up'],
-            ramp_limit_down0 = n_config.at['methanation biogas', 'ramp limit down']
+            ramp_limit_up=n_config.at['methanation biogas', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanation biogas', 'ramp limit down']
             )
 
         # Call compressor for biogas
@@ -3159,11 +3161,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             efficiency4= tech_costs.at["methanation biogas","heat-output"] ,
             p_nom_extendable= expansion,
             p_nom= capacity,
-            p_min_pu0=n_config.at["methanation CO2", "min load"],
+            committable=(n_config.at["methanation CO2", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanation CO2", "min load"],
             capital_cost= capital_cost * vol_ratio,
             marginal_cost= tech_costs.at["methanation biogas","VOM"],
-            ramp_limit_up0 = n_config.at['methanation CO2', 'ramp limit up'],
-            ramp_limit_down0 = n_config.at['methanation CO2', 'ramp limit down']
+            ramp_limit_up=n_config.at['methanation CO2', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanation CO2', 'ramp limit down']
             )
 
         # Call compressor for CO2 w/ storage

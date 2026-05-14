@@ -15,6 +15,7 @@ logs/
 
 # text_docs
 text_docs/
+memory/
 
 # technology-data SHA cache (used by retrieve_technology_data)
 *.sha

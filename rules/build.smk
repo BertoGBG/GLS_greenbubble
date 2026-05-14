@@ -25,8 +25,8 @@ rule build_network:
         costs_eu = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
         inputs   = f"resources/inputs_{YEAR}.pkl",
     output:
-        network    = "resources/{network}_PRE.nc",
-        comp_alloc = "resources/{network}_comp_alloc.pkl",
+        network    = "resources/{network}/{network}_PRE.nc",
+        comp_alloc = "resources/{network}/{network}_comp_alloc.pkl",
     params:
         plot_folder = f"{OUTDIR}/{{network}}/plots",
     log:

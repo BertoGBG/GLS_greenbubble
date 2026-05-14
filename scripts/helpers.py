@@ -26,7 +26,7 @@ post-processing stages:
 import pandas as pd
 import numpy as np
 import pypsatopo
-from scripts.config import En_price_year, n_flags, discount_rate, outputs_folder, CO2_cost_ref_year, max_RE_to_grid, tariffs_dict
+from scripts.config import En_price_year, n_flags, discount_rate, outputs_folder, CO2_cost_ref_year, max_RE_to_grid, tariffs_dict, stochastic
 import pickle as pkl
 from scripts.solver_profiles import SOLVER_PROFILES
 import yaml
@@ -1363,6 +1363,27 @@ def build_model_solve_network(
                     raise ValueError(f"{comp_name} has duplicated names: {list(dup[:20])}")
 
     _normalize_component_index_names(n)
+
+    # ---- MILP + stochastic guard ----
+    _committable_links = (
+        n.links.index[n.links["committable"].astype(bool)].tolist()
+        if "committable" in n.links.columns else []
+    )
+    if _committable_links and stochastic["stochastic"]:
+        warnings.warn(
+            f"\n⚠️  MILP + STOCHASTIC NOT SUPPORTED\n"
+            f"   Committable links detected: {_committable_links}\n"
+            f"   PyPSA stochastic optimization requires a pure LP (no binary variables).\n"
+            f"   Unit commitment (committable=True) will be IGNORED or cause solver errors.\n"
+            f"   → Disable committable in n_config.yaml OR disable stochastic in config.yaml.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        print(
+            f"\n⚠️  WARNING: MILP + STOCHASTIC NOT SUPPORTED — "
+            f"committable links {_committable_links} detected with stochastic=True. "
+            f"Disable one or the other.\n"
+        )
 
     try:
         m = n.optimize.create_model()
