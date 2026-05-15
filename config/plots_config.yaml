@@ -213,13 +213,13 @@ plotting:
 # list of internal buses for plotting shadow prices
   bus_list_mp:
     - El3 bus
-    - H2
-    - bioCH4
-    - bioCH4 biomethanation biogas
-    - bioCH4 biomethanation CO2
-    - bioCH4 methanation biogas
-    - bioCH4 methanation CO2
-    - Methanol
+    - H2 collection
+    - H2 delivery
+    - H2 distribution
+    - bioCH4 collection
+    - bioCH4 delivery
+    - Methanol collection
+    - Methanol delivery
     - Heat MT
     - Heat DH
     - Heat LT

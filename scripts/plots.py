@@ -760,8 +760,7 @@ def save_opt_capacity_components(
 def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3, comp_tech_map=None):
     """Save a comprehensive human-readable table of all optimal-capacity components.
 
-    Main output: full_component_table.csv — one row per component.
-    Summary output: cost_summary_by_plant.csv — per-plant and grand-total cost sums.
+    Output: full_component_table.csv — one row per component.
 
     Filters components whose optimal capacity < num_tol (solver numerical noise only).
     For stochastic networks the first scenario slice is used for static tables;
@@ -1019,27 +1018,6 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
 
-    # ---- build per-plant summary ----
-    _cost_cols = ["Fixed cost (€/y)", "Variable cost (€/y)", "Total cost (€/y)"]
-    summary_rows = []
-    for plant, grp in df.groupby("Plant", sort=True):
-        summary_rows.append({
-            "Plant": plant,
-            "Fixed cost (€/y)":    round(grp["Fixed cost (€/y)"].sum(), 0),
-            "Variable cost (€/y)": round(grp["Variable cost (€/y)"].sum(), 0),
-            "Total cost (€/y)":    round(grp["Total cost (€/y)"].sum(), 0),
-        })
-    summary_rows.append({
-        "Plant":               "SYSTEM TOTAL",
-        "Fixed cost (€/y)":    round(total_fixed, 0),
-        "Variable cost (€/y)": round(total_var, 0),
-        "Total cost (€/y)":    round(total_cost, 0),
-    })
-    df_summary = pd.DataFrame(summary_rows)
-    summary_path = out.parent / "cost_summary_by_plant.csv"
-    df_summary.to_csv(summary_path, index=False)
-    print(f"[full_component_table] Saved summary to {summary_path}")
-
     return df
 
 
@@ -1163,6 +1141,398 @@ def filter_items_by_capacity_threshold(
             print(f"  - {lab} [{kind}] selector={sel} -> {why}")
 
     return filtered
+
+
+def filter_bus_list_mp(n, bus_list, link_th=0.5):
+    """Return buses from bus_list that have at least one injecting link with capacity >= link_th.
+
+    Checks every link where the bus appears as bus1..bus5 (output side).
+    Buses not present in the network's marginal_price table are also dropped.
+    """
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    cap_col = next((col for col in ("p_nom_opt", "p_nom") if not links.empty and col in links.columns), None)
+    mp_cols = set(n.buses_t.marginal_price.columns) if not n.buses_t.marginal_price.empty else set()
+    if isinstance(n.buses_t.marginal_price.columns, pd.MultiIndex):
+        mp_cols = set(n.buses_t.marginal_price.columns.get_level_values("name"))
+
+    keep, dropped = [], []
+    for bus in bus_list:
+        # Always keep buses that appear in marginal_price with any content,
+        # but only if at least one injecting link is above threshold.
+        has_link = False
+        if cap_col is not None:
+            for bus_col in ("bus1", "bus2", "bus3", "bus4", "bus5"):
+                if bus_col not in links.columns:
+                    continue
+                mask = links[bus_col] == bus
+                if mask.any() and (links.loc[mask, cap_col].abs() >= link_th).any():
+                    has_link = True
+                    break
+
+        if has_link or (not links.empty and cap_col is None):
+            keep.append(bus)
+        else:
+            dropped.append(bus)
+
+    if dropped:
+        print(f"[shadow prices] buses filtered out (no injecting link ≥ {link_th} MW): {dropped}")
+    return keep
+
+
+def _bus_net_injection(n, bus):
+    """Total power injected INTO `bus` at each snapshot (MW).
+
+    Uses link p0 × efficiency for each output port (positive efficiency only),
+    plus generator output and storage-unit discharge at that bus.
+    For stochastic networks, uses the first scenario's p0.
+    """
+    result = pd.Series(0.0, index=n.snapshots)
+
+    # Generators
+    if not n.generators.empty and "bus" in n.generators.columns:
+        p_gen = getattr(n.generators_t, "p", None)
+        if p_gen is not None:
+            for g in n.generators.index[n.generators["bus"] == bus]:
+                if g in p_gen.columns:
+                    result = result.add(p_gen[g].reindex(n.snapshots, fill_value=0.0), fill_value=0.0)
+
+    # Links: injection at each output port = p0 × efficiency_i (if > 0)
+    if not n.links.empty:
+        p0_raw = getattr(n.links_t, "p0", None)
+        if p0_raw is not None and not p0_raw.empty:
+            if isinstance(p0_raw.columns, pd.MultiIndex):
+                first_scen = p0_raw.columns.get_level_values(0)[0]
+                p0_df = p0_raw[first_scen]
+            else:
+                p0_df = p0_raw
+            links = _slice_df_first_scenario(n.links)
+            for bus_col, eff_col in [
+                ("bus1", "efficiency"),
+                ("bus2", "efficiency2"),
+                ("bus3", "efficiency3"),
+                ("bus4", "efficiency4"),
+                ("bus5", "efficiency5"),
+            ]:
+                if bus_col not in links.columns:
+                    continue
+                for lk in links.index[links[bus_col] == bus]:
+                    if lk not in p0_df.columns:
+                        continue
+                    eff = float(links.at[lk, eff_col]) if eff_col in links.columns else 1.0
+                    if eff > 0:
+                        result = result.add(
+                            (p0_df[lk] * eff).reindex(n.snapshots, fill_value=0.0),
+                            fill_value=0.0,
+                        )
+
+    # StorageUnits discharging
+    if not n.storage_units.empty and "bus" in n.storage_units.columns:
+        p_su = getattr(n.storage_units_t, "p", None)
+        if p_su is not None:
+            for su in n.storage_units.index[n.storage_units["bus"] == bus]:
+                if su in p_su.columns:
+                    result = result.add(
+                        p_su[su].reindex(n.snapshots, fill_value=0.0).clip(lower=0),
+                        fill_value=0.0,
+                    )
+
+    return result.clip(lower=0)
+
+
+def export_shadow_prices_mean_csv(n, bus_list, out_path):
+    """Save energy-weighted mean marginal price for each bus; returns {bus: mean} dict.
+
+    Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
+    Falls back to duration-weighted mean when a bus receives no measurable flow.
+    """
+    mp = n.buses_t.marginal_price
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+
+    rows = []
+    means = {}
+
+    for bus in bus_list:
+        if isinstance(mp.columns, pd.MultiIndex):
+            bus_cols = mp.loc[:, mp.columns.get_level_values("name") == bus]
+            if bus_cols.empty:
+                continue
+            λ = bus_cols.iloc[:, 0]
+        else:
+            if bus not in mp.columns:
+                continue
+            λ = mp[bus]
+
+        λ = pd.to_numeric(λ, errors="coerce").reindex(n.snapshots, fill_value=0.0)
+
+        q    = _bus_net_injection(n, bus)
+        e_w  = (q * snap_w).reindex(n.snapshots, fill_value=0.0)
+        denom = float(e_w.sum())
+
+        if denom > 1e-6:
+            wmean = float((λ * e_w).sum() / denom)
+        else:
+            wmean = float((λ * snap_w).sum() / snap_w.sum())
+
+        means[bus] = wmean
+        rows.append({"bus": bus, "energy weighted mean (EUR/MWh)": round(wmean, 4)})
+
+    if rows:
+        pd.DataFrame(rows).set_index("bus").to_csv(out_path)
+        print(f"[shadow prices] energy-weighted mean prices saved → {out_path}")
+
+    return means
+
+
+def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (energy-weighted)",
+                                bus_filter=None):
+    """Bar chart of energy-weighted mean marginal prices by bus.
+
+    Parameters
+    ----------
+    means : dict {bus: float}  (as returned by export_shadow_prices_mean_csv)
+    out_path : str or Path
+    bus_filter : list[str] or None
+        If given, only buses in this list are plotted (preserves order of bus_filter).
+    """
+    if not means:
+        return
+
+    if bus_filter is not None:
+        buses = [b for b in bus_filter if b in means]
+    else:
+        buses = list(means.keys())
+    values = [means[b] for b in buses]
+
+    fig, ax = plt.subplots(figsize=(max(6, 0.55 * len(buses)), 4.2))
+    bars = ax.bar(range(len(buses)), values, color="#2196f3", edgecolor="white", linewidth=0.5)
+
+    # value labels on top of bars
+    for bar, val in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(abs(v) for v in values) * 0.01,
+            f"{val:.1f}",
+            ha="center", va="bottom", fontsize=8,
+        )
+
+    ax.set_xticks(range(len(buses)))
+    ax.set_xticklabels(buses, rotation=60, ha="right", fontsize=9)
+    ax.set_ylabel("€/MWh")
+    ax.set_title(title)
+    ax.grid(axis="y", alpha=0.3)
+    ax.axhline(0, color="black", linewidth=0.6)
+
+    plt.tight_layout()
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[shadow prices] mean bar chart saved → {out_path}")
+
+
+# ---- LCOP BY TECHNOLOGY ----
+
+def compute_lcop_by_technology(n, out_csv, out_plot):
+    """Compute LCOP, revenue, and annual profit for each technology injecting
+    into a product collection bus (tagged is_product_bus=True).
+
+    Definitions (one row per multilink lk with bus1 = collection bus):
+
+      indirect OPEX  = feedstock costs − by-product credits, via KKT:
+                     = −Σ_{k≠bus1} eff_k × Σ_t(p0_t × λ_{bus_k,t} × snap_w_t)
+                       [eff_0 = −1 for bus0; positive = net cost, typical case]
+
+      LCOP [€/MWh]   = (CAPEX + OPEX + indirect OPEX) / annual production
+
+      revenue main product = eff1 × Σ_t(p0_t × λ_{bus1,t} × snap_w_t)
+
+      net market value = revenue main product − indirect OPEX
+
+      annual profit    = net market value − CAPEX − OPEX
+                       = what the market pays you for your product and
+                         by-products, minus every cost you incur.
+                         ≈ 0 for the marginal (price-setting) technology;
+                         > 0 for infra-marginal (lower-cost) technologies.
+
+    Shared components (compressors, storage with their own carrier) are NOT
+    included — their cost enters implicitly via the KKT at the interface buses.
+
+    Saves a presentable CSV and a two-panel bar chart.
+    Returns results as a DataFrame (column names match the CSV headers).
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[LCOP] no 'is_product_bus' column on buses — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[LCOP] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[LCOP] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[LCOP] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    # ── Statistics ─────────────────────────────────────────────────────────
+    try:
+        capex_s = n.statistics.capex(groupby=False)
+        opex_s  = n.statistics.opex(groupby=False)
+    except Exception as e:
+        _warn.warn(f"[LCOP] n.statistics failed: {e}")
+        capex_s = pd.Series(dtype=float)
+        opex_s  = pd.Series(dtype=float)
+
+    def _get_stat(series, name):
+        if series.empty:
+            return 0.0
+        if isinstance(series.index, pd.MultiIndex):
+            try:
+                val = series.xs(name, level=-1)
+                return float(val.sum()) if hasattr(val, "sum") else float(val)
+            except KeyError:
+                return 0.0
+        return float(series.get(name, 0.0))
+
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+
+    mp = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    if p0_raw is not None and not p0_raw.empty:
+        p0_df = (
+            p0_raw[p0_raw.columns.get_level_values(0)[0]]
+            if isinstance(p0_raw.columns, pd.MultiIndex)
+            else p0_raw
+        )
+    else:
+        p0_df = pd.DataFrame(index=n.snapshots)
+
+    def _kkt_term(bus, eff, p0):
+        """eff × Σ_t(p0_t × λ_{bus,t} × snap_w_t); 0 if bus unavailable."""
+        if pd.isna(bus) or str(bus) == "" or str(bus) not in mp.columns:
+            return 0.0
+        λ = mp[str(bus)].reindex(n.snapshots, fill_value=0.0)
+        return float((p0 * float(eff) * λ * snap_w).sum())
+
+    rows = []
+    link_names = []
+    for lk in product_links:
+        capex = _get_stat(capex_s, lk)
+        opex  = _get_stat(opex_s,  lk)
+
+        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        p0 = (
+            p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+            if lk in p0_df.columns
+            else pd.Series(0.0, index=n.snapshots)
+        )
+        annual_production = float((p0 * eff1 * snap_w).sum()) if eff1 > 0 else 0.0
+        if annual_production <= 0:
+            continue
+
+        # ── KKT at bus0 (implicit eff = -1: primary feedstock consumed) ───
+        bus0 = links.at[lk, "bus0"] if "bus0" in links.columns else ""
+        net_kkt_non_main = _kkt_term(bus0, -1.0, p0)
+
+        # ── KKT at bus2..bus5 (additional inputs eff<0 and by-products eff>0)
+        for bus_col, eff_col in [("bus2", "efficiency2"), ("bus3", "efficiency3"),
+                                  ("bus4", "efficiency4"), ("bus5", "efficiency5")]:
+            if bus_col not in links.columns or eff_col not in links.columns:
+                continue
+            eff_k = links.at[lk, eff_col]
+            if pd.isna(eff_k) or float(eff_k) == 0.0:
+                continue
+            net_kkt_non_main += _kkt_term(links.at[lk, bus_col], eff_k, p0)
+
+        # indirect OPEX = feedstock costs − by-product credits (positive = net cost)
+        indirect_opex = -net_kkt_non_main
+
+        # ── KKT at bus1 (main product at collection bus) ───────────────────
+        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
+        revenue_main = _kkt_term(bus1, eff1, p0)
+
+        net_market_value = revenue_main - indirect_opex
+        lcop             = (capex + opex + indirect_opex) / annual_production
+        annual_profit    = net_market_value - capex - opex
+
+        product = n.buses.at[bus1, "product"] if ("product" in n.buses.columns and bus1 in n.buses.index) else ""
+        link_names.append(lk)
+        rows.append({
+            "carrier":                      links.at[lk, "carrier"] if "carrier" in links.columns else "",
+            "product":                      product,
+            "CAPEX (EUR)":                  round(capex, 0),
+            "OPEX (EUR)":                   round(opex, 0),
+            "indirect OPEX (EUR)":          round(indirect_opex, 0),
+            "revenue main product (EUR)":   round(revenue_main, 0),
+            "net market value (EUR)":       round(net_market_value, 0),
+            "annual production (MWh)":      round(annual_production, 0),
+            "LCOP (EUR/MWh)":               round(lcop, 2),
+            "annual profit (EUR)":          round(annual_profit, 0),
+        })
+
+    if not rows:
+        print("[LCOP] no product links with positive output — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows, index=pd.Index(link_names, name="link"))
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv)
+    print(f"[LCOP] saved → {out_csv}")
+
+    _plot_lcop_bar(df, Path(out_plot))
+    return df
+
+
+def _plot_lcop_bar(df, out_path):
+    """Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom)."""
+    labels  = df.index.tolist()
+    lcops   = df["LCOP (EUR/MWh)"].tolist()
+    profits = (df["annual profit (EUR)"] / 1e3).tolist()
+    if not labels:
+        return
+
+    n_tech = len(labels)
+    fig, axes = plt.subplots(2, 1, figsize=(max(6, 0.65 * n_tech), 8))
+
+    def _draw_bars(ax, values, ylabel, title, color):
+        bars = ax.bar(range(n_tech), values, color=color, edgecolor="white", linewidth=0.5)
+        y_range = max(abs(v) for v in values) if values else 1.0
+        for bar, val in zip(bars, values):
+            ypos = bar.get_height() + y_range * 0.01 if val >= 0 else bar.get_height() - y_range * 0.04
+            ax.text(bar.get_x() + bar.get_width() / 2, ypos,
+                    f"{val:.1f}", ha="center", va="bottom", fontsize=8)
+        ax.set_xticks(range(n_tech))
+        ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=9)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid(axis="y", alpha=0.3)
+        ax.axhline(0, color="black", linewidth=0.6)
+
+    _draw_bars(axes[0], lcops,   "€/MWh",
+               "LCOP  =  (CAPEX + OPEX + indirect OPEX) / annual production",
+               "#43a047")
+    _draw_bars(axes[1], profits, "k€/year",
+               "Annual profit  =  revenue main product − indirect OPEX − CAPEX − OPEX",
+               "#1565c0")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[LCOP] bar chart saved → {out_path}")
+
 
 # ---- OPTIMAL CAPACITIES ----
 def _slice_df_first_scenario(df: pd.DataFrame):
@@ -1739,16 +2109,12 @@ def shadow_prices_violinplot_stoch(
     fig, ax = plt.subplots(figsize=(max(9, 0.45 * len(labels)), 4.6))
     vp = ax.violinplot(data, showmeans=True, showmedians=False, showextrema=True)
 
-    ax.set_xticks(range(1, len(labels) + 1), labels, rotation=90)
-    ax.set_title(title)
-    ax.grid(True, alpha=0.25)
-
     vp["cmeans"].set_color(mean_color)
     vp["cmeans"].set_linewidth(mean_linewidth)
 
-    #vp["cmedians"].set_color(median_color)
-    #vp["cmedians"].set_linewidth(median_linewidth)
-
+    ax.set_xticks(range(1, len(labels) + 1), labels, rotation=90)
+    ax.set_title(title)
+    ax.grid(True, alpha=0.25)
 
     ax.text(0.02, 0.95, scen_txt, transform=ax.transAxes, fontsize=9, va="top",
             bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
@@ -4629,9 +4995,25 @@ def run_plot_and_export(
         )
 
     def step_shadow_prices() -> None:
+        # Build bus list: demand mode → delivery buses only; price mode → all buses
+        driver = c.targets_dict.get("driver", "demand")
+        if driver == "price":
+            bus_list_bar = list(bus_list_mp)
+        else:
+            bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
+
+        # CSV and bar chart use the same bus list
+        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
+                                    bus_filter=bus_list_bar)
+
+        # Violin + LDC: same list, further filtered by capacity threshold
+        bus_list_f = filter_bus_list_mp(
+            n, bus_list_bar, link_th=thresholds.get("LINK_TH", 0.5)
+        )
         shadow_prices_violinplot_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4640,11 +5022,12 @@ def run_plot_and_export(
             handle_spikes="clip",
             quantile_hi=0.98,
             n_draws=25000,
+            title="Shadow prices — snapshot distribution over time (mean: scenario-weighted)",
         )
 
         shadow_prices_ldc_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4654,6 +5037,7 @@ def run_plot_and_export(
             quantile_hi=0.98,
             n_points=1001,
             fname="shd_prices_ldc.png",
+            title="Shadow prices — load-duration curves over snapshots",
         )
 
     def step_operation_plots() -> None:
@@ -4708,6 +5092,13 @@ def run_plot_and_export(
     def step_pypsa_statistics() -> None:
         save_pypsa_statistics(n, csv_folder / "pypsa_statistics.csv")
 
+    def step_lcop() -> None:
+        compute_lcop_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_by_technology.csv",
+            out_plot=plot_folder / "lcop_by_technology.png",
+        )
+
     # ---------------- Run in order ----------------
 
     _safe_step("cost_by_carrier", step_cost_by_carrier)
@@ -4722,6 +5113,7 @@ def run_plot_and_export(
 
     _safe_step("inputs_ldc_by_scenario", step_inputs_ldc)
     _safe_step("shadow_prices", step_shadow_prices)
+    _safe_step("lcop", step_lcop)
     _safe_step("operation_plots", step_operation_plots)
 
     if failures:
@@ -4737,6 +5129,7 @@ def run_plot_operational(
     n,
     c,
     plot_folder: str | Path,
+    csv_folder: str | Path,
     items: list[dict],
     thresholds: dict,
     bus_list_mp: list[str],
@@ -4755,6 +5148,8 @@ def run_plot_operational(
 
     plot_folder = Path(plot_folder)
     plot_folder.mkdir(parents=True, exist_ok=True)
+    csv_folder = Path(csv_folder)
+    csv_folder.mkdir(parents=True, exist_ok=True)
 
     failures: Dict[str, Exception] = {}
 
@@ -4801,9 +5196,25 @@ def run_plot_operational(
         )
 
     def step_shadow_prices() -> None:
+        # Build bus list: demand mode → delivery buses only; price mode → all buses
+        driver = c.targets_dict.get("driver", "demand")
+        if driver == "price":
+            bus_list_bar = list(bus_list_mp)
+        else:
+            bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
+
+        # CSV and bar chart use the same bus list
+        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
+                                    bus_filter=bus_list_bar)
+
+        # Violin + LDC: same list, further filtered by capacity threshold
+        bus_list_f = filter_bus_list_mp(
+            n, bus_list_bar, link_th=thresholds.get("LINK_TH", 0.5)
+        )
         shadow_prices_violinplot_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4812,10 +5223,11 @@ def run_plot_operational(
             handle_spikes="clip",
             quantile_hi=0.98,
             n_draws=25000,
+            title="Shadow prices — snapshot distribution over time (mean: scenario-weighted)",
         )
         shadow_prices_ldc_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4825,6 +5237,7 @@ def run_plot_operational(
             quantile_hi=0.98,
             n_points=1001,
             fname="shd_prices_ldc.png",
+            title="Shadow prices — load-duration curves over snapshots",
         )
 
     def step_operation_plots() -> None:
@@ -4863,9 +5276,17 @@ def run_plot_operational(
             add_stochastic_column=False,
         )
 
+    def step_lcop() -> None:
+        compute_lcop_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_by_technology.csv",
+            out_plot=plot_folder / "lcop_by_technology.png",
+        )
+
     _safe("filter_items",       step_filter_items)
     _safe("inputs_ldc",         step_inputs_ldc)
     _safe("shadow_prices",      step_shadow_prices)
+    _safe("lcop",               step_lcop)
     _safe("operation_plots",    step_operation_plots)
 
     if failures:

@@ -7,7 +7,7 @@ biochar credits: #TODO : stochastic testing
 
 CO2 Liq credits: #TODO : stochastic testing
   enable: false
-  #efficiency: 0.9 # assumption including boil off
+  efficiency: 0.95 # assumption including boil off
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass

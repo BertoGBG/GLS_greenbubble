@@ -1860,12 +1860,13 @@ def add_heat_pump(n, n_flags, inputs_dict, tech_costs):
 
 
 def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
-    """Add exogenous energy demands/ or selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links
+    """Add exogenous energy demands / selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links.
 
     INPUTS
-    plant : str # usually it matched t in the adding plant section
+    plant : str  — matches the technology key used in the plant-adding section
     OUTPUTS
-    product_bus : 'str' # name of the bus where the plant alloctes its product -> used to build multilinks in add_plant functions
+    product_bus : str  — the collection bus for this product; used as bus1 in plant multilinks
+                         (plants inject directly into the collection bus)
     """
 
     # HELPERS
@@ -1878,15 +1879,13 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
     def build_bus_list_demand_or_price(driver, plant):
         """Return (bus_list, demand_ts, price_ts, e_product).
 
-        bus_list always has three elements:
-          [0] per-tech intermediate bus   e.g. "H2 electrolysis"
-          [1] product collection bus      e.g. "H2 collection"   ← tagged for discovery
-          [2] external demand/sale bus    e.g. "H2" (demand) or "H2 delivery" (price)
+        bus_list always has two elements:
+          [0] product collection bus   e.g. "bioCH4 collection"  ← tagged for discovery
+          [1] delivery/demand bus      e.g. "bioCH4 delivery"
 
-        Multiple plants producing the same product each get their own [0] bus and
-        feed into the shared [1] collection bus via a zero-cost per-tech link.
-        The collection-to-external link and the Store/Load at [2] are created only
-        once, regardless of how many plants are added.
+        All plants producing the same product inject directly into the shared [0]
+        collection bus (bus1 of the plant multilink).  The collection-to-delivery
+        link and the Store/Load at [1] are created only once per product.
         """
         bus_list = None
         demand_ts = None
@@ -1906,32 +1905,32 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
             weights = n.snapshot_weightings["objective"]
 
             if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = [f"bioCH4 {plant}", "bioCH4 collection", "bioCH4 delivery"]
+                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
                 demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
                 e_product = float((demand_ts * weights).sum())
                 price_ts  = p_bioCH4
 
             if any(k in plant.lower() for k in ["electrolysis"]):
-                bus_list  = [f"H2 {plant}", "H2 collection", "H2 delivery"]
+                bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
                 e_product = float((demand_ts * weights).sum())
                 price_ts  = p_H2
 
             if any(k in plant.lower() for k in ["Methanol", "methanolisation", "meoh"]):
-                bus_list  = [f"Methanol {plant}", "Methanol collection", "Methanol delivery"]
+                bus_list  = ["Methanol collection", "Methanol delivery"]
                 demand_ts = clean_series(inputs_dict["Methanol_input_demand"], n)
                 e_product = float((demand_ts * weights).sum())
                 price_ts  = p_meoh
 
         elif driver == "demand":
             if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = [f"bioCH4 {plant}", "bioCH4 collection", "bioCH4"]
+                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
                 demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
             if any(k in plant.lower() for k in ["electrolysis"]):
-                bus_list  = [f"H2 {plant}", "H2 collection", "H2"]
+                bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
             if any(k in plant.lower() for k in ["Methanol", "methanolisation", "meoh"]):
-                bus_list  = [f"Methanol {plant}", "Methanol collection", "Methanol"]
+                bus_list  = ["Methanol collection", "Methanol delivery"]
                 demand_ts = clean_series(inputs_dict["Methanol_input_demand"], n)
 
         else:
@@ -1940,19 +1939,19 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
         return bus_list, demand_ts, price_ts, e_product
 
     def add_targets_per_product(n, driver, product, carrier, unit, bus_list, demand_ts, price_ts, e_product):
-        """Wire one plant into the product collection topology.
+        """Wire the product collection topology (created once per product).
 
-        bus_list = [per-tech bus, collection bus, external demand/sale bus]
+        bus_list = [collection bus, delivery/demand bus]
 
-        Per-tech link (always, zero cost):
-            bus_list[0] → bus_list[1]   named "{plant}_to_collection"
+        Plants inject directly into bus_list[0] (collection bus) via their own
+        multilink's bus1.  This function creates the shared infrastructure only:
 
-        Collection-to-external link + Store/Load (created once across all plants):
-          demand:  bus_list[1] → bus_list[2],  named "{product}_collection_to_demand"
-          price:   bus_list[1] → bus_list[2],  named "{product}_collection_to_delivery"
+        Collection-to-delivery link + Store/Load (created once across all plants):
+          demand:  bus_list[0] → bus_list[1],  named "{product}_collection_to_demand"
+          price:   bus_list[0] → bus_list[1],  named "{product}_collection_to_delivery"
 
-        The collection bus (bus_list[1]) is tagged so other modules can find it
-        without hardcoded names.
+        bus_list[0] (collection) is tagged so other modules can find it without
+        hardcoded names.
         """
         bus_dict = {
             "bus_list": bus_list,
@@ -1963,24 +1962,10 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
         ensure_carrier(n, product)
 
         # Tag the collection bus — discoverable by add_symbiosis and other modules.
-        n.buses.loc[bus_list[1], "is_product_bus"] = True
-        n.buses.loc[bus_list[1], "product"]        = product
+        n.buses.loc[bus_list[0], "is_product_bus"] = True
+        n.buses.loc[bus_list[0], "product"]        = product
 
-        # ── Per-tech link: intermediate → collection (zero cost, always) ──────
-        lk_collect = f"{plant}_to_collection"
-        if lk_collect not in n.links.index:
-            n.add(
-                "Link",
-                lk_collect,
-                carrier=product,
-                bus0=bus_list[0],
-                bus1=bus_list[1],
-                efficiency=1.0,
-                p_nom_extendable=True,
-                marginal_cost=0.0,
-            )
-
-        # ── Collection → external: created once regardless of how many plants ──
+        # ── Collection → delivery: created once regardless of how many plants ──
         if driver == "demand":
             lk_ext = f"{product}_collection_to_demand"
             if lk_ext not in n.links.index:
@@ -1988,15 +1973,15 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     "Link",
                     lk_ext,
                     carrier=product,
-                    bus0=bus_list[1],
-                    bus1=bus_list[2],
+                    bus0=bus_list[0],
+                    bus1=bus_list[1],
                     efficiency=1.0,
                     p_nom_extendable=True,
                     marginal_cost=0.0,
                 )
 
             if product not in n.loads.index:
-                n.add("Load", product, bus=bus_list[2], carrier=carrier)
+                n.add("Load", product, bus=bus_list[1], carrier=carrier)
                 n.loads_t.p_set[product] = demand_ts.reindex(n.snapshots)
 
                 # Delivery store: sized by inputs_dict; None or 0 → rigid demand (no store)
@@ -2004,7 +1989,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 store_e_nom_max = inputs_dict.get(_store_key, float("inf"))
                 if store_e_nom_max is not None and store_e_nom_max > 0:
                     store_kwargs = dict(
-                        bus              = bus_list[2],
+                        bus              = bus_list[1],
                         e_nom_extendable = True,
                         e_cyclic         = True,
                     )
@@ -2019,8 +2004,8 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     "Link",
                     lk_ext,
                     carrier=product,
-                    bus0=bus_list[1],
-                    bus1=bus_list[2],
+                    bus0=bus_list[0],
+                    bus1=bus_list[1],
                     efficiency=1.0,
                     p_nom_extendable=True,
                 )
@@ -2033,7 +2018,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 n.add(
                     "Store",
                     f"{product} delivery",
-                    bus=bus_list[2],
+                    bus=bus_list[1],
                     e_nom_extendable=True,
                     e_cyclic=False,
                     e_nom_max=e_product,
@@ -2100,9 +2085,9 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         # ------- adding functions ------------
 
         def add_biogas_aux(n):
-            bus_dict = {'bus_list': ['Dig biomass', 'Digestate', 'biogas', 'bioCH4'],
-                        'carrier_list': ['Dig biomass', 'Digestate', 'gas', 'gas'],
-                        'unit_list': ['t/h DM', 't/h DM', 'MW', 'MW'],
+            bus_dict = {'bus_list': ['Dig biomass', 'Digestate', 'biogas'],
+                        'carrier_list': ['Dig biomass', 'Digestate', 'gas'],
+                        'unit_list': ['t/h DM', 't/h DM', 'MW'],
                         }
             # add required buses if not in the network
             n = add_requirements_buses(n, bus_dict, symbiosis_n)
@@ -2205,9 +2190,9 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         def add_biogas_upgrading_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier):
             """ product_bus: str # is the bus for deliver of bioCH4, set by the add_targets function"""
 
-            bus_dict = {'bus_list': ['NG', 'CO2 sep', 'biogas', 'bioCH4'],
-                        'carrier_list': ['gas', 'CO2', 'gas', 'gas'],
-                        'unit_list': ['MW', 't/h', 'MW', 'MW'],
+            bus_dict = {'bus_list': ['NG', 'CO2 sep', 'biogas'],
+                        'carrier_list': ['gas', 'CO2', 'gas'],
+                        'unit_list': ['MW', 't/h', 'MW'],
                         }
             # add required buses if not in the network
             n = add_requirements_buses(n, bus_dict, symbiosis_n)
@@ -2571,9 +2556,9 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
     def add_H2_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier):
 
         n = add_requirements_buses(n, {
-            'bus_list': ['El3', 'H2'],
-            'carrier_list': ['El', 'H2'],
-            'unit_list': ['MW', 'MW'],
+            'bus_list': ['El3'],
+            'carrier_list': ['El'],
+            'unit_list': ['MW'],
         }, symbiosis_n)
 
         # ---------- Add local heat connections
@@ -3220,7 +3205,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         idx = ['local EL bus','CO2 in bus', 'H2 in bus', 'biogas in bus', 'product bus']
         carriers= ['El',"CO2", "H2", "gas", "gas"]
         units = ['MW', "t/h", "MW", "MW", "MW"]
-        buses_methanation = ['El_methanation', 'CO2 distribution', 'H2 distribution', 'biogas', 'bioCH4']
+        buses_methanation = ['El_methanation', 'CO2 distribution', 'H2 distribution', 'biogas', '']
         methanation_buses = pd.DataFrame(index =idx, columns=['methanation'] + techs, data = ''  )
         methanation_buses.loc[:,'methanation'] = buses_methanation
         methanation_buses.loc[:,'carrier'] = carriers
