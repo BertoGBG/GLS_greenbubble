@@ -1,14 +1,14 @@
 # config/config.yml
-run_name: D_meoh_MILP # keep it short
+run_name: P_bmeth_test # keep it short
 
 # Annual Demands or price targets
 # if driver == 'demand': Demands must be present AND Prices are not used in the model
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
 
 targets:
-  driver: 'demand' # 'price' | 'demand'
-  demand_H2 :  100000 # MWh_H2 /y  Demand OR max production
-  demand_CH4 : 300000 # MWh_CH4 /y Demand OR max production
+  driver: 'price' # 'price' | 'demand'
+  demand_H2 :  200000 # MWh_H2 /y  Demand OR max production
+  demand_CH4 : 360000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 9000 # Mwh_meoh /y Demand OR max production
   price_H2 : 90 # €/MWh prices are required only for driver : 'price'
   price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
@@ -64,7 +64,7 @@ n_flags:
   renewables: true
   electrolysis: true
   meoh: true
-  methanation: false
+  methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
   print: true       # saves svg of prenetwork before optimization
@@ -81,7 +81,7 @@ outputs_folder: outputs/single_analysis
 
 # RFNBOs
 rfnbos_dict:
-  limit: 'price'         # emissions | price | unlimited | disconnected
+  limit: 'unlimited'         # emissions | price | unlimited | disconnected
   price_threshold: 20      # €/MWh
   emission_threshold: 0.0648   # tCO2e/MWh
 
@@ -89,7 +89,7 @@ rfnbos_dict:
 year_EU: 2030
 USD_to_EUR: 0.85
 EUR_to_DKK: 7.46
-discount_rate: 0.1
+discount_rate: 0.07
 
 # tariffs
 tariffs_dict:
@@ -136,7 +136,7 @@ stochastic:
 # Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
 # When enabled, `snakemake` targets the RH output and does NOT run solve_network.
 rolling_horizon:
-  enabled: true
+  enabled: false
   horizon: 168        # window size in hours (e.g. 168 = 1 week)
   overlap: 72         # overlap in hours between consecutive windows
   network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_SN_ST_CO2_100_tD_H2_100_MeOH_9_CH4_300_2024_El_0.1_DET_D_meoh_MILP/networks/B_H_RE_H2_MEOH_SN_ST_CO2_100_tD_H2_100_MeOH_9_CH4_300_2024_El_0.1_DET_D_meoh_MILP_OPT.nc'  # REQUIRED when enabled — path to a .nc network to load

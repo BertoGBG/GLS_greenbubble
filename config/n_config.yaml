@@ -23,8 +23,8 @@ battery: # includes inverter
 biogas: # (unit: MW CH4,  for simplicity)
   <<: *base
   cost factor : 1
-  initial capacity: 0
-  expansion: true
+  initial capacity: 30
+  expansion: false
 
 biogas storage:
   <<: *base
@@ -33,6 +33,7 @@ biogas storage:
 biogas upgrading: #
   <<: *base
   cost factor: 1
+  max capacity : 30
 
 biogas compressor: # applies to methanation
   <<: *base
@@ -50,7 +51,7 @@ biogas engine:
   <<: *base
   initial capacity: 0
   cost factor: 1       # override
-  min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
+  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
   committable : true # -> only for initial capacity or RH
 
@@ -74,7 +75,7 @@ methanation biogas: # (bus0 unit: MW H2)
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
   committable : true # -> only for initial capacity or RH
-  expansion : true
+  expansion : false
   cost factor: 1.2
 
 methanation CO2: # (bus0 unit: MW H2)
@@ -83,7 +84,7 @@ methanation CO2: # (bus0 unit: MW H2)
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
   committable : true # -> only for initial capacity or RH
-  expansion: true
+  expansion: false
   cost factor: 1.2
 
 CH4 compressor: # applies to both meoh and methanation

@@ -44,6 +44,7 @@ GreenBubble Documentation
    guide_new_technology
    guide_demands
    guide_rolling_horizon
+   guide_economic_analysis
 
 .. toctree::
    :maxdepth: 1
