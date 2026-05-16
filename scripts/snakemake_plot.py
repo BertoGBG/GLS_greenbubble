@@ -10,11 +10,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pickle
 import pypsa
-from scripts.helpers import create_folder_if_not_exists
+from scripts.helpers import create_folder_if_not_exists, zero_small_capacities
 from scripts.plots import run_plot_and_export
 from scripts import config as c
 
 n = pypsa.Network(snakemake.input.network)
+
+# Clean solver-noise artifacts in-memory before any analysis.
+# The .nc on disk is never touched — this mirrors the pypsa-eur brownfield
+# capacity_threshold approach (add_brownfield.py) for single-period networks.
+_zero_th = float(c.optimization.get("zero_threshold_MW", 0.0))
+zero_small_capacities(n, _zero_th)
 
 with open(snakemake.input.comp_alloc, "rb") as fh:
     _alloc_payload = pickle.load(fh)
@@ -31,17 +37,11 @@ results_folder = str(Path(snakemake.input.network).parent.parent)
 plot_folder    = create_folder_if_not_exists(results_folder, "plots")
 csv_folder     = create_folder_if_not_exists(results_folder, "csv")
 
-# resolve symbolic threshold keys to numeric values
-for it in c.items:
-    if isinstance(it.get("th"), str):
-        it["th"] = float(c.thresholds[it["th"]])
-
 run_plot_and_export(
     n                       = n,
     c                       = c,
     csv_folder              = csv_folder,
     plot_folder             = plot_folder,
-    thresholds              = c.thresholds,
     items                   = c.items,
     bus_list_mp             = c.bus_list_mp,
     network_comp_allocation = network_comp_allocation,
