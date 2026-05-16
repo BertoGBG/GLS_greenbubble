@@ -33,7 +33,7 @@ biogas storage:
 biogas upgrading: #
   <<: *base
   cost factor: 1
-  max capacity : 30
+  expansion: true
 
 biogas compressor: # applies to methanation
   <<: *base
@@ -67,7 +67,7 @@ biomethanation CO2: # (bus0 unit: MW H2)
   ramp limit up: 1 # % of total power capacity per hour
   ramp limit down: 1 # % of total power capacity per hour
   expansion : true
-  cost factor: 0.8
+  cost factor: 1
 
 methanation biogas: # (bus0 unit: MW H2)
   <<: *base
@@ -76,7 +76,7 @@ methanation biogas: # (bus0 unit: MW H2)
   min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
   committable : true # -> only for initial capacity or RH
   expansion : false
-  cost factor: 1.2
+  cost factor: 1
 
 methanation CO2: # (bus0 unit: MW H2)
   <<: *base
@@ -85,7 +85,7 @@ methanation CO2: # (bus0 unit: MW H2)
   min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
   committable : true # -> only for initial capacity or RH
   expansion: false
-  cost factor: 1.2
+  cost factor: 1
 
 CH4 compressor: # applies to both meoh and methanation
   <<: *base

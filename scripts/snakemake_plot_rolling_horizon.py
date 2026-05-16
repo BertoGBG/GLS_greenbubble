@@ -28,11 +28,6 @@ results_folder = Path(snakemake.input.network).parent.parent
 plot_folder    = create_folder_if_not_exists(str(results_folder), "plots_rh")
 csv_folder     = create_folder_if_not_exists(str(results_folder), "csv_rh")
 
-# Resolve symbolic threshold keys to numeric values (same as snakemake_plot.py)
-for it in c.items:
-    if isinstance(it.get("th"), str):
-        it["th"] = float(c.thresholds[it["th"]])
-
 # ── Full plot suite for the RH network ────────────────────────────────────────
 # network_comp_allocation=None → agent/allocation steps are skipped with a
 # warning; all carrier-level cost, operational and shadow-price steps run.
@@ -41,7 +36,6 @@ run_plot_and_export(
     c                       = c,
     csv_folder              = csv_folder,
     plot_folder             = plot_folder,
-    thresholds              = c.thresholds,
     items                   = c.items,
     bus_list_mp             = c.bus_list_mp,
     network_comp_allocation = None,

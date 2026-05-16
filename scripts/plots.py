@@ -508,33 +508,13 @@ def save_opt_capacity_components(
     n_opt,
     network_comp_allocation,
     file_path,
-    thresholds: dict | None = None,
-    # defaults (still here for backward compatibility)
-    GEN_TH=0.5,          # MW
-    LINK_TH=0.5,         # MW
-    LINK_MASS_TH=0.5,    # t/h
-    STORE_TH=1.0,        # MWh
-    STORE_MASS_TH=0.5,   # t
-    SU_TH=0.5,           # MW
-    SU_MASS_TH=0.5,      # t/h
 ):
     """
     Saves optimal capacities + annualized capex for allocated assets.
 
-    thresholds:
-      dict with keys: GEN_TH, LINK_TH, LINK_MASS_TH, STORE_TH, STORE_MASS_TH, SU_TH, SU_MASS_TH
-      If provided, overrides the default keyword args above.
+    Solver-noise filtering is handled upstream by zero_small_capacities()
+    in snakemake_plot.py, so no per-component threshold is needed here.
     """
-
-    # --- override defaults from YAML thresholds if given ---
-    if thresholds is not None:
-        GEN_TH = float(thresholds.get("GEN_TH", GEN_TH))
-        LINK_TH = float(thresholds.get("LINK_TH", LINK_TH))
-        LINK_MASS_TH = float(thresholds.get("LINK_MASS_TH", LINK_MASS_TH))
-        STORE_TH = float(thresholds.get("STORE_TH", STORE_TH))
-        STORE_MASS_TH = float(thresholds.get("STORE_MASS_TH", STORE_MASS_TH))
-        SU_TH = float(thresholds.get("SU_TH", SU_TH))
-        SU_MASS_TH = float(thresholds.get("SU_MASS_TH", SU_MASS_TH))
 
     # -------- helpers --------
     def detect_levels(mi: pd.MultiIndex):
@@ -615,19 +595,6 @@ def save_opt_capacity_components(
             return None if pd.isna(u) else u
         return None
 
-    def threshold(component, unit):
-        u = norm_unit(unit)
-        if component == "generator":
-            return GEN_TH
-        if component == "link":
-            return LINK_MASS_TH if u == "t/h" else LINK_TH
-        if component == "store":
-            return STORE_MASS_TH if u == "t" else STORE_TH
-        # storage_unit is power-rated (like generator), but allow t/h buses too
-        if component == "storage_unit":
-            return SU_MASS_TH if u == "t/h" else SU_TH
-        return None
-
     # -------- build rows --------
     rows = []
 
@@ -646,21 +613,16 @@ def save_opt_capacity_components(
                     continue
                 bus = gens.at[g, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("generator", u)
                 cap = float(gens.at[g, gen_opt])
                 cc = float(gens.at[g, "capital_cost"]) if "capital_cost" in gens.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "generator",
                     "asset": str(g),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
         # Links
@@ -670,21 +632,16 @@ def save_opt_capacity_components(
                     continue
                 bus0 = links.at[l, "bus0"]
                 u = unit_of_bus(bus0)
-                th = threshold("link", u)
                 cap = float(links.at[l, link_opt])
                 cc = float(links.at[l, "capital_cost"]) if "capital_cost" in links.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "link",
                     "asset": str(l),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus0,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
         # Stores
@@ -694,55 +651,41 @@ def save_opt_capacity_components(
                     continue
                 bus = stores.at[s, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("store", u)
                 cap = float(stores.at[s, store_opt])
                 cc = float(stores.at[s, "capital_cost"]) if "capital_cost" in stores.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "store",
                     "asset": str(s),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
-        # NEW: Storage Units
+        # Storage Units
         if su_opt:
             for su in alloc.get("storage_units", []) or []:
                 if su not in sus.index:
                     continue
                 bus = sus.at[su, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("storage_unit", u)
                 cap = float(sus.at[su, su_opt])
-
                 cc = float(sus.at[su, "capital_cost"]) if "capital_cost" in sus.columns else np.nan
-                cost_out = cap * cc
-
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
-                # Optional: implicit energy capacity (MWh) via max_hours if available
                 e_cap = np.nan
                 if "max_hours" in sus.columns:
                     mh = sus.at[su, "max_hours"]
                     if mh is not None and not pd.isna(mh):
                         e_cap = float(cap) * float(mh)
-
                 rows.append({
                     "plant": plant,
                     "component": "storage_unit",
                     "asset": str(su),
-                    "capacity": cap_out,
+                    "capacity": cap,
                     "energy_capacity": e_cap,
-                    "Fixed cost (€/y)": cost_out,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
-                    "unit": norm_unit(u),              # this is power unit
-                    "threshold": th,
+                    "unit": norm_unit(u),
                 })
 
     df = pd.DataFrame(rows)
@@ -1058,7 +1001,7 @@ def save_pypsa_statistics(n, file_path):
 def filter_items_by_capacity_threshold(
     n,
     items,
-    default_th=0.0,
+    default_th=1e-3,
     include_exi=True,
     verbose=False,
 ):
@@ -4829,7 +4772,6 @@ def run_plot_and_export(
     csv_folder: str | Path,
     plot_folder: str | Path,
     items: list[dict],
-    thresholds: dict,
     bus_list_mp: list[str],
     network_comp_allocation: Optional[dict] = None,
     comp_tech_map: Optional[dict] = None,
@@ -4930,7 +4872,6 @@ def run_plot_and_export(
             n,
             network_comp_allocation,
             csv_folder / "optimal_capacities",
-            thresholds=thresholds,
         )
 
         opt_cap_holder["obj"] = opt_cap
@@ -4939,7 +4880,6 @@ def run_plot_and_export(
         items_f = filter_items_by_capacity_threshold(
             n,
             items,
-            default_th=0.0,
             include_exi=True,
             verbose=True,
         )
@@ -5008,9 +4948,7 @@ def run_plot_and_export(
                                     bus_filter=bus_list_bar)
 
         # Violin + LDC: same list, further filtered by capacity threshold
-        bus_list_f = filter_bus_list_mp(
-            n, bus_list_bar, link_th=thresholds.get("LINK_TH", 0.5)
-        )
+        bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)
         shadow_prices_violinplot_stoch(
             n,
             bus_list=bus_list_f,
@@ -5131,7 +5069,6 @@ def run_plot_operational(
     plot_folder: str | Path,
     csv_folder: str | Path,
     items: list[dict],
-    thresholds: dict,
     bus_list_mp: list[str],
 ) -> Dict[str, Exception]:
     """Run only the operational (dispatch) plots.
@@ -5168,7 +5105,7 @@ def run_plot_operational(
 
     def step_filter_items() -> None:
         items_f_holder["items_f"] = filter_items_by_capacity_threshold(
-            n, items, default_th=0.0, include_exi=True, verbose=True,
+            n, items, include_exi=True, verbose=True,
         )
 
     def step_inputs_ldc() -> None:
@@ -5209,9 +5146,7 @@ def run_plot_operational(
                                     bus_filter=bus_list_bar)
 
         # Violin + LDC: same list, further filtered by capacity threshold
-        bus_list_f = filter_bus_list_mp(
-            n, bus_list_bar, link_th=thresholds.get("LINK_TH", 0.5)
-        )
+        bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)
         shadow_prices_violinplot_stoch(
             n,
             bus_list=bus_list_f,

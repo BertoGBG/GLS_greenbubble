@@ -1,5 +1,5 @@
 # config/config.yml
-run_name: P_bmeth_test # keep it short
+run_name: T_test_test # keep it short
 
 # Annual Demands or price targets
 # if driver == 'demand': Demands must be present AND Prices are not used in the model
@@ -7,8 +7,8 @@ run_name: P_bmeth_test # keep it short
 
 targets:
   driver: 'price' # 'price' | 'demand'
-  demand_H2 :  200000 # MWh_H2 /y  Demand OR max production
-  demand_CH4 : 360000 # MWh_CH4 /y Demand OR max production
+  demand_H2 :  0 # MWh_H2 /y  Demand OR max production
+  demand_CH4 : 350000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 9000 # Mwh_meoh /y Demand OR max production
   price_H2 : 90 # €/MWh prices are required only for driver : 'price'
   price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
@@ -63,7 +63,7 @@ n_flags:
   central_heat: true
   renewables: true
   electrolysis: true
-  meoh: true
+  meoh: false
   methanation: true
   symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
   storage: true     # activate every Thermal and Battery storage (from n_config)
@@ -109,6 +109,11 @@ optimization:
   solver_profile : "gurobi-barrier-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
   collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
   return_model: true  # returns linopy model
+
+  # Solver-noise cleanup: extendable components with p_nom_opt (or e_nom_opt) strictly
+  # below this value are treated as "not built" — their optimal capacity and all
+  # result timeseries are zeroed before the network is exported.  Set to 0 to disable.
+  zero_threshold_MW: 0.01   # MW ,t/h (or MWh , t for stores)
   overrides: null
     #overrides:     # examples are illustrative
      #OutputFlag: 1

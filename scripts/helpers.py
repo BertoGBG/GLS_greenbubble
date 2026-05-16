@@ -1833,6 +1833,65 @@ def _extract_public_values(module):
     return vals
 
 
+def zero_small_capacities(n, threshold_mw):
+    """Zero solver-noise artifacts in a network loaded for analysis.
+
+    Mirrors the pypsa-eur add_brownfield capacity_threshold logic: extendable
+    components whose p_nom_opt (or e_nom_opt for stores) is strictly below
+    threshold_mw are treated as "not built" — their optimal capacity and all
+    result timeseries are zeroed in-memory so plots, LCOP, and CSV exports see
+    a clean network.  The .nc file on disk is never modified.
+
+    Parameters
+    ----------
+    n : pypsa.Network   (modified in place)
+    threshold_mw : float
+        Components with |p_nom_opt| < threshold_mw are zeroed.  Pass 0 to skip.
+    """
+    import pandas as pd
+
+    if threshold_mw <= 0:
+        return
+
+    _RESULT_TS = {
+        "generators":    ["p"],
+        "links":         ["p0", "p1", "p2", "p3", "p4"],
+        "storage_units": ["p", "state_of_charge", "spill"],
+        "stores":        ["p", "e"],
+    }
+
+    for c_name, attr in [
+        ("generators",    "p"),
+        ("links",         "p"),
+        ("storage_units", "p"),
+        ("stores",        "e"),
+    ]:
+        comp    = getattr(n, c_name)
+        nom_opt = f"{attr}_nom_opt"
+        nom_ext = f"{attr}_nom_extendable"
+        if nom_opt not in comp.columns or nom_ext not in comp.columns:
+            continue
+
+        small = comp[nom_ext] & (comp[nom_opt].abs() < threshold_mw)
+        small_idx = comp.index[small]
+        if small_idx.empty:
+            continue
+
+        comp.loc[small_idx, nom_opt] = 0.0
+
+        ts = getattr(n, f"{c_name}_t", None)
+        if ts is not None:
+            for ts_attr in _RESULT_TS.get(c_name, []):
+                df = ts.get(ts_attr) if hasattr(ts, "get") else getattr(ts, ts_attr, None)
+                if isinstance(df, pd.DataFrame) and not df.empty:
+                    cols = small_idx.intersection(df.columns)
+                    if not cols.empty:
+                        df.loc[:, cols] = 0.0
+
+        print(f"[zero_small_capacities] {c_name}: zeroed {len(small_idx)} component(s) "
+              f"with {nom_opt} < {threshold_mw} MW → {list(small_idx)}")
+
+
 def dump_params_module(module, dst_folder, filename="params.yaml",
                        dataframes_as="records", sort_keys=False):
     """

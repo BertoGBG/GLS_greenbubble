@@ -101,6 +101,7 @@ optimization = {
     "overrides": _opt.get("overrides", None),
     "collect_all_duals": bool(_opt.get("collect_all_duals", False)),
     "return_model": bool(_opt.get("return_model", False)),
+    "zero_threshold_MW": float(_opt.get("zero_threshold_MW", 0.0)),
 }
 
 # Normalize common YAML -> Python edge cases
@@ -128,13 +129,7 @@ if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:
 # ---------------- Plotting/Export config ----------------
 
 plot_cfg = plt_config["plotting"]
-thresholds = plot_cfg["thresholds"]
 items = plot_cfg["capacity_items"]
 bus_list_mp = plot_cfg["bus_list_mp"]
 carrier_colors = dict(plt_config.get("carrier_colors", {}))
-
-# Replace symbolic thresholds (GEN_TH → numeric)
-for it in items:
-    th_key = it["th"]
-    it["th"] = thresholds[th_key]
 

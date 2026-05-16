@@ -120,15 +120,73 @@ for key, net in networks_dict.items():
     )
     networks_dict[key] = net
 
+def zero_small_capacities(n, threshold_mw):
+    """Zero solver-noise artifacts before export.
+
+    Mirrors pypsa-eur add_brownfield capacity_threshold logic but for
+    single-period networks.  Extendable components whose p_nom_opt (or
+    e_nom_opt for stores) is strictly below threshold_mw are treated as
+    "not built": the optimal capacity is set to zero and all result
+    timeseries columns for those components are zeroed so that downstream
+    analysis (LCOP, plots, CSV exports) sees a clean network.
+    """
+    import pandas as pd
+
+    _RESULT_TS = {
+        "generators":    ["p"],
+        "links":         ["p0", "p1", "p2", "p3", "p4"],
+        "storage_units": ["p", "state_of_charge", "spill"],
+        "stores":        ["p", "e"],
+    }
+
+    for c_name, attr in [
+        ("generators",    "p"),
+        ("links",         "p"),
+        ("storage_units", "p"),
+        ("stores",        "e"),
+    ]:
+        comp      = getattr(n, c_name)
+        nom_opt   = f"{attr}_nom_opt"
+        nom_ext   = f"{attr}_nom_extendable"
+        if nom_opt not in comp.columns or nom_ext not in comp.columns:
+            continue
+
+        small = comp[nom_ext] & (comp[nom_opt].abs() < threshold_mw)
+        small_idx = comp.index[small]
+        if small_idx.empty:
+            continue
+
+        comp.loc[small_idx, nom_opt] = 0.0
+
+        ts = getattr(n, f"{c_name}_t", None)
+        if ts is not None:
+            for ts_attr in _RESULT_TS.get(c_name, []):
+                df = ts.get(ts_attr)
+                if isinstance(df, pd.DataFrame) and not df.empty:
+                    cols = small_idx.intersection(df.columns)
+                    if not cols.empty:
+                        df.loc[:, cols] = 0.0
+
+        print(f"[zero_small_capacities] {c_name}: zeroed {len(small_idx)} component(s) "
+              f"with {nom_opt} < {threshold_mw} MW → {list(small_idx)}")
+
+
 # ---- Export main (stoch or det) OPT network to the declared Snakemake output
 main_key = "stoch" if c.stochastic["stochastic"] else "network"
 n_solved = networks_dict[main_key]
+
+_zero_th = float(c.optimization.get("zero_threshold_MW", 0.0))
+if _zero_th > 0:
+    zero_small_capacities(n_solved, _zero_th)
+
 n_solved.export_to_netcdf(snakemake.output.network)
 
 # Export WS networks if EVPI
 for key, net in networks_dict.items():
     if key == main_key:
         continue
+    if _zero_th > 0:
+        zero_small_capacities(net, _zero_th)
     export_network(net, c.n_flags_opt, n_names_dict[key], networks_folder, "_OPT")
 
 # Print OPT network topology diagram
