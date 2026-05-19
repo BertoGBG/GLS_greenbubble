@@ -1,0 +1,680 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Technologies &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'technologies';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Analytical Methods" href="methods.html" />
+    <link rel="prev" title="Network Model" href="network_model.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Ftechnologies.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/technologies.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Technologies</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#renewable-electricity-n-flags-renewables">Renewable electricity  (<code class="docutils literal notranslate"><span class="pre">n_flags.renewables</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electrolysis-n-flags-electrolysis">Electrolysis  (<code class="docutils literal notranslate"><span class="pre">n_flags.electrolysis</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#biogas-and-biomass-chain-n-flags-biogas">Biogas and biomass chain  (<code class="docutils literal notranslate"><span class="pre">n_flags.biogas</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methanation-routes-n-flags-methanation">Methanation routes  (<code class="docutils literal notranslate"><span class="pre">n_flags.methanation</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methanol-synthesis-n-flags-meoh">Methanol synthesis  (<code class="docutils literal notranslate"><span class="pre">n_flags.meoh</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storage-n-flags-storage">Storage  (<code class="docutils literal notranslate"><span class="pre">n_flags.storage</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-system-n-flags-central-heat">Heat system  (<code class="docutils literal notranslate"><span class="pre">n_flags.central_heat</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-symbiosis-n-flags-symbiosis">Industrial symbiosis  (<code class="docutils literal notranslate"><span class="pre">n_flags.symbiosis</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-connection">Grid connection</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-markets">External markets</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="technologies">
+<span id="id1"></span><h1>Technologies<a class="headerlink" href="#technologies" title="Link to this heading">#</a></h1>
+<p>This page describes each technology group modelled in GreenBubble: how it is
+represented in PyPSA, which parameters control its behaviour, and any
+modelling assumptions worth knowing.  Each group corresponds to one or more
+entries in <code class="docutils literal notranslate"><span class="pre">config/n_config.default.yaml</span></code> and is activated by a flag in
+<code class="docutils literal notranslate"><span class="pre">n_flags</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This page documents the current technology set.  New technologies follow
+the pattern described in <a class="reference internal" href="guide_new_technology.html#guide-new-technology"><span class="std std-ref">Guide for Adding New Technologies</span></a>.</p>
+</div>
+<p>—</p>
+<section id="renewable-electricity-n-flags-renewables">
+<h2>Renewable electricity  (<code class="docutils literal notranslate"><span class="pre">n_flags.renewables</span></code>)<a class="headerlink" href="#renewable-electricity-n-flags-renewables" title="Link to this heading">#</a></h2>
+<p><strong>Onshore wind</strong> and <strong>solar PV</strong> are modelled as <code class="docutils literal notranslate"><span class="pre">Generator</span></code> components
+with capacity-factor time series retrieved from
+<a class="reference external" href="https://www.renewables.ninja">Renewables.ninja</a> for the configured site
+coordinates.  Both are extendable by default (greenfield) with costs from the
+technology-data database.</p>
+<p>Up to <code class="docutils literal notranslate"><span class="pre">max_RE_to_grid</span></code> fraction of total renewable output can be exported
+to the electricity grid; the remainder must be consumed internally.</p>
+<p>—</p>
+</section>
+<section id="electrolysis-n-flags-electrolysis">
+<h2>Electrolysis  (<code class="docutils literal notranslate"><span class="pre">n_flags.electrolysis</span></code>)<a class="headerlink" href="#electrolysis-n-flags-electrolysis" title="Link to this heading">#</a></h2>
+<p>Alkaline electrolysis is a <code class="docutils literal notranslate"><span class="pre">Link</span></code> (electricity → hydrogen) with:</p>
+<ul class="simple">
+<li><p>Ramp limits (up/down) to reflect the electrolyser’s response speed</p></li>
+<li><p>Minimum load to avoid operating at inefficient part-load</p></li>
+<li><p>Committable mode available for brownfield dispatch runs</p></li>
+</ul>
+<p>The electrolyser cost is sourced from the IEA via the technology-data
+database.  Efficiency is fixed (no part-load curve); an improved part-load
+model is planned.</p>
+<p>—</p>
+</section>
+<section id="biogas-and-biomass-chain-n-flags-biogas">
+<h2>Biogas and biomass chain  (<code class="docutils literal notranslate"><span class="pre">n_flags.biogas</span></code>)<a class="headerlink" href="#biogas-and-biomass-chain-n-flags-biogas" title="Link to this heading">#</a></h2>
+<p><strong>Biogas plant</strong> — modelled as a <code class="docutils literal notranslate"><span class="pre">Generator</span></code> producing raw biogas (CH₄
+equivalent) from digestible biomass inputs (manure, co-substrate).  Feedstock
+cost and availability are set in the <code class="docutils literal notranslate"><span class="pre">options.Dig</span> <span class="pre">biomass</span></code> block of
+<code class="docutils literal notranslate"><span class="pre">n_config.default.yaml</span></code>.</p>
+<p><strong>Biogas upgrading</strong> — pressure-swing adsorption (PSA) or equivalent, strips
+CO₂ from raw biogas to yield pipeline-quality biomethane.  Modelled as a
+<code class="docutils literal notranslate"><span class="pre">Link</span></code> (raw biogas → biomethane + CO₂).</p>
+<p><strong>Biogas compressor</strong> — compresses raw biogas upstream of methanation;
+modelled as a <code class="docutils literal notranslate"><span class="pre">Link</span></code> with electricity input.</p>
+<p><strong>Biogas engine</strong> — combined heat-and-power unit; a multi-output <code class="docutils literal notranslate"><span class="pre">Link</span></code>
+(biogas → electricity + heat) with minimum load and optional committable
+mode for dispatch-only runs.</p>
+<p><strong>Belt dryer</strong> — hot-air dryer for biomass pellet production.  Semi-empirical
+sizing based on moisture content.  <code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">false</span></code> by default — treated
+as a fixed brownfield asset.</p>
+<p><strong>Dewatering</strong> — screw press for digestate solid/liquid separation.
+Fixed capacity, no expansion.</p>
+<p><strong>Pelletization</strong> — biomass pellets production from dried fibres.</p>
+<p>—</p>
+</section>
+<section id="methanation-routes-n-flags-methanation">
+<h2>Methanation routes  (<code class="docutils literal notranslate"><span class="pre">n_flags.methanation</span></code>)<a class="headerlink" href="#methanation-routes-n-flags-methanation" title="Link to this heading">#</a></h2>
+<p>Two technology pathways are available.  Both convert H₂ + CO₂ (or H₂ +
+biogas) into synthetic methane:</p>
+<dl class="simple">
+<dt><strong>Catalytic methanation</strong> (<code class="docutils literal notranslate"><span class="pre">methanation</span> <span class="pre">CO2</span></code>, <code class="docutils literal notranslate"><span class="pre">methanation</span> <span class="pre">biogas</span></code>)</dt><dd><p>— Sabatier reaction.  Strict ramp limits (8 %/h) and minimum load (40 %)
+reflect the thermal inertia of the catalyst bed.</p>
+</dd>
+<dt><strong>Biomethanation</strong> (<code class="docutils literal notranslate"><span class="pre">biomethanation</span> <span class="pre">CO2</span></code>, <code class="docutils literal notranslate"><span class="pre">biomethanation</span> <span class="pre">biogas</span></code>)</dt><dd><p>— Biological hydrogenotrophic process (trickle-bed reactor).
+Faster ramp response than catalytic (ramp limit 100 %/h); no minimum load
+constraint in the default configuration.</p>
+</dd>
+</dl>
+<p>Both are modelled as <code class="docutils literal notranslate"><span class="pre">Link</span></code> components.  The feed can be CO₂ (from the
+CO₂ distribution bus) or raw biogas (from the biogas bus).</p>
+<p>—</p>
+</section>
+<section id="methanol-synthesis-n-flags-meoh">
+<h2>Methanol synthesis  (<code class="docutils literal notranslate"><span class="pre">n_flags.meoh</span></code>)<a class="headerlink" href="#methanol-synthesis-n-flags-meoh" title="Link to this heading">#</a></h2>
+<p>CO₂ hydrogenation to methanol (<code class="docutils literal notranslate"><span class="pre">methanolisation</span></code>): CO₂ + H₂ → MeOH + H₂O.
+Modelled as a multi-input <code class="docutils literal notranslate"><span class="pre">Link</span></code> with ramp limits (8 %/h) and minimum
+load (15 %).  Waste heat is recovered to the medium-temperature heat bus.</p>
+<p>An eSMR + methanol synthesis route is planned but not yet implemented.</p>
+<p>—</p>
+</section>
+<section id="storage-n-flags-storage">
+<h2>Storage  (<code class="docutils literal notranslate"><span class="pre">n_flags.storage</span></code>)<a class="headerlink" href="#storage-n-flags-storage" title="Link to this heading">#</a></h2>
+<p>All storage components are activated together by the <code class="docutils literal notranslate"><span class="pre">storage</span></code> flag.
+Individual technologies can be disabled by setting <code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">false</span></code> and
+<code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity:</span> <span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">n_config.default.yaml</span></code>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 15.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Battery (Li-ion)</p></td>
+<td><p>StorageUnit</p></td>
+<td><p>Includes inverter losses; default 2-hour duration</p></td>
+</tr>
+<tr class="row-odd"><td><p>H₂ HP storage</p></td>
+<td><p>Store</p></td>
+<td><p>High-pressure steel vessel; extendable</p></td>
+</tr>
+<tr class="row-even"><td><p>CO₂ HP storage</p></td>
+<td><p>Store</p></td>
+<td><p>Pressurised cylinders; extendable</p></td>
+</tr>
+<tr class="row-odd"><td><p>CO₂ Liq storage</p></td>
+<td><p>Store</p></td>
+<td><p>Liquefaction + insulated tank; e_nom and liquefaction capacity
+optimised separately</p></td>
+</tr>
+<tr class="row-even"><td><p>TES concrete</p></td>
+<td><p>StorageUnit</p></td>
+<td><p>Concrete thermal store; 10-hour duration; standing losses</p></td>
+</tr>
+<tr class="row-odd"><td><p>TES district heating</p></td>
+<td><p>StorageUnit</p></td>
+<td><p>Hot-water buffer for DH; 50-hour duration</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>—</p>
+</section>
+<section id="heat-system-n-flags-central-heat">
+<h2>Heat system  (<code class="docutils literal notranslate"><span class="pre">n_flags.central_heat</span></code>)<a class="headerlink" href="#heat-system-n-flags-central-heat" title="Link to this heading">#</a></h2>
+<p>Three heat buses represent temperature levels in the cluster:</p>
+<ul class="simple">
+<li><p><strong>Heat MT</strong> (medium temperature) — process waste heat, biomass boilers,
+biogas engine CHP output</p></li>
+<li><p><strong>Heat DH</strong> (district heating) — optional connection to an external DH
+network (price and load set in <code class="docutils literal notranslate"><span class="pre">options.DH</span></code>)</p></li>
+<li><p><strong>Heat LT</strong> (low temperature) — low-grade cooling and heat pump source</p></li>
+</ul>
+<p>A <code class="docutils literal notranslate"><span class="pre">heat</span> <span class="pre">pump</span></code> link can upgrade LT to DH heat (extendable, disabled by
+default).  <code class="docutils literal notranslate"><span class="pre">El</span> <span class="pre">boiler</span></code> and <code class="docutils literal notranslate"><span class="pre">NG</span> <span class="pre">boiler</span></code> provide backup heat.</p>
+<p>—</p>
+</section>
+<section id="industrial-symbiosis-n-flags-symbiosis">
+<h2>Industrial symbiosis  (<code class="docutils literal notranslate"><span class="pre">n_flags.symbiosis</span></code>)<a class="headerlink" href="#industrial-symbiosis-n-flags-symbiosis" title="Link to this heading">#</a></h2>
+<p>The symbiosis flag adds all internal distribution links between plants:
+electricity, H₂, CO₂, and heat exchange connections across plant boundaries.
+Disabling it isolates each plant to its own buses, useful for benchmarking
+individual plant economics.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">symbiosis</span> <span class="pre">El</span> <span class="pre">transformer</span></code> (configured under <code class="docutils literal notranslate"><span class="pre">options</span></code> in
+<code class="docutils literal notranslate"><span class="pre">n_config.default.yaml</span></code>) controls whether the internal electrical
+transformer between plants is extendable.</p>
+<p>—</p>
+</section>
+<section id="grid-connection">
+<h2>Grid connection<a class="headerlink" href="#grid-connection" title="Link to this heading">#</a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">Link</span></code> representing the point of common coupling (PCC) with the
+electricity grid.  Capacity is extendable by default.  Grid import carries
+the full Danish tariff stack (TSO, DSO, state levies) defined in
+<code class="docutils literal notranslate"><span class="pre">tariffs_dict</span></code>; grid export earns the sell tariff.</p>
+<p>—</p>
+</section>
+<section id="external-markets">
+<h2>External markets<a class="headerlink" href="#external-markets" title="Link to this heading">#</a></h2>
+<p>Configured under the <code class="docutils literal notranslate"><span class="pre">options:</span></code> section of <code class="docutils literal notranslate"><span class="pre">n_config.default.yaml</span></code>:</p>
+<ul class="simple">
+<li><p><strong>Pellets market</strong> — biomass pellet purchase at a fixed price; optional
+capacity cap</p></li>
+<li><p><strong>Moist biomass market</strong> — co-substrate purchase for biogas plant</p></li>
+<li><p><strong>Biochar credits</strong> — revenue credit for biochar sequestration from
+pyrolysis</p></li>
+<li><p><strong>CO₂ Liq credits</strong> — revenue credit for liquefied CO₂ export</p></li>
+<li><p><strong>District heating</strong> — heat sale to external DH grid (<code class="docutils literal notranslate"><span class="pre">options.DH</span></code>)</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="network_model.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Network Model</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="methods.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Analytical Methods</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#renewable-electricity-n-flags-renewables">Renewable electricity  (<code class="docutils literal notranslate"><span class="pre">n_flags.renewables</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#electrolysis-n-flags-electrolysis">Electrolysis  (<code class="docutils literal notranslate"><span class="pre">n_flags.electrolysis</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#biogas-and-biomass-chain-n-flags-biogas">Biogas and biomass chain  (<code class="docutils literal notranslate"><span class="pre">n_flags.biogas</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methanation-routes-n-flags-methanation">Methanation routes  (<code class="docutils literal notranslate"><span class="pre">n_flags.methanation</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methanol-synthesis-n-flags-meoh">Methanol synthesis  (<code class="docutils literal notranslate"><span class="pre">n_flags.meoh</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storage-n-flags-storage">Storage  (<code class="docutils literal notranslate"><span class="pre">n_flags.storage</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-system-n-flags-central-heat">Heat system  (<code class="docutils literal notranslate"><span class="pre">n_flags.central_heat</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#industrial-symbiosis-n-flags-symbiosis">Industrial symbiosis  (<code class="docutils literal notranslate"><span class="pre">n_flags.symbiosis</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-connection">Grid connection</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-markets">External markets</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

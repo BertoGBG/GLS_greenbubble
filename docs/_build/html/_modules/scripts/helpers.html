@@ -140,6 +140,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
 <ul class="nav bd-sidenav">
@@ -161,6 +162,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_economic_analysis.html">Economic Analysis of Results</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -344,7 +346,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pypsatopo</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scripts.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">En_price_year</span><span class="p">,</span> <span class="n">n_flags</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">,</span> <span class="n">outputs_folder</span><span class="p">,</span> <span class="n">CO2_cost_ref_year</span><span class="p">,</span> <span class="n">max_RE_to_grid</span><span class="p">,</span> <span class="n">tariffs_dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">En_price_year</span><span class="p">,</span> <span class="n">n_flags</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">,</span> <span class="n">outputs_folder</span><span class="p">,</span> <span class="n">CO2_cost_ref_year</span><span class="p">,</span> <span class="n">max_RE_to_grid</span><span class="p">,</span> <span class="n">tariffs_dict</span><span class="p">,</span> <span class="n">stochastic</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pkl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scripts.solver_profiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_PROFILES</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
@@ -1762,6 +1764,27 @@
 
     <span class="n">_normalize_component_index_names</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
+    <span class="c1"># ---- MILP + stochastic guard ----</span>
+    <span class="n">_committable_links</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="s2">&quot;committable&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;committable&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">columns</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">_committable_links</span> <span class="ow">and</span> <span class="n">stochastic</span><span class="p">[</span><span class="s2">&quot;stochastic&quot;</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">⚠️  MILP + STOCHASTIC NOT SUPPORTED</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;   Committable links detected: </span><span class="si">{</span><span class="n">_committable_links</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;   PyPSA stochastic optimization requires a pure LP (no binary variables).</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;   Unit commitment (committable=True) will be IGNORED or cause solver errors.</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;   → Disable committable in n_config.yaml OR disable stochastic in config.yaml.&quot;</span><span class="p">,</span>
+            <span class="ne">RuntimeWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">⚠️  WARNING: MILP + STOCHASTIC NOT SUPPORTED — &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;committable links </span><span class="si">{</span><span class="n">_committable_links</span><span class="si">}</span><span class="s2"> detected with stochastic=True. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Disable one or the other.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">create_model</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model variables:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">variables</span><span class="p">))</span>
@@ -2230,6 +2253,68 @@
             <span class="k">continue</span>                                <span class="c1"># skip callables/classes/modules</span>
         <span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
     <span class="k">return</span> <span class="n">vals</span>
+
+
+<div class="viewcode-block" id="zero_small_capacities">
+<a class="viewcode-back" href="../../api.html#scripts.helpers.zero_small_capacities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">zero_small_capacities</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">threshold_mw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Zero solver-noise artifacts in a network loaded for analysis.</span>
+
+<span class="sd">    Mirrors the pypsa-eur add_brownfield capacity_threshold logic: extendable</span>
+<span class="sd">    components whose p_nom_opt (or e_nom_opt for stores) is strictly below</span>
+<span class="sd">    threshold_mw are treated as &quot;not built&quot; — their optimal capacity and all</span>
+<span class="sd">    result timeseries are zeroed in-memory so plots, LCOP, and CSV exports see</span>
+<span class="sd">    a clean network.  The .nc file on disk is never modified.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n : pypsa.Network   (modified in place)</span>
+<span class="sd">    threshold_mw : float</span>
+<span class="sd">        Components with |p_nom_opt| &lt; threshold_mw are zeroed.  Pass 0 to skip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+    <span class="k">if</span> <span class="n">threshold_mw</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">_RESULT_TS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;generators&quot;</span><span class="p">:</span>    <span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;links&quot;</span><span class="p">:</span>         <span class="p">[</span><span class="s2">&quot;p0&quot;</span><span class="p">,</span> <span class="s2">&quot;p1&quot;</span><span class="p">,</span> <span class="s2">&quot;p2&quot;</span><span class="p">,</span> <span class="s2">&quot;p3&quot;</span><span class="p">,</span> <span class="s2">&quot;p4&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;storage_units&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;state_of_charge&quot;</span><span class="p">,</span> <span class="s2">&quot;spill&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;stores&quot;</span><span class="p">:</span>        <span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">c_name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;generators&quot;</span><span class="p">,</span>    <span class="s2">&quot;p&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;links&quot;</span><span class="p">,</span>         <span class="s2">&quot;p&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;storage_units&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;stores&quot;</span><span class="p">,</span>        <span class="s2">&quot;e&quot;</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">comp</span>    <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">c_name</span><span class="p">)</span>
+        <span class="n">nom_opt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">_nom_opt&quot;</span>
+        <span class="n">nom_ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">_nom_extendable&quot;</span>
+        <span class="k">if</span> <span class="n">nom_opt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">comp</span><span class="o">.</span><span class="n">columns</span> <span class="ow">or</span> <span class="n">nom_ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">comp</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">small</span> <span class="o">=</span> <span class="n">comp</span><span class="p">[</span><span class="n">nom_ext</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">comp</span><span class="p">[</span><span class="n">nom_opt</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">threshold_mw</span><span class="p">)</span>
+        <span class="n">small_idx</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">small</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">small_idx</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">comp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">small_idx</span><span class="p">,</span> <span class="n">nom_opt</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">ts</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c_name</span><span class="si">}</span><span class="s2">_t&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ts_attr</span> <span class="ow">in</span> <span class="n">_RESULT_TS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c_name</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ts_attr</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="s2">&quot;get&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ts_attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                    <span class="n">cols</span> <span class="o">=</span> <span class="n">small_idx</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">cols</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[zero_small_capacities] </span><span class="si">{</span><span class="n">c_name</span><span class="si">}</span><span class="s2">: zeroed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">small_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> component(s) &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">nom_opt</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="n">threshold_mw</span><span class="si">}</span><span class="s2"> MW → </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">small_idx</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="dump_params_module">

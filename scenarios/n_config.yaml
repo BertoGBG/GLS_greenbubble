@@ -14,71 +14,61 @@ base: &base
 # applies to all components of this each class (e.g. to all "H2 compressor" in the network)
 battery: # includes inverter
   <<: *base
-  ramp limit up: 0.5 # % of total en capacity per hour
-  ramp limit down: 0.5 # % of total en capacity per hour
+  max hours : 2
   expansion : true
+  initial capacity: 0 # in MW for power discharge. Energy capacity as capacity * max hours
 
-biogas: # (unit: MW CH4, for simplicity)
+biogas: # (unit: MW CH4,  for simplicity)
   <<: *base
-  initial capacity: 30
-  expansion: false
 
 biogas storage:
   <<: *base
   max capacity: 200 # MWh
 
-biogas upgrading: # (unit: MW CH4,  for simplicity)
+biogas upgrading: #
   <<: *base
-  initial capacity: 0
+
+biogas compressor: # applies to methanation
+  <<: *base
 
 biomass belt dryer:
   <<: *base
-  cost factor: 1.2       # override
-  min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
+  cost factor: 1       # override
+  expansion : false
 
 biomass boiler:
   <<: *base
+  expansion : true
 
 biogas engine:
   <<: *base
-  initial capacity: 0
-  cost factor: 1       # override
-  min load: 0.5 # % of max power capacity that must run (otherwise shut-off)
+  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
   expansion : true
+  committable : false # -> only for expansion false or RH
 
-# TODO add min size for methanation plants matching the cost
 biomethanation biogas: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 0.7 # % of total power capacity per hour
-  ramp limit down: 0.7 # % of total power capacity per hour
-  min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
-  expansion : true
+  ramp limit up: 1 # % of total power capacity per hour
+  ramp limit down: 1 # % of total power capacity per hour
 
 biomethanation CO2: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 0.7 # % of total power capacity per hour
-  ramp limit down: 0.7 # % of total power capacity per hour
-  min load: 0.1 # % of max power capacity that must run (otherwise shut-off)
-  expansion : true
+  ramp limit up: 1 # % of total power capacity per hour
+  ramp limit down: 1 # % of total power capacity per hour
 
 methanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  expansion : false
+  min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
+  committable : false # -> only for initial capacity or RH
 
 methanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  expansion: false
-
-biogas compressor: # applies methanation
-  <<: *base
-  #expansion: true # valid for both centralized and plant-specific
-  #capacity: 0 # valid only for centralized
+  min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
+  committable : false # -> only for initial capacity or RH
 
 CH4 compressor: # applies to both meoh and methanation
   <<: *base
@@ -93,7 +83,6 @@ CO2 compressor: # applies to both meoh and methanation
 CO2 HP storage:
   <<: *base
   expansion: true # valid for both centralized and plant-specific
-  capacity : 0 # valid only for centralized
 
 CO2 Liq storage: # NOTE: for expansion e_nom in store and p_nom in liquefaction are optimized separately. Initial capacity has a constant ratio (c-rate = 1)
   <<: *base
@@ -104,55 +93,62 @@ CO2 pipe:
 
 dewatering:
   <<: *base
+  expansion : false
 
 El boiler:
   <<: *base
+  expansion : true
 
 electrolysis: # (bus0 unit: MW el )
   <<: *base
-  cost factor: 2.5      # according to IEA (last pypsa-eur inputs)
+  cost factor: 1      # according to IEA (last pypsa-eur inputs)
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+  committable : false # -> only for initial capacity or RH
 
 DH heat exchanger:
   <<: *base
 
-eSMR meoh: # TODO add to the model
-  <<: *base
-  ramp limit up: 0.08 # % of total power capacity per hour
-  ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+#eSMR meoh: # TODO add to the model
+#  <<: *base
+#  ramp limit up: 0.08 # % of total power capacity per hour
+#  ramp limit down: 0.08 # % of total power capacity per hour
+#  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+#  expansion : false # KEEP false
+#  initial capacity : 0 # KEEP 0
 
 grid connection:
   <<: *base
+  expansion : true
 
 H2 compressor:
   <<: *base
-  cost factor: 2                        # override
-  capacity : 0 # valid only for centralized
   #expansion: true # valid for both centralized and plant-specific
   #capacity: 0 # valid only for centralized
 
 H2 pipe:
   <<: *base
+  cost factor: 1
 
 H2 HP storage:
   <<: *base
   expansion: true # valid for both centralized and plant-specific
-  # capacity: 0 # valid only for centralized
 
 heat pump:
   <<: *base
+  expansion : false
 
 methanolisation: # (bus0 unit: t/h CO2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
   min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
+  committable : false # -> only for initial capacity or RH
 
 NG boiler:
   <<: *base
+  expansion : true
 
 onwind:
   <<: *base
@@ -162,22 +158,21 @@ pelletization:
 
 pyrolysis:
   <<: *base
+  expansion : false
 
 solar:
   <<: *base
 
-TES concrete: #
+TES concrete: # capacity in MW of output power. Energy capacity as capacity * max hours
   <<: *base
-  min capacity: 0 # MWh
-  ramp limit up: 0.1 # % of total en capacity per hour
-  ramp limit down: 0.1 # % of total en capacity per hour
+  max hours : 10
+  efficiency store : 0.95
+  efficiency dispatch : 0.95
   standing loss: 0.02 # % of total energy  per hour
-  expansion: true
+  expansion: false
 
-TES DH:
+TES DH: # capacity in MW of output power. Energy capacity as capacity * max hours
   <<: *base
-  min capacity: 5 # MWh
-  ramp limit up: 0.02 # % of total en capacity per hour
-  ramp limit down: 0.02 # % of total en capacity per hour
+  max hours : 50
   standing loss: 0.002 # % of total energy  per hour
   expansion: false

@@ -1042,7 +1042,7 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
                   carrier=c,
                   bus0=co2_liq_bus,
                   bus1=bus_seq,
-                  efficiency=0.9, # n_options.at['CO2 Liq credits','efficiency'],
+                  efficiency=0.95, # n_options.at['CO2 Liq credits','efficiency'], # TODO
                   p_nom_extendable=True,
                   marginal_cost= -1 *  co2_credits,
                   )
@@ -2766,7 +2766,10 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         idx = ['local EL bus','CO2 in bus', 'H2 in bus', 'product bus']
         carriers= ['El',"CO2", "H2", "Methanol"]
         units = ['MW', "t/h", "MW", "MW"]
-        buses_meoh = ['El_meoh', 'CO2 distribution', 'H2 distribution', 'Methanol',]
+        # product bus left blank here — set per-tech by add_targets() below.
+        # 'Methanol' was previously used as a placeholder, creating an orphan bus
+        # because the actual link connects to 'Methanol collection' (set by add_targets).
+        buses_meoh = ['El_meoh', 'CO2 distribution', 'H2 distribution', '',]
         meoh_buses = pd.DataFrame(index =idx, columns=['meoh'] + techs, data = ''  )
         meoh_buses.loc[:,'meoh'] = buses_meoh
         meoh_buses.loc[:,'carrier'] = carriers

@@ -1,6 +1,12 @@
 import re
+from pathlib import Path
 
-configfile: "config/config.yaml"
+# Load base defaults first, then user override if it exists (mirrors pypsa-eur pattern).
+# To customise a run: copy config/config.default.yaml → config/config.yaml and edit.
+configfile: "config/config.default.yaml"
+
+if Path("config/config.yaml").exists():
+    configfile: "config/config.yaml"
 
 
 # ---------------------------------------------------------------------------

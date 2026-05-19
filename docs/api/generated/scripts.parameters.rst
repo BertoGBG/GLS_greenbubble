@@ -1,4 +1,4 @@
-scripts.parameters
+﻿scripts.parameters
 ==================
 
 .. automodule:: scripts.parameters
@@ -10,7 +10,6 @@ scripts.parameters
    
       lhv_NG
       eia_api
-      NG_demand_year
       hours_in_period
       start_date
       end_date

@@ -1,3 +1,7 @@
+# plots_config.default.yaml
+# BASE DEFAULTS — edit directly (plots rarely change between scenarios).
+# To override, create config/plots_config.yaml with only the keys you want to change.
+#
 # EXPORT AND PLOTS
 # Add to this section the component that you are interested in plotting
 # selector: the component name in the network (all components containing it will be selected),
