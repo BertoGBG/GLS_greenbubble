@@ -15,35 +15,39 @@ GreenBubble Documentation
 
    introduction
    installation
+   guide_snakemake
 
 .. toctree::
    :maxdepth: 1
-   :caption: Configuration
+   :caption: Model Description
+
+   network_model
+   technologies
+   methods
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Configuration Reference
 
    configuration
    wildcards
+
+.. toctree::
+   :maxdepth: 1
+   :caption: How-to Guides
+
+   guide_demands
+   guide_rolling_horizon
+   guide_economic_analysis
    examples
 
 .. toctree::
    :maxdepth: 1
-   :caption: Rules Overview
-
-   rules
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Implementation Details
-
-   implementation
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Developer Guide
+   :caption: Developer Reference
 
    workflow
    guide_new_technology
-   guide_demands
-   guide_rolling_horizon
+   implementation
 
 .. toctree::
    :maxdepth: 1

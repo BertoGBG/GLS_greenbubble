@@ -2,6 +2,11 @@
 __pycache__/
 *.pyc
 
+# User-specific config overrides (do not commit — use *.default.yaml as the base)
+config/config.yaml
+config/n_config.yaml
+config/plots_config.yaml
+
 # Outputs
 outputs/
 

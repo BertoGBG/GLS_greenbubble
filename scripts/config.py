@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MIT
-"""Configuration loader: reads ``config.yaml`` and ``n_config.yaml`` at import time.
+"""Configuration loader: reads config files at import time.
+
+Loading order (mirrors pypsa-eur):
+  1. config/config.default.yaml          — committed base defaults
+  2. config/config.yaml                  — user overrides (if present, gitignored)
+  3. config/n_config.default.yaml        — network component defaults (includes options: section)
+  4. config/n_config.yaml                — network overrides (if present, gitignored)
+  5. config/plots_config.default.yaml    — plot defaults
 
 All optimisation settings, technology flags, stochastic scenario definitions
 and demand targets are exposed as module-level variables so that any script
@@ -31,33 +38,51 @@ import pandas as pd
 import yaml
 from pathlib import Path
 
-'''Load configuration '''
-#  --- optimization ----
+_CFG_DIR = Path(__file__).resolve().parent.parent / "config"
 
-CFG_PATH = Path(__file__).resolve().parent.parent / "config" / "config.yaml"
-with CFG_PATH.open("r", encoding="utf-8") as f:
-    _cfg = yaml.safe_load(f) or {}
 
-# ---  network configuration ---
-n_CFG_PATH = Path(__file__).resolve().parent.parent / "config" / "n_config.yaml"
-with n_CFG_PATH.open("r", encoding="utf-8") as f:
-    n_cfg = yaml.safe_load(f) or {}
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base in-place and return base."""
+    for k, v in override.items():
+        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
+            _deep_merge(base[k], v)
+        else:
+            base[k] = v
+    return base
 
-n_cfg.pop("base", None)
-n_config = pd.DataFrame.from_dict(n_cfg, orient="index").sort_index()
 
-# --- options  ---
-n_OPT_PATH = Path(__file__).resolve().parent.parent / "config" / "n_options.yaml"
-with n_OPT_PATH.open("r", encoding="utf-8") as f:
-    n_opt = yaml.safe_load(f) or {}
+def _load_with_override(default_path: Path, user_path: Path) -> dict:
+    """Load default YAML and deep-merge user override on top if it exists."""
+    with default_path.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    if user_path.exists():
+        with user_path.open("r", encoding="utf-8") as f:
+            _deep_merge(data, yaml.safe_load(f) or {})
+    return data
 
-# --- plots  ---
-PLOTS_CFG_PATH = Path(__file__).resolve().parent.parent / "config" / "plots_config.yaml"
-with PLOTS_CFG_PATH.open("r", encoding="utf-8") as f:
-    plt_config = yaml.safe_load(f) or {}
 
+# --- main run config ---
+_cfg = _load_with_override(
+    _CFG_DIR / "config.default.yaml",
+    _CFG_DIR / "config.yaml",
+)
+
+# --- network component config (options: subsection holds former n_options.yaml) ---
+_n_raw = _load_with_override(
+    _CFG_DIR / "n_config.default.yaml",
+    _CFG_DIR / "n_config.yaml",
+)
+_n_raw.pop("base", None)
+n_opt = _n_raw.pop("options", {})
 n_opt.pop("base", None)
+n_config = pd.DataFrame.from_dict(_n_raw, orient="index").sort_index()
 n_options = pd.DataFrame.from_dict(n_opt, orient="index").sort_index()
+
+# --- plots ---
+plt_config = _load_with_override(
+    _CFG_DIR / "plots_config.default.yaml",
+    _CFG_DIR / "plots_config.yaml",
+)
 
 # ------  Expose optimization variables with the same name in the model (retro-compatibility)
 run_name                 = _cfg["run_name"]

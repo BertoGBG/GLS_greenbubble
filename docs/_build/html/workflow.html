@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Workflow &#8212; GreenBubble</title>
+    <title>Workflow and Rules &#8212; GreenBubble</title>
   
   
   
@@ -47,7 +47,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Guide for Adding New Technologies" href="guide_new_technology.html" />
-    <link rel="prev" title="Implementation Details for Industrial Clusters" href="implementation.html" />
+    <link rel="prev" title="Examples" href="examples.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -141,27 +141,30 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -352,7 +355,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Workflow</h1>
+    <h1>Workflow and Rules</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -362,11 +365,18 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-workflow">Running the workflow</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dag-overview">DAG overview</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rules">Rules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-mode">Stochastic mode</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs">Outputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rule-graph">Rule graph</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rules-reference">Rules reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-tech-data-rules-retrieve-smk"><code class="docutils literal notranslate"><span class="pre">retrieve_tech_data</span></code> <em>(rules/retrieve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preprocess-inputs-rules-retrieve-smk"><code class="docutils literal notranslate"><span class="pre">preprocess_inputs</span></code> <em>(rules/retrieve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prepare-inputs-rules-build-smk"><code class="docutils literal notranslate"><span class="pre">prepare_inputs</span></code> <em>(rules/build.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-network-rules-build-smk"><code class="docutils literal notranslate"><span class="pre">build_network</span></code> <em>(rules/build.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solve-network-rules-solve-smk"><code class="docutils literal notranslate"><span class="pre">solve_network</span></code> <em>(rules/solve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results-rules-plot-smk"><code class="docutils literal notranslate"><span class="pre">plot_results</span></code> <em>(rules/plot.smk)</em></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-structure">Output structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-rules">Adding rules</a></li>
 </ul>
             </nav>
         </div>
@@ -378,88 +388,149 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="workflow">
-<span id="id1"></span><h1>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h1>
+  <section id="workflow-and-rules">
+<span id="workflow"></span><h1>Workflow and Rules<a class="headerlink" href="#workflow-and-rules" title="Link to this heading">#</a></h1>
 <p>GreenBubble is orchestrated by <a class="reference external" href="https://snakemake.readthedocs.io">Snakemake</a>.
-Each step is a rule defined under <code class="docutils literal notranslate"><span class="pre">rules/</span></code> and the full DAG is assembled by <code class="docutils literal notranslate"><span class="pre">Snakefile</span></code>.</p>
-<section id="running-the-workflow">
-<h2>Running the workflow<a class="headerlink" href="#running-the-workflow" title="Link to this heading">#</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">snakemake</span> <span class="o">-</span><span class="n">j4</span>
+Each processing step is a <strong>rule</strong> defined in the <code class="docutils literal notranslate"><span class="pre">rules/</span></code> folder.
+The <code class="docutils literal notranslate"><span class="pre">Snakefile</span></code> assembles the full directed acyclic graph (DAG) and
+manages file dependencies, caching, and parallelism.</p>
+<p>For instructions on running the workflow and configuring scenarios, see
+<a class="reference internal" href="guide_snakemake.html#guide-snakemake"><span class="std std-ref">Running the Model with Snakemake</span></a>.</p>
+<p>—</p>
+<section id="rule-graph">
+<h2>Rule graph<a class="headerlink" href="#rule-graph" title="Link to this heading">#</a></h2>
+<a class="reference internal image-reference" href="_images/rulegraph.png"><img alt="GreenBubble Snakemake rule graph" class="align-center" src="_images/rulegraph.png" style="width: 50%;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The six rules execute in the following order:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>preprocess_inputs ──┐
+                    ├──▶ prepare_inputs ──┐
+retrieve_tech_data ─┘                     ├──▶ build_network ──▶ solve_network ──▶ plot_results
+                    └──────────────────────┘
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">-j4</span></code> allows up to 4 jobs in parallel (useful for multi-year preprocessing).
-Use <code class="docutils literal notranslate"><span class="pre">-j1</span></code> for sequential execution.</p>
-<p>To force re-execution of a specific step:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">snakemake</span> <span class="o">-</span><span class="n">j1</span> <span class="o">--</span><span class="n">forcerun</span> <span class="n">preprocess_inputs</span>
-</pre></div>
-</div>
+<p>In <strong>stochastic mode</strong>, <code class="docutils literal notranslate"><span class="pre">preprocess_inputs</span></code> runs once per scenario year
+(in parallel when <code class="docutils literal notranslate"><span class="pre">-j</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>) before <code class="docutils literal notranslate"><span class="pre">prepare_inputs</span></code> assembles the
+combined inputs.</p>
+<p>—</p>
 </section>
-<section id="dag-overview">
-<h2>DAG overview<a class="headerlink" href="#dag-overview" title="Link to this heading">#</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>retrieve_tech_data        ← downloads technology cost CSV
-      │
-preprocess_inputs         ← downloads &amp; preprocesses market data (one job per year)
-(one per scenario year)
-      │
-prepare_inputs            ← assembles all timeseries into a single inputs dict
-      │
-build_network             ← constructs PyPSA network; adds stochastic scenarios
-      │
-solve_network             ← runs capacity expansion + dispatch optimisation
-      │
-plot_results              ← exports figures and result tables
-</pre></div>
-</div>
-</section>
-<section id="rules">
-<h2>Rules<a class="headerlink" href="#rules" title="Link to this heading">#</a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">rules/retrieve.smk</span></code></dt><dd><ul class="simple">
-<li><p><strong>retrieve_tech_data</strong> — fetches <code class="docutils literal notranslate"><span class="pre">costs_{year_EU}.csv</span></code> from the
-<a class="reference external" href="https://github.com/BertoGBG/technology-data">technology-data</a> repository.</p></li>
-<li><p><strong>preprocess_inputs</strong> — downloads electricity prices, CO₂ intensities, NG prices,
-renewable capacity factors, and district heating demand for each scenario year.
-Parameterised by <code class="docutils literal notranslate"><span class="pre">{year}</span></code> wildcard; runs in parallel when <code class="docutils literal notranslate"><span class="pre">-j</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>.</p></li>
-</ul>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rules/build.smk</span></code></dt><dd><ul class="simple">
-<li><p><strong>prepare_costs</strong> — builds the <code class="docutils literal notranslate"><span class="pre">tech_costs</span></code> DataFrame from the cost CSV.</p></li>
-<li><p><strong>prepare_inputs</strong> — loads all preprocessed CSV files and assembles the
-<code class="docutils literal notranslate"><span class="pre">inputs_dict</span></code> used by the network builder.</p></li>
-<li><p><strong>build_network</strong> — constructs the PyPSA network with all active technologies
-(controlled by <code class="docutils literal notranslate"><span class="pre">n_flags</span></code>). Adds stochastic scenario links if
-<code class="docutils literal notranslate"><span class="pre">stochastic.stochastic:</span> <span class="pre">true</span></code>.</p></li>
-</ul>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rules/solve.smk</span></code></dt><dd><ul class="simple">
-<li><p><strong>solve_network</strong> — runs the linear programme via Linopy. Solver and profile
-are set in <a class="reference internal" href="config/config.html#config-yaml"><span class="std std-ref">config.yaml</span></a> under <code class="docutils literal notranslate"><span class="pre">optimization</span></code>.</p></li>
-</ul>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rules/plot.smk</span></code></dt><dd><ul class="simple">
-<li><p><strong>plot_results</strong> — exports dispatch plots, capacity tables, and shadow prices.</p></li>
-</ul>
-</dd>
-</dl>
-</section>
-<section id="stochastic-mode">
-<h2>Stochastic mode<a class="headerlink" href="#stochastic-mode" title="Link to this heading">#</a></h2>
-<p>When <code class="docutils literal notranslate"><span class="pre">stochastic.stochastic:</span> <span class="pre">true</span></code> in <a class="reference internal" href="config/config.html#config-yaml"><span class="std std-ref">config.yaml</span></a>:</p>
+<section id="rules-reference">
+<h2>Rules reference<a class="headerlink" href="#rules-reference" title="Link to this heading">#</a></h2>
+<section id="retrieve-tech-data-rules-retrieve-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">retrieve_tech_data</span></code>  <em>(rules/retrieve.smk)</em><a class="headerlink" href="#retrieve-tech-data-rules-retrieve-smk" title="Link to this heading">#</a></h3>
+<p>Downloads the technology-cost CSV from the
+<a class="reference external" href="https://github.com/BertoGBG/technology-data">technology-data</a> repository.
+The file is cached locally; a SHA check at workflow start triggers
+re-download automatically if the remote file has changed.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">PREPROCESS_YEARS</span></code> is expanded to include all keys in <code class="docutils literal notranslate"><span class="pre">stochastic.scenarios</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">preprocess_inputs</span></code> runs once per scenario year (in parallel).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">build_network</span></code> couples the scenarios into a single stochastic LP.</p></li>
-<li><p>If <code class="docutils literal notranslate"><span class="pre">stochastic.EVPI:</span> <span class="pre">true</span></code>, deterministic runs per scenario are also executed
-to compute the Expected Value of Perfect Information.</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">data/technology-data/outputs/costs_{year_EU}.csv</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_retrieve_tech.py</span></code></p></li>
 </ul>
+<p>—</p>
 </section>
-<section id="outputs">
-<h2>Outputs<a class="headerlink" href="#outputs" title="Link to this heading">#</a></h2>
-<p>Results are written to <code class="docutils literal notranslate"><span class="pre">outputs/single_analysis/{network_name}/</span></code>:</p>
+<section id="preprocess-inputs-rules-retrieve-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">preprocess_inputs</span></code>  <em>(rules/retrieve.smk)</em><a class="headerlink" href="#preprocess-inputs-rules-retrieve-smk" title="Link to this heading">#</a></h3>
+<p>Downloads and preprocesses energy-market input data for a given year:
+electricity spot prices, CO₂ emission intensities, natural gas prices,
+renewable capacity factors (wind and solar), and district heating demand.</p>
+<p>Parameterised by the <code class="docutils literal notranslate"><span class="pre">{year}</span></code> wildcard; runs once per scenario year
+(main year + all stochastic scenario years).  In stochastic mode, multiple
+instances run in parallel.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">networks/</span></code> — pre- and post-optimisation PyPSA <code class="docutils literal notranslate"><span class="pre">.nc</span></code> files</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">plots/</span></code> — dispatch figures, capacity bar charts, shadow price tables</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">data/Inputs_{year}/.preprocessed</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_preprocess.py</span></code></p></li>
+<li><p><strong>Force refresh</strong>: <code class="docutils literal notranslate"><span class="pre">snakemake</span> <span class="pre">-j1</span> <span class="pre">--forcerun</span> <span class="pre">preprocess_inputs</span></code></p></li>
 </ul>
+<p>—</p>
+</section>
+<section id="prepare-inputs-rules-build-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">prepare_inputs</span></code>  <em>(rules/build.smk)</em><a class="headerlink" href="#prepare-inputs-rules-build-smk" title="Link to this heading">#</a></h3>
+<p>Loads all preprocessed CSV files and assembles the <code class="docutils literal notranslate"><span class="pre">inputs_dict</span></code> used
+by the network builder: demand time series, efficiency curves, tariff
+schedules, and RFNBO constraint vectors.</p>
+<p>Re-runs automatically when <code class="docutils literal notranslate"><span class="pre">config/config.default.yaml</span></code> (or the user
+override <code class="docutils literal notranslate"><span class="pre">config/config.yaml</span></code>) changes.</p>
+<ul class="simple">
+<li><p><strong>Input</strong>: preprocessed year markers, config file(s)</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">resources/inputs_{year}.pkl</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_prepare_inputs.py</span></code></p></li>
+</ul>
+<p>—</p>
+</section>
+<section id="build-network-rules-build-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">build_network</span></code>  <em>(rules/build.smk)</em><a class="headerlink" href="#build-network-rules-build-smk" title="Link to this heading">#</a></h3>
+<p>Constructs the full PyPSA network from the cost database and the assembled
+inputs dictionary.  Applies all technology flags from <code class="docutils literal notranslate"><span class="pre">n_flags</span></code> (inactive
+technologies are excluded entirely).  Adds stochastic scenario sub-networks
+if <code class="docutils literal notranslate"><span class="pre">stochastic.stochastic:</span> <span class="pre">true</span></code>.</p>
+<p>Optionally saves an SVG diagram of the pre-optimisation network
+(<code class="docutils literal notranslate"><span class="pre">n_flags.print:</span> <span class="pre">true</span></code>) and exports the PRE network to <code class="docutils literal notranslate"><span class="pre">.nc</span></code>
+(<code class="docutils literal notranslate"><span class="pre">n_flags.export:</span> <span class="pre">true</span></code>).</p>
+<ul class="simple">
+<li><p><strong>Input</strong>: cost CSV, inputs pickle</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">resources/{network}/{network}_PRE.nc</span></code>,
+<code class="docutils literal notranslate"><span class="pre">resources/{network}/{network}_comp_alloc.pkl</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_build_network.py</span></code></p></li>
+</ul>
+<p>—</p>
+</section>
+<section id="solve-network-rules-solve-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">solve_network</span></code>  <em>(rules/solve.smk)</em><a class="headerlink" href="#solve-network-rules-solve-smk" title="Link to this heading">#</a></h3>
+<p>Runs the capacity expansion and dispatch optimisation via Linopy.
+The solver (HiGHS or Gurobi) and its parameter profile are set in
+<code class="docutils literal notranslate"><span class="pre">config/config.default.yaml</span></code> under <code class="docutils literal notranslate"><span class="pre">optimization</span></code>.</p>
+<p>Post-solve cleanup: components with optimal capacity below
+<code class="docutils literal notranslate"><span class="pre">optimization.zero_threshold_MW</span></code> are treated as not built and
+their time series are zeroed.</p>
+<ul class="simple">
+<li><p><strong>Input</strong>: PRE network, cost CSV</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">{outdir}/{network}/networks/{network}_OPT.nc</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_solve.py</span></code></p></li>
+</ul>
+<p>—</p>
+</section>
+<section id="plot-results-rules-plot-smk">
+<h3><code class="docutils literal notranslate"><span class="pre">plot_results</span></code>  <em>(rules/plot.smk)</em><a class="headerlink" href="#plot-results-rules-plot-smk" title="Link to this heading">#</a></h3>
+<p>Exports all post-processing outputs: dispatch plots, capacity bar charts,
+Levelised Cost of Production (LCOP) tables, shadow price tables, and CSV
+result files.</p>
+<ul class="simple">
+<li><p><strong>Input</strong>: OPT network, component allocation pickle</p></li>
+<li><p><strong>Output</strong>: <code class="docutils literal notranslate"><span class="pre">{outdir}/{network}/plots/</span></code></p></li>
+<li><p><strong>Script</strong>: <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_plot.py</span></code></p></li>
+</ul>
+<p>—</p>
+</section>
+</section>
+<section id="output-structure">
+<h2>Output structure<a class="headerlink" href="#output-structure" title="Link to this heading">#</a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>outputs/single_analysis/{network_name}/
+  networks/
+    {network}_PRE.nc        ← pre-optimisation network
+    {network}_OPT.nc        ← post-optimisation network (dispatch + p_nom_opt)
+  plots/
+    capacity/               ← capacity bar charts per technology
+    dispatch/               ← hourly dispatch time series
+    economics/              ← LCOP, cost breakdown, shadow prices
+    *.csv                   ← tabular results for further analysis
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">{network_name}</span></code> encodes all key scenario parameters (flags, CO₂ cost,
+targets, year, run name) — see <a class="reference internal" href="wildcards.html#wildcards"><span class="std std-ref">Wildcards</span></a> for the full format.</p>
+<p>—</p>
+</section>
+<section id="adding-rules">
+<h2>Adding rules<a class="headerlink" href="#adding-rules" title="Link to this heading">#</a></h2>
+<p>New processing steps follow the same pattern:</p>
+<ol class="arabic simple">
+<li><p>Add a rule to an existing <code class="docutils literal notranslate"><span class="pre">rules/*.smk</span></code> file (or create a new one)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include</span></code> the file in the <code class="docutils literal notranslate"><span class="pre">Snakefile</span></code></p></li>
+<li><p>Add the rule’s output to the appropriate downstream rule’s <code class="docutils literal notranslate"><span class="pre">input:</span></code></p></li>
+</ol>
+<p>See <a class="reference internal" href="guide_new_technology.html#guide-new-technology"><span class="std std-ref">Guide for Adding New Technologies</span></a> for a worked example of extending the
+build and solve pipeline.</p>
 </section>
 </section>
 
@@ -475,12 +546,12 @@ to compute the Expected Value of Perfect Information.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="implementation.html"
+       href="examples.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Implementation Details for Industrial Clusters</p>
+        <p class="prev-next-title">Examples</p>
       </div>
     </a>
     <a class="right-next"
@@ -510,11 +581,18 @@ to compute the Expected Value of Perfect Information.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-workflow">Running the workflow</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dag-overview">DAG overview</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rules">Rules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-mode">Stochastic mode</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outputs">Outputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rule-graph">Rule graph</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rules-reference">Rules reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve-tech-data-rules-retrieve-smk"><code class="docutils literal notranslate"><span class="pre">retrieve_tech_data</span></code> <em>(rules/retrieve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preprocess-inputs-rules-retrieve-smk"><code class="docutils literal notranslate"><span class="pre">preprocess_inputs</span></code> <em>(rules/retrieve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prepare-inputs-rules-build-smk"><code class="docutils literal notranslate"><span class="pre">prepare_inputs</span></code> <em>(rules/build.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-network-rules-build-smk"><code class="docutils literal notranslate"><span class="pre">build_network</span></code> <em>(rules/build.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solve-network-rules-solve-smk"><code class="docutils literal notranslate"><span class="pre">solve_network</span></code> <em>(rules/solve.smk)</em></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results-rules-plot-smk"><code class="docutils literal notranslate"><span class="pre">plot_results</span></code> <em>(rules/plot.smk)</em></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-structure">Output structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-rules">Adding rules</a></li>
 </ul>
   </nav></div>
 

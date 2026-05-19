@@ -140,27 +140,31 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -336,6 +340,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#Z"><strong>Z</strong></a>
  
 </div>
 <h2 id="A">A</h2>
@@ -415,18 +420,16 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#scripts.retrieve.balance_bioCH4_MeOH_demand_GL">balance_bioCH4_MeOH_demand_GL() (in module scripts.retrieve)</a>
-</li>
       <li><a href="api.html#scripts.technology_inputs.belt_dryer_investment">belt_dryer_investment() (in module scripts.technology_inputs)</a>
 </li>
       <li><a href="api.html#scripts.preprocessing.build_demands_TS">build_demands_TS() (in module scripts.preprocessing)</a>
 </li>
       <li><a href="api.html#scripts.helpers.build_electricity_grid_price_w_tariff">build_electricity_grid_price_w_tariff() (in module scripts.helpers)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#scripts.helpers.build_model_solve_network">build_model_solve_network() (in module scripts.helpers)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#scripts.prepare_network.build_network">build_network() (in module scripts.prepare_network)</a>
 </li>
       <li><a href="api.html#scripts.helpers.build_NG_grid_price_w_tariff">build_NG_grid_price_w_tariff() (in module scripts.helpers)</a>
@@ -571,14 +574,10 @@
 </li>
       <li><a href="api.html#scripts.prepare_network.link_signature">link_signature() (in module scripts.prepare_network)</a>
 </li>
-      <li><a href="api.html#scripts.preprocessing.load_input_data">load_input_data() (in module scripts.preprocessing)</a>
-
-      <ul>
-        <li><a href="api.html#scripts.retrieve.load_input_data">(in module scripts.retrieve)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#scripts.preprocessing.load_input_data">load_input_data() (in module scripts.preprocessing)</a>
+</li>
       <li><a href="api.html#scripts.prepare_network.log_new_components">log_new_components() (in module scripts.prepare_network)</a>
 </li>
       <li><a href="api.html#scripts.parameters.loop_tol">loop_tol (in module scripts.parameters)</a>
@@ -633,10 +632,6 @@
       <li><a href="api.html#scripts.prepare_network.network_dependencies">network_dependencies() (in module scripts.prepare_network)</a>
 </li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#scripts.parameters.NG_demand_year">NG_demand_year (in module scripts.parameters)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
@@ -654,14 +649,10 @@
 </li>
       <li><a href="api.html#scripts.create_stoch_scenarios.patch_timeseries">patch_timeseries() (in module scripts.create_stoch_scenarios)</a>
 </li>
-      <li><a href="api.html#scripts.preprocessing.pre_processing_energy_data">pre_processing_energy_data() (in module scripts.preprocessing)</a>
-
-      <ul>
-        <li><a href="api.html#scripts.retrieve.pre_processing_energy_data">(in module scripts.retrieve)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#scripts.preprocessing.pre_processing_energy_data">pre_processing_energy_data() (in module scripts.preprocessing)</a>
+</li>
       <li><a href="api.html#scripts.preprocessing.prepare_all_inputs">prepare_all_inputs() (in module scripts.preprocessing)</a>
 </li>
       <li><a href="api.html#scripts.helpers.prepare_costs">prepare_costs() (in module scripts.helpers)</a>
@@ -804,6 +795,14 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#scripts.prepare_network.tech_to_add">tech_to_add() (in module scripts.prepare_network)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Z">Z</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#scripts.helpers.zero_small_capacities">zero_small_capacities() (in module scripts.helpers)</a>
 </li>
   </ul></td>
 </tr></table>

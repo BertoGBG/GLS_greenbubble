@@ -1,0 +1,290 @@
+.. _guide-economic-analysis:
+
+Economic Analysis of Results
+=============================
+
+This guide describes the economic interpretation framework built into
+GreenBubble's post-processing pipeline (``scripts/plots.py``).  It covers:
+
+- how the network represents markets via buses and shadow prices,
+- the product topology (collection bus + delivery bus),
+- the Levelised Cost of Production (LCOP) formula and its components,
+- the full KKT revenue and annual profit, and
+- how to interpret LCOP versus the shadow price at the collection bus.
+
+---
+
+Network topology as a market
+------------------------------
+
+GreenBubble is a linear PyPSA model.  Every **bus** is a commodity market
+at a specific location and quality level.  The **KKT multiplier** at a bus
+(``n.buses_t.marginal_price``) is the shadow price of the energy balance
+constraint there — the marginal value of one additional unit of that
+commodity at that time step.
+
+**Links** are technologies that convert commodities.  A multilink with
+ports ``bus0 … busN`` satisfies:
+
+.. code-block:: text
+
+   flow at bus_k = p0 × efficiency_k   (k ≥ 1)
+   flow at bus0  = −p0                  (convention: bus0 always consumes)
+
+Positive ``efficiency_k`` → the link *produces* at bus_k (output or by-product).
+Negative ``efficiency_k`` → the link *consumes* from bus_k (additional input).
+
+---
+
+Product topology
+-----------------
+
+Every product (bioCH4, H2, Methanol) uses a two-bus structure:
+
+.. code-block:: text
+
+   [technology A] ──┐
+   [technology B] ──┤──► bioCH4 collection ──► bioCH4 delivery ──► demand / store
+   [technology C] ──┘              ▲
+                          is_product_bus = True
+
+``bioCH4 collection``
+   The **collection bus**.  All technologies producing bioCH4 inject here
+   directly via ``bus1`` of their multilink.  Tagged ``is_product_bus=True``
+   in the network so post-processing can discover it automatically.
+
+``bioCH4 delivery``
+   The **delivery bus**.  The exogenous demand load (demand mode) or the
+   price-setting sale link (price mode) is attached here.  In price mode the
+   marginal cost of the ``collection_to_delivery`` link is the exogenous
+   selling price time series.
+
+The shadow price at the collection bus (``λ_collection``) is determined at
+equilibrium by the marginal producer — the highest-cost technology that is
+still dispatched.  Technologies with lower cost earn an *intra-marginal rent*.
+
+---
+
+Shared components
+------------------
+
+Compressors, HP storage, and other auxiliary equipment often serve multiple
+technologies and are modelled as a single shared component (separate carrier).
+They are **not** included in the LCOP computation for the production
+technologies themselves.
+
+Their capital and operational costs appear implicitly via the shadow price at
+the buses they connect to (e.g. ``H2 distribution``, ``CO2 distribution``).
+When a production technology draws H2 from ``H2 distribution``, the KKT
+``λ_{H2 distribution}`` already reflects the full cost of H2 at that
+pressure level, including compression.
+
+---
+
+LCOP — Levelised Cost of Production
+-------------------------------------
+
+For a multilink ``lk`` whose ``bus1`` is a collection bus (``is_product_bus=True``),
+first define the **indirect OPEX**:
+
+.. math::
+
+   \text{indirect OPEX} = -\sum_{k \neq 1} \eta_k \cdot \overline{(\lambda_{k} \cdot p_0)}
+
+where :math:`\eta_0 = -1` for bus0 (primary feedstock, always consumed), and
+:math:`\overline{(\lambda_k \cdot p_0)} = \sum_t p_{0,t} \cdot \lambda_{k,t} \cdot w_t`
+with snapshot weights :math:`w_t` from ``snapshot_weightings["objective"]``.
+
+The sign convention makes indirect OPEX **positive when input costs dominate** (the
+typical case) and negative only if by-product credits exceed all feedstock costs.
+
+.. list-table:: Port contributions to indirect OPEX
+   :header-rows: 1
+   :widths: 28 12 60
+
+   * - Port
+     - :math:`\eta_k`
+     - Contribution to indirect OPEX
+   * - bus0 — primary feedstock
+     - −1
+     - :math:`+p_0 \cdot \lambda_{\text{bus0}} \cdot w` — adds feedstock cost
+   * - bus2..N — additional input
+     - < 0
+     - :math:`+|\eta_k| \cdot p_0 \cdot \lambda_k \cdot w` — adds feedstock cost
+   * - bus2..N — by-product output
+     - > 0
+     - :math:`-\eta_k \cdot p_0 \cdot \lambda_k \cdot w` — subtracts by-product credit
+
+Then:
+
+.. math::
+
+   \text{LCOP} = \frac{\text{CAPEX} + \text{OPEX} + \text{indirect OPEX}}{Q_\text{main}}
+
+where:
+
+- :math:`\text{CAPEX}` = ``n.statistics.capex()`` for the link (annualised capital cost)
+- :math:`\text{OPEX}` = ``n.statistics.opex()`` for the link (explicit ``marginal_cost`` × dispatch — variable O&M such as enzyme or maintenance rates, **not** feedstock costs)
+- :math:`Q_\text{main} = \sum_t p_{0,t} \cdot \eta_1 \cdot w_t` — annual production at bus1
+
+**No double-counting:** ``OPEX`` is the explicit variable O&M declared in
+``tech_costs`` (VOM).  Indirect OPEX captures the *market value* of feedstocks
+consumed and by-products produced via KKT shadow prices.  These measure
+different things and do not overlap.
+
+**Existing (EXI\_) assets:** ``capital_cost = 0`` in the network for fixed-capacity
+components, so ``CAPEX = 0`` from statistics.  Their LCOP reflects short-run
+marginal cost only (OPEX + indirect OPEX).
+
+---
+
+Revenue, net market value, and annual profit
+---------------------------------------------
+
+.. math::
+
+   \text{revenue main product} = \eta_1 \cdot \sum_t p_{0,t} \cdot \lambda_{\text{bus1},t} \cdot w_t
+
+This is the market value of the main product at the collection bus — what the
+market would pay for everything the technology produces there.
+
+.. math::
+
+   \text{net market value} = \text{revenue main product} - \text{indirect OPEX}
+
+.. math::
+
+   \text{annual profit} = \text{net market value} - \text{CAPEX} - \text{OPEX}
+                        = \text{revenue main product} - \text{indirect OPEX}
+                          - \text{CAPEX} - \text{OPEX}
+
+Annual profit is the economic rent: what the market pays the technology for its
+product, minus every cost it incurs (capital, O&M, feedstocks net of by-products).
+
+- **annual profit ≈ 0** — the technology is the marginal (price-setting) producer.
+- **annual profit > 0** — intra-marginal rent; technology has lower cost than the price-setter.
+- **annual profit < 0** — technology is loss-making under current market conditions (possible for EXI\_ assets if market prices are low).
+
+.. note::
+
+   The zero-profit condition holds for optimally expanded technologies in a
+   fully endogenous problem.  When exogenous selling prices are set (price mode),
+   the complementary slackness argument breaks down and all dispatched
+   technologies can earn positive profit if the price exceeds the LCOP of the
+   marginal producer.
+
+**Intra-marginal rent:**
+
+.. code-block:: text
+
+   rent_per_MWh ≈ λ̄_collection − LCOP
+
+where ``λ̄_collection`` is the energy-weighted mean shadow price at the
+collection bus (from ``shadow_prices_mean.csv``).  The technology with
+``LCOP ≈ λ̄_collection`` is the price-setter; all others earn rent proportional
+to the cost gap.
+
+---
+
+Output files
+-------------
+
+``compute_lcop_by_technology()`` in ``scripts/plots.py`` produces:
+
+``csv/lcop_by_technology.csv``
+   One row per product link (index column: ``link``).
+
+   .. list-table::
+      :header-rows: 1
+      :widths: 38 62
+
+      * - Column
+        - Description
+      * - ``carrier``
+        - PyPSA carrier name of the link
+      * - ``product``
+        - Product name (bioCH4, H2, Methanol …)
+      * - ``CAPEX (EUR)``
+        - Annualised capital cost from ``n.statistics.capex()``
+      * - ``OPEX (EUR)``
+        - Variable O&M from ``n.statistics.opex()`` (explicit marginal cost × dispatch)
+      * - ``indirect OPEX (EUR)``
+        - Feedstock costs minus by-product credits via KKT shadow prices;
+          positive = net cost (typical), negative = by-products exceed feedstock cost
+      * - ``revenue main product (EUR)``
+        - Market value of annual main-product output at the collection bus
+      * - ``net market value (EUR)``
+        - ``revenue main product`` − ``indirect OPEX``
+      * - ``annual production (MWh)``
+        - Annual energy output at bus1 = :math:`\sum_t p_{0,t} \cdot \eta_1 \cdot w_t`
+      * - ``LCOP (EUR/MWh)``
+        - ``(CAPEX + OPEX + indirect OPEX) / annual production``
+      * - ``annual profit (EUR)``
+        - ``net market value − CAPEX − OPEX``; economic rent earned by the technology
+
+``plots/lcop_by_technology.png``
+   Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom).
+
+---
+
+Shadow price outputs
+---------------------
+
+``csv/shadow_prices_mean.csv``
+   Energy-weighted mean KKT for every bus in ``plots_config.yaml → bus_list_mp``,
+   including collection buses.  Computed regardless of whether any technology
+   actively dispatches to the bus.
+
+   Formula:
+
+   .. math::
+
+      \bar{\lambda}_\text{bus} = \frac{\sum_t \lambda_{t} \cdot q_t \cdot w_t}{\sum_t q_t \cdot w_t}
+
+   where :math:`q_t` is the net injection at the bus (generators + positive-efficiency
+   link outputs + storage discharge), and :math:`w_t` is the snapshot weight.
+   Falls back to duration-weighted mean when a bus has no measurable injection.
+
+   Columns:
+
+   .. list-table::
+      :header-rows: 1
+      :widths: 40 60
+
+      * - Column
+        - Description
+      * - ``bus`` (index)
+        - Bus name from ``bus_list_mp``
+      * - ``energy weighted mean (EUR/MWh)``
+        - Energy-weighted mean shadow price at that bus
+
+``plots/shd_prices_mean_bar.png``
+   Bar chart of energy-weighted mean shadow prices.  Collection buses are
+   excluded — delivery buses are sufficient to read the product market price.
+   Buses with no active injection are also dropped.
+
+``plots/shd_prices_violin.png``, ``plots/shd_prices_ldc.png``
+   **Snapshot distribution** of shadow prices (one observation per time step),
+   with the scenario-weighted mean marked.  These show *when* prices are high
+   or low, not an energy-weighted average.  Restricted to the same delivery-bus
+   subset as the bar chart, further filtered to buses with at least one injecting
+   link above the ``LINK_TH`` capacity threshold.
+
+---
+
+Comparing LCOP to shadow prices
+---------------------------------
+
+A practical diagnostic workflow:
+
+1. Look at ``shadow_prices_mean.csv`` — read the ``energy weighted mean (EUR/MWh)``
+   for the delivery bus of each product (e.g. ``bioCH4 delivery``) — this is
+   ``λ̄_delivery``, which equals ``λ̄_collection`` when the collection-to-delivery
+   link is zero-cost.
+2. Look at ``lcop_by_technology.csv`` — compare each technology's ``LCOP (EUR/MWh)``
+   to ``λ̄_delivery`` of its product.
+3. Technologies with ``annual_profit_EUR ≈ 0`` are price-setters.
+4. Technologies with ``annual_profit_EUR > 0`` earn intra-marginal rent —
+   check whether they are EXI\_ (legacy) assets or optimally expanded.
+5. In price mode, all technologies that run may earn positive profit if the
+   exogenous selling price exceeds the LCOP of the marginal producer.

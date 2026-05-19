@@ -87,12 +87,16 @@ If the technology produces a product sold or delivered to an external bus
            )
            my_buses.at["product bus", t] = product_bus
 
-``add_targets`` creates the following network elements:
+``add_targets`` creates the following network elements (once per product, shared
+across all plants that produce it):
 
-- ``"{product} {t}"`` — per-tech intermediate bus (returned as ``product_bus``)
-- ``"{product} collection"`` — shared collection bus (tagged for discovery by other modules)
-- ``"{t}_to_collection"`` — zero-cost link from per-tech bus to collection bus
-- Collection-to-delivery/demand link and Store/Load — created once and shared across all plants
+- ``"{product} collection"`` — shared collection bus, returned as ``product_bus``
+  and tagged ``is_product_bus=True`` so other modules can discover it
+- Collection-to-delivery/demand link and Store/Load at the delivery bus
+  (``"{product} delivery"``) — created once regardless of how many plants run
+
+Plants inject **directly** into the collection bus via their multilink's ``bus1``.
+There is no per-technology intermediate bus.
 
 .. important::
 
@@ -128,7 +132,7 @@ This inner function receives ``prefix``, ``capital_cost``, ``capacity``,
            "Link", name,
            carrier=carrier,
            bus0=my_buses.at["H2 in bus",    t],
-           bus1=my_buses.at["product bus",  t],   # per-tech intermediate bus
+           bus1=my_buses.at["product bus",  t],   # collection bus — direct injection
            efficiency=...,
            p_nom=capacity,
            p_nom_extendable=expansion,
@@ -199,9 +203,11 @@ Key Rules
    * - Always write ``if t in cap_to_add or t in exp_to_add:``
      - ``if t in (list_a or list_b):`` only checks the first non-empty list — silent bug
    * - Call ``add_targets()`` before building the multilink
-     - Sets ``product_bus`` (per-tech bus) before the link wires to it
+     - Sets ``product_bus`` (the collection bus) before the link wires to it
    * - Never overwrite ``product bus`` inside ``add_*_cap_exp``
-     - ``add_targets`` sets it correctly for both ``price`` and ``demand`` drivers
+     - ``add_targets`` sets it to the collection bus for both ``price`` and ``demand`` drivers
+   * - Set ``bus1 = my_buses.at["product bus", t]`` (the collection bus)
+     - Plants inject directly into the collection bus — no per-tech intermediate bus
    * - Use ``add_requirements_buses()`` for any bus that may already exist
      - Idempotent — safe even if another tech already created the bus
    * - Tag any shared bus via ``n.buses.loc[bus, "my_tag"]``
@@ -283,3 +289,49 @@ full reference at :ref:`guide-demands`.  The short version:
    The delivery store is automatically sized by ``build_product_demand_ts``
    based on the chosen mode.  Do not set ``e_nom_max`` manually in the network
    script — read it from ``inputs_dict["MyProduct_store_e_nom_max"]``.
+
+----
+
+Economic interpretation of the new technology
+-----------------------------------------------
+
+Once the network is built and solved, the post-processing pipeline
+automatically computes economic metrics for every technology injecting into a
+collection bus.  See :ref:`guide-economic-analysis` for the full derivation.
+The short version relevant to technology design:
+
+**LCOP (Levelised Cost of Production)**
+  Defined over the multilink's bus ports:
+
+  .. math::
+
+     \text{LCOP} = \frac{\text{CAPEX} + \text{OPEX}
+                         - \sum_{k \neq \text{bus1}} \eta_k \cdot
+                           \overline{(\lambda_k \cdot p_0)}}{Q_\text{main}}
+
+  where ``indirect OPEX`` = feedstock costs − by-product credits via KKT
+  (positive = net cost).  Bus0 uses :math:`\eta_0 = -1` (primary feedstock
+  consumed); additional input ports add cost; by-product ports give credit.
+  Shared components (compressors, storage) are excluded — their cost enters
+  via the KKT at the shared interface bus.
+
+**Topology choices that affect LCOP:**
+
+- ``bus1`` must be the collection bus (``is_product_bus=True``) so the
+  pipeline discovers the link automatically.
+- By-product ports (heat, CO2, etc.) with positive efficiency contribute a
+  KKT credit.  Connect them to the correct shared bus so their shadow price
+  is non-zero.
+- Additional input ports (eff < 0) will add to the LCOP numerator via the
+  KKT at that bus — make sure the bus has a meaningful shadow price (i.e. it
+  is connected to a real supply with cost).
+
+**Annual profit**
+
+  .. math::
+
+     \text{annual profit} = \text{revenue main product} - \text{indirect OPEX}
+                            - \text{CAPEX} - \text{OPEX}
+
+  A value near zero means the technology is the marginal (price-setting)
+  producer for its product; a positive value indicates intra-marginal rent.

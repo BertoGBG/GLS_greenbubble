@@ -47,7 +47,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Wildcards" href="wildcards.html" />
-    <link rel="prev" title="Installation" href="installation.html" />
+    <link rel="prev" title="Running the Model with Snakemake" href="guide_snakemake.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -141,6 +141,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
 <ul class="current nav bd-sidenav">
@@ -162,6 +163,7 @@
 <li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -362,7 +364,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#config-yaml">config.yaml</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#config-default-yaml">config.default.yaml</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general">General</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#targets">targets</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-technology-activation">n_flags — technology activation</a></li>
@@ -373,9 +375,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rfnbos-dict">rfnbos_dict</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-yaml">n_config.yaml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-options-yaml">n_options.yaml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-yaml">plots_config.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-default-yaml">plots_config.default.yaml</a></li>
 </ul>
             </nav>
         </div>
@@ -389,36 +390,37 @@
                   
   <section id="configuration">
 <span id="id1"></span><h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h1>
-<p>GreenBubble is configured via four YAML files in the <code class="docutils literal notranslate"><span class="pre">config/</span></code> folder:</p>
+<p>GreenBubble is configured via three YAML files in the <code class="docutils literal notranslate"><span class="pre">config/</span></code> folder.
+Each file has a committed <code class="docutils literal notranslate"><span class="pre">*.default.yaml</span></code> base and an optional
+<code class="docutils literal notranslate"><span class="pre">*.yaml</span></code> user-override that is merged on top at runtime.
+See <a class="reference internal" href="guide_snakemake.html#guide-snakemake"><span class="std std-ref">Running the Model with Snakemake</span></a> for the full override workflow.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <colgroup>
-<col style="width: 30.0%" />
-<col style="width: 70.0%" />
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>File</p></th>
+<tr class="row-odd"><th class="head"><p>Default file</p></th>
 <th class="head"><p>Purpose</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">config/config.yaml</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">config/config.default.yaml</span></code></p></td>
 <td><p>Main settings: demands, technology flags, economics, solver, stochastic scenarios</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">config/n_config.yaml</span></code></p></td>
-<td><p>Per-technology capacity bounds, ramp limits, brownfield initial capacities</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">config/n_config.default.yaml</span></code></p></td>
+<td><p>Per-technology capacity bounds, ramp limits, brownfield initial capacities,
+and external market options (<code class="docutils literal notranslate"><span class="pre">options:</span></code> section)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">config/n_options.yaml</span></code></p></td>
-<td><p>External market options: biomass purchase, DH sales, biochar credits</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">config/plots_config.yaml</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">config/plots_config.default.yaml</span></code></p></td>
 <td><p>Which components to export and plot after optimisation</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <hr class="docutils" />
-<section id="config-yaml">
-<h2>config.yaml<a class="headerlink" href="#config-yaml" title="Link to this heading">#</a></h2>
+<section id="config-default-yaml">
+<h2>config.default.yaml<a class="headerlink" href="#config-default-yaml" title="Link to this heading">#</a></h2>
 <section id="general">
 <span id="config-general"></span><h3>General<a class="headerlink" href="#general" title="Link to this heading">#</a></h3>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">run_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">H2_meth_dmd_DK</span>
@@ -472,7 +474,7 @@ Setting a flag to <code class="docutils literal notranslate"><span class="pre">f
 <span class="w">  </span><span class="nt">meoh</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># methanol synthesis (CO₂ hydrogenation)</span>
 <span class="w">  </span><span class="nt">methanation</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># catalytic and biological methanation</span>
 <span class="w">  </span><span class="nt">symbiosis</span><span class="p">:</span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># all internal energy/material exchange links</span>
-<span class="w">  </span><span class="nt">storage</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># all storage technologies (from n_config.yaml)</span>
+<span class="w">  </span><span class="nt">storage</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># all storage technologies (from n_config.default.yaml)</span>
 <span class="w">  </span><span class="nt">print</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># save SVG of pre-optimisation network</span>
 <span class="w">  </span><span class="nt">export</span><span class="p">:</span><span class="w">       </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">  </span><span class="c1"># export pre-optimisation network to .nc</span>
 </pre></div>
@@ -557,34 +559,27 @@ Common Gurobi profiles: <code class="docutils literal notranslate"><span class="
 </section>
 </section>
 <hr class="docutils" />
-<section id="n-config-yaml">
-<h2>n_config.yaml<a class="headerlink" href="#n-config-yaml" title="Link to this heading">#</a></h2>
+<section id="n-config-default-yaml">
+<h2>n_config.default.yaml<a class="headerlink" href="#n-config-default-yaml" title="Link to this heading">#</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/n_config.yaml</span></code>.</p>
+<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/n_config.default.yaml</span></code>.</p>
 </div>
 <p>Per-technology configuration for greenfield/brownfield optimisation.
 Each entry sets the initial installed capacity, expansion allowance, cost factor,
 and operational constraints (ramp limits, minimum load) for one technology group.</p>
 <p>Key parameters: <code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">expansion</span></code>, <code class="docutils literal notranslate"><span class="pre">cost</span> <span class="pre">factor</span></code>,
 <code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">hours</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">ramp</span> <span class="pre">limit</span> <span class="pre">up/down</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">options:</span></code> section at the bottom of this file controls external market
+connections: biomass purchase markets, district heating sales, biochar and CO₂
+sequestration credits, and electrical transformer sizing.</p>
 </section>
 <hr class="docutils" />
-<section id="n-options-yaml">
-<h2>n_options.yaml<a class="headerlink" href="#n-options-yaml" title="Link to this heading">#</a></h2>
+<section id="plots-config-default-yaml">
+<h2>plots_config.default.yaml<a class="headerlink" href="#plots-config-default-yaml" title="Link to this heading">#</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/n_options.yaml</span></code>.</p>
-</div>
-<p>Controls external market connections: biomass purchase markets, district heating
-sales, biochar and CO₂ sequestration credits, and electrical transformer sizing.</p>
-</section>
-<hr class="docutils" />
-<section id="plots-config-yaml">
-<h2>plots_config.yaml<a class="headerlink" href="#plots-config-yaml" title="Link to this heading">#</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/plots_config.yaml</span></code>.</p>
+<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/plots_config.default.yaml</span></code>.</p>
 </div>
 <p>Defines which network components are extracted and plotted after optimisation,
 including capacity thresholds and the list of internal buses for shadow price plots.</p>
@@ -603,12 +598,12 @@ including capacity thresholds and the list of internal buses for shadow price pl
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="installation.html"
+       href="guide_snakemake.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Installation</p>
+        <p class="prev-next-title">Running the Model with Snakemake</p>
       </div>
     </a>
     <a class="right-next"
@@ -638,7 +633,7 @@ including capacity thresholds and the list of internal buses for shadow price pl
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#config-yaml">config.yaml</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#config-default-yaml">config.default.yaml</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general">General</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#targets">targets</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-technology-activation">n_flags — technology activation</a></li>
@@ -649,9 +644,8 @@ including capacity thresholds and the list of internal buses for shadow price pl
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rfnbos-dict">rfnbos_dict</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-yaml">n_config.yaml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-options-yaml">n_options.yaml</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-yaml">plots_config.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-default-yaml">plots_config.default.yaml</a></li>
 </ul>
   </nav></div>
 

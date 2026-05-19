@@ -1,0 +1,145 @@
+# config/config.default.yaml
+# BASE DEFAULTS — do not edit for scenario runs.
+# To override, create config/config.yaml with only the keys you want to change.
+run_name: default # keep it short
+
+# Annual Demands or price targets
+# if driver == 'demand': Demands must be present AND Prices are not used in the model
+# if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
+
+targets:
+  driver: 'price' # 'price' | 'demand'
+  demand_H2 :  200000 # MWh_H2 /y  Demand OR max production for H2 GRID (nto internal consumption)
+  demand_CH4 : 350000 # MWh_CH4 /y Demand OR max production
+  demand_meoh : 9000 # Mwh_meoh /y Demand OR max production
+  price_H2 : 90 # €/MWh prices are required only for driver : 'price'
+  price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
+  price_meoh : 110 # €/MWh prices are required only for driver : 'price'
+
+  # Demand shape per product (applied in both 'demand' and 'price' driver modes)
+  # mode: flat | profile | bins_flat | bins_profile
+  #   flat         – constant MW every hour; flexibility store sized to CH4_flexibility * annual
+  #   profile      – continuous TS scaled via NG_DK profile; same store sizing
+  #   bins_flat    – zero except at n-bin endpoints, equal delivery per bin;
+  #                  store capped to annual/n_bins (one bin's worth)
+  #   bins_profile – zero except at endpoints, delivery ∝ NG_DK integral in bin;
+  #                  store capped to max_bin_demand * (1 + demand_store_buffer)
+  # flexibility: fraction of annual demand used as e_nom_max for flat/profile stores
+  #              (0 = rigid demand, no store added)
+  CH4_demand_mode: flat
+  CH4_bins: 1            # 1=year-end | 12=monthly | 52=weekly | N=N equal bins  - only for bin modes
+  CH4_flexibility: 0.00   # only for flat OR profile modes
+  CH4_profile: null      # path to seasonal profile CSV (data/common/); null = built-in NG_DK
+
+  H2_demand_mode: profile
+  H2_bins: 12
+  H2_flexibility: 0.1
+  H2_profile: data/common/NG_demand_DK_profile.csv
+
+  MeOH_demand_mode: bins_profile
+  MeOH_bins: 2
+  MeOH_flexibility: 0.0
+  MeOH_profile: data/common/NG_demand_DK_profile.csv
+
+  demand_store_buffer: 0.5   # extra headroom for bins_profile store (e.g. 0.05 = +5%)
+
+# CO2 tax for fossil emissions and reward for negative emissions
+CO2_cost: 100 # €/t (CO2_cost)
+CO2_cost_ref_year: 0 # if the energy prices already include a CO2 tax, set it here.
+
+# Sales of Electricity
+max_RE_to_grid : 0.1 # # max share of RE (internal consumption + export) that can be sold to the grid
+
+# Energy & Weather year
+En_price_year: 2024
+
+# Location (Skive)
+latitude: 56.566 # 35.50 # Cal Flats
+longitude: 9.033 # -120.10 # Cal Flats
+
+# Network configuration flags
+n_flags:
+  biogas: true
+  central_heat: true
+  renewables: true
+  electrolysis: true
+  meoh: true
+  methanation: true
+  symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
+  storage: true     # activate every Thermal and Battery storage (from n_config)
+  print: true       # saves svg of prenetwork before optimization
+  export: false     # exports prenetwork before optimization -> always saved in resources/
+
+# optimization flags
+n_flags_opt:
+  print: true       # saves svg of optimal network
+  export: true      # exports optimal network to .nc
+  plot: true
+
+# Where to save single-run outputs
+outputs_folder: outputs/single_analysis
+
+# RFNBOs
+rfnbos_dict:
+  limit: 'unlimited'         # emissions | price | unlimited | disconnected
+  price_threshold: 20      # €/MWh
+  emission_threshold: 0.0648   # tCO2e/MWh
+
+# Economics
+year_EU: 2030
+USD_to_EUR: 0.85
+EUR_to_DKK: 7.46
+discount_rate: 0.07
+tariffs_dict:
+  el_transmission_tariff : 9.92   # TSO Tariff from energinet € /MWh
+  el_system_tariff : 6.84   # €/MWh
+  el_afgift : 45 # state tarif set to 45 ore/kWh (DK) previously 72, but 0.8 for 2026 - 2027
+  el_net_tariff_low : 2   # Euro/MWh DSO Tariff for 60/10kV transformer (A_low customer)
+  el_net_tariff_high : 6
+  el_net_tariff_peak : 12
+  el_tariff_sell : 1.4  # Selling tariff
+  NG_dso_tariff : 1.8  #  Eur/MWh - NG grid tariffs DSO : https://evida.dk/tarifblad010125/
+  NG_tso_tariff :  0.01 #  Eur/MWh - NG grid tariff TSO : https://en.energinet.dk/media/fhslybmk/transmission-tariffs-effective-as-of-1st-january-2025-updated-1st-june-2024.pdf
+
+# SOLVER
+optimization:
+  solver :  'highs'  # 'gurobi' | 'highs'
+  solver_profile : "highs-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
+  collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
+  return_model: true  # returns linopy model
+  overrides: null
+    #overrides:     # examples are illustrative
+     #OutputFlag: 1
+     #BarConvTol: 1e-8
+  zero_threshold_MW: 0.01   # MW ,t/h (or MWh , t for stores). Set to 0 to disable.
+  # Solver-noise cleanup: extendable components with p_nom_opt (or e_nom_opt) strictly
+  # below this value are treated as "not built" — their optimal capacity and all
+  # result timeseries are zeroed before the network is exported.
+
+
+# Stochastic capacity and dispatch optimization
+stochastic:
+  stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
+  scenarios: { # name of scenarios and their probabilities
+              '2023': 0.30,
+              '2024': 0.35,
+              '2025': 0.35}
+  CO2_cost_s : {  # CO2 cost (tax) per scenario
+                "2023": 100,
+                "2024": 100,
+                "2025": 100}
+  CO2_cost_ref_year_s: {  # CO2 cost (tax) per scenario
+                "2023": 0,
+                "2024": 0,
+                "2025": 0}
+  EVPI : true # runs additional deterministic optimization for each scenario and calcualtes EVPI (automatically false if stochastic: false)
+
+# Rolling horizon dispatch optimisation
+# Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
+# When enabled, `snakemake` targets the RH output and does NOT run solve_network.
+rolling_horizon:
+  enabled: false
+  horizon: 168        # window size in hours (e.g. 168 = 1 week)
+  overlap: 72         # overlap in hours between consecutive windows
+  network_path: ''  # REQUIRED when enabled — path to a .nc network to load
+  rh_year: 2024       # optional: year for RH inputs/weather; defaults to En_price_year

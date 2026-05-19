@@ -43,10 +43,11 @@
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guide_rolling_horizon';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="next" title="Economic Analysis of Results" href="guide_economic_analysis.html" />
     <link rel="prev" title="Setting Product Demands" href="guide_demands.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -141,6 +142,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
 <ul class="nav bd-sidenav">
@@ -162,6 +164,7 @@
 <li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -373,6 +376,12 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-and-profile-modes">Flat and profile modes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annual-point-load-products-bins-flat-bins-profile-with-n-bins-1">Annual point-load products (bins_flat / bins_profile with n_bins = 1)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weekly-monthly-bins-n-bins-12">Weekly / monthly bins (n_bins ≥ 12)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-constraints-in-rolling-horizon">Custom constraints in rolling horizon</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#re-export-fraction-constraint">RE export fraction constraint</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-new-custom-constraint-to-the-pf-solve">Adding a new custom constraint to the PF solve</a></li>
 </ul>
 </li>
 </ul>
@@ -608,6 +617,90 @@ multi-window carry-over while keeping a one-window buffer.</p></li>
 delivery fits within a single rolling window, so the store fills and empties
 naturally within each window. The store cap is the per-bin size set during
 network building.</p>
+<p>—</p>
+</section>
+</section>
+<section id="custom-constraints-in-rolling-horizon">
+<h2>Custom constraints in rolling horizon<a class="headerlink" href="#custom-constraints-in-rolling-horizon" title="Link to this heading">#</a></h2>
+<p>The capacity expansion solve applies several custom constraints via
+<code class="docutils literal notranslate"><span class="pre">extra_functionality</span></code> that are not part of the standard PyPSA model.
+The RH solve must replicate these constraints in every window, otherwise
+the RH dispatch is less constrained than the PF solve and the cost
+comparison is meaningless.</p>
+<section id="re-export-fraction-constraint">
+<h3>RE export fraction constraint<a class="headerlink" href="#re-export-fraction-constraint" title="Link to this heading">#</a></h3>
+<p>The most important custom constraint limits how much renewable electricity
+the site may sell back to the grid relative to the amount it consumes
+on-site:</p>
+<div class="math notranslate nohighlight">
+\[E_{\text{export, window}} \leq \alpha \times E_{\text{consumed, window}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha\)</span> is <code class="docutils literal notranslate"><span class="pre">max_RE_to_grid</span></code> from <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>.</p>
+<p><strong>In the perfect-foresight (PF) solve</strong> this is a single annual constraint:
+the full-year export total must not exceed <span class="math notranslate nohighlight">\(\alpha\)</span> times the full-year
+on-site consumption total.</p>
+<p><strong>In rolling horizon</strong> the constraint cannot be applied as a single annual
+expression, because each window is solved as an independent optimisation
+problem with its own linopy model that only contains the window’s snapshots.
+Instead the same constraint is added to <em>every window</em> using the window’s own
+snapshot set — effectively enforcing the fraction locally within each 168-hour
+(or chosen <code class="docutils literal notranslate"><span class="pre">horizon</span></code>) period.</p>
+<p>This per-window enforcement is <strong>strictly tighter</strong> than the original annual
+constraint: if the fraction is satisfied in every window it is guaranteed to be
+satisfied over the full year.  The practical consequence is that the RH
+dispatch may curtail slightly more RE or shift slightly more production
+internally compared to a hypothetical annual-constraint RH, but the direction
+of the bound is always conservative.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Omitting this constraint from the RH solve causes the optimizer to export
+far more electricity to the grid than the PF solve (observed: 2.5× more
+annual export in an unconstrained RH run), making the RH total system cost
+appear lower than PF.  This is an artefact — the system is “profiting” from
+unplanned grid exports rather than using the electricity for green fuel
+production.  The constraint must always be applied to both solves to ensure
+a fair comparison.</p>
+</div>
+</section>
+<section id="implementation">
+<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h3>
+<p>The constraint is injected via the <code class="docutils literal notranslate"><span class="pre">extra_functionality</span></code> hook that PyPSA’s
+<code class="docutils literal notranslate"><span class="pre">optimize_with_rolling_horizon</span></code> passes to each per-window <code class="docutils literal notranslate"><span class="pre">n.optimize()</span></code>
+call:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_rh_extra_functionality</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">snapshots</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">add_max_RE_sales_constraint</span><span class="p">(</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span>
+        <span class="n">bus</span><span class="o">=</span><span class="s2">&quot;El3&quot;</span><span class="p">,</span>
+        <span class="n">export_pattern</span><span class="o">=</span><span class="s2">&quot;El3_to&quot;</span><span class="p">,</span>
+        <span class="n">export_bus</span><span class="o">=</span><span class="s2">&quot;ElDK1 sell bus&quot;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_RE_to_grid</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;El3_export_fraction_of_total_RE&quot;</span><span class="p">,</span>
+        <span class="n">n_flags</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">n_flags</span><span class="p">,</span>
+        <span class="n">include_agents</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;biogas&quot;</span><span class="p">,</span> <span class="s2">&quot;electrolysis&quot;</span><span class="p">,</span> <span class="s2">&quot;methanation&quot;</span><span class="p">,</span> <span class="s2">&quot;meoh&quot;</span><span class="p">],</span>
+        <span class="n">snapshots</span><span class="o">=</span><span class="n">snapshots</span><span class="p">,</span>   <span class="c1"># &lt;-- window snapshots, not full-year</span>
+    <span class="p">)</span>
+
+<span class="n">n</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">optimize_with_rolling_horizon</span><span class="p">(</span>
+    <span class="o">...</span>
+    <span class="n">extra_functionality</span><span class="o">=</span><span class="n">_rh_extra_functionality</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">snapshots</span></code> argument is critical: without it,
+<code class="docutils literal notranslate"><span class="pre">add_max_RE_sales_constraint</span></code> would call <code class="docutils literal notranslate"><span class="pre">_snapshots_by_scenario(n)</span></code> and
+receive the full 8760-snapshot index, but the linopy model variables only
+contain the current window’s timestamps, causing a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> when the
+function tries to select non-existent snapshots from the model variables.</p>
+</section>
+<section id="adding-a-new-custom-constraint-to-the-pf-solve">
+<h3>Adding a new custom constraint to the PF solve<a class="headerlink" href="#adding-a-new-custom-constraint-to-the-pf-solve" title="Link to this heading">#</a></h3>
+<p>If you add a new <code class="docutils literal notranslate"><span class="pre">extra_functionality</span></code> constraint to <code class="docutils literal notranslate"><span class="pre">helpers.py</span></code> for the
+capacity expansion run, you <strong>must</strong> also add it to <code class="docutils literal notranslate"><span class="pre">_rh_extra_functionality</span></code>
+in <code class="docutils literal notranslate"><span class="pre">scripts/snakemake_rolling_horizon.py</span></code>, passing <code class="docutils literal notranslate"><span class="pre">snapshots=snapshots</span></code>
+(or an equivalent window-aware argument) so the constraint operates on the
+current window’s snapshot set rather than the full network index.</p>
 </section>
 </section>
 </section>
@@ -633,11 +726,11 @@ network building.</p>
       </div>
     </a>
     <a class="right-next"
-       href="api.html"
+       href="guide_economic_analysis.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">API Reference</p>
+        <p class="prev-next-title">Economic Analysis of Results</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -670,6 +763,12 @@ network building.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-and-profile-modes">Flat and profile modes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#annual-point-load-products-bins-flat-bins-profile-with-n-bins-1">Annual point-load products (bins_flat / bins_profile with n_bins = 1)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weekly-monthly-bins-n-bins-12">Weekly / monthly bins (n_bins ≥ 12)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-constraints-in-rolling-horizon">Custom constraints in rolling horizon</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#re-export-fraction-constraint">RE export fraction constraint</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation">Implementation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-new-custom-constraint-to-the-pf-solve">Adding a new custom constraint to the PF solve</a></li>
 </ul>
 </li>
 </ul>

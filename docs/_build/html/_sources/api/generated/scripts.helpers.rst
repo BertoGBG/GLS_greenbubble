@@ -1,4 +1,4 @@
-scripts.helpers
+﻿scripts.helpers
 ===============
 
 .. automodule:: scripts.helpers
@@ -43,4 +43,5 @@ scripts.helpers
       read_costs
       save_config
       save_network_comp_allocation
+      zero_small_capacities
    

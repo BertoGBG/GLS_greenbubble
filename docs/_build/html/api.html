@@ -47,7 +47,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="References" href="references.html" />
-    <link rel="prev" title="Rolling Horizon Dispatch Optimisation" href="guide_rolling_horizon.html" />
+    <link rel="prev" title="Implementation Details" href="implementation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -141,27 +141,31 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current nav bd-sidenav">
@@ -365,7 +369,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.config">Configuration &amp; Parameters</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.DH_Tamb_max"><code class="docutils literal notranslate"><span class="pre">DH_Tamb_max</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.DH_data_folder"><code class="docutils literal notranslate"><span class="pre">DH_data_folder</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.NG_demand_year"><code class="docutils literal notranslate"><span class="pre">NG_demand_year</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.currency"><code class="docutils literal notranslate"><span class="pre">currency</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.eia_api"><code class="docutils literal notranslate"><span class="pre">eia_api</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.end_date"><code class="docutils literal notranslate"><span class="pre">end_date</span></code></a></li>
@@ -377,12 +380,9 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.retrieve">Data Retrieval</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.GL_inputs_to_eff"><code class="docutils literal notranslate"><span class="pre">GL_inputs_to_eff()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.balance_bioCH4_MeOH_demand_GL"><code class="docutils literal notranslate"><span class="pre">balance_bioCH4_MeOH_demand_GL()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.download_energidata"><code class="docutils literal notranslate"><span class="pre">download_energidata()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.fetch_remote_sha"><code class="docutils literal notranslate"><span class="pre">fetch_remote_sha()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.get_cached_sha"><code class="docutils literal notranslate"><span class="pre">get_cached_sha()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.load_input_data"><code class="docutils literal notranslate"><span class="pre">load_input_data()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.pre_processing_energy_data"><code class="docutils literal notranslate"><span class="pre">pre_processing_energy_data()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.remove_feb_29"><code class="docutils literal notranslate"><span class="pre">remove_feb_29()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.retrieve_renewable_capacity_factors"><code class="docutils literal notranslate"><span class="pre">retrieve_renewable_capacity_factors()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.retrieve_technology_data"><code class="docutils literal notranslate"><span class="pre">retrieve_technology_data()</span></code></a></li>
@@ -440,6 +440,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs"><code class="docutils literal notranslate"><span class="pre">read_costs()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_network_comp_allocation"><code class="docutils literal notranslate"><span class="pre">save_network_comp_allocation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.zero_small_capacities"><code class="docutils literal notranslate"><span class="pre">zero_small_capacities()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.prepare_network">Network Construction</a><ul class="nav section-nav flex-column">
@@ -515,7 +516,17 @@ script.  Docstrings are rendered automatically from the source code using
 <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html">Sphinx autodoc</a>.</p>
 <section id="module-scripts.config">
 <span id="configuration-parameters"></span><h2>Configuration &amp; Parameters<a class="headerlink" href="#module-scripts.config" title="Link to this heading">#</a></h2>
-<p>Configuration loader: reads <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">n_config.yaml</span></code> at import time.</p>
+<p>Configuration loader: reads config files at import time.</p>
+<dl class="simple">
+<dt>Loading order (mirrors pypsa-eur):</dt><dd><ol class="arabic simple">
+<li><p>config/config.default.yaml          — committed base defaults</p></li>
+<li><p>config/config.yaml                  — user overrides (if present, gitignored)</p></li>
+<li><p>config/n_config.default.yaml        — network component defaults (includes options: section)</p></li>
+<li><p>config/n_config.yaml                — network overrides (if present, gitignored)</p></li>
+<li><p>config/plots_config.default.yaml    — plot defaults</p></li>
+</ol>
+</dd>
+</dl>
 <p>All optimisation settings, technology flags, stochastic scenario definitions
 and demand targets are exposed as module-level variables so that any script
 can do:</p>
@@ -565,12 +576,6 @@ and the project location coordinates.  EU locations write to
 </dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="scripts.parameters.NG_demand_year">
-<span class="sig-prename descclassname"><span class="pre">scripts.parameters.</span></span><span class="sig-name descname"><span class="pre">NG_demand_year</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2019</span></span><a class="headerlink" href="#scripts.parameters.NG_demand_year" title="Link to this definition">#</a></dt>
-<dd><p>Build snapshots Time Period in DK</p>
-</dd></dl>
-
-<dl class="py data">
 <dt class="sig sig-object py" id="scripts.parameters.currency">
 <span class="sig-prename descclassname"><span class="pre">scripts.parameters.</span></span><span class="sig-name descname"><span class="pre">currency</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'EUR'</span></span><a class="headerlink" href="#scripts.parameters.currency" title="Link to this definition">#</a></dt>
 <dd><p>District heating external demand</p>
@@ -579,7 +584,7 @@ and the project location coordinates.  EU locations write to
 <dl class="py data">
 <dt class="sig sig-object py" id="scripts.parameters.eia_api">
 <span class="sig-prename descclassname"><span class="pre">scripts.parameters.</span></span><span class="sig-name descname"><span class="pre">eia_api</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'s9EmSaPvrh8X3CYL5GjsznA3JfaueLUWjmNvXGlB'</span></span><a class="headerlink" href="#scripts.parameters.eia_api" title="Link to this definition">#</a></dt>
-<dd><p>Crete an external NG demand</p>
+<dd><p>Build snapshots Time Period in DK</p>
 </dd></dl>
 
 <dl class="py data">
@@ -644,12 +649,6 @@ efficiencies for multilinks in the network</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="scripts.retrieve.balance_bioCH4_MeOH_demand_GL">
-<span class="sig-prename descclassname"><span class="pre">scripts.retrieve.</span></span><span class="sig-name descname"><span class="pre">balance_bioCH4_MeOH_demand_GL</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/retrieve.html#balance_bioCH4_MeOH_demand_GL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.retrieve.balance_bioCH4_MeOH_demand_GL" title="Link to this definition">#</a></dt>
-<dd><p>function preprocesses the GreenLab site input data creting MeOH and bioCH4 demands</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="scripts.retrieve.download_energidata">
 <span class="sig-prename descclassname"><span class="pre">scripts.retrieve.</span></span><span class="sig-name descname"><span class="pre">download_energidata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/retrieve.html#download_energidata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.retrieve.download_energidata" title="Link to this definition">#</a></dt>
 <dd><p>Download a dataset from the Energi Data Service REST API.</p>
@@ -706,20 +705,6 @@ normalised with <a class="reference external" href="https://pandas.pydata.org/do
 <dt class="sig sig-object py" id="scripts.retrieve.get_cached_sha">
 <span class="sig-prename descclassname"><span class="pre">scripts.retrieve.</span></span><span class="sig-name descname"><span class="pre">get_cached_sha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/retrieve.html#get_cached_sha"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.retrieve.get_cached_sha" title="Link to this definition">#</a></dt>
 <dd><p>Return the SHA stored in <code class="docutils literal notranslate"><span class="pre">&lt;local_file_path&gt;.sha</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="scripts.retrieve.load_input_data">
-<span class="sig-prename descclassname"><span class="pre">scripts.retrieve.</span></span><span class="sig-name descname"><span class="pre">load_input_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/retrieve.html#load_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.retrieve.load_input_data" title="Link to this definition">#</a></dt>
-<dd><p>Load csv files and prepare Input Data to GL network</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="scripts.retrieve.pre_processing_energy_data">
-<span class="sig-prename descclassname"><span class="pre">scripts.retrieve.</span></span><span class="sig-name descname"><span class="pre">pre_processing_energy_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/retrieve.html#pre_processing_energy_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.retrieve.pre_processing_energy_data" title="Link to this definition">#</a></dt>
-<dd><p>function that preprocess all the energy input data and saves in
-NOTE:Some data are not always used depending on the network configuration
-Prices from DK are downlaoded in DKK</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1513,6 +1498,25 @@ specify one (default <code class="docutils literal notranslate"><span class="pre
 <span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">save_network_comp_allocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_comp_allocation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/helpers.html#save_network_comp_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.save_network_comp_allocation" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.helpers.zero_small_capacities">
+<span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">zero_small_capacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_mw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/helpers.html#zero_small_capacities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.zero_small_capacities" title="Link to this definition">#</a></dt>
+<dd><p>Zero solver-noise artifacts in a network loaded for analysis.</p>
+<p>Mirrors the pypsa-eur add_brownfield capacity_threshold logic: extendable
+components whose p_nom_opt (or e_nom_opt for stores) is strictly below
+threshold_mw are treated as “not built” — their optimal capacity and all
+result timeseries are zeroed in-memory so plots, LCOP, and CSV exports see
+a clean network.  The .nc file on disk is never modified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>pypsa.Network</em><em>   (</em><em>modified in place</em><em>)</em>)</p></li>
+<li><p><strong>threshold_mw</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Components with <a href="#id1"><span class="problematic" id="id2">|p_nom_opt|</span></a> &lt; threshold_mw are zeroed.  Pass 0 to skip.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-scripts.prepare_network">
 <span id="network-construction"></span><h2>Network Construction<a class="headerlink" href="#module-scripts.prepare_network" title="Link to this heading">#</a></h2>
@@ -1724,11 +1728,14 @@ match using only that suffix, regardless of any prefix (e.g. ‘PlantA H2 HP sto
 <dl class="py function">
 <dt class="sig sig-object py" id="scripts.prepare_network.add_targets">
 <span class="sig-prename descclassname"><span class="pre">scripts.prepare_network.</span></span><span class="sig-name descname"><span class="pre">add_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_costs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/prepare_network.html#add_targets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.prepare_network.add_targets" title="Link to this definition">#</a></dt>
-<dd><p>Add exogenous energy demands/ or selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links</p>
+<dd><p>Add exogenous energy demands / selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links.</p>
 <p>INPUTS
-plant : str # usually it matched t in the adding plant section
+plant : str  — matches the technology key used in the plant-adding section
 OUTPUTS
-product_bus : ‘str’ # name of the bus where the plant alloctes its product -&gt; used to build multilinks in add_plant functions</p>
+product_bus : str  — the collection bus for this product; used as bus1 in plant multilinks</p>
+<blockquote>
+<div><p>(plants inject directly into the collection bus)</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="py function">
@@ -2006,12 +2013,12 @@ Works even if folder_data has a trailing slash.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="guide_rolling_horizon.html"
+       href="implementation.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Rolling Horizon Dispatch Optimisation</p>
+        <p class="prev-next-title">Implementation Details</p>
       </div>
     </a>
     <a class="right-next"
@@ -2044,7 +2051,6 @@ Works even if folder_data has a trailing slash.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.config">Configuration &amp; Parameters</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.DH_Tamb_max"><code class="docutils literal notranslate"><span class="pre">DH_Tamb_max</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.DH_data_folder"><code class="docutils literal notranslate"><span class="pre">DH_data_folder</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.NG_demand_year"><code class="docutils literal notranslate"><span class="pre">NG_demand_year</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.currency"><code class="docutils literal notranslate"><span class="pre">currency</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.eia_api"><code class="docutils literal notranslate"><span class="pre">eia_api</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.parameters.end_date"><code class="docutils literal notranslate"><span class="pre">end_date</span></code></a></li>
@@ -2056,12 +2062,9 @@ Works even if folder_data has a trailing slash.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.retrieve">Data Retrieval</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.GL_inputs_to_eff"><code class="docutils literal notranslate"><span class="pre">GL_inputs_to_eff()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.balance_bioCH4_MeOH_demand_GL"><code class="docutils literal notranslate"><span class="pre">balance_bioCH4_MeOH_demand_GL()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.download_energidata"><code class="docutils literal notranslate"><span class="pre">download_energidata()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.fetch_remote_sha"><code class="docutils literal notranslate"><span class="pre">fetch_remote_sha()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.get_cached_sha"><code class="docutils literal notranslate"><span class="pre">get_cached_sha()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.load_input_data"><code class="docutils literal notranslate"><span class="pre">load_input_data()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.pre_processing_energy_data"><code class="docutils literal notranslate"><span class="pre">pre_processing_energy_data()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.remove_feb_29"><code class="docutils literal notranslate"><span class="pre">remove_feb_29()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.retrieve_renewable_capacity_factors"><code class="docutils literal notranslate"><span class="pre">retrieve_renewable_capacity_factors()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.retrieve.retrieve_technology_data"><code class="docutils literal notranslate"><span class="pre">retrieve_technology_data()</span></code></a></li>
@@ -2119,6 +2122,7 @@ Works even if folder_data has a trailing slash.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs"><code class="docutils literal notranslate"><span class="pre">read_costs()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_network_comp_allocation"><code class="docutils literal notranslate"><span class="pre">save_network_comp_allocation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.zero_small_capacities"><code class="docutils literal notranslate"><span class="pre">zero_small_capacities()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-scripts.prepare_network">Network Construction</a><ul class="nav section-nav flex-column">

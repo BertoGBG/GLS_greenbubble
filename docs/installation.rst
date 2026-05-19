@@ -61,12 +61,12 @@ Solver setup
 
    Gurobi requires a valid licence. Free academic licences are available at
    https://www.gurobi.com/academia/academic-program-and-licenses/.
-   Once installed, set ``optimization.solver: 'gurobi'`` in ``config/config.yaml``.
+   Once installed, set ``optimization.solver: 'gurobi'`` in ``config/config.yaml`` (see :ref:`guide-snakemake`).
 
 **HiGHS** (open-source, no licence needed)
 
    HiGHS is included in the conda environment. Set ``optimization.solver: 'highs'``
-   in ``config/config.yaml`` to use it. Suitable for smaller or exploratory runs.
+   in ``config/config.yaml`` (see :ref:`guide-snakemake`) to use it. Suitable for smaller or exploratory runs.
 
 
 Running the model

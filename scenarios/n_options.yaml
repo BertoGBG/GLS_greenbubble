@@ -2,12 +2,12 @@
 
 # -------------------  options config (alphabetical) -------------------
 # expansion
-biochar credits: #TODO : stochastic testing
+biochar credits:
   enable: false
 
-CO2 Liq credits: #TODO : stochastic testing
-  enable: false
-  #efficiency: 0.9 # assumption including boil off
+CO2 Liq credits:
+  enable: true
+  efficiency: 0.95 # assumption including boil off
 
 Dig biomass:
   max capacity: .inf # t/y of manure and biomass

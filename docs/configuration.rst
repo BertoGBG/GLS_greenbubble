@@ -3,27 +3,29 @@
 Configuration
 =============
 
-GreenBubble is configured via four YAML files in the ``config/`` folder:
+GreenBubble is configured via three YAML files in the ``config/`` folder.
+Each file has a committed ``*.default.yaml`` base and an optional
+``*.yaml`` user-override that is merged on top at runtime.
+See :ref:`guide-snakemake` for the full override workflow.
 
 .. list-table::
-   :widths: 30 70
+   :widths: 35 65
    :header-rows: 1
 
-   * - File
+   * - Default file
      - Purpose
-   * - ``config/config.yaml``
+   * - ``config/config.default.yaml``
      - Main settings: demands, technology flags, economics, solver, stochastic scenarios
-   * - ``config/n_config.yaml``
-     - Per-technology capacity bounds, ramp limits, brownfield initial capacities
-   * - ``config/n_options.yaml``
-     - External market options: biomass purchase, DH sales, biochar credits
-   * - ``config/plots_config.yaml``
+   * - ``config/n_config.default.yaml``
+     - Per-technology capacity bounds, ramp limits, brownfield initial capacities,
+       and external market options (``options:`` section)
+   * - ``config/plots_config.default.yaml``
      - Which components to export and plot after optimisation
 
 ----
 
-config.yaml
------------
+config.default.yaml
+--------------------
 
 .. _config-general:
 
@@ -98,7 +100,7 @@ Setting a flag to ``false`` removes the corresponding components entirely.
      meoh:         true   # methanol synthesis (CO₂ hydrogenation)
      methanation:  true   # catalytic and biological methanation
      symbiosis:    true   # all internal energy/material exchange links
-     storage:      true   # all storage technologies (from n_config.yaml)
+     storage:      true   # all storage technologies (from n_config.default.yaml)
      print:        true   # save SVG of pre-optimisation network
      export:       false  # export pre-optimisation network to .nc
 
@@ -200,11 +202,11 @@ Controls RFNBO (Renewable Fuels of Non-Biological Origin) compliance constraints
 
 ----
 
-n_config.yaml
--------------
+n_config.default.yaml
+----------------------
 
 .. note::
-   Full documentation coming soon. See inline comments in ``config/n_config.yaml``.
+   Full documentation coming soon. See inline comments in ``config/n_config.default.yaml``.
 
 Per-technology configuration for greenfield/brownfield optimisation.
 Each entry sets the initial installed capacity, expansion allowance, cost factor,
@@ -213,24 +215,17 @@ and operational constraints (ramp limits, minimum load) for one technology group
 Key parameters: ``initial capacity``, ``expansion``, ``cost factor``,
 ``max capacity``, ``max hours``, ``min load``, ``ramp limit up/down``.
 
-----
-
-n_options.yaml
---------------
-
-.. note::
-   Full documentation coming soon. See inline comments in ``config/n_options.yaml``.
-
-Controls external market connections: biomass purchase markets, district heating
-sales, biochar and CO₂ sequestration credits, and electrical transformer sizing.
+The ``options:`` section at the bottom of this file controls external market
+connections: biomass purchase markets, district heating sales, biochar and CO₂
+sequestration credits, and electrical transformer sizing.
 
 ----
 
-plots_config.yaml
------------------
+plots_config.default.yaml
+--------------------------
 
 .. note::
-   Full documentation coming soon. See inline comments in ``config/plots_config.yaml``.
+   Full documentation coming soon. See inline comments in ``config/plots_config.default.yaml``.
 
 Defines which network components are extracted and plotted after optimisation,
 including capacity thresholds and the list of internal buses for shadow price plots.
