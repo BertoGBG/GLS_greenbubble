@@ -10,3 +10,5 @@ biogas: # (unit: MW CH4,  for simplicity)
 H2 HP storage:
   expansion : false
 
+onwind:
+  expansion : false
