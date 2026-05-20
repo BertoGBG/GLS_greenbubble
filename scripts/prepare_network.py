@@ -106,10 +106,13 @@ def network_dependencies(n_flags, ):
         n_flags_OK['renewables'] = False
 
     # H2 production Dependencies
-    cond1 = n_flags['electrolysis'] and rfnbos_dict['limit'] == 'unlimited'
+    cond1 = n_flags['electrolysis'] and rfnbos_dict['limit'] != 'disconnected'
     cond2 = n_flags['electrolysis'] and n_flags['renewables']
+    cond3 = n_flags['electrolysis'] and rfnbos_dict['limit'] in {'unlimited'}
+    price_case  = (cond1 or cond2) and targets_dict['driver'] == 'price'
+    demand_case = (cond2 or cond3) and targets_dict['driver'] == 'demand'
 
-    if cond1 or cond2 :
+    if price_case or demand_case:
         n_flags_OK['electrolysis'] = True
     else:
         n_flags_OK['electrolysis'] = False
