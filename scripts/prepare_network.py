@@ -108,7 +108,7 @@ def network_dependencies(n_flags, ):
     # H2 production Dependencies
     cond1 = n_flags['electrolysis'] and rfnbos_dict['limit'] != 'disconnected'
     cond2 = n_flags['electrolysis'] and n_flags['renewables']
-    cond3 = n_flags['electrolysis'] and rfnbos_dict['limit'] in {'emissions', 'unlimited'}
+    cond3 = n_flags['electrolysis'] and rfnbos_dict['limit'] in {'unlimited'}
     price_case  = (cond1 or cond2) and targets_dict['driver'] == 'price'
     demand_case = (cond2 or cond3) and targets_dict['driver'] == 'demand'
 
