@@ -24,3 +24,6 @@ memory/
 
 # technology-data SHA cache (used by retrieve_technology_data)
 *.sha
+
+# Solver log
+gurobi.log
