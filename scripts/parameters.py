@@ -18,8 +18,27 @@ scripts.  It is imported as ``p`` throughout the codebase::
 
 import pandas as pd
 import os
+import warnings
+from pathlib import Path
 from scripts.config import En_price_year, year_EU, latitude, longitude, EUR_to_DKK
 from scripts.helpers import build_snapshots, is_eu_or_us
+
+
+def _load_dotenv(path: str = ".env") -> None:
+    """Load key=value pairs from a .env file into os.environ (no-op if missing)."""
+    env_file = Path(path)
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            os.environ.setdefault(key, val)
+
+
+_load_dotenv()
 
 # --------------------------------------
 ''' Constants'''
@@ -40,11 +59,23 @@ cost_path = os.path.join(cost_folder, cost_file)
 cost_file_US = "costs_" + str(year_EU) + '_US' + ".csv"
 cost_path_US = os.path.join(cost_folder, cost_file)
 
-# token to download  factors from Renewable Ninjas
-# obtain your own token from : https://www.renewables.ninja/documentation/api
-RN_token = "3665f7dcb14437156a2071ac917e37a9165f9be8"  #
-entsoe_api = "5f634ee5-faa2-4257-8a63-9cb21a1c356d" # EU
-eia_api = 's9EmSaPvrh8X3CYL5GjsznA3JfaueLUWjmNvXGlB' # US
+# API tokens — loaded from environment variables (or .env file in project root).
+# Copy .env.example to .env and fill in your own tokens.  Never commit .env.
+# Obtain tokens at:
+#   Renewables.ninja : https://www.renewables.ninja/documentation/api
+#   ENTSO-E          : https://transparency.entsoe.eu/usrm/user/createPublicUser
+#   EIA (US)         : https://www.eia.gov/opendata/register.php
+RN_token   = os.environ.get("RN_TOKEN", "")
+entsoe_api = os.environ.get("ENTSOE_API_KEY", "")
+eia_api    = os.environ.get("EIA_API_KEY", "")
+
+_missing = [name for name, val in [("RN_TOKEN", RN_token), ("ENTSOE_API_KEY", entsoe_api), ("EIA_API_KEY", eia_api)] if not val]
+if _missing:
+    warnings.warn(
+        f"API token(s) not set: {', '.join(_missing)}. "
+        "Data retrieval will fail. Copy .env.example → .env and add your tokens.",
+        stacklevel=2,
+    )
 
 '''Build snapshots Time Period in DK'''
 hours_in_period, start_date, end_date = build_snapshots(En_price_year)

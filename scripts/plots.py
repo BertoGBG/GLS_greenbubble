@@ -942,13 +942,13 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
     obj = getattr(n, "objective", None)
     if obj is not None:
         try:
-            obj_f = float(obj)
+            obj_f = float(obj) + float(getattr(n, "objective_constant", 0.0) or 0.0)
             diff  = total_cost - obj_f
             pct   = 100.0 * diff / obj_f if obj_f != 0 else float("nan")
             print(
                 f"[full_component_table] Cost check: "
                 f"table total={total_cost:.0f} €/y  |  "
-                f"network objective={obj_f:.0f} €/y  |  "
+                f"TSC (obj+constant)={obj_f:.0f} €/y  |  "
                 f"diff={diff:+.0f} €/y ({pct:+.1f}%)"
             )
         except Exception:

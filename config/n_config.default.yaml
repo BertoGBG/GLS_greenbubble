@@ -2,19 +2,37 @@
 # BASE DEFAULTS — do not edit for scenario runs.
 # To override, create config/n_config.yaml with only the keys you want to change.
 #
-# GREEN and BROWN field optimization
-# for each technology set the initial capacity (with zero cost) and possibility to expand and the other constraints.
+# ── Greenfield / Brownfield configuration ───────────────────────────────────
+# Three parameters jointly define each technology's investment mode:
+#
+#   initial capacity   expansion   residual cost factor   →  Mode
+#   ────────────────   ─────────   ────────────────────   ──────────────────────────────
+#        0             false            any               Technology absent (rcf ignored)
+#        0             true              0                Greenfield — pure new capacity
+#        0             true             >0                Degenerate: rcf ignored (no EXI_)
+#       >0             false             0                Brownfield — fixed, sunk cost
+#       >0             false            >0                Brownfield — fixed, residual CAPEX charged
+#       >0             true              0                Mixed — existing (free) + expandable
+#       >0             true             >0                Mixed — existing (residual CAPEX) + expandable
+#
+# cost factor        — multiplier on capital_cost for NEW capacity (sensitivity analysis).
+# residual cost factor — fraction of the tech capital_cost charged for EXISTING (EXI_) capacity.
+#                        0 = sunk cost (no charge); 1 = full annualised cost recovered.
+#                        Only effective when initial capacity > 0.
+# ────────────────────────────────────────────────────────────────────────────
 
 # common defaults for most technologies
 base: &base
-  initial capacity: 0 # default initial capacity null
-  expansion: true # default capacity expansion
-  cost factor: 1  # default to input source
-  max capacity: .inf   # default to infinity
+  initial capacity: 0    # MW (or unit of bus0) of already-installed capacity
+  expansion: true        # allow new capacity to be built on top of initial
+  cost factor: 1         # capital cost multiplier for new capacity (1 = tech-data value)
+  residual cost factor: 0  # fraction of capital cost charged for existing capacity
+  max capacity: .inf     # upper bound on total capacity
 
 # -------------------  config (alphabetical) -------------------
 # Units refer to bus0 in the network except for 'biogas'
 # applies to all components of this each class (e.g. to all "H2 compressor" in the network)
+
 battery: # includes inverter
   <<: *base
   max hours : 2
@@ -63,14 +81,14 @@ methanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
+  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
   committable : false # -> only for initial capacity or RH
 
 methanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
+  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
   committable : false # -> only for initial capacity or RH
 
 CH4 compressor: # applies to both meoh and methanation

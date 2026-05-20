@@ -205,19 +205,91 @@ Controls RFNBO (Renewable Fuels of Non-Biological Origin) compliance constraints
 n_config.default.yaml
 ----------------------
 
-.. note::
-   Full documentation coming soon. See inline comments in ``config/n_config.default.yaml``.
-
 Per-technology configuration for greenfield/brownfield optimisation.
 Each entry sets the initial installed capacity, expansion allowance, cost factor,
 and operational constraints (ramp limits, minimum load) for one technology group.
 
-Key parameters: ``initial capacity``, ``expansion``, ``cost factor``,
-``max capacity``, ``max hours``, ``min load``, ``ramp limit up/down``.
+Key investment parameters: ``initial capacity``, ``expansion``, ``cost factor``,
+``residual cost factor``, ``max capacity``.
 
 The ``options:`` section at the bottom of this file controls external market
 connections: biomass purchase markets, district heating sales, biochar and CO₂
 sequestration credits, and electrical transformer sizing.
+
+.. _brownfield-greenfield:
+
+Greenfield and Brownfield configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Three parameters jointly determine the investment mode for each technology:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 12 22 48
+
+   * - ``initial capacity``
+     - ``expansion``
+     - ``residual cost factor``
+     - Result
+   * - ``0``
+     - ``false``
+     - any
+     - **Technology absent.** Not added to the model. ``residual cost factor`` is ignored.
+   * - ``0``
+     - ``true``
+     - ``0``
+     - **Pure greenfield.** Only a new expandable component is built; the optimizer decides the capacity.
+   * - ``0``
+     - ``true``
+     - ``> 0``
+     - **Degenerate.** No existing plant exists, so ``residual cost factor`` has no effect — same as pure greenfield.
+   * - ``> 0``
+     - ``false``
+     - ``0``
+     - **Pure brownfield (sunk cost).** Existing capacity is fixed in the model, capital cost is fully sunk — no CAPEX charged to the objective.
+   * - ``> 0``
+     - ``false``
+     - ``> 0``
+     - **Brownfield with residual CAPEX.** Existing capacity is fixed; a fraction of the annualised capital cost is charged to the system cost (e.g. remaining loan repayments).
+   * - ``> 0``
+     - ``true``
+     - ``0``
+     - **Mixed — existing free, expandable.** Existing capacity dispatches at zero capital cost; additional capacity can be built at full cost.
+   * - ``> 0``
+     - ``true``
+     - ``> 0``
+     - **Mixed — existing with residual CAPEX, expandable.** Existing capacity carries a residual capital charge; additional capacity can be built on top at full cost.
+
+**Parameter meanings**
+
+``cost factor``
+   Multiplier applied to the capital cost of **new** capacity (``expansion=true`` component).
+   Used for cost sensitivity analysis: ``1.0`` = tech-data value, ``0.5`` = 50% cost reduction scenario.
+   Does not affect existing capacity.
+
+``residual cost factor``
+   Fraction of the technology capital cost charged for **existing** (``EXI_``) capacity.
+   Represents annualised residual CAPEX still to be recovered (e.g. a plant halfway through
+   its financing period has ``residual cost factor ≈ 0.5``).
+   ``0`` = sunk cost (default); ``1`` = full annualised cost charged.
+
+**PyPSA implementation**
+
+Internally, an ``EXI_<tech>`` component with ``residual cost factor > 0`` is built as
+``p_nom_extendable=True`` with ``p_nom_min = p_nom_max = initial_capacity``.
+This forces the LP variable to its fixed value, moving the capital cost term into
+``n.objective_constant``.  ``n.statistics.capex()`` reads ``capital_cost × p_nom_opt``
+after solving and correctly accounts for the residual charge in LCOP and TSC outputs.
+
+**Example** — existing biogas plant, 40 % CAPEX still to recover, no new capacity allowed:
+
+.. code-block:: yaml
+
+   # config/n_config.yaml  (user override)
+   biogas:
+     initial capacity: 5.0   # MW CH4
+     expansion: false
+     residual cost factor: 0.4
 
 ----
 
