@@ -3,10 +3,27 @@
 
 
 ###### Enter content below this line #####
+run_name: price_price_noRE
+
+targets:
+  driver: 'price' # 'price' | 'demand'
+
 # Network configuration flags
 n_flags:
+  biogas: true
   central_heat: false
+  renewables: false
+  electrolysis: true
+  meoh: false
+  methanation: true
+  symbiosis: true   # all internal connection between plants (El, H2, CO2, Heat MT, DH, LT)
+  storage: true     # activate every Thermal and Battery storage (from n_config)
+  print: true       # saves svg of prenetwork before optimization
+  export: false     # exports prenetwork before optimization -> always saved in resources/
 
+# RFNBOs
+rfnbos_dict:
+  limit: 'price'         # emissions | price | unlimited | disconnected
 
 # SOLVER
 optimization:
