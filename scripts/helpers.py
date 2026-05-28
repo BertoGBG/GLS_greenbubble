@@ -1450,8 +1450,6 @@ def build_model_solve_network(
     dual_dir.mkdir(parents=True, exist_ok=True)
 
     # ---- Solve + (optional) dual collection ----
-    print("MODEL ID before solve:", id(n.model))
-
     with capture_pypsa_unassigned_constraints() as log_msgs:
         status, condition = n.optimize.solve_model(
             solver_name=solver,
@@ -1459,7 +1457,6 @@ def build_model_solve_network(
             assign_all_duals=False,
             **opts,
         )
-        print("MODEL ID after solve:", id(n.model))
 
         # primals
         try:
