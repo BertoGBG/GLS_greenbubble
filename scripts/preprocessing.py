@@ -848,140 +848,151 @@ def pre_processing_energy_data(year: int = None) -> None:
     end_date = (dates[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
 
     '''El spot prices DK1 - input DKK/MWh or EUR/MWh'''
-    Elspotprices_data = download_dk_day_ahead_prices(
-        start_date=start_date,
-        end_date=end_date,
-        price_area=p.price_area,
-        timeout=60,
-        resolution="1h",  # "native" or "1h"
-        how="mean")
+    if not Path(El_price_input_file).exists():
+        Elspotprices_data = download_dk_day_ahead_prices(
+            start_date=start_date,
+            end_date=end_date,
+            price_area=p.price_area,
+            timeout=60,
+            resolution="1h",  # "native" or "1h"
+            how="mean")
 
-    #Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
-    Elspotprices = Elspotprices_data[['TimeDK', 'SpotPrice' + 'EUR']].copy()
-    Elspotprices.rename(columns={'SpotPrice' + 'EUR': 'SpotPrice'}, inplace=True)
-    Elspotprices['TimeDK'] = pd.to_datetime(Elspotprices['TimeDK'])
-    Elspotprices.set_index('TimeDK', inplace=True)
-    Elspotprices = remove_feb_29(Elspotprices)
-    Elspotprices.index.name = None
-    Elspotprices.to_csv(El_price_input_file, sep=';')  # currency/MWh
+        #Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)
+        Elspotprices = Elspotprices_data[['TimeDK', 'SpotPrice' + 'EUR']].copy()
+        Elspotprices.rename(columns={'SpotPrice' + 'EUR': 'SpotPrice'}, inplace=True)
+        Elspotprices['TimeDK'] = pd.to_datetime(Elspotprices['TimeDK'])
+        Elspotprices.set_index('TimeDK', inplace=True)
+        Elspotprices = remove_feb_29(Elspotprices)
+        Elspotprices.index.name = None
+        Elspotprices.to_csv(El_price_input_file, sep=';')  # currency/MWh
+    else:
+        print(f"[preprocess] Skipping Elspotprices download — {El_price_input_file} already exists.")
 
     '''CO2 emission from El Grid DK1'''
     # DeclarationEmissionHour was removed from the API; DeclarationGridEmission covers all years
-    CO2emis_data = download_energidata(
-        dataset_name='DeclarationGridEmission',
-        start_date=start_date,
-        end_date=end_date,
-        sort_val="HourDK asc",
-        price_area=p.price_area,
-        limit=0
-    )
-    CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
+    if not Path(CO2emis_input_file).exists():
+        CO2emis_data = download_energidata(
+            dataset_name='DeclarationGridEmission',
+            start_date=start_date,
+            end_date=end_date,
+            sort_val="HourDK asc",
+            price_area=p.price_area,
+            limit=0
+        )
+        CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
 
-    CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
-    CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
-    CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'])
-    CO2_emiss_El.set_index('HourDK', inplace=True)
-    CO2_emiss_El = remove_feb_29(CO2_emiss_El)
-    CO2_emiss_El.to_csv(CO2emis_input_file, sep=';')
+        CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
+        CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
+        CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'])
+        CO2_emiss_El.set_index('HourDK', inplace=True)
+        CO2_emiss_El = remove_feb_29(CO2_emiss_El)
+        CO2_emiss_El.to_csv(CO2emis_input_file, sep=';')
+    else:
+        print(f"[preprocess] Skipping CO2 emissions download — {CO2emis_input_file} already exists.")
 
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
-    if _year <= 2022:
-        # due to different structure of Energinet dataset for the year 2019 and 2022
-        dataset_name = 'GasMonthlyNeutralPrice'
-        #sort_val = 'sort=Month%20ASC'
-        filter_area = ''
-        sort_val = "Month ASC"  # 'sort=HourDK%20asc'
-        NG_price_year = download_energidata(
-            dataset_name=dataset_name,
-            start_date=start_date,  # "2025-01-01",
-            end_date=end_date,  # "2026-01-01",
-            sort_val=sort_val,
-            price_area='',
-            limit=0
-        )
-        #NG_price_year = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
-        NG_price_col_name = 'Neutral gas price ' + 'EUR' + '/MWh'
-        NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
-        NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
-        NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
-        NG_price_year.set_index('HourDK', inplace=True)
-        NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / EUR_to_DKK  # coversion to €/MWh
-        last_rows3 = pd.DataFrame(
-            {'HourDK': hours_in_period[-1:len(hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
-        last_rows3.set_index('HourDK', inplace=True)
-        NG_price_year = pd.concat([NG_price_year, last_rows3])
-        NG_price_year = NG_price_year.asfreq('h', method='ffill')
+    if not Path(NG_price_year_input_file).exists():
+        if _year <= 2022:
+            # due to different structure of Energinet dataset for the year 2019 and 2022
+            dataset_name = 'GasMonthlyNeutralPrice'
+            #sort_val = 'sort=Month%20ASC'
+            filter_area = ''
+            sort_val = "Month ASC"  # 'sort=HourDK%20asc'
+            NG_price_year = download_energidata(
+                dataset_name=dataset_name,
+                start_date=start_date,  # "2025-01-01",
+                end_date=end_date,  # "2026-01-01",
+                sort_val=sort_val,
+                price_area='',
+                limit=0
+            )
+            #NG_price_year = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)
+            NG_price_col_name = 'Neutral gas price ' + 'EUR' + '/MWh'
+            NG_price_year.rename(columns={'MonthlyNeutralGasPriceDKK_kWh': NG_price_col_name}, inplace=True)
+            NG_price_year.rename(columns={'Month': 'HourDK'}, inplace=True)
+            NG_price_year['HourDK'] = pd.to_datetime(NG_price_year['HourDK']).dt.tz_localize(None)
+            NG_price_year.set_index('HourDK', inplace=True)
+            NG_price_year[NG_price_col_name] = NG_price_year[NG_price_col_name] * 1000 / EUR_to_DKK  # coversion to €/MWh
+            last_rows3 = pd.DataFrame(
+                {'HourDK': hours_in_period[-1:len(hours_in_period)], NG_price_col_name: NG_price_year.iloc[-1, 0]})
+            last_rows3.set_index('HourDK', inplace=True)
+            NG_price_year = pd.concat([NG_price_year, last_rows3])
+            NG_price_year = NG_price_year.asfreq('h', method='ffill')
 
-    elif _year > 2022:
-        # due to different structure of Energinet dataset for the year 2019 and 2022
-        dataset_name = 'GasDailyBalancingPrice'
-        #sort_val = 'sort=GasDay%20ASC'
-        #filter_area = ''
-        sort_val = "GasDay ASC"  # 'sort=HourDK%20asc'
-        THE_daily_NG_prices = download_energidata(
-            dataset_name=dataset_name,
-            start_date=start_date,  # "2025-01-01",
-            end_date=end_date,  # "2026-01-01",
-            sort_val=sort_val,
-            price_area='',
-            limit=0
-        )
+        elif _year > 2022:
+            # due to different structure of Energinet dataset for the year 2019 and 2022
+            dataset_name = 'GasDailyBalancingPrice'
+            #sort_val = 'sort=GasDay%20ASC'
+            #filter_area = ''
+            sort_val = "GasDay ASC"  # 'sort=HourDK%20asc'
+            THE_daily_NG_prices = download_energidata(
+                dataset_name=dataset_name,
+                start_date=start_date,  # "2025-01-01",
+                end_date=end_date,  # "2026-01-01",
+                sort_val=sort_val,
+                price_area='',
+                limit=0
+            )
 
-        # --- Compute EUR/MWh
-        THE_daily_NG_prices["THE_NG_pricesEUR_MWh"] = (
-                THE_daily_NG_prices["THEPriceDKK_kWh"] * 1000
-                / THE_daily_NG_prices["ExchangeRateEUR_DKK"] * 100
-        )
+            # --- Compute EUR/MWh
+            THE_daily_NG_prices["THE_NG_pricesEUR_MWh"] = (
+                    THE_daily_NG_prices["THEPriceDKK_kWh"] * 1000
+                    / THE_daily_NG_prices["ExchangeRateEUR_DKK"] * 100
+            )
 
-        # --- Rename GasDay -> HourDK and parse datetime once
-        THE_daily_NG_prices = THE_daily_NG_prices.rename(columns={"GasDay": "HourDK"})
-        THE_daily_NG_prices["HourDK"] = pd.to_datetime(THE_daily_NG_prices["HourDK"], errors="coerce")
+            # --- Rename GasDay -> HourDK and parse datetime once
+            THE_daily_NG_prices = THE_daily_NG_prices.rename(columns={"GasDay": "HourDK"})
+            THE_daily_NG_prices["HourDK"] = pd.to_datetime(THE_daily_NG_prices["HourDK"], errors="coerce")
 
-        # Optional: if GasDay is a date (00:00), ensure it is normalized
-        # (doesn't hurt if it's already at midnight)
-        THE_daily_NG_prices["HourDK"] = THE_daily_NG_prices["HourDK"].dt.floor("D")
+            # Optional: if GasDay is a date (00:00), ensure it is normalized
+            # (doesn't hurt if it's already at midnight)
+            THE_daily_NG_prices["HourDK"] = THE_daily_NG_prices["HourDK"].dt.floor("D")
 
-        # --- Make index and keep it timezone-naive to match p.hours_in_period (also tz-naive)
-        THE_daily_NG_prices = THE_daily_NG_prices.set_index("HourDK").sort_index()
-        THE_daily_NG_prices.index = THE_daily_NG_prices.index.tz_localize(None)
+            # --- Make index and keep it timezone-naive to match p.hours_in_period (also tz-naive)
+            THE_daily_NG_prices = THE_daily_NG_prices.set_index("HourDK").sort_index()
+            THE_daily_NG_prices.index = THE_daily_NG_prices.index.tz_localize(None)
 
-        # --- Reindex to your full hourly index and forward fill
-        hours = pd.DatetimeIndex(hours_in_period)  # ensures it's a DatetimeIndex
-        THE_daily_NG_prices = THE_daily_NG_prices.reindex(hours).ffill()
+            # --- Reindex to your full hourly index and forward fill
+            hours = pd.DatetimeIndex(hours_in_period)  # ensures it's a DatetimeIndex
+            THE_daily_NG_prices = THE_daily_NG_prices.reindex(hours).ffill()
 
-        # --- Final series
-        NG_price_year = THE_daily_NG_prices[["THE_NG_pricesEUR_MWh"]].copy()
+            # --- Final series
+            NG_price_year = THE_daily_NG_prices[["THE_NG_pricesEUR_MWh"]].copy()
 
-    NG_price_year = remove_feb_29(NG_price_year)
-    NG_price_year = NG_price_year.interpolate(method='linear')
-    NG_price_year.to_csv(NG_price_year_input_file, sep=';')  # €/MWh
+        NG_price_year = remove_feb_29(NG_price_year)
+        NG_price_year = NG_price_year.interpolate(method='linear')
+        NG_price_year.to_csv(NG_price_year_input_file, sep=';')  # €/MWh
+    else:
+        print(f"[preprocess] Skipping NG price download — {NG_price_year_input_file} already exists.")
 
     '''  Estimated NG Demand DK '''
     # source: https://www.energidataservice.dk/tso-gas/Gasflow
     # used to create a profile for H2 demand - if required.
-    dataset_name = 'Gasflow'
-    sort_val = "GasDay"  # 'sort=HourDK%20asc'
-    NG_demand_DK_data = download_energidata(
-        dataset_name=dataset_name,
-        start_date=start_date,  # "2025-01-01",
-        end_date=end_date,  # "2026-01-01",
-        sort_val=sort_val,
-        price_area='',
-        limit=0
-    )
-    #NG_demand_DK_data = download_energidata(dataset_name, start_date, end_date, sort_val, filter_area)
-    NG_demand_DK = NG_demand_DK_data[['GasDay', 'KWhToDenmark']].copy()
-    NG_demand_DK['KWhToDenmark'] = NG_demand_DK['KWhToDenmark'] / -1000  # kWh-> MWh
-    NG_demand_DK.rename(columns={'KWhToDenmark': 'NG Demand DK MWh'}, inplace=True)
-    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'])
-    NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay']).dt.tz_localize(None)
-    NG_demand_DK.set_index('GasDay', inplace=True)
-    NG_demand_DK = remove_feb_29(NG_demand_DK)
-    # Save to data/common/ as the year-agnostic seasonal demand profile
     _COMMON_DIR.mkdir(parents=True, exist_ok=True)
     if not _DEFAULT_PROFILE_PATH.exists():
+        dataset_name = 'Gasflow'
+        sort_val = "GasDay"  # 'sort=HourDK%20asc'
+        NG_demand_DK_data = download_energidata(
+            dataset_name=dataset_name,
+            start_date=start_date,  # "2025-01-01",
+            end_date=end_date,  # "2026-01-01",
+            sort_val=sort_val,
+            price_area='',
+            limit=0
+        )
+        #NG_demand_DK_data = download_energidata(dataset_name, start_date, end_date, sort_val, filter_area)
+        NG_demand_DK = NG_demand_DK_data[['GasDay', 'KWhToDenmark']].copy()
+        NG_demand_DK['KWhToDenmark'] = NG_demand_DK['KWhToDenmark'] / -1000  # kWh-> MWh
+        NG_demand_DK.rename(columns={'KWhToDenmark': 'NG Demand DK MWh'}, inplace=True)
+        NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay'])
+        NG_demand_DK['GasDay'] = pd.to_datetime(NG_demand_DK['GasDay']).dt.tz_localize(None)
+        NG_demand_DK.set_index('GasDay', inplace=True)
+        NG_demand_DK = remove_feb_29(NG_demand_DK)
+        # Save to data/common/ as the year-agnostic seasonal demand profile
         NG_demand_DK.to_csv(_DEFAULT_PROFILE_PATH, sep=';')
+    else:
+        print(f"[preprocess] Skipping NG demand download — {_DEFAULT_PROFILE_PATH} already exists.")
 
     '''District heating data'''
     # Profile is derived from fixed 2019 Skive weather data — year-agnostic.
@@ -1026,19 +1037,28 @@ def pre_processing_energy_data(year: int = None) -> None:
 
     '''Onshore Wind and Solar Capacity Factors'''
     # Download CF for wind and solar corresponding to the energy year
-    # TODO remove fallback function: when RN data for 2025 are available
-    #CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, start_date, end_date, latitude, longitude)
-    CF_solar, CF_wind = retrieve_renewable_capacity_factors_with_fallback(
-        p.RN_token,
-        start_date,
-        end_date,
-        latitude,
-        longitude,
-    )
-    CF_wind = remove_feb_29(CF_wind)
-    CF_solar = remove_feb_29(CF_solar)
-    CF_wind.to_csv(CF_wind_input_file, sep=';')  # kg/MWh
-    CF_solar.to_csv(CF_solar_input_file, sep=';')  # kg/MWh
+    if not (Path(CF_wind_input_file).exists() and Path(CF_solar_input_file).exists()):
+        if not p.RN_token:
+            raise RuntimeError(
+                f"CF_wind.csv / CF_solar.csv are missing for year {_year} and RN_TOKEN is not set.\n"
+                f"Either copy .env.example → .env and add your Renewables.ninja token,\n"
+                f"or place pre-downloaded CF files in {_folder}/"
+            )
+        # TODO remove fallback function: when RN data for 2025 are available
+        #CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, start_date, end_date, latitude, longitude)
+        CF_solar, CF_wind = retrieve_renewable_capacity_factors_with_fallback(
+            p.RN_token,
+            start_date,
+            end_date,
+            latitude,
+            longitude,
+        )
+        CF_wind = remove_feb_29(CF_wind)
+        CF_solar = remove_feb_29(CF_solar)
+        CF_wind.to_csv(CF_wind_input_file, sep=';')  # kg/MWh
+        CF_solar.to_csv(CF_solar_input_file, sep=';')  # kg/MWh
+    else:
+        print(f"[preprocess] Skipping CF download — {CF_wind_input_file} and {CF_solar_input_file} already exist.")
 
     return
 

@@ -18,7 +18,7 @@ scripts.  It is imported as ``p`` throughout the codebase::
 
 import pandas as pd
 import os
-import warnings
+
 from pathlib import Path
 from scripts.config import En_price_year, year_EU, latitude, longitude, EUR_to_DKK
 from scripts.helpers import build_snapshots, is_eu_or_us
@@ -69,13 +69,7 @@ RN_token   = os.environ.get("RN_TOKEN", "")
 entsoe_api = os.environ.get("ENTSOE_API_KEY", "")
 eia_api    = os.environ.get("EIA_API_KEY", "")
 
-_missing = [name for name, val in [("RN_TOKEN", RN_token), ("ENTSOE_API_KEY", entsoe_api), ("EIA_API_KEY", eia_api)] if not val]
-if _missing:
-    warnings.warn(
-        f"API token(s) not set: {', '.join(_missing)}. "
-        "Data retrieval will fail. Copy .env.example → .env and add your tokens.",
-        stacklevel=2,
-    )
+
 
 '''Build snapshots Time Period in DK'''
 hours_in_period, start_date, end_date = build_snapshots(En_price_year)
