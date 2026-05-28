@@ -10,6 +10,7 @@ Outputs:
 from pathlib import Path
 import sys
 import pickle
+import logging
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -35,6 +36,11 @@ with open(snakemake.input.inputs, "rb") as fh:
 
 n_flags_OK = network_dependencies(c.n_flags)
 n = build_network(tech_costs, inputs_dict, n_flags_OK, c.n_options, p)
+# Suppress spurious "not optimized" warnings from PyPSA's property accessors
+# during consistency_check and export — the PRE network is intentionally unoptimized.
+_pypsa_log = logging.getLogger("pypsa.networks")
+_pypsa_log.setLevel(logging.ERROR)
+
 n.consistency_check()
 
 if c.stochastic["stochastic"]:
@@ -45,6 +51,8 @@ if c.stochastic["stochastic"]:
     assert_stochastic_schema_consistent(n, where="after create_scenarios")
 
 n.export_to_netcdf(snakemake.output.network)
+
+_pypsa_log.setLevel(logging.NOTSET)  # restore to inherit from root logger
 
 # Build enriched comp_alloc payload:
 #   allocation      — plant → {generators, links, stores, storage_units}

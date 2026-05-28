@@ -30,3 +30,6 @@ memory/
 
 # Solver log
 gurobi.log
+
+# others
+CLAUDE.md
