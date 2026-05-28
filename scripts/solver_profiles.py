@@ -26,7 +26,7 @@ GUROBI_PROFILES = {
         "Seed": 123,
     },
 
-    # Keep your special profiles (they’re useful)
+    #
     "gurobi-numeric-focus": {
         "NumericFocus": 3,
         "Method": 2,
@@ -40,30 +40,6 @@ GUROBI_PROFILES = {
         "Seed": 123,
     },
 
-    "gurobi-barhom-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 2,
-        "Crossover": 0,
-        "BarHomogeneous": 1,
-        "DualReductions": 0,
-        "InfUnbdInfo": 1,
-        "NumericFocus": 3,
-        "BarConvTol": 1e-6,
-        "FeasibilityTol": 1e-6,
-        "OptimalityTol": 1e-6,
-        "Seed": 123,
-    },
-
-    "gurobi-simplex-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 1,
-        "DualReductions": 0,
-        "InfUnbdInfo": 1,
-        "Presolve": 2,
-        "NumericFocus": 3,
-        "Seed": 123,
-    },
-
     "gurobi-barrier-fast": {
         "Threads": _default_threads(8),
         "Method": 2,                 # barrier
@@ -73,14 +49,6 @@ GUROBI_PROFILES = {
         "AggFill": 0,
         "PreDual": 0,
     },
-
-    "gurobi-stoch-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 1,          # simplex diagnose tends to give cleaner certs
-        "DualReductions": 0,  # key: remove ambiguity
-        "InfUnbdInfo": 1,
-        "Seed": 123,
-    }
 
 }
 
