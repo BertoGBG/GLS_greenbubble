@@ -3340,10 +3340,21 @@ def _cap_from_component_table(comp_df, scen, name, preferred_cols):
 
 # ----------------------------
 # Heatmap utility - CF
+def _upsample_to_hourly(s):
+    """Forward-fill a sub-hourly or coarser series to 1-hour resolution for heatmap display."""
+    if len(s) < 2:
+        return s
+    freq_ns = (s.index[1] - s.index[0]).value
+    if freq_ns != 3_600_000_000_000:  # not already 1h
+        s = s.resample("1h").ffill()
+    return s
+
+
 def heatmap_day_hour(series, ax, vmin=0, vmax=1, title="", cmap="viridis", show_months=True):
     """
-    series: hourly pd.Series with DatetimeIndex
+    series: pd.Series with DatetimeIndex (any resolution)
     Creates a heatmap with y=hour(0..23), x=day-of-year.
+    Coarser-than-hourly data is upsampled to 1 h by forward-fill for display.
     """
     s = pd.to_numeric(series, errors="coerce").dropna()
     if s.empty:
@@ -3352,6 +3363,7 @@ def heatmap_day_hour(series, ax, vmin=0, vmax=1, title="", cmap="viridis", show_
         return None
 
     s = s[~s.index.duplicated(keep="first")]
+    s = _upsample_to_hourly(s)
     df = pd.DataFrame({"val": s.values}, index=pd.DatetimeIndex(s.index))
     df["doy"] = df.index.dayofyear
     df["hour"] = df.index.hour
@@ -3530,11 +3542,15 @@ def figure_heatmaps_compare_scenarios(
     # compute stochastic "expected pattern" series as weighted day×hour matrix
     def _heatmap_day_hour_weighted(values, weights, ax, vmin=0, vmax=1, title="", cmap="viridis", show_months=True):
         """
-        values, weights: pd.Series with DatetimeIndex aligned (hourly).
+        values, weights: pd.Series with DatetimeIndex aligned (any resolution).
         Produces day×hour heatmap using weighted mean per (doy,hour).
+        Coarser-than-hourly data is upsampled to 1 h for display.
         """
         v = pd.to_numeric(values, errors="coerce")
         w = pd.to_numeric(weights, errors="coerce")
+        # upsample both series together before filtering
+        v = _upsample_to_hourly(v.dropna())
+        w = _upsample_to_hourly(w.dropna())
         m = np.isfinite(v) & np.isfinite(w) & (w > 0)
         v = v[m]
         w = w[m]
@@ -3715,8 +3731,9 @@ def figure_heatmaps_compare_scenarios(
 # Heatmap utility - values
 def heatmap_day_hour_actual(series, ax, norm, title="", cmap="viridis", show_months=True):
     """
-    series: hourly pd.Series with DatetimeIndex (actual values)
+    series: pd.Series with DatetimeIndex (actual values, any resolution)
     norm: matplotlib Normalize/TwoSlopeNorm defining color scaling (capacity-based)
+    Coarser-than-hourly data is upsampled to 1 h by forward-fill for display.
     """
     s = pd.to_numeric(series, errors="coerce").dropna()
     if s.empty:
@@ -3725,6 +3742,7 @@ def heatmap_day_hour_actual(series, ax, norm, title="", cmap="viridis", show_mon
         return None
 
     s = s[~s.index.duplicated(keep="first")]
+    s = _upsample_to_hourly(s)
     df = pd.DataFrame({"val": s.values}, index=pd.DatetimeIndex(s.index))
     df["doy"] = df.index.dayofyear
     df["hour"] = df.index.hour
@@ -4036,6 +4054,8 @@ def figure_heatmaps_compare_scenarios_actual(
     def _heatmap_day_hour_weighted_actual(values, weights, ax, norm, title="", cmap="viridis", show_months=True):
         v = pd.to_numeric(values, errors="coerce")
         w = pd.to_numeric(weights, errors="coerce")
+        v = _upsample_to_hourly(v.dropna())
+        w = _upsample_to_hourly(w.dropna())
         m = np.isfinite(v) & np.isfinite(w) & (w > 0)
         v = v[m]
         w = w[m]
