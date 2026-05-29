@@ -103,4 +103,4 @@ Developed at:
 
 - [DTU Wind and Energy Systems — Power and Energy Systems Division](https://wind.dtu.dk/research/research-divisions/power-and-energy-systems), Technical University of Denmark
 - [Department of Mechanical and Production Engineering](https://mpe.au.dk/en/), Aarhus University
-- [Business and Carbon Emissions](https://bce.au.dk/en/), Aarhus University
+- [Department of Biological and Chemical Engineering](https://bce.au.dk/en/), Aarhus University
