@@ -219,9 +219,14 @@ def fix_capacities(n):
 def enable_committable_for_rh(n, n_config):
     """Re-enable committable=True for links whose tech has committable: true in n_config.
 
-    During PF capacity expansion committable is forced to False (MILP + extendable is
-    unsupported in PyPSA).  After fix_capacities() all p_nom are fixed, so unit
-    commitment can safely be activated for the dispatch-only RH solve.
+    GreenBubble's prepare_network.py sets committable=False whenever expansion=True,
+    keeping the capacity expansion solve as a pure LP for speed and stochastic
+    compatibility.  After fix_capacities() all p_nom are fixed, so unit commitment
+    can safely be activated for the dispatch-only RH solve.
+
+    Note: PyPSA itself does support committable + extendable simultaneously in
+    deterministic capacity expansion via a big-M MILP formulation.  See
+    https://docs.pypsa.org/latest/examples/committable-extendable/ .
 
     Matching is by link carrier == n_config index (e.g. 'electrolysis', 'biogas engine').
     Both EXI_ and new-build links with the same carrier are enabled.
