@@ -138,6 +138,16 @@ if isinstance(optimization["overrides"], str) and optimization["overrides"].lowe
 if isinstance(optimization["solver_profile"], str) and optimization["solver_profile"].strip() == "":
     optimization["solver_profile"] = None
 
+# ---------------- Temporal clustering config ----------------
+
+_cl = _cfg.get("clustering", {}) or {}
+_cl_t = _cl.get("temporal", {}) or {}
+clustering = {
+    "temporal": {
+        "resolution": _cl_t.get("resolution", False),
+    }
+}
+
 # ---------------- Rolling horizon config ----------------
 
 _rh = _cfg.get("rolling_horizon", {}) or {}

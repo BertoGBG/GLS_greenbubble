@@ -1665,7 +1665,7 @@ def compare_objective(n_stoch, ws_networks, probs):
 
 
 # ---- SAVE & EXPORT RESULTS
-def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic):
+def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic, resolution=False):
     """
     Create a descriptive filename for a PyPSA network based on:
     - enabled technologies (n_flags)
@@ -1748,6 +1748,8 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
     # ------------------
     # Filename
     # ------------------
+    tr = resolution if resolution else "1h"
+
     file_name = (
         f"{prefix}"
         f"CO2_{CO2_c}_"
@@ -1758,6 +1760,7 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
         f"{year}_"
         f"El_{max_RE_to_grid}_"
         f"{stch}_"
+        f"{tr}_"
         f"{run_name}"
     )
 
@@ -1946,6 +1949,72 @@ def zero_small_capacities(n, threshold_mw):
 
         print(f"[zero_small_capacities] {c_name}: zeroed {len(small_idx)} component(s) "
               f"with {nom_opt} < {threshold_mw} MW → {list(small_idx)}")
+
+
+def resample_network(n, resolution):
+    """Resample all time-varying network data to a coarser time resolution.
+
+    Args:
+        n: PyPSA network with hourly snapshots.
+        resolution: pandas offset string, e.g. ``"4h"``, ``"8h"``, ``"24h"``.
+                    ``False`` / ``None`` → return ``n`` unchanged.
+
+    Returns:
+        The same network object with snapshots and time-series resampled in-place.
+
+    Raises:
+        NotImplementedError: if ``resolution`` implies sub-hourly intervals.
+    """
+    import warnings
+
+    if not resolution:
+        return n
+
+    offset = str(resolution)
+
+    # Guard against sub-hourly upsampling
+    nanos = pd.tseries.frequencies.to_offset(offset).nanos
+    freq_hours = nanos / 3_600_000_000_000
+    if freq_hours < 1.0:
+        raise NotImplementedError(
+            f"Sub-hourly resolution '{resolution}' requires upsampling of input data"
+            " — not yet implemented."
+        )
+
+    # Stochastic mode warning
+    from scripts import config as c
+    if c.stochastic.get("stochastic", False):
+        warnings.warn(
+            f"temporal resolution='{resolution}' with stochastic mode: all scenarios "
+            "are resampled independently. Inter-scenario correlations at sub-period "
+            "level are lost. Results are approximate.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    # Resample snapshot weightings (sum over interval → correct annual totals)
+    new_w = n.snapshot_weightings.resample(offset).sum()
+    new_w = new_w[new_w["objective"] > 0]  # drop zero-weight edge periods if any
+
+    # Resample all time-varying component attributes
+    for attr_dict_name in [
+        "generators_t", "links_t", "loads_t",
+        "stores_t", "storage_units_t", "buses_t",
+    ]:
+        pnl = getattr(n, attr_dict_name)
+        for attr, df in list(pnl.items()):
+            if df.empty:
+                continue
+            if attr_dict_name == "stores_t" and attr == "e_max_pu":
+                pnl[attr] = df.resample(offset).min()   # conservative upper bound
+            elif attr_dict_name == "stores_t" and attr == "e_min_pu":
+                pnl[attr] = df.resample(offset).max()   # conservative lower bound
+            else:
+                pnl[attr] = df.resample(offset).mean()  # prices, CFs, demands
+
+    n.set_snapshots(new_w.index)
+    n.snapshot_weightings = new_w
+    return n
 
 
 def dump_params_module(module, dst_folder, filename="params.yaml",

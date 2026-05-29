@@ -38,6 +38,7 @@ GreenBubble Documentation
    :caption: How-to Guides
 
    guide_demands
+   guide_temporal_resolution
    guide_rolling_horizon
    guide_economic_analysis
    examples
