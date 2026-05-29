@@ -26,6 +26,8 @@ autosummary_generate = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
+autodoc_mock_imports = ["snakemake"]
+
 bibtex_bibfiles = []
 
 intersphinx_mapping = {
