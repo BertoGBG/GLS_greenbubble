@@ -1529,6 +1529,17 @@ def build_model_solve_network(
             except Exception as e:
                 # keep going; we can still export from linopy
                 print(f"⚠️ PyPSA dual writeback raised (continuing): {e}")
+            else:
+                # assign_duals writes raw LP duals into buses_t.marginal_price.
+                # post_processing (called inside solve_model) already divided by
+                # snapshot_weightings to give €/MWh — re-apply that here because
+                # the second assign_duals call overwrote those normalized values.
+                _sns = n.snapshots
+                _w = n.snapshot_weightings.objective.reindex(_sns)
+                if not n.buses_t.marginal_price.empty:
+                    n.buses_t.marginal_price.loc[_sns] = (
+                        n.buses_t.marginal_price.loc[_sns].divide(_w, axis=0)
+                    )
 
     # ---- Export only unassigned constraints ----
     unassigned = []
