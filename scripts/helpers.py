@@ -1665,7 +1665,7 @@ def compare_objective(n_stoch, ws_networks, probs):
 
 
 # ---- SAVE & EXPORT RESULTS
-def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic):
+def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic, resolution=False):
     """
     Create a descriptive filename for a PyPSA network based on:
     - enabled technologies (n_flags)
@@ -1748,6 +1748,8 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
     # ------------------
     # Filename
     # ------------------
+    tr = f"_TR_{resolution}" if resolution else ""
+
     file_name = (
         f"{prefix}"
         f"CO2_{CO2_c}_"
@@ -1757,7 +1759,7 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
         f"CH4_{CH4_t}_"
         f"{year}_"
         f"El_{max_RE_to_grid}_"
-        f"{stch}_"
+        f"{stch}{tr}_"
         f"{run_name}"
     )
 
