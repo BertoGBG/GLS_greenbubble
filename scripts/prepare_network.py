@@ -3999,9 +3999,21 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
     # Convert EXI_ components with remaining_investment_fraction > 0 to extendable-fixed
     _apply_exi_residual_costs(network)
 
-    # Temporal resampling (skipped in rolling-horizon mode — RH uses its own windowing)
+    # Temporal resampling
+    # Skipped in rolling-horizon mode: RH loads a user-provided fixed-capacity network
+    # via network_path and slides a window over the full hourly time series internally —
+    # resampling here would have no effect on the actual RH solve.
     resolution = clustering["temporal"]["resolution"]
-    if resolution and not rolling_horizon["enabled"]:
-        network = resample_network(network, resolution)
+    if resolution:
+        if rolling_horizon["enabled"]:
+            _warnings.warn(
+                f"clustering.temporal.resolution='{resolution}' is set but "
+                "rolling_horizon.enabled=true: resampling is skipped. "
+                "The RH solver uses the network_path network at its original resolution.",
+                UserWarning,
+                stacklevel=2,
+            )
+        else:
+            network = resample_network(network, resolution)
 
     return network
