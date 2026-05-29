@@ -3,7 +3,7 @@
 Workflow and Rules
 ==================
 
-GreenBubble is orchestrated by `Snakemake <https://snakemake.readthedocs.io>`_.
+GreenBubble is orchestrated by `Snakemake <https://snakemake.readthedocs.io/en/stable/>`_.
 Each processing step is a **rule** defined in the ``rules/`` folder.
 The ``Snakefile`` assembles the full directed acyclic graph (DAG) and
 manages file dependencies, caching, and parallelism.
