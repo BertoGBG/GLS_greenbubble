@@ -1,172 +1,106 @@
-# GreenLab skive - greenbubble model
+# GreenBubble
 
-[![Documentation Status](https://readthedocs.org/projects/gls-greenbubble/badge/?version=latest)](https://gls-greenbubble.readthedocs.io/en/latest/)
+[![Documentation](https://readthedocs.org/projects/gls-greenbubble/badge/?version=latest)](https://gls-greenbubble.readthedocs.io/en/latest/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Built on PyPSA](https://img.shields.io/badge/built%20on-PyPSA-orange)](https://pypsa.readthedocs.io)
 
-GLS greenbubble is a open model of the PtX section of the GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
+**GreenBubble** is an open-source techno-economic optimisation model for **Power-to-X industrial clusters** — co-located plants that share electricity, hydrogen, CO₂, biomethane, methanol and heat infrastructure. Built on [PyPSA](https://pypsa.readthedocs.io), it co-optimises **capacity expansion** and **hourly dispatch** across a multi-energy hub over a full year at 1-hour resolution.
 
-<img width="1184" alt="Screenshot 2025-02-19 at 12 31 24" src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" />
+<p align="center">
+<img src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" width="90%" alt="GreenBubble network diagram" />
+</p>
 
+The model was developed based on the [GreenLab Skive](https://www.greenlab.dk) industrial park — an agricultural-industrial hub in Denmark that integrates biogas, electrolysis, methanation and methanol synthesis. The methodology is described in:
 
+> *Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants*, Energy Conversion and Management, 2024.  
+> DOI: [10.1016/j.enconman.2024.119175](https://doi.org/10.1016/j.enconman.2024.119175)
 
-**Installation**
-Clone this repository to your destination folder:
+📖 **Full documentation:** [gls-greenbubble.readthedocs.io](https://gls-greenbubble.readthedocs.io)
 
-% git clone https://github.com/BertoGBG/GLS_greenbubble.git
+---
 
-Create the virtual environment from environment.yaml
-We recommend using the package manager and environment management system conda to install python dependencies. Install [miniconda](https://docs.anaconda.com/miniconda/), which is a mini version of [anaconda](https://www.anaconda.com)
- that includes only conda and its dependencies or make sure conda is already installed on your system. For instructions for your operating system follow the conda [installation guide] (https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
-To create the virtual environment for each platform:
+## Key features
 
-Add the conda-forge channel and enable strict priority
-.../greenbubble % conda config --add channels conda-forge
-.../greenbubble % conda config --set channel_priority strict
+| | |
+|---|---|
+| **Multi-energy LP** | Electricity, H₂, CO₂, biomethane, methanol and heat (3 temperature levels) in a single solve |
+| **Capacity + dispatch** | No decomposition — capacity expansion and hourly operation co-optimised |
+| **Greenfield & brownfield** | Existing assets parameterised by construction year and remaining investment fraction |
+| **Stochastic scenarios** | Multi-scenario LP with expected value of perfect information (EVPI) |
+| **Rolling horizon** | Dispatch-only mode on a fixed network for operational studies |
+| **Industrial symbiosis** | Shapley-value cost allocation across co-located partners |
+| **RFNBO compliance** | Additionality and emission constraints for renewable hydrogen certification |
+| **Economic post-processing** | LCOP, short-run marginal cost (SRMC), KKT shadow prices, annual profit per technology |
 
-Install conda-lock (once)
-.../greenbubble % conda install -n base -c conda-forge conda-lock
+---
 
-Create environment for your OS:
-.../greenbubble % conda-lock install -n greenbubble_gls --platform linux-64 envs/locks/conda-lock-linux-64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-64 envs/locks/conda-lock-osx-64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
-.../greenbubble % conda-lock install -n greenbubble_gls --platform win-64 envs/locks/conda-lock-win-64.yml
+## Technologies (examples)
 
-Activate environment:
-.../greenbubble % conda activate greenbubble_gls
+GreenBubble is designed to be extensible. The following are examples of technologies currently implemented — the list is not exhaustive:
 
+**Hydrogen production** — Alkaline electrolysis
 
-**Reference**
-please cite as: https://doi.org/10.1016/j.enconman.2024.119175
+**Biomethane production** — Biogas upgrading · Biomethanation of biogas or CO₂ · Catalytic methanation of biogas or CO₂
 
+**Methanol production** — CO₂ hydrogenation
 
-**What can the model do**
-GreenBubble is an open model for optimization of industrial energy system based on agricultural setups. The model is based on PyPSA framework https://pypsa.readthedocs.io/en/stable/ and can simultaneously optimize the capacity of the plants in the industrial hub and they operation, over 1 year time horizon with time resolution up to 1h.
-The capacity expansion can be green-field or brown-field with optimization is based on long-term economic equilibrium, and shadow prices for internal eergy and material flow are considered valid for the internal market.
-The optimization also includes the internal hydrogen (inc. compression), CO2 (inc. comnpression), electricity and heat (3 temperature levels) networks .
+**Renewable electricity** — Onshore wind · Solar PV
 
-**Technolgy and processes:**
-In the current the only PtX products available are: hydrogen (for grid and/or internal use), methanol and biomethane. The Energy inputs are biomass (digestible and solid biomass) and renewable energy (onshore wind and solar).  
-Electricity can be sold as a product, but the sales are constrained proportionally to the internal demand.
+**Storage** — Li-ion batteries · H₂ in steel vessels · CO₂ liquefaction · Pressurised CO₂ cylinders · Hot-water thermal storage · Concrete-based thermal energy storage
 
-1) Hydrogen production:
-   - Alkaline electrolysis
-   
-2) Methane production:
-   - Biogas + upgrading
-   - Biomethannation of biogas (with H2)
-   - Biomethanation of CO2 (with H2)
-   - Catalytic methanation of biogas (with H2)
-   - Catalytic methanation of CO2 (with H2)
-   
-3) Methanol production:
-   - CO2 hydrogenation 
-   - eSMR with methanol synthesis (available soon)
+**Biomass handling** — Belt dryer · Digestate dewatering
 
-4) Renewable electricity 
-   - On-shore wind 
-   - solar PV
+**Shared infrastructure** — H₂, CO₂ and heat distribution networks · Gas compressors · Grid connection
 
-5) Storage technologies:
-   - Lithium-ion battieries
-   - H2 in steel vessels
-   - CO2 liquefaction and storage
-   - CO2 pressurized in cylinders
-   - Heat at water tanks (as for district heating)
-   - Heat in concrete based Thermal Energy Storage
-   
-6) Biomass handling:
-   - Biomass drying in hot air belt dryer
-   - Dewatering of digestate fibers
+---
 
-**External markets (exogenous assumptions) :**
-The optimization behaves as a price taker with respect to external markets, hence prices and availability of external resources are exogenously set.
-these include: 
-- CO2 tax on fossil emission
-- Electricity prices and emission intensities + TSO and DSO tariffs
-- Natural gas prices
-- District heating Price 
-- Biomass pellets
-- Biomass chips
-- Digestible biomass (manure) 
+## Quick start
 
+```bash
+git clone https://github.com/BertoGBG/GLS_greenbubble.git
+cd GLS_greenbubble
 
-**Workflow:**
+# Create environment — shown for macOS Apple Silicon; see docs for other platforms
+conda config --add channels conda-forge && conda config --set channel_priority strict
+conda install -n base -c conda-forge conda-lock
+conda-lock install -n greenbubble-pypsa107 --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+conda activate greenbubble-pypsa107
 
-1) Configuration:
-    in ../config/ are present three files for configuration
-    a) config.yaml : main config file with all the optimization paramaters as demands for H2, MeOH, CH4 and which plants can be part of the solution (in n_flags).
-    b) n_config.yaml : green/brown field config file. Default is all green field, but each technology can initialized with an existing capacity and expansion limited.
-                        all constrains relative to a specific technolgy are set here (e.g. ramp up/down limits and min load)
-    c) n_options.yaml : config for options relative to external markets. e.g. enable biomass purchase, sales of biochar credits etc...
+# Copy and fill in API tokens (required for data retrieval)
+cp .env.example .env
 
-2) Run the model:
+# Preview the execution plan, then run
+snakemake -n
+snakemake -j4
+```
 
-   **Option A — standalone script (original)**
-   ```
-   python greenbubble_main.py
-   ```
+See the [installation guide](https://gls-greenbubble.readthedocs.io/en/latest/installation.html) for platform-specific instructions and solver setup (Gurobi / HiGHS).
 
-   **Option B — Snakemake workflow**
+---
 
-   Install Snakemake into the environment (once):
-   ```
-   conda install -c conda-forge snakemake-minimal>=8
-   ```
+## Licence and citation
 
-   Dry-run to preview the execution plan:
-   ```
-   snakemake -n
-   ```
+- Code: MIT  
+- Documentation: CC-BY-4.0
 
-   Run the full workflow:
-   ```
-   snakemake --cores 4
-   ```
+If you use GreenBubble in your research, please cite:
 
-   Run a specific rule only (e.g. just build the network):
-   ```
-   snakemake --cores 4 build_network
-   ```
+```bibtex
+@article{greenbubble2024,
+  title   = {Optimizing hydrogen and e-methanol production through
+             Power-to-X integration in biogas plants},
+  journal = {Energy Conversion and Management},
+  year    = {2024},
+  doi     = {10.1016/j.enconman.2024.119175},
+}
+```
 
-   Force re-run of a rule even if outputs exist:
-   ```
-   snakemake --cores 4 --forcerun solve_network
-   ```
+---
 
-   The Snakemake DAG follows these steps:
-   ```
-   retrieve_tech_data  ──┐
-   preprocess_inputs   ──┤
-                         ├─► prepare_costs ──┐
-                         └─► prepare_inputs ─┤
-                                             └─► build_network ─► solve_network ─► plot_results
-   ```
-   Intermediate files are stored in `resources/` and logs in `logs/` (both gitignored).
-   Final outputs go to `outputs/single_analysis/{network_name}/` as configured in `config.yaml`.
+## Contributors
 
-3) preprocessing:
-   Data packages for Skive are pre-downloaded in ../data/ . See ../scripts/paramaters.py for inputs to the pre-processing.
-   - electricity spot prices
-   - CO2 emission intensities
-   - NG prices
-   - Electricity demand profile (DK_1)
-   - Capacity factors for wind and solar
-   - NG demand profile (if used to geenrate an H2 demand profile)
-   - DH demand profile in Skive
-   - 
-4) GLS specific data are retrive from the file: GreenLab_Input_file.xlxs
+Developed at:
 
-5) general database for techno-economic data of various technolgies: [technology-data](https://technology-data.readthedocs.io/en/latest/)
-
-6) exceptions to the technology-data are set via ../scripts/technology_inputs.py in particoular: compressors and biomass drying are based on physics (semi-empirical for dryer) 
-
-**Results of the single optimization**
-The optimized network returns the optimal capacties for all the components in the model and their dispatch with one hour resolution and the shadow prices for each material and energy flows in the behihd-the-meter market.
-Example results are stored within: ../outputs/single_analysis/
-Each optimization run creates a folder based on n_flags and 'run name' set in config.yaml. Thsi folder contains two subfolders, /plot (for graphicals and table) and /networks for the pre- adn post- networks and the full configuration of each run 
-
-
-
-
-
-  
+- [DTU Wind and Energy Systems — Power and Energy Systems Division](https://wind.dtu.dk/research/research-divisions/power-and-energy-systems), Technical University of Denmark
+- [Department of Mechanical and Production Engineering](https://mpe.au.dk/en/), Aarhus University
+- [Business and Carbon Emissions](https://bce.au.dk/en/), Aarhus University
