@@ -1,9 +1,14 @@
 .DS_Store
-outputs/.DS_Store
-.DS_Store
-outputs/.DS_Store
 __pycache__/
 *.pyc
+
+# API tokens — never commit the real .env, only .env.example
+.env
+
+# User-specific config overrides (do not commit — use *.default.yaml as the base)
+config/config.yaml
+config/n_config.yaml
+config/plots_config.yaml
 
 # Outputs
 outputs/

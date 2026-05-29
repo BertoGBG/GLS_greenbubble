@@ -1,0 +1,1566 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scripts.preprocessing &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scripts/preprocessing';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_economic_analysis.html">Economic Analysis of Results</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2F_modules/scripts/preprocessing.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scripts.preprocessing</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: MIT</span>
+<span class="sd">&quot;&quot;&quot;Energy-market data preprocessing and network input assembly.</span>
+
+<span class="sd">This module contains two groups of functions:</span>
+
+<span class="sd">**Data download and preprocessing** (called by :mod:`scripts.snakemake_preprocess`)</span>
+
+<span class="sd">* :func:`pre_processing_energy_data` — entry point that downloads and stores</span>
+<span class="sd">  all CSV inputs for a given energy-price year (electricity prices, CO₂</span>
+<span class="sd">  emission intensities, natural gas prices, district-heating demand, and</span>
+<span class="sd">  renewable capacity factors).</span>
+
+<span class="sd">**Network input assembly** (called by :mod:`scripts.snakemake_prepare_inputs`)</span>
+
+<span class="sd">* :func:`prepare_all_inputs` — loads the preprocessed CSVs for all scenario</span>
+<span class="sd">  years and assembles the ``inputs_dict`` consumed by</span>
+<span class="sd">  :func:`scripts.prepare_network.build_network`.</span>
+
+<span class="sd">All CSV outputs are written to ``data/Inputs_{year}/`` (EU locations) or</span>
+<span class="sd">``data/California/Inputs_{year}/`` (US locations), as determined by the</span>
+<span class="sd">project coordinates in ``config.yaml``.</span>
+
+<span class="sd">.. note::</span>
+<span class="sd">   Leap-year days (Feb 29) are dropped to keep all years on the same</span>
+<span class="sd">   8 760-hour snapshot index.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span> <span class="k">as</span> <span class="n">p</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">timezonefinder</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimezoneFinder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">entsoe</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntsoePandasClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">En_price_year</span><span class="p">,</span>
+                            <span class="n">EUR_to_DKK</span><span class="p">,</span>
+                            <span class="n">latitude</span><span class="p">,</span>
+                            <span class="n">longitude</span><span class="p">,</span>
+                            <span class="p">)</span>
+
+<span class="c1"># ── Demand profiles ─────────────────────────────────────────────────────────</span>
+<span class="c1"># Year-agnostic seasonal demand profiles live here (not in Inputs_{year}/).</span>
+<span class="n">_COMMON_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/common&quot;</span><span class="p">)</span>
+<span class="n">_DEFAULT_PROFILE_PATH</span> <span class="o">=</span> <span class="n">_COMMON_DIR</span> <span class="o">/</span> <span class="s2">&quot;NG_demand_DK_profile.csv&quot;</span>
+
+
+<span class="c1"># ------ INPUTS PRE-PROCESSING ----</span>
+
+<div class="viewcode-block" id="GL_inputs_to_eff">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.GL_inputs_to_eff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GL_inputs_to_eff</span><span class="p">(</span><span class="n">GL_inputs</span><span class="p">:</span> <span class="s2">&quot;pandas.DataFrame&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;pandas.DataFrame&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert GreenLab energy/material flow table to PyPSA MultiLink efficiencies.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    GL_inputs : pandas.DataFrame</span>
+<span class="sd">        Raw GreenLab flow table read from ``GreenLab_Input_file.xlsx``</span>
+<span class="sd">        (sheet ``&quot;Overview_2&quot;``).  Rows are bus names; columns are plant</span>
+<span class="sd">        names.  Row ``&quot;bus0&quot;`` indicates the reference bus for each plant.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas.DataFrame</span>
+<span class="sd">        Efficiency table with the same shape as *GL_inputs* (minus the</span>
+<span class="sd">        ``&quot;bus0&quot;`` row and ``&quot;Bus Unit&quot;`` column).  Each value is the</span>
+<span class="sd">        bus-to-bus efficiency relative to ``bus0``.  Zero entries are</span>
+<span class="sd">        replaced with ``NaN`` to signal unused ports to PyPSA.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    * ``(-)`` flow values are energy/material **consumed** by the plant.</span>
+<span class="sd">    * ``(+)`` flow values are energy/material **produced** by the plant.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># NOTE: (-) refers to energy or material flow CONSUMED by the plant</span>
+    <span class="c1">#      (+) refers to energy or material flow PRODUCED by the plant</span>
+    <span class="c1"># Calculates Efficiencies for MultiLinks</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_inputs</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;Bus Unit&#39;</span><span class="p">)</span>  <span class="c1"># drops not relevant columns</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="s1">&#39;bus0&#39;</span><span class="p">)</span>
+    <span class="c1"># bus-to-bus efficiency set with bus0 as reference (normalized)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">GL_eff</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="n">bus0_prc</span> <span class="o">=</span> <span class="n">GL_inputs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;bus0&#39;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">bus0_val</span> <span class="o">=</span> <span class="n">GL_inputs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">bus0_prc</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">GL_eff</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="o">-</span><span class="n">bus0_val</span>
+        <span class="n">GL_eff</span><span class="p">[</span><span class="n">GL_eff</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">GL_eff</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_profile_ts</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span><span class="p">,</span>
+    <span class="n">snapshots</span><span class="p">:</span> <span class="s2">&quot;pd.DatetimeIndex | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;pd.Series&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a seasonal demand profile CSV and return an hourly Series.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str or None</span>
+<span class="sd">        Path to a semicolon-separated CSV with a datetime index (daily or</span>
+<span class="sd">        sub-daily) and one numeric column.  ``None`` falls back to the</span>
+<span class="sd">        built-in NG DK profile at ``data/common/NG_demand_DK_profile.csv``.</span>
+<span class="sd">    snapshots : pd.DatetimeIndex, optional</span>
+<span class="sd">        Optimization snapshot index.  When provided the profile&#39;s year is</span>
+<span class="sd">        remapped to the optimization year so that year-agnostic profiles</span>
+<span class="sd">        (e.g. from a different historical year) align correctly.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.Series</span>
+<span class="sd">        Hourly values (daily originals divided by 24).  Index is tz-naive.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">if</span> <span class="n">path</span> <span class="k">else</span> <span class="n">_DEFAULT_PROFILE_PATH</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Demand profile not found: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;Run `snakemake preprocess_inputs` first, or place a custom</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;semicolon-separated CSV at that path.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">_s</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">_idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">_s</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_idx</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_idx</span> <span class="o">=</span> <span class="n">_idx</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">_s</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">_idx</span>
+    <span class="n">_hi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
+        <span class="n">_s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+        <span class="n">_s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span>
+        <span class="n">inclusive</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">_s</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">_hi</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;ffill&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mf">24.0</span>
+
+    <span class="k">if</span> <span class="n">snapshots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">opt_year</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">snapshots</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">profile_year</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">profile_year</span> <span class="o">!=</span> <span class="n">opt_year</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">opt_year</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="build_product_demand_ts">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.build_product_demand_ts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_product_demand_ts</span><span class="p">(</span>
+    <span class="n">annual_demand</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">snapshots</span><span class="p">:</span> <span class="s2">&quot;pandas.DatetimeIndex&quot;</span><span class="p">,</span>
+    <span class="n">profile_ts</span><span class="p">:</span> <span class="s2">&quot;pandas.Series | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">flexibility_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">store_buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">col_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;demand MWh&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[pandas.DataFrame, float | None]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an hourly demand time series and the delivery-store ``e_nom_max``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    annual_demand : float</span>
+<span class="sd">        Total demand over the full snapshot period (MWh or equivalent).</span>
+<span class="sd">    mode : str</span>
+<span class="sd">        ``&quot;flat&quot;``         — constant MW every hour.</span>
+<span class="sd">        ``&quot;profile&quot;``      — continuous TS scaled to *annual_demand* via *profile_ts*.</span>
+<span class="sd">        ``&quot;bins_flat&quot;``    — zero except at *n_bins* endpoints; equal delivery per bin.</span>
+<span class="sd">        ``&quot;bins_profile&quot;`` — zero except at endpoints; delivery ∝ *profile_ts* integral</span>
+<span class="sd">                             within each bin.</span>
+<span class="sd">    snapshots : pandas.DatetimeIndex</span>
+<span class="sd">        Network snapshot index (typically 8 760 hourly steps).</span>
+<span class="sd">    profile_ts : pandas.Series, optional</span>
+<span class="sd">        Reference time series for ``&quot;profile&quot;`` and ``&quot;bins_profile&quot;`` modes.</span>
+<span class="sd">        Must cover the same period as *snapshots* (reindexed + forward-filled).</span>
+<span class="sd">    n_bins : int</span>
+<span class="sd">        Number of equal delivery intervals (only for ``&quot;bins_*&quot;`` modes).</span>
+<span class="sd">        1 = single year-end delivery; 12 ≈ monthly; 52 ≈ weekly.</span>
+<span class="sd">    flexibility_fraction : float</span>
+<span class="sd">        For ``&quot;flat&quot;``/``&quot;profile&quot;`` modes: fraction of *annual_demand* used as</span>
+<span class="sd">        ``e_nom_max`` for the delivery store.  0 → no store (rigid demand).</span>
+<span class="sd">    store_buffer : float</span>
+<span class="sd">        For ``&quot;bins_profile&quot;`` mode: extra headroom added on top of the largest</span>
+<span class="sd">        bin delivery (e.g. 0.05 → 5 % capacity margin).</span>
+<span class="sd">    col_name : str</span>
+<span class="sd">        Column label in the returned DataFrame.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    demand_df : pandas.DataFrame</span>
+<span class="sd">        Single-column DataFrame indexed by *snapshots*.</span>
+<span class="sd">    e_nom_max : float or None</span>
+<span class="sd">        Delivery-store ``e_nom_max``.  ``None`` → no store (rigid demand).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_snap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">snapshots</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">annual_demand</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">col_name</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">snapshots</span><span class="p">),</span> <span class="kc">None</span>
+
+    <span class="c1"># ── Continuous modes ──────────────────────────────────────────────────────</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;flat&quot;</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">annual_demand</span> <span class="o">/</span> <span class="n">n_snap</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">snapshots</span><span class="p">)</span>
+        <span class="n">e_nom_max</span> <span class="o">=</span> <span class="n">flexibility_fraction</span> <span class="o">*</span> <span class="n">annual_demand</span> <span class="k">if</span> <span class="n">flexibility_fraction</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">ts</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">col_name</span><span class="p">),</span> <span class="n">e_nom_max</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;profile&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">profile_ts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;profile_ts is required for mode=&#39;profile&#39;&quot;</span><span class="p">)</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="n">profile_ts</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">snapshots</span><span class="p">)</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">prof</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;profile_ts sums to zero — cannot scale to annual_demand&quot;</span><span class="p">)</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">prof</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="n">annual_demand</span>
+        <span class="n">e_nom_max</span> <span class="o">=</span> <span class="n">flexibility_fraction</span> <span class="o">*</span> <span class="n">annual_demand</span> <span class="k">if</span> <span class="n">flexibility_fraction</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">ts</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">col_name</span><span class="p">),</span> <span class="n">e_nom_max</span>
+
+    <span class="c1"># ── Bin modes ─────────────────────────────────────────────────────────────</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bins_flat&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_profile&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unknown demand mode &#39;</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&#39;. Choose: flat | profile | bins_flat | bins_profile&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">snapshots</span><span class="p">)</span>
+
+    <span class="c1"># Divide snapshot index into n_bins equal parts and snap to actual timestamps</span>
+    <span class="n">endpoints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bins</span><span class="p">):</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_snap</span> <span class="o">/</span> <span class="n">n_bins</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_snap</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">endpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">snapshots</span><span class="p">[</span><span class="n">end_idx</span><span class="p">])</span>
+    <span class="n">endpoints</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapshots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># guarantee last bin ends at final snapshot</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">:</span>
+        <span class="n">delivery</span> <span class="o">=</span> <span class="n">annual_demand</span> <span class="o">/</span> <span class="n">n_bins</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">endpoints</span><span class="p">:</span>
+            <span class="n">ts</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">+=</span> <span class="n">delivery</span>
+        <span class="n">e_nom_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">delivery</span><span class="p">)</span>  <span class="c1"># store sized to one bin&#39;s delivery</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># bins_profile</span>
+        <span class="k">if</span> <span class="n">profile_ts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;profile_ts is required for mode=&#39;bins_profile&#39;&quot;</span><span class="p">)</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="n">profile_ts</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">snapshots</span><span class="p">)</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span>
+        <span class="n">total_prof</span> <span class="o">=</span> <span class="n">prof</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">total_prof</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;profile_ts sums to zero — cannot compute bin weights&quot;</span><span class="p">)</span>
+
+        <span class="n">bin_deliveries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">prev_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">endpoints</span><span class="p">:</span>
+            <span class="n">ep_idx</span> <span class="o">=</span> <span class="n">snapshots</span><span class="o">.</span><span class="n">get_loc</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span>
+            <span class="n">bin_prof</span> <span class="o">=</span> <span class="n">prof</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">prev_idx</span> <span class="p">:</span> <span class="n">ep_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">delivery</span> <span class="o">=</span> <span class="n">bin_prof</span> <span class="o">/</span> <span class="n">total_prof</span> <span class="o">*</span> <span class="n">annual_demand</span>
+            <span class="n">bin_deliveries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">delivery</span><span class="p">)</span>
+            <span class="n">ts</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">+=</span> <span class="n">delivery</span>
+            <span class="n">prev_idx</span> <span class="o">=</span> <span class="n">ep_idx</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">max_bin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">bin_deliveries</span><span class="p">)</span> <span class="k">if</span> <span class="n">bin_deliveries</span> <span class="k">else</span> <span class="n">annual_demand</span>
+        <span class="n">e_nom_max</span> <span class="o">=</span> <span class="n">max_bin</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">store_buffer</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ts</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">col_name</span><span class="p">),</span> <span class="n">e_nom_max</span></div>
+
+
+
+<div class="viewcode-block" id="build_demands_TS">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.build_demands_TS">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_demands_TS</span><span class="p">(</span><span class="n">targets_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build hourly demand time series for bioCH₄, H₂ and methanol.</span>
+
+<span class="sd">    Demand shape (flat, profile, or periodic bins) and delivery-store sizing are</span>
+<span class="sd">    controlled by ``targets_dict`` keys set in ``config.yaml``.  No intermediate</span>
+<span class="sd">    CSV files are written — all values are computed in-memory and returned.</span>
+
+<span class="sd">    Seasonal profiles are loaded from CSV files under ``data/common/``.  Each</span>
+<span class="sd">    product can point to its own profile via the ``*_profile`` key in</span>
+<span class="sd">    ``targets``; ``null`` uses ``data/common/NG_demand_DK_profile.csv``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    targets_dict : dict</span>
+<span class="sd">        Demand targets from ``config.yaml`` (``targets`` block).  Required keys:</span>
+<span class="sd">        ``&quot;demand_CH4&quot;``, ``&quot;demand_H2&quot;``, ``&quot;demand_meoh&quot;``.  Optional shape</span>
+<span class="sd">        keys: ``&quot;CH4_demand_mode&quot;``, ``&quot;CH4_bins&quot;``, ``&quot;CH4_flexibility&quot;``,</span>
+<span class="sd">        ``&quot;CH4_profile&quot;``, and their ``H2_*`` / ``MeOH_*`` equivalents, plus</span>
+<span class="sd">        ``&quot;demand_store_buffer&quot;``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Keys: ``&quot;bioCH4&quot;``, ``&quot;bioCH4_e_nom_max&quot;``, ``&quot;H2&quot;``,</span>
+<span class="sd">        ``&quot;H2_e_nom_max&quot;``, ``&quot;meoh&quot;``, ``&quot;meoh_e_nom_max&quot;``, ``&quot;NG_DK&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">snapshots</span>     <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span>
+    <span class="n">store_buffer</span>  <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;demand_store_buffer&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+    <span class="c1"># ── bioCH4 ────────────────────────────────────────────────────────────────</span>
+    <span class="n">CH4_mode</span> <span class="o">=</span> <span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CH4_demand_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">)</span>
+    <span class="n">CH4_bins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CH4_bins&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">CH4_flex</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CH4_flexibility&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="n">bioCH4_demand</span><span class="p">,</span> <span class="n">bioCH4_e_nom_max</span> <span class="o">=</span> <span class="n">build_product_demand_ts</span><span class="p">(</span>
+        <span class="n">annual_demand</span>        <span class="o">=</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;demand_CH4&quot;</span><span class="p">],</span>
+        <span class="n">mode</span>                 <span class="o">=</span> <span class="n">CH4_mode</span><span class="p">,</span>
+        <span class="n">snapshots</span>            <span class="o">=</span> <span class="n">snapshots</span><span class="p">,</span>
+        <span class="n">profile_ts</span>           <span class="o">=</span> <span class="n">_load_profile_ts</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CH4_profile&quot;</span><span class="p">),</span> <span class="n">snapshots</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;profile&quot;</span> <span class="ow">in</span> <span class="n">CH4_mode</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_bins</span>               <span class="o">=</span> <span class="n">CH4_bins</span><span class="p">,</span>
+        <span class="n">flexibility_fraction</span> <span class="o">=</span> <span class="n">CH4_flex</span><span class="p">,</span>
+        <span class="n">store_buffer</span>         <span class="o">=</span> <span class="n">store_buffer</span><span class="p">,</span>
+        <span class="n">col_name</span>             <span class="o">=</span> <span class="s2">&quot;bioCH4 demand MWh&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ── Methanol ──────────────────────────────────────────────────────────────</span>
+    <span class="n">MeOH_mode</span> <span class="o">=</span> <span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MeOH_demand_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">)</span>
+    <span class="n">MeOH_bins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MeOH_bins&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">MeOH_flex</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MeOH_flexibility&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="n">Methanol_demand</span><span class="p">,</span> <span class="n">Methanol_e_nom_max</span> <span class="o">=</span> <span class="n">build_product_demand_ts</span><span class="p">(</span>
+        <span class="n">annual_demand</span>        <span class="o">=</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;demand_meoh&quot;</span><span class="p">],</span>
+        <span class="n">mode</span>                 <span class="o">=</span> <span class="n">MeOH_mode</span><span class="p">,</span>
+        <span class="n">snapshots</span>            <span class="o">=</span> <span class="n">snapshots</span><span class="p">,</span>
+        <span class="n">profile_ts</span>           <span class="o">=</span> <span class="n">_load_profile_ts</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MeOH_profile&quot;</span><span class="p">),</span> <span class="n">snapshots</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;profile&quot;</span> <span class="ow">in</span> <span class="n">MeOH_mode</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_bins</span>               <span class="o">=</span> <span class="n">MeOH_bins</span><span class="p">,</span>
+        <span class="n">flexibility_fraction</span> <span class="o">=</span> <span class="n">MeOH_flex</span><span class="p">,</span>
+        <span class="n">store_buffer</span>         <span class="o">=</span> <span class="n">store_buffer</span><span class="p">,</span>
+        <span class="n">col_name</span>             <span class="o">=</span> <span class="s2">&quot;Methanol demand MWh&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ── H2 ────────────────────────────────────────────────────────────────────</span>
+    <span class="n">H2_mode</span> <span class="o">=</span> <span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;H2_demand_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">)</span>
+    <span class="n">H2_bins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;H2_bins&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">H2_flex</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;H2_flexibility&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+    <span class="n">H2_input_demand</span><span class="p">,</span> <span class="n">H2_e_nom_max</span> <span class="o">=</span> <span class="n">build_product_demand_ts</span><span class="p">(</span>
+        <span class="n">annual_demand</span>        <span class="o">=</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;demand_H2&quot;</span><span class="p">],</span>
+        <span class="n">mode</span>                 <span class="o">=</span> <span class="n">H2_mode</span><span class="p">,</span>
+        <span class="n">snapshots</span>            <span class="o">=</span> <span class="n">snapshots</span><span class="p">,</span>
+        <span class="n">profile_ts</span>           <span class="o">=</span> <span class="n">_load_profile_ts</span><span class="p">(</span><span class="n">targets_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;H2_profile&quot;</span><span class="p">),</span> <span class="n">snapshots</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;profile&quot;</span> <span class="ow">in</span> <span class="n">H2_mode</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_bins</span>               <span class="o">=</span> <span class="n">H2_bins</span><span class="p">,</span>
+        <span class="n">flexibility_fraction</span> <span class="o">=</span> <span class="n">H2_flex</span><span class="p">,</span>
+        <span class="n">store_buffer</span>         <span class="o">=</span> <span class="n">store_buffer</span><span class="p">,</span>
+        <span class="n">col_name</span>             <span class="o">=</span> <span class="s2">&quot;H2_demand_MWh&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ── Default NG_DK profile (kept in inputs_dict for downstream reference) ──</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">NG_DK_h</span> <span class="o">=</span> <span class="n">_load_profile_ts</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">snapshots</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">NG_DK_h</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;bioCH4&quot;</span><span class="p">:</span>           <span class="n">bioCH4_demand</span><span class="p">,</span>
+        <span class="s2">&quot;bioCH4_e_nom_max&quot;</span><span class="p">:</span> <span class="n">bioCH4_e_nom_max</span><span class="p">,</span>
+        <span class="s2">&quot;H2&quot;</span><span class="p">:</span>               <span class="n">H2_input_demand</span><span class="p">,</span>
+        <span class="s2">&quot;H2_e_nom_max&quot;</span><span class="p">:</span>     <span class="n">H2_e_nom_max</span><span class="p">,</span>
+        <span class="s2">&quot;meoh&quot;</span><span class="p">:</span>             <span class="n">Methanol_demand</span><span class="p">,</span>
+        <span class="s2">&quot;meoh_e_nom_max&quot;</span><span class="p">:</span>   <span class="n">Methanol_e_nom_max</span><span class="p">,</span>
+        <span class="s2">&quot;NG_DK&quot;</span><span class="p">:</span>            <span class="n">NG_DK_h</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="load_input_data">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.load_input_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_input_data</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load csv files and prepare Input Data to GL network&quot;&quot;&quot;</span>
+
+    <span class="n">GL_inputs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">GL_input_file</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="s1">&#39;Overview_2&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_inputs_to_eff</span><span class="p">(</span><span class="n">GL_inputs</span><span class="p">)</span>
+    <span class="n">Elspotprices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">El_price_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># currency/MWh</span>
+    <span class="n">Elspotprices</span> <span class="o">=</span> <span class="n">Elspotprices</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+    <span class="n">CO2_emiss_El</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">CO2emis_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># kg/MWh CO2</span>
+    <span class="n">CO2_emiss_El</span> <span class="o">=</span> <span class="n">CO2_emiss_El</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">CF_wind_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># MWh/h y</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">CF_solar_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># MWh/h y</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+    <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">NG_price_year_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># MWh/h y</span>
+    <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">NG_price_year</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+    <span class="n">DH_external_demand</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">DH_external_demand_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># currency/MWh</span>
+    <span class="n">DH_external_demand</span> <span class="o">=</span> <span class="n">DH_external_demand</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">hours_in_period</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">GL_inputs</span><span class="p">,</span> <span class="n">GL_eff</span><span class="p">,</span> <span class="n">Elspotprices</span><span class="p">,</span> <span class="n">CO2_emiss_El</span><span class="p">,</span> <span class="n">CF_wind</span><span class="p">,</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">NG_price_year</span><span class="p">,</span> <span class="n">DH_external_demand</span></div>
+
+
+
+<span class="c1"># ---- DEMANDS for H2, MeOH and El_DK1_GLS</span>
+
+<span class="c1"># ----- EXTERNAL ENERGY MARKETS</span>
+
+<div class="viewcode-block" id="remove_feb_29">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.remove_feb_29">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_feb_29</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="c1"># Function to remove February 29 if it&#39;s a leap year, works on df and series</span>
+    <span class="c1"># Check if the year is a leap year</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">29</span><span class="p">)):</span>
+        <span class="c1"># Remove rows where the date is February 29</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">29</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+
+<span class="n">BASE</span> <span class="o">=</span> <span class="s2">&quot;https://api.energidataservice.dk/dataset&quot;</span>
+
+<div class="viewcode-block" id="download_energidata">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.download_energidata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_energidata</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">sort_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">price_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Robust download from energidataservice.dk returning a DataFrame.</span>
+<span class="sd">    start_date/end_date formats allowed: yyyy, yyyy-MM, yyyy-MM-dd, yyyy-MM-ddTHH:mm  (DK local time) :contentReference[oaicite:2]{index=2}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BASE</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start_date</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end_date</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">sort_val</span><span class="p">:</span>
+        <span class="c1"># pass without &quot;sort=&quot; prefix</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sort_val</span>
+
+    <span class="k">if</span> <span class="n">price_area</span><span class="p">:</span>
+        <span class="c1"># API expects JSON object, values as arrays is the documented format :contentReference[oaicite:3]{index=3}</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;PriceArea&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">price_area</span><span class="p">]})</span>
+
+    <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">},</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="c1"># If this raises, you&#39;ll see the HTTP code (e.g. 429, 502, 504, 400, ...)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Print a short snippet so you can see what the server actually returned (often HTML)</span>
+        <span class="n">snippet</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> from Energi Data Service.</span><span class="se">\n</span><span class="s2">URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="se">\n</span><span class="s2">Body snippet:</span><span class="se">\n</span><span class="si">{</span><span class="n">snippet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+    <span class="c1"># Only parse JSON if it looks like JSON</span>
+    <span class="n">ctype</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;json&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctype</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="n">snippet</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected JSON but got Content-Type=</span><span class="si">{</span><span class="n">ctype</span><span class="si">}</span><span class="se">\n</span><span class="s2">URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="se">\n</span><span class="s2">Body snippet:</span><span class="se">\n</span><span class="si">{</span><span class="n">snippet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;records&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">records</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="download_dk_day_ahead_prices">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.download_dk_day_ahead_prices">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_dk_day_ahead_prices</span><span class="p">(</span>
+    <span class="n">start_date</span><span class="p">,</span>
+    <span class="n">end_date</span><span class="p">,</span>
+    <span class="n">price_area</span><span class="o">=</span><span class="s2">&quot;DK1&quot;</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;1h&quot;</span><span class="p">,</span>   <span class="c1"># &quot;native&quot; or &quot;1h&quot;</span>
+    <span class="n">how</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>            <span class="c1"># for 1h: &quot;mean&quot; (default) or &quot;last&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Downloads day-ahead prices across the dataset switch:</span>
+<span class="sd">    - Elspotprices up to 2025-09-30</span>
+<span class="sd">    - DayAheadPrices from 2025-10-01 onwards</span>
+
+<span class="sd">    Returns a single normalized DF with:</span>
+<span class="sd">      TimeUTC, TimeDK, PriceArea, SpotPriceEUR, SpotPriceDKK</span>
+
+<span class="sd">    If resolution=&quot;1h&quot;, resamples everything to hourly in UTC (DST-safe).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cutoff</span> <span class="o">=</span> <span class="s2">&quot;2025-10-01T00:00&quot;</span>
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># part A: old dataset (hourly)</span>
+    <span class="k">if</span> <span class="n">start_date</span> <span class="o">&lt;</span> <span class="n">cutoff</span><span class="p">:</span>
+        <span class="n">end_a</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end_date</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">df_a</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;Elspotprices&quot;</span><span class="p">,</span>
+            <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+            <span class="n">end_date</span><span class="o">=</span><span class="n">end_a</span><span class="p">,</span>
+            <span class="n">sort_val</span><span class="o">=</span><span class="s2">&quot;HourDK asc&quot;</span><span class="p">,</span>
+            <span class="n">price_area</span><span class="o">=</span><span class="n">price_area</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">df_a</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">df_a</span> <span class="o">=</span> <span class="n">df_a</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;HourUTC&quot;</span><span class="p">:</span> <span class="s2">&quot;TimeUTC&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;HourDK&quot;</span><span class="p">:</span> <span class="s2">&quot;TimeDK&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">:</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">:</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">,</span>
+            <span class="p">})</span>
+            <span class="n">df_a</span> <span class="o">=</span> <span class="n">df_a</span><span class="p">[[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeDK&quot;</span><span class="p">,</span> <span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">]]</span>
+            <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_a</span><span class="p">)</span>
+
+    <span class="c1"># part B: new dataset (15-min from Oct 2025)</span>
+    <span class="k">if</span> <span class="n">end_date</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">:</span>
+        <span class="n">start_b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">df_b</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;DayAheadPrices&quot;</span><span class="p">,</span>
+            <span class="n">start_date</span><span class="o">=</span><span class="n">start_b</span><span class="p">,</span>
+            <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>
+            <span class="n">sort_val</span><span class="o">=</span><span class="s2">&quot;TimeUTC asc&quot;</span><span class="p">,</span>
+            <span class="n">price_area</span><span class="o">=</span><span class="n">price_area</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">df_b</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">df_b</span> <span class="o">=</span> <span class="n">df_b</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;DayAheadPriceEUR&quot;</span><span class="p">:</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;DayAheadPriceDKK&quot;</span><span class="p">:</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">,</span>
+            <span class="p">})</span>
+            <span class="n">df_b</span> <span class="o">=</span> <span class="n">df_b</span><span class="p">[[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeDK&quot;</span><span class="p">,</span> <span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">]]</span>
+            <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_b</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">dfs</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="c1"># ---- Normalize datetimes ----</span>
+    <span class="c1"># Parse to datetime; keep &quot;naive&quot; timestamps as provided by API</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">])</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">&quot;TimeDK&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;TimeDK&quot;</span><span class="p">])</span>
+
+    <span class="c1"># ---- Optional: resample to hourly ----</span>
+    <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1h&quot;</span><span class="p">,</span> <span class="s2">&quot;hour&quot;</span><span class="p">,</span> <span class="s2">&quot;hourly&quot;</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeUTC&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">&quot;last&quot;</span><span class="p">:</span>
+            <span class="n">agg</span> <span class="o">=</span> <span class="s2">&quot;last&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">agg</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span>  <span class="c1"># default</span>
+
+        <span class="c1"># Resample per area</span>
+        <span class="n">resampled</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;PriceArea&quot;</span><span class="p">)[[</span><span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">]]</span>
+               <span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s2">&quot;1h&quot;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">agg</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Recreate TimeDK from TimeUTC in a DST-safe way:</span>
+        <span class="c1"># interpret TimeUTC as UTC, convert to Europe/Copenhagen, then drop tz.</span>
+        <span class="n">resampled</span><span class="p">[</span><span class="s2">&quot;TimeDK&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">resampled</span><span class="p">[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;Europe/Copenhagen&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Keep column order</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">resampled</span><span class="p">[[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeDK&quot;</span><span class="p">,</span> <span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">]]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[[</span><span class="s2">&quot;TimeUTC&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeDK&quot;</span><span class="p">,</span> <span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceEUR&quot;</span><span class="p">,</span> <span class="s2">&quot;SpotPriceDKK&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">&quot;PriceArea&quot;</span><span class="p">,</span> <span class="s2">&quot;TimeUTC&quot;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+
+<span class="n">tf</span> <span class="o">=</span> <span class="n">TimezoneFinder</span><span class="p">()</span>
+
+<span class="n">RN_MAX_DATE</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2024-12-31&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+<span class="n">RN_LAST_END_EXCL_UTC</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2025-01-01 00:00&quot;</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>  <span class="c1"># end-exclusive</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rn_get</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GET with automatic retry/backoff on RN 429 rate-limit responses.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">429</span><span class="p">:</span>
+            <span class="n">wait</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span>  <span class="c1"># 1, 2, 4, 8, 16 s</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">r</span>
+    <span class="k">return</span> <span class="n">r</span>  <span class="c1"># return last response if all retries exhausted</span>
+
+
+<div class="viewcode-block" id="retrieve_renewable_capacity_factors">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.retrieve_renewable_capacity_factors">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve_renewable_capacity_factors</span><span class="p">(</span>
+    <span class="n">token</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="p">,</span>
+    <span class="n">end_date</span><span class="p">,</span>
+    <span class="n">latitude</span><span class="p">,</span>
+    <span class="n">longitude</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;merra2&quot;</span><span class="p">,</span>
+    <span class="n">return_tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>  <span class="c1"># &quot;UTC&quot; or &quot;local&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Call RN for PV and wind.</span>
+<span class="sd">    Inputs start_date/end_date are LOCAL time for the location timezone.</span>
+
+<span class="sd">    RN API only supports date_to &lt;= 2024-12-31, and date_from must also be &lt;= 2024-12-31.</span>
+<span class="sd">    We clamp date_to; if date_from is beyond RN_MAX_DATE we raise (wrapper should avoid calling).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">api_base</span> <span class="o">=</span> <span class="s2">&quot;https://www.renewables.ninja/api/&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">session</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Token &quot;</span> <span class="o">+</span> <span class="n">token</span><span class="p">}</span>
+
+    <span class="n">tzname</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">timezone_at</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="n">latitude</span><span class="p">,</span> <span class="n">lng</span><span class="o">=</span><span class="n">longitude</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tzname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not determine timezone for lat=</span><span class="si">{</span><span class="n">latitude</span><span class="si">}</span><span class="s2">, lon=</span><span class="si">{</span><span class="n">longitude</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Inputs are LOCAL time (safe parsing)</span>
+    <span class="n">start_local</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span>
+    <span class="n">end_local</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">start_local</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_local</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">end_local</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">end_local</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+
+    <span class="c1"># RN date window (date-based). Clamp to RN coverage.</span>
+    <span class="n">date_from_d</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="n">date_to_d</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">date_from_d</span> <span class="o">&gt;</span> <span class="n">RN_MAX_DATE</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RN cannot serve date_from after </span><span class="si">{</span><span class="n">RN_MAX_DATE</span><span class="si">}</span><span class="s2"> (got </span><span class="si">{</span><span class="n">date_from_d</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">date_to_d</span> <span class="o">&gt;</span> <span class="n">RN_MAX_DATE</span><span class="p">:</span>
+        <span class="n">date_to_d</span> <span class="o">=</span> <span class="n">RN_MAX_DATE</span>
+
+    <span class="n">date_from</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">date_from_d</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">date_to</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">date_to_d</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --- PV ---</span>
+    <span class="n">optimal_tilt</span> <span class="o">=</span> <span class="n">latitude</span> <span class="o">*</span> <span class="mf">0.87</span> <span class="o">+</span> <span class="mf">3.1</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_rn_get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">api_base</span> <span class="o">+</span> <span class="s2">&quot;data/pv&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+        <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+        <span class="s2">&quot;date_from&quot;</span><span class="p">:</span> <span class="n">date_from</span><span class="p">,</span>
+        <span class="s2">&quot;date_to&quot;</span><span class="p">:</span> <span class="n">date_to</span><span class="p">,</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+        <span class="s2">&quot;capacity&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s2">&quot;system_loss&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="s2">&quot;tracking&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;tilt&quot;</span><span class="p">:</span> <span class="n">optimal_tilt</span><span class="p">,</span>
+        <span class="s2">&quot;azim&quot;</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span>
+        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RN pv failed </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">2000</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])),</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+    <span class="n">CF_solar</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">CF_solar</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;CF solar&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># --- Wind ---</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_rn_get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">api_base</span> <span class="o">+</span> <span class="s2">&quot;data/wind&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+        <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+        <span class="s2">&quot;date_from&quot;</span><span class="p">:</span> <span class="n">date_from</span><span class="p">,</span>
+        <span class="s2">&quot;date_to&quot;</span><span class="p">:</span> <span class="n">date_to</span><span class="p">,</span>
+        <span class="s2">&quot;capacity&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;turbine&quot;</span><span class="p">:</span> <span class="s2">&quot;Vestas V80 2000&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RN wind failed </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">2000</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])),</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+    <span class="n">CF_wind</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">CF_wind</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="s2">&quot;CF wind&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># RN timestamps are UTC</span>
+    <span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+    <span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clip in UTC using local intent converted to UTC</span>
+    <span class="n">start_utc</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+    <span class="n">end_utc</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">start_utc</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">end_utc</span><span class="p">)]</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">start_utc</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">end_utc</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">return_tz</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+        <span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+        <span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">CF_wind</span></div>
+
+
+
+<div class="viewcode-block" id="retrieve_renewable_capacity_factors_with_fallback">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.retrieve_renewable_capacity_factors_with_fallback">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve_renewable_capacity_factors_with_fallback</span><span class="p">(</span>
+    <span class="n">RN_token</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="p">,</span>
+    <span class="n">end_date</span><span class="p">,</span>
+    <span class="n">latitude</span><span class="p">,</span>
+    <span class="n">longitude</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;merra2&quot;</span><span class="p">,</span>
+    <span class="n">out_timezone</span><span class="o">=</span><span class="s2">&quot;Europe/Copenhagen&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper when inputs are ALWAYS LOCAL time for the location.</span>
+
+<span class="sd">    Rule:</span>
+<span class="sd">    - If start_local.date() &gt;= 2025-01-01, do NOT call RN at all (RN would reject).</span>
+<span class="sd">      Instead replay all hours from 2024 and shift forward.</span>
+<span class="sd">    - If start_local.date() &lt;= 2024-12-31, fetch that portion from RN (clamped),</span>
+<span class="sd">      and replay the rest if needed.</span>
+
+<span class="sd">    Output:</span>
+<span class="sd">    - Complete hourly series on an expected UTC grid, then converted to out_timezone.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tzname</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">timezone_at</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="n">latitude</span><span class="p">,</span> <span class="n">lng</span><span class="o">=</span><span class="n">longitude</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tzname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not determine timezone for lat=</span><span class="si">{</span><span class="n">latitude</span><span class="si">}</span><span class="s2">, lon=</span><span class="si">{</span><span class="n">longitude</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Inputs are LOCAL time</span>
+    <span class="n">start_local</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span>
+    <span class="n">end_local</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">start_local</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_local</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">end_local</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">end_local</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+
+    <span class="c1"># Expected hourly UTC index for [start, end)</span>
+    <span class="n">start_utc</span> <span class="o">=</span> <span class="n">start_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+    <span class="n">end_utc</span> <span class="o">=</span> <span class="n">end_local</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+    <span class="n">expected_utc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start_utc</span><span class="p">,</span> <span class="n">end_utc</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="n">inclusive</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+
+    <span class="n">parts_solar</span><span class="p">,</span> <span class="n">parts_wind</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="c1"># ---------- Supported part: only if local start date is within RN coverage ----------</span>
+    <span class="k">if</span> <span class="n">start_local</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">RN_MAX_DATE</span><span class="p">:</span>
+        <span class="c1"># cap the RN portion to end of RN coverage in local time</span>
+        <span class="n">rn_end_local</span> <span class="o">=</span> <span class="n">RN_LAST_END_EXCL_UTC</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span>
+        <span class="n">end_ok_local</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">end_local</span><span class="p">,</span> <span class="n">rn_end_local</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">start_local</span> <span class="o">&lt;</span> <span class="n">end_ok_local</span><span class="p">:</span>
+            <span class="n">CF_s</span><span class="p">,</span> <span class="n">CF_w</span> <span class="o">=</span> <span class="n">retrieve_renewable_capacity_factors</span><span class="p">(</span>
+                <span class="n">RN_token</span><span class="p">,</span>
+                <span class="n">start_local</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M&quot;</span><span class="p">),</span>
+                <span class="n">end_ok_local</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M&quot;</span><span class="p">),</span>
+                <span class="n">latitude</span><span class="p">,</span>
+                <span class="n">longitude</span><span class="p">,</span>
+                <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+                <span class="n">return_tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parts_solar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CF_s</span><span class="p">)</span>
+            <span class="n">parts_wind</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CF_w</span><span class="p">)</span>
+
+    <span class="c1"># ---------- Overflow: anything beyond RN coverage (or all of it if start is 2025+) ----------</span>
+    <span class="c1"># Determine overflow in UTC</span>
+    <span class="n">overflow_start_utc</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start_utc</span><span class="p">,</span> <span class="n">RN_LAST_END_EXCL_UTC</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">end_utc</span> <span class="o">&gt;</span> <span class="n">overflow_start_utc</span><span class="p">:</span>
+        <span class="n">overflow_idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">overflow_start_utc</span><span class="p">,</span> <span class="n">end_utc</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="n">inclusive</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overflow_idx</span><span class="p">)</span>
+
+        <span class="n">mapped_end_utc</span> <span class="o">=</span> <span class="n">RN_LAST_END_EXCL_UTC</span>
+        <span class="n">mapped_start_utc</span> <span class="o">=</span> <span class="n">mapped_end_utc</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+
+        <span class="n">mapped_start_local</span> <span class="o">=</span> <span class="n">mapped_start_utc</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M&quot;</span><span class="p">)</span>
+        <span class="n">mapped_end_local</span> <span class="o">=</span> <span class="n">mapped_end_utc</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tzname</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M&quot;</span><span class="p">)</span>
+
+        <span class="n">CF_s_24</span><span class="p">,</span> <span class="n">CF_w_24</span> <span class="o">=</span> <span class="n">retrieve_renewable_capacity_factors</span><span class="p">(</span>
+            <span class="n">RN_token</span><span class="p">,</span>
+            <span class="n">mapped_start_local</span><span class="p">,</span>
+            <span class="n">mapped_end_local</span><span class="p">,</span>
+            <span class="n">latitude</span><span class="p">,</span>
+            <span class="n">longitude</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">return_tz</span><span class="o">=</span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">overflow_start_utc</span> <span class="o">-</span> <span class="n">mapped_start_utc</span>
+        <span class="n">CF_s_24</span> <span class="o">=</span> <span class="n">CF_s_24</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">CF_w_24</span> <span class="o">=</span> <span class="n">CF_w_24</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">CF_s_24</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_s_24</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="n">shift</span>
+        <span class="n">CF_w_24</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_w_24</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="n">shift</span>
+
+        <span class="n">parts_solar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CF_s_24</span><span class="p">)</span>
+        <span class="n">parts_wind</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CF_w_24</span><span class="p">)</span>
+
+    <span class="c1"># Combine + force complete grid</span>
+    <span class="n">CF_solar_utc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">parts_solar</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">expected_utc</span><span class="p">)</span>
+    <span class="n">CF_wind_utc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">parts_wind</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">expected_utc</span><span class="p">)</span>
+
+    <span class="c1"># Fix edge NaNs from date-based RN windows</span>
+    <span class="n">CF_solar_utc</span> <span class="o">=</span> <span class="n">CF_solar_utc</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span>
+    <span class="n">CF_wind_utc</span> <span class="o">=</span> <span class="n">CF_wind_utc</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span>
+
+    <span class="c1"># Convert to requested output timezone</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">CF_solar_utc</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">CF_wind_utc</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_solar</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">out_timezone</span><span class="p">)</span>
+    <span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">CF_wind</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">out_timezone</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">CF_wind</span></div>
+
+
+
+<div class="viewcode-block" id="retrive_entsoe_el_demand">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.retrive_entsoe_el_demand">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrive_entsoe_el_demand</span><span class="p">(</span><span class="n">API_KEY</span><span class="p">,</span> <span class="n">start_day</span><span class="p">,</span> <span class="n">end_day</span><span class="p">,</span> <span class="n">country_code</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;function that retrives historical el demand with hourly resolution from a specific bidding zone&quot;&quot;&quot;</span>
+    <span class="c1"># NOTE: list of country codes available here: https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="n">EntsoePandasClient</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span> <span class="n">API_KEY</span><span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start_day</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;Europe/Brussels&#39;</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end_day</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;Europe/Brussels&#39;</span><span class="p">)</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">query_load</span><span class="p">(</span><span class="n">country_code</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ts</span></div>
+
+
+
+<div class="viewcode-block" id="pre_processing_energy_data">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.pre_processing_energy_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pre_processing_energy_data</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download and preprocess all energy-market inputs for one price year.</span>
+
+<span class="sd">    Fetches data from the Energi Data Service API (electricity spot prices,</span>
+<span class="sd">    CO₂ emission intensities, natural gas prices, district-heating demand)</span>
+<span class="sd">    and from the Renewables.ninja API (wind and solar capacity factors), then</span>
+<span class="sd">    writes all results as semicolon-delimited CSV files to</span>
+<span class="sd">    ``data/Inputs_{year}/`` (EU) or ``data/California/Inputs_{year}/`` (US).</span>
+
+<span class="sd">    A ``&quot;HourDK&quot;`` sorted, leap-year-stripped hourly index is enforced on all</span>
+<span class="sd">    outputs so they align with the model snapshot index from</span>
+<span class="sd">    :func:`scripts.helpers.build_snapshots`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    year : int, optional</span>
+<span class="sd">        Energy-price year to preprocess (e.g. ``2023``).  Defaults to</span>
+<span class="sd">        ``En_price_year`` from ``config.yaml`` when *None*.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        All outputs are written to CSV files; nothing is returned.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    requests.HTTPError</span>
+<span class="sd">        If an API request fails after retries.</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If the downloaded time series cannot be aligned to the expected</span>
+<span class="sd">        8 760-hour snapshot index.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    * DK electricity prices are downloaded in DKK and converted to EUR</span>
+<span class="sd">      using ``EUR_to_DKK`` from ``config.yaml``.</span>
+<span class="sd">    * Leap days (Feb 29) are dropped to maintain a uniform 8 760-hour year.</span>
+<span class="sd">    * Some CSV outputs are not used by every network configuration but are</span>
+<span class="sd">      always written to avoid downstream ``FileNotFoundError`` exceptions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># --- Year-specific setup (supports multi-year stochastic preprocessing) ---</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scripts.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_snapshots</span><span class="p">,</span> <span class="n">is_eu_or_us</span>
+    <span class="n">_year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="k">if</span> <span class="n">year</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">En_price_year</span>
+    <span class="n">hours_in_period</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_snapshots</span><span class="p">(</span><span class="n">_year</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_eu_or_us</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;EU&#39;</span><span class="p">:</span>
+        <span class="n">_folder</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;data/Inputs_</span><span class="si">{</span><span class="n">_year</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_folder</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;data/California/Inputs_</span><span class="si">{</span><span class="n">_year</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">_folder</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">El_price_input_file</span>           <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_folder</span><span class="si">}</span><span class="s1">/Elspotprices_input.csv&#39;</span>
+    <span class="n">CO2emis_input_file</span>            <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_folder</span><span class="si">}</span><span class="s1">/CO2emis_input.csv&#39;</span>
+    <span class="n">NG_price_year_input_file</span>      <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_folder</span><span class="si">}</span><span class="s1">/NG_price_year_input.csv&#39;</span>
+    <span class="n">DH_external_demand_input_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_COMMON_DIR</span> <span class="o">/</span> <span class="s1">&#39;DH_external_demand_input.csv&#39;</span><span class="p">)</span>
+    <span class="n">CF_wind_input_file</span>            <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_folder</span><span class="si">}</span><span class="s1">/CF_wind.csv&#39;</span>
+    <span class="n">CF_solar_input_file</span>           <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_folder</span><span class="si">}</span><span class="s1">/CF_solar.csv&#39;</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Dates&quot;&quot;&quot;</span>
+    <span class="n">dates</span> <span class="o">=</span> <span class="n">hours_in_period</span><span class="o">.</span><span class="n">date</span>
+    <span class="n">start_date</span> <span class="o">=</span> <span class="n">dates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">end_date</span> <span class="o">=</span> <span class="p">(</span><span class="n">dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;El spot prices DK1 - input DKK/MWh or EUR/MWh&#39;&#39;&#39;</span>
+    <span class="n">Elspotprices_data</span> <span class="o">=</span> <span class="n">download_dk_day_ahead_prices</span><span class="p">(</span>
+        <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+        <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>
+        <span class="n">price_area</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">price_area</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;1h&quot;</span><span class="p">,</span>  <span class="c1"># &quot;native&quot; or &quot;1h&quot;</span>
+        <span class="n">how</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>
+
+    <span class="c1">#Elspotprices_data = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, p.filter_area)</span>
+    <span class="n">Elspotprices</span> <span class="o">=</span> <span class="n">Elspotprices_data</span><span class="p">[[</span><span class="s1">&#39;TimeDK&#39;</span><span class="p">,</span> <span class="s1">&#39;SpotPrice&#39;</span> <span class="o">+</span> <span class="s1">&#39;EUR&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">Elspotprices</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;SpotPrice&#39;</span> <span class="o">+</span> <span class="s1">&#39;EUR&#39;</span><span class="p">:</span> <span class="s1">&#39;SpotPrice&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Elspotprices</span><span class="p">[</span><span class="s1">&#39;TimeDK&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">Elspotprices</span><span class="p">[</span><span class="s1">&#39;TimeDK&#39;</span><span class="p">])</span>
+    <span class="n">Elspotprices</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;TimeDK&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Elspotprices</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">Elspotprices</span><span class="p">)</span>
+    <span class="n">Elspotprices</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">Elspotprices</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">El_price_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>  <span class="c1"># currency/MWh</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;CO2 emission from El Grid DK1&#39;&#39;&#39;</span>
+    <span class="c1"># DeclarationEmissionHour was removed from the API; DeclarationGridEmission covers all years</span>
+    <span class="n">CO2emis_data</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="s1">&#39;DeclarationGridEmission&#39;</span><span class="p">,</span>
+        <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+        <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>
+        <span class="n">sort_val</span><span class="o">=</span><span class="s2">&quot;HourDK asc&quot;</span><span class="p">,</span>
+        <span class="n">price_area</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">price_area</span><span class="p">,</span>
+        <span class="n">limit</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="n">CO2_emiss_El</span> <span class="o">=</span> <span class="n">CO2emis_data</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;FuelAllocationMethod == &#39;125%&#39;&quot;</span><span class="p">)[[</span><span class="s1">&#39;HourDK&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2PerkWh&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">CO2_emiss_El</span><span class="p">[</span><span class="s1">&#39;CO2PerkWh&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CO2_emiss_El</span><span class="p">[</span><span class="s1">&#39;CO2PerkWh&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># t/MWh</span>
+    <span class="n">CO2_emiss_El</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;CO2PerkWh&#39;</span><span class="p">:</span> <span class="s1">&#39;CO2PerMWh&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">CO2_emiss_El</span><span class="p">[</span><span class="s1">&#39;HourDK&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">CO2_emiss_El</span><span class="p">[</span><span class="s1">&#39;HourDK&#39;</span><span class="p">])</span>
+    <span class="n">CO2_emiss_El</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;HourDK&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">CO2_emiss_El</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">CO2_emiss_El</span><span class="p">)</span>
+    <span class="n">CO2_emiss_El</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">CO2emis_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+
+    <span class="c1"># NG prices depending on the year</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39; NG prices prices in DKK/kWh or EUR/kWH&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">_year</span> <span class="o">&lt;=</span> <span class="mi">2022</span><span class="p">:</span>
+        <span class="c1"># due to different structure of Energinet dataset for the year 2019 and 2022</span>
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="s1">&#39;GasMonthlyNeutralPrice&#39;</span>
+        <span class="c1">#sort_val = &#39;sort=Month%20ASC&#39;</span>
+        <span class="n">filter_area</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">sort_val</span> <span class="o">=</span> <span class="s2">&quot;Month ASC&quot;</span>  <span class="c1"># &#39;sort=HourDK%20asc&#39;</span>
+        <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>  <span class="c1"># &quot;2025-01-01&quot;,</span>
+            <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>  <span class="c1"># &quot;2026-01-01&quot;,</span>
+            <span class="n">sort_val</span><span class="o">=</span><span class="n">sort_val</span><span class="p">,</span>
+            <span class="n">price_area</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="c1">#NG_price_year = download_energidata(dataset_name, p.start_date, p.end_date, sort_val, filter_area)</span>
+        <span class="n">NG_price_col_name</span> <span class="o">=</span> <span class="s1">&#39;Neutral gas price &#39;</span> <span class="o">+</span> <span class="s1">&#39;EUR&#39;</span> <span class="o">+</span> <span class="s1">&#39;/MWh&#39;</span>
+        <span class="n">NG_price_year</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;MonthlyNeutralGasPriceDKK_kWh&#39;</span><span class="p">:</span> <span class="n">NG_price_col_name</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">NG_price_year</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Month&#39;</span><span class="p">:</span> <span class="s1">&#39;HourDK&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">NG_price_year</span><span class="p">[</span><span class="s1">&#39;HourDK&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">NG_price_year</span><span class="p">[</span><span class="s1">&#39;HourDK&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">NG_price_year</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;HourDK&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">NG_price_year</span><span class="p">[</span><span class="n">NG_price_col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">NG_price_year</span><span class="p">[</span><span class="n">NG_price_col_name</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">/</span> <span class="n">EUR_to_DKK</span>  <span class="c1"># coversion to €/MWh</span>
+        <span class="n">last_rows3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;HourDK&#39;</span><span class="p">:</span> <span class="n">hours_in_period</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">hours_in_period</span><span class="p">)],</span> <span class="n">NG_price_col_name</span><span class="p">:</span> <span class="n">NG_price_year</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]})</span>
+        <span class="n">last_rows3</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;HourDK&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">NG_price_year</span><span class="p">,</span> <span class="n">last_rows3</span><span class="p">])</span>
+        <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">NG_price_year</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ffill&#39;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">_year</span> <span class="o">&gt;</span> <span class="mi">2022</span><span class="p">:</span>
+        <span class="c1"># due to different structure of Energinet dataset for the year 2019 and 2022</span>
+        <span class="n">dataset_name</span> <span class="o">=</span> <span class="s1">&#39;GasDailyBalancingPrice&#39;</span>
+        <span class="c1">#sort_val = &#39;sort=GasDay%20ASC&#39;</span>
+        <span class="c1">#filter_area = &#39;&#39;</span>
+        <span class="n">sort_val</span> <span class="o">=</span> <span class="s2">&quot;GasDay ASC&quot;</span>  <span class="c1"># &#39;sort=HourDK%20asc&#39;</span>
+        <span class="n">THE_daily_NG_prices</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>  <span class="c1"># &quot;2025-01-01&quot;,</span>
+            <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>  <span class="c1"># &quot;2026-01-01&quot;,</span>
+            <span class="n">sort_val</span><span class="o">=</span><span class="n">sort_val</span><span class="p">,</span>
+            <span class="n">price_area</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="n">limit</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># --- Compute EUR/MWh</span>
+        <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;THE_NG_pricesEUR_MWh&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;THEPriceDKK_kWh&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>
+                <span class="o">/</span> <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;ExchangeRateEUR_DKK&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="p">)</span>
+
+        <span class="c1"># --- Rename GasDay -&gt; HourDK and parse datetime once</span>
+        <span class="n">THE_daily_NG_prices</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;GasDay&quot;</span><span class="p">:</span> <span class="s2">&quot;HourDK&quot;</span><span class="p">})</span>
+        <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;HourDK&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;HourDK&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Optional: if GasDay is a date (00:00), ensure it is normalized</span>
+        <span class="c1"># (doesn&#39;t hurt if it&#39;s already at midnight)</span>
+        <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;HourDK&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="p">[</span><span class="s2">&quot;HourDK&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">)</span>
+
+        <span class="c1"># --- Make index and keep it timezone-naive to match p.hours_in_period (also tz-naive)</span>
+        <span class="n">THE_daily_NG_prices</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;HourDK&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+        <span class="n">THE_daily_NG_prices</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># --- Reindex to your full hourly index and forward fill</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">hours_in_period</span><span class="p">)</span>  <span class="c1"># ensures it&#39;s a DatetimeIndex</span>
+        <span class="n">THE_daily_NG_prices</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">hours</span><span class="p">)</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span>
+
+        <span class="c1"># --- Final series</span>
+        <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">THE_daily_NG_prices</span><span class="p">[[</span><span class="s2">&quot;THE_NG_pricesEUR_MWh&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">NG_price_year</span><span class="p">)</span>
+    <span class="n">NG_price_year</span> <span class="o">=</span> <span class="n">NG_price_year</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+    <span class="n">NG_price_year</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">NG_price_year_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>  <span class="c1"># €/MWh</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;  Estimated NG Demand DK &#39;&#39;&#39;</span>
+    <span class="c1"># source: https://www.energidataservice.dk/tso-gas/Gasflow</span>
+    <span class="c1"># used to create a profile for H2 demand - if required.</span>
+    <span class="n">dataset_name</span> <span class="o">=</span> <span class="s1">&#39;Gasflow&#39;</span>
+    <span class="n">sort_val</span> <span class="o">=</span> <span class="s2">&quot;GasDay&quot;</span>  <span class="c1"># &#39;sort=HourDK%20asc&#39;</span>
+    <span class="n">NG_demand_DK_data</span> <span class="o">=</span> <span class="n">download_energidata</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">start_date</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>  <span class="c1"># &quot;2025-01-01&quot;,</span>
+        <span class="n">end_date</span><span class="o">=</span><span class="n">end_date</span><span class="p">,</span>  <span class="c1"># &quot;2026-01-01&quot;,</span>
+        <span class="n">sort_val</span><span class="o">=</span><span class="n">sort_val</span><span class="p">,</span>
+        <span class="n">price_area</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">limit</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="c1">#NG_demand_DK_data = download_energidata(dataset_name, start_date, end_date, sort_val, filter_area)</span>
+    <span class="n">NG_demand_DK</span> <span class="o">=</span> <span class="n">NG_demand_DK_data</span><span class="p">[[</span><span class="s1">&#39;GasDay&#39;</span><span class="p">,</span> <span class="s1">&#39;KWhToDenmark&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;KWhToDenmark&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;KWhToDenmark&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="o">-</span><span class="mi">1000</span>  <span class="c1"># kWh-&gt; MWh</span>
+    <span class="n">NG_demand_DK</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;KWhToDenmark&#39;</span><span class="p">:</span> <span class="s1">&#39;NG Demand DK MWh&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;GasDay&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;GasDay&#39;</span><span class="p">])</span>
+    <span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;GasDay&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">NG_demand_DK</span><span class="p">[</span><span class="s1">&#39;GasDay&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">NG_demand_DK</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;GasDay&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">NG_demand_DK</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">NG_demand_DK</span><span class="p">)</span>
+    <span class="c1"># Save to data/common/ as the year-agnostic seasonal demand profile</span>
+    <span class="n">_COMMON_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_DEFAULT_PROFILE_PATH</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">NG_demand_DK</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">_DEFAULT_PROFILE_PATH</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;District heating data&#39;&#39;&#39;</span>
+    <span class="c1"># Profile is derived from fixed 2019 Skive weather data — year-agnostic.</span>
+    <span class="c1"># Skip if already present in data/common/ to avoid re-reading local DMI files</span>
+    <span class="c1"># on non-EU (e.g. California) machines where p.DH_data_folder may be absent.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">DH_external_demand_input_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># https://www.dmi.dk/friedata/observationer/</span>
+        <span class="n">data_folder</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">DH_data_folder</span>
+        <span class="n">name_files</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">data_folder</span><span class="p">)</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">name_files</span><span class="p">:</span>
+            <span class="n">df_temp_2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_folder</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">,</span> <span class="s1">&#39;Middeltemperatur&#39;</span><span class="p">])</span>
+            <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">DH_Skive</span><span class="p">,</span> <span class="n">df_temp_2</span><span class="p">])</span>
+
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="s1">&#39;DateTime&#39;</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="s1">&#39;first&#39;</span><span class="p">)</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">])</span>
+        <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;DateTime&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S+00:00&quot;</span><span class="p">))</span>
+        <span class="n">hours_in_2019</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2019-01-01T00:00&#39;</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;2020-01-01T00:00&#39;</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">)</span>
+        <span class="n">hours_in_2019</span> <span class="o">=</span> <span class="n">hours_in_2019</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">hours_in_2019</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;DateTime&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">hours_in_2019</span><span class="p">)</span>
+
+        <span class="n">DH_max_capacity</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">DH_Skive_Capacity</span>  <span class="c1"># MW</span>
+        <span class="c1"># source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf</span>
+        <span class="n">DH_Tamb_min</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">DH_Tamb_min</span>  <span class="c1"># minimum outdoor temp --&gt; maximum Capacity Factor</span>
+        <span class="n">DH_Tamb_max</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">DH_Tamb_max</span>  <span class="c1"># maximum outdoor temp--&gt; capacity Factor = 0</span>
+        <span class="n">CF_DH</span> <span class="o">=</span> <span class="p">(</span><span class="n">DH_Tamb_max</span> <span class="o">-</span> <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;Middeltemperatur&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">DH_Tamb_max</span> <span class="o">-</span> <span class="n">DH_Tamb_min</span><span class="p">)</span>
+        <span class="n">CF_DH</span><span class="p">[</span><span class="n">CF_DH</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;Capacity Factor DH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CF_DH</span>
+        <span class="c1"># adjust for base load in summer months due to sanitary water</span>
+        <span class="c1"># assumption: mean heat load in January/July = 6 (from Aarhus data).</span>
+        <span class="n">DH_CFmean_Jan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">DH_Skive</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;2019-01&#39;</span><span class="p">,</span> <span class="s1">&#39;Capacity Factor DH&#39;</span><span class="p">])</span>
+        <span class="n">DH_CFbase_load</span> <span class="o">=</span> <span class="n">DH_CFmean_Jan</span> <span class="o">/</span> <span class="mi">4</span>
+        <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;Capacity Factor DH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;Capacity Factor DH&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">DH_CFbase_load</span>
+        <span class="n">DH_Skive</span><span class="p">[</span><span class="s1">&#39;DH demand MWh&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="p">[</span>
+                                        <span class="s1">&#39;Capacity Factor DH&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">DH_max_capacity</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">DH_Skive</span><span class="p">)</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span><span class="n">hours_in_period</span><span class="p">)</span>
+        <span class="n">DH_Skive</span> <span class="o">=</span> <span class="n">DH_Skive</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+        <span class="n">DH_Skive</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">DH_external_demand_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>  <span class="c1"># MWh/h</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Onshore Wind and Solar Capacity Factors&#39;&#39;&#39;</span>
+    <span class="c1"># Download CF for wind and solar corresponding to the energy year</span>
+    <span class="c1"># TODO remove fallback function: when RN data for 2025 are available</span>
+    <span class="c1">#CF_solar, CF_wind = retrieve_renewable_capacity_factors(p.RN_token, start_date, end_date, latitude, longitude)</span>
+    <span class="n">CF_solar</span><span class="p">,</span> <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">retrieve_renewable_capacity_factors_with_fallback</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">RN_token</span><span class="p">,</span>
+        <span class="n">start_date</span><span class="p">,</span>
+        <span class="n">end_date</span><span class="p">,</span>
+        <span class="n">latitude</span><span class="p">,</span>
+        <span class="n">longitude</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">CF_wind</span><span class="p">)</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">remove_feb_29</span><span class="p">(</span><span class="n">CF_solar</span><span class="p">)</span>
+    <span class="n">CF_wind</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">CF_wind_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>  <span class="c1"># kg/MWh</span>
+    <span class="n">CF_solar</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">CF_solar_input_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>  <span class="c1"># kg/MWh</span>
+
+    <span class="k">return</span></div>
+
+
+
+<span class="c1"># ---- Pre-processing for PyPSA network</span>
+
+<div class="viewcode-block" id="prepare_all_inputs">
+<a class="viewcode-back" href="../../api.html#scripts.preprocessing.prepare_all_inputs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_all_inputs</span><span class="p">(</span><span class="n">targets_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">CO2_cost</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                       <span class="n">CO2_cost_ref_year</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_RE_to_grid</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load preprocessed CSVs and assemble the network input dictionary.</span>
+
+<span class="sd">    Calls all lower-level loaders and demand builders and packages their</span>
+<span class="sd">    outputs into the single ``inputs_dict`` consumed by</span>
+<span class="sd">    :func:`scripts.prepare_network.build_network`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    targets_dict : dict</span>
+<span class="sd">        Demand targets keyed by carrier name (``&quot;demand_H2&quot;``,</span>
+<span class="sd">        ``&quot;demand_CH4&quot;``, ``&quot;demand_meoh&quot;``) and demand driver</span>
+<span class="sd">        (``&quot;driver&quot;``).  Corresponds to the ``targets`` block in</span>
+<span class="sd">        ``config.yaml``.</span>
+<span class="sd">    CO2_cost : float</span>
+<span class="sd">        CO₂ price in EUR/t used for the current optimisation scenario.</span>
+<span class="sd">    CO2_cost_ref_year : float</span>
+<span class="sd">        CO₂ price in the reference (historical) year, used to scale</span>
+<span class="sd">        time-series cost signals.</span>
+<span class="sd">    max_RE_to_grid : float</span>
+<span class="sd">        Maximum fraction of renewable electricity that may be exported to</span>
+<span class="sd">        the grid (0–1).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        ``inputs_dict`` with the following keys (each value is a</span>
+<span class="sd">        :class:`pandas.DataFrame` or scalar):</span>
+
+<span class="sd">        * ``&quot;GL_inputs&quot;`` — GreenLab energy/material flow table</span>
+<span class="sd">        * ``&quot;GL_eff&quot;`` — bus-to-bus efficiency DataFrame</span>
+<span class="sd">        * ``&quot;Elspotprices&quot;`` — hourly electricity spot prices (EUR/MWh)</span>
+<span class="sd">        * ``&quot;CO2_emiss_El&quot;`` — hourly CO₂ emission intensity (kg/MWh)</span>
+<span class="sd">        * ``&quot;CF_wind&quot;`` — hourly wind capacity factors</span>
+<span class="sd">        * ``&quot;CF_solar&quot;`` — hourly solar capacity factors</span>
+<span class="sd">        * ``&quot;NG_price_year&quot;`` — hourly natural gas price (EUR/MWh)</span>
+<span class="sd">        * ``&quot;DH_external_demand&quot;`` — hourly district-heating demand (MWh)</span>
+<span class="sd">        * ``&quot;demands&quot;`` — sub-dict with H₂, bioCH₄ and MeOH demand series</span>
+<span class="sd">        * ``&quot;CO2_cost&quot;`` — CO₂ price scalar (EUR/t)</span>
+<span class="sd">        * ``&quot;max_RE_to_grid&quot;`` — grid export fraction scalar</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># load the inputs form CSV files</span>
+    <span class="n">GL_inputs</span><span class="p">,</span> <span class="n">GL_eff</span><span class="p">,</span> <span class="n">Elspotprices</span><span class="p">,</span> <span class="n">CO2_emiss_El</span><span class="p">,</span> <span class="n">CF_wind</span><span class="p">,</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">NG_price_year</span><span class="p">,</span> <span class="n">DH_external_demand</span> <span class="o">=</span> <span class="n">load_input_data</span><span class="p">()</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Build all demands&#39;&#39;&#39;</span>
+    <span class="c1"># build demands TS (considers targets_dict[&#39;driver&#39;])</span>
+    <span class="n">demands</span> <span class="o">=</span> <span class="n">build_demands_TS</span><span class="p">(</span><span class="n">targets_dict</span><span class="p">)</span>
+    <span class="n">NG_DK</span> <span class="o">=</span> <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;NG_DK&#39;</span><span class="p">]</span>
+
+    <span class="n">H2_input_demand</span>   <span class="o">=</span> <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;H2&#39;</span><span class="p">]</span>
+    <span class="n">bioCH4_demand</span>     <span class="o">=</span> <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;bioCH4&#39;</span><span class="p">]</span>
+    <span class="n">Methanol_demand</span>   <span class="o">=</span> <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;meoh&#39;</span><span class="p">]</span>
+
+    <span class="n">inputs_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;GL_inputs&#39;</span><span class="p">:</span>               <span class="n">GL_inputs</span><span class="p">,</span>
+        <span class="s1">&#39;GL_eff&#39;</span><span class="p">:</span>                  <span class="n">GL_eff</span><span class="p">,</span>
+        <span class="s1">&#39;Elspotprices&#39;</span><span class="p">:</span>            <span class="n">Elspotprices</span><span class="p">,</span>
+        <span class="s1">&#39;CO2_emiss_El&#39;</span><span class="p">:</span>            <span class="n">CO2_emiss_El</span><span class="p">,</span>
+        <span class="s1">&#39;bioCH4_demand&#39;</span><span class="p">:</span>           <span class="n">bioCH4_demand</span><span class="p">,</span>
+        <span class="s1">&#39;bioCH4_store_e_nom_max&#39;</span><span class="p">:</span>  <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;bioCH4_e_nom_max&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;CF_wind&#39;</span><span class="p">:</span>                 <span class="n">CF_wind</span><span class="p">,</span>
+        <span class="s1">&#39;CF_solar&#39;</span><span class="p">:</span>                <span class="n">CF_solar</span><span class="p">,</span>
+        <span class="s1">&#39;NG_price_year&#39;</span><span class="p">:</span>           <span class="n">NG_price_year</span><span class="p">,</span>
+        <span class="s1">&#39;Methanol_input_demand&#39;</span><span class="p">:</span>   <span class="n">Methanol_demand</span><span class="p">,</span>
+        <span class="s1">&#39;Methanol_store_e_nom_max&#39;</span><span class="p">:</span> <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;meoh_e_nom_max&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;NG_demand_DK&#39;</span><span class="p">:</span>            <span class="n">NG_DK</span><span class="p">,</span>
+        <span class="s1">&#39;DH_external_demand&#39;</span><span class="p">:</span>      <span class="n">DH_external_demand</span><span class="p">,</span>
+        <span class="s1">&#39;H2_input_demand&#39;</span><span class="p">:</span>         <span class="n">H2_input_demand</span><span class="p">,</span>
+        <span class="s1">&#39;H2_store_e_nom_max&#39;</span><span class="p">:</span>      <span class="n">demands</span><span class="p">[</span><span class="s1">&#39;H2_e_nom_max&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;CO2 cost&#39;</span><span class="p">:</span>                <span class="n">CO2_cost</span><span class="p">,</span>
+        <span class="s1">&#39;CO2 cost ref year&#39;</span><span class="p">:</span>       <span class="n">CO2_cost_ref_year</span><span class="p">,</span>
+        <span class="s1">&#39;max_RE_to_grid&#39;</span><span class="p">:</span>          <span class="n">max_RE_to_grid</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;driver&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">Elspotprices</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># &lt;- align with scenario/year data</span>
+
+        <span class="n">prices</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;price_H2&quot;</span><span class="p">:</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;price_H2&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;price_meoh&quot;</span><span class="p">:</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;price_meoh&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;price_bioCH4&quot;</span><span class="p">:</span> <span class="n">targets_dict</span><span class="p">[</span><span class="s2">&quot;price_bioCH4&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="n">price_ts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">prices</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="p">}</span>
+        <span class="n">inputs_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">price_ts</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">inputs_dict</span></div>
+
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

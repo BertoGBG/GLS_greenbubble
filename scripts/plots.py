@@ -425,24 +425,70 @@ def extract_deterministic_from_stochastic(n, scenario=None, slice_timeseries=Fal
 
     return n_det
 
+def _filter_network_for_topo(n, threshold: float = 0.5):
+    """Remove near-zero-capacity components and orphaned buses from n in-place.
+
+    Modifies n directly (no copy) — matches the original optimal_network_only()
+    approach which avoids PyPSA's restriction on copying a network with an
+    attached solver model.  The network must already be exported before calling.
+
+    Uses p_nom_opt / e_nom_opt (OPT) when available, falls back to p_nom / e_nom (PRE).
+    Also removes buses that become orphaned after component removal.
+    """
+    comp_map = [
+        ("generators",    "p_nom", "p_nom_opt", "Generator"),
+        ("links",         "p_nom", "p_nom_opt", "Link"),
+        ("stores",        "e_nom", "e_nom_opt", "Store"),
+        ("storage_units", "p_nom", "p_nom_opt", "StorageUnit"),
+    ]
+    total_removed = 0
+    for attr, nom_col, opt_col, cls_name in comp_map:
+        df = getattr(n, attr, None)
+        if df is None or df.empty:
+            continue
+        cap_col = opt_col if opt_col in df.columns else nom_col
+        if cap_col not in df.columns:
+            continue
+        to_remove = df.index[df[cap_col].fillna(0.0).abs() < threshold].tolist()
+        for name in to_remove:
+            n.remove(cls_name, name)
+        total_removed += len(to_remove)
+
+    # Remove buses no longer referenced by any remaining component
+    bus_ok = set()
+    for bus_col in ("bus", "bus0", "bus1", "bus2", "bus3", "bus4"):
+        for attr in ("generators", "links", "stores", "storage_units", "loads"):
+            df = getattr(n, attr, None)
+            if df is not None and not df.empty and bus_col in df.columns:
+                bus_ok.update(df[bus_col].dropna().values)
+    orphan_buses = [b for b in n.buses.index if b not in bus_ok]
+    for b in orphan_buses:
+        n.remove("Bus", b)
+
+    if total_removed or orphan_buses:
+        print(f"[print_network] removed {total_removed} near-zero components, "
+              f"{len(orphan_buses)} orphaned buses (threshold={threshold})")
+    return n
+
+
 def print_network(n, n_flags, nc_path, network_name, suffix, plot_folder, is_stochastic):
     # function that prints .svg of network topology with pypsatopo
 
     if not n_flags.get("print", False):
         return None
 
+    if nc_path is None:
+        print("[WARN] No nc_path provided; skipping network plot.")
+        return None
+
     if is_stochastic:
-        # Reload ONLY to safely collapse scenarios for plotting
-        if nc_path is None:
-            print("[WARN] No nc_path provided; skipping network plot.")
-            return None
         n_plot = pypsa.Network(nc_path)
         n_plot = extract_deterministic_from_stochastic(
             n_plot, scenario=None, slice_timeseries=False
         )
     else:
-        # Deterministic network can be plotted directly (no scenario slicing needed)
-        n_plot = n
+        # Always reload from saved NC to avoid any in-memory state issues with pypsatopo
+        n_plot = pypsa.Network(nc_path)
 
     filename = f"{network_name}{suffix}.svg"
     svg_path = os.path.join(plot_folder, filename)
@@ -462,33 +508,13 @@ def save_opt_capacity_components(
     n_opt,
     network_comp_allocation,
     file_path,
-    thresholds: dict | None = None,
-    # defaults (still here for backward compatibility)
-    GEN_TH=0.5,          # MW
-    LINK_TH=0.5,         # MW
-    LINK_MASS_TH=0.5,    # t/h
-    STORE_TH=1.0,        # MWh
-    STORE_MASS_TH=0.5,   # t
-    SU_TH=0.5,           # MW
-    SU_MASS_TH=0.5,      # t/h
 ):
     """
     Saves optimal capacities + annualized capex for allocated assets.
 
-    thresholds:
-      dict with keys: GEN_TH, LINK_TH, LINK_MASS_TH, STORE_TH, STORE_MASS_TH, SU_TH, SU_MASS_TH
-      If provided, overrides the default keyword args above.
+    Solver-noise filtering is handled upstream by zero_small_capacities()
+    in snakemake_plot.py, so no per-component threshold is needed here.
     """
-
-    # --- override defaults from YAML thresholds if given ---
-    if thresholds is not None:
-        GEN_TH = float(thresholds.get("GEN_TH", GEN_TH))
-        LINK_TH = float(thresholds.get("LINK_TH", LINK_TH))
-        LINK_MASS_TH = float(thresholds.get("LINK_MASS_TH", LINK_MASS_TH))
-        STORE_TH = float(thresholds.get("STORE_TH", STORE_TH))
-        STORE_MASS_TH = float(thresholds.get("STORE_MASS_TH", STORE_MASS_TH))
-        SU_TH = float(thresholds.get("SU_TH", SU_TH))
-        SU_MASS_TH = float(thresholds.get("SU_MASS_TH", SU_MASS_TH))
 
     # -------- helpers --------
     def detect_levels(mi: pd.MultiIndex):
@@ -569,19 +595,6 @@ def save_opt_capacity_components(
             return None if pd.isna(u) else u
         return None
 
-    def threshold(component, unit):
-        u = norm_unit(unit)
-        if component == "generator":
-            return GEN_TH
-        if component == "link":
-            return LINK_MASS_TH if u == "t/h" else LINK_TH
-        if component == "store":
-            return STORE_MASS_TH if u == "t" else STORE_TH
-        # storage_unit is power-rated (like generator), but allow t/h buses too
-        if component == "storage_unit":
-            return SU_MASS_TH if u == "t/h" else SU_TH
-        return None
-
     # -------- build rows --------
     rows = []
 
@@ -600,21 +613,16 @@ def save_opt_capacity_components(
                     continue
                 bus = gens.at[g, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("generator", u)
                 cap = float(gens.at[g, gen_opt])
                 cc = float(gens.at[g, "capital_cost"]) if "capital_cost" in gens.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "generator",
                     "asset": str(g),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
         # Links
@@ -624,21 +632,16 @@ def save_opt_capacity_components(
                     continue
                 bus0 = links.at[l, "bus0"]
                 u = unit_of_bus(bus0)
-                th = threshold("link", u)
                 cap = float(links.at[l, link_opt])
                 cc = float(links.at[l, "capital_cost"]) if "capital_cost" in links.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "link",
                     "asset": str(l),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus0,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
         # Stores
@@ -648,55 +651,41 @@ def save_opt_capacity_components(
                     continue
                 bus = stores.at[s, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("store", u)
                 cap = float(stores.at[s, store_opt])
                 cc = float(stores.at[s, "capital_cost"]) if "capital_cost" in stores.columns else np.nan
-                cost_out = cap * cc
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
                 rows.append({
                     "plant": plant,
                     "component": "store",
                     "asset": str(s),
-                    "capacity": cap_out,
-                    "Fixed cost (€/y)": cost_out,
+                    "capacity": cap,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
                     "unit": norm_unit(u),
-                    "threshold": th,
                 })
 
-        # NEW: Storage Units
+        # Storage Units
         if su_opt:
             for su in alloc.get("storage_units", []) or []:
                 if su not in sus.index:
                     continue
                 bus = sus.at[su, "bus"]
                 u = unit_of_bus(bus)
-                th = threshold("storage_unit", u)
                 cap = float(sus.at[su, su_opt])
-
                 cc = float(sus.at[su, "capital_cost"]) if "capital_cost" in sus.columns else np.nan
-                cost_out = cap * cc
-
-                cap_out = f"< {th}" if (th is not None and cap < th) else cap
-
-                # Optional: implicit energy capacity (MWh) via max_hours if available
                 e_cap = np.nan
                 if "max_hours" in sus.columns:
                     mh = sus.at[su, "max_hours"]
                     if mh is not None and not pd.isna(mh):
                         e_cap = float(cap) * float(mh)
-
                 rows.append({
                     "plant": plant,
                     "component": "storage_unit",
                     "asset": str(su),
-                    "capacity": cap_out,
+                    "capacity": cap,
                     "energy_capacity": e_cap,
-                    "Fixed cost (€/y)": cost_out,
+                    "Fixed cost (€/y)": cap * cc,
                     "reference inlet": bus,
-                    "unit": norm_unit(u),              # this is power unit
-                    "threshold": th,
+                    "unit": norm_unit(u),
                 })
 
     df = pd.DataFrame(rows)
@@ -710,11 +699,309 @@ def save_opt_capacity_components(
     df.attrs["chosen_scenario"] = str(chosen_scenario) if chosen_scenario is not None else None
     return df
 
+
+def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3, comp_tech_map=None):
+    """Save a comprehensive human-readable table of all optimal-capacity components.
+
+    Output: full_component_table.csv — one row per component.
+
+    Filters components whose optimal capacity < num_tol (solver numerical noise only).
+    For stochastic networks the first scenario slice is used for static tables;
+    variable costs are summed across all snapshots weighted by snapshot_weightings.
+    """
+
+    # ---- helpers ----
+    def _slice_static(df):
+        if df is None or df.empty:
+            return df if df is not None else pd.DataFrame()
+        if not isinstance(df.index, pd.MultiIndex):
+            return df
+        return df.xs(df.index.get_level_values(0)[0], level=0)
+
+    def _get_buses_static():
+        if isinstance(n.buses.index, pd.MultiIndex):
+            return n.buses.xs(n.buses.index.get_level_values(0)[0], level=0)
+        return n.buses
+
+    buses_s = _get_buses_static()
+
+    def _unit_of_bus(bus_name):
+        b = bus_name[-1] if isinstance(bus_name, tuple) else bus_name
+        if "unit" in buses_s.columns and b in buses_s.index:
+            u = buses_s.at[b, "unit"]
+            if pd.notna(u) and str(u).strip():
+                return str(u).strip()
+        return "MW"
+
+    # ---- reverse lookup: component name -> plant ----
+    comp_to_plant: dict = {}
+    for plant, alloc in (network_comp_allocation or {}).items():
+        for kind_key in ("generators", "links", "stores", "storage_units"):
+            for cname in (alloc or {}).get(kind_key, []) or []:
+                comp_to_plant[cname] = plant
+
+    _tech_map = comp_tech_map or {}
+
+    # ---- snapshot weightings ----
+    sw = n.snapshot_weightings
+    weights = sw.get("generators", sw.get("objective", sw.iloc[:, 0]))
+    total_hours = float(weights.sum())
+
+    def _weighted_sum(ts):
+        if ts is None:
+            return 0.0
+        return float(ts.reindex(weights.index).fillna(0.0).mul(weights).sum())
+
+    def _get_ts(ts_df, name):
+        if ts_df is None or ts_df.empty:
+            return None
+        if isinstance(ts_df.columns, pd.MultiIndex):
+            matches = [col for col in ts_df.columns if col[-1] == name]
+            return ts_df[matches].sum(axis=1) / max(len(matches), 1) if matches else None
+        return ts_df[name] if name in ts_df.columns else None
+
+    def _capacity_factor(dispatch_wsum, cap):
+        if cap <= 0 or total_hours <= 0:
+            return np.nan
+        return round(dispatch_wsum / (cap * total_hours), 3)
+
+    def _vre_curtailment(name, cap):
+        """Curtailment fraction = (available - produced) / available for VRE generators."""
+        p_max_pu_df = getattr(n.generators_t, "p_max_pu", None)
+        if p_max_pu_df is None:
+            return np.nan
+        ts_avail = _get_ts(p_max_pu_df, name)
+        if ts_avail is None:
+            return np.nan
+        ts_p = _get_ts(n.generators_t.get("p"), name)
+        if ts_p is None:
+            return np.nan
+        avail_wsum = _weighted_sum(ts_avail * cap)
+        prod_wsum  = _weighted_sum(ts_p)
+        if avail_wsum <= 0:
+            return np.nan
+        return round((avail_wsum - prod_wsum) / avail_wsum, 3)
+
+    def _is_vre(carrier):
+        c = str(carrier).lower()
+        return any(k in c for k in ("wind", "solar", "pv"))
+
+    # ---- static slices ----
+    gens_s   = _slice_static(n.generators)
+    links_s  = _slice_static(n.links)
+    stores_s = _slice_static(n.stores)
+    sus_s    = _slice_static(n.storage_units) if hasattr(n, "storage_units") else pd.DataFrame()
+
+    rows = []
+
+    # --- Generators ---
+    cap_col = "p_nom_opt" if "p_nom_opt" in gens_s.columns else "p_nom"
+    for name, row in gens_s.iterrows():
+        cap = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc      = float(row.get("capital_cost", 0.0))
+        mc      = float(row.get("marginal_cost", 0.0))
+        bus     = str(row.get("bus", ""))
+        carrier = row.get("carrier", "")
+        ts      = _get_ts(n.generators_t.get("p"), name)
+        disp    = _weighted_sum(ts)
+        var     = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Generator",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        carrier,
+            "Reference inlet":                bus,
+            "Unit":                           _unit_of_bus(bus),
+            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    _vre_curtailment(name, cap) if _is_vre(carrier) else np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":               round(cap * cc + var, 0),
+        })
+
+    # --- Links ---
+    cap_col = "p_nom_opt" if "p_nom_opt" in links_s.columns else "p_nom"
+    for name, row in links_s.iterrows():
+        cap  = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc   = float(row.get("capital_cost", 0.0))
+        mc   = float(row.get("marginal_cost", 0.0))
+        bus0 = str(row.get("bus0", ""))
+        ts   = _get_ts(n.links_t.get("p0"), name)
+        ts_pos = ts.clip(lower=0) if ts is not None else None
+        disp = _weighted_sum(ts_pos)
+        var  = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Link",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        row.get("carrier", ""),
+            "Reference inlet":                bus0,
+            "Unit":                           _unit_of_bus(bus0),
+            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":              round(cap * cc + var, 0),
+        })
+
+    # --- Stores ---
+    cap_col = "e_nom_opt" if "e_nom_opt" in stores_s.columns else "e_nom"
+    for name, row in stores_s.iterrows():
+        cap = float(row.get(cap_col, 0.0))
+        if cap < num_tol:
+            continue
+        cc  = float(row.get("capital_cost", 0.0))
+        mc  = float(row.get("marginal_cost", 0.0))
+        bus = str(row.get("bus", ""))
+        ts  = _get_ts(n.stores_t.get("p"), name)
+        ts_pos = ts.clip(lower=0) if ts is not None else None
+        disp = _weighted_sum(ts_pos)
+        var  = mc * disp
+        rows.append({
+            "Plant":                          comp_to_plant.get(name, "Unallocated"),
+            "Component":                      "Store",
+            "Asset":                          name,
+            "Cost input":                     _tech_map.get(name, ""),
+            "Carrier":                        row.get("carrier", ""),
+            "Reference inlet":                bus,
+            "Unit":                           _unit_of_bus(bus),
+            "Expandable":                     bool(row.get("e_nom_extendable", False)),
+            "Initial capacity":               round(float(row.get("e_nom", 0.0)), 3),
+            "Optimal capacity":               round(cap, 3),
+            "Optimal energy capacity":        np.nan,
+            "Capacity factor":                _capacity_factor(disp, cap),
+            "Curtailment":                    np.nan,
+            "Specific fixed cost (€/(unit y))":   round(cc, 2),
+            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Fixed cost (€/y)":               round(cap * cc, 0),
+            "Variable cost (€/y)":            round(var, 0),
+            "Total cost (€/y)":               round(cap * cc + var, 0),
+        })
+
+    # --- StorageUnits ---
+    if not sus_s.empty:
+        cap_col = "p_nom_opt" if "p_nom_opt" in sus_s.columns else "p_nom"
+        for name, row in sus_s.iterrows():
+            cap = float(row.get(cap_col, 0.0))
+            if cap < num_tol:
+                continue
+            cc   = float(row.get("capital_cost", 0.0))
+            mc   = float(row.get("marginal_cost", 0.0))
+            bus  = str(row.get("bus", ""))
+            mh   = row.get("max_hours", np.nan)
+            e_cap = round(cap * float(mh), 3) if pd.notna(mh) else np.nan
+            ts   = _get_ts(n.storage_units_t.get("p"), name)
+            ts_pos = ts.clip(lower=0) if ts is not None else None
+            disp = _weighted_sum(ts_pos)
+            var  = mc * disp
+            rows.append({
+                "Plant":                          comp_to_plant.get(name, "Unallocated"),
+                "Component":                      "StorageUnit",
+                "Asset":                          name,
+                "Cost input":                     _tech_map.get(name, ""),
+                "Carrier":                        row.get("carrier", ""),
+                "Reference inlet":                bus,
+                "Unit":                           _unit_of_bus(bus),
+                "Expandable":                     bool(row.get("p_nom_extendable", False)),
+                "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
+                "Optimal capacity":               round(cap, 3),
+                "Optimal energy capacity":        e_cap,
+                "Capacity factor":                _capacity_factor(disp, cap),
+                "Curtailment":                    np.nan,
+                "Specific fixed cost (€/(unit y))":   round(cc, 2),
+                "Specific variable cost (€/(unit h))": round(mc, 4),
+                "Fixed cost (€/y)":               round(cap * cc, 0),
+                "Variable cost (€/y)":            round(var, 0),
+                "Total cost (€/y)":               round(cap * cc + var, 0),
+            })
+
+    df = pd.DataFrame(rows).sort_values("Plant", kind="stable").reset_index(drop=True)
+
+    # ---- objective function check ----
+    total_fixed = df["Fixed cost (€/y)"].sum()
+    total_var   = df["Variable cost (€/y)"].sum()
+    total_cost  = df["Total cost (€/y)"].sum()
+    obj = getattr(n, "objective", None)
+    if obj is not None:
+        try:
+            obj_f = float(obj) + float(getattr(n, "objective_constant", 0.0) or 0.0)
+            diff  = total_cost - obj_f
+            pct   = 100.0 * diff / obj_f if obj_f != 0 else float("nan")
+            print(
+                f"[full_component_table] Cost check: "
+                f"table total={total_cost:.0f} €/y  |  "
+                f"TSC (obj+constant)={obj_f:.0f} €/y  |  "
+                f"diff={diff:+.0f} €/y ({pct:+.1f}%)"
+            )
+        except Exception:
+            pass
+
+    # ---- save main CSV ----
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out, index=False)
+
+    return df
+
+
+def save_cost_assumptions_csv(tech_costs_used, file_path):
+    """Save the technology cost assumptions used in the model as a CSV.
+
+    tech_costs_used is a DataFrame (subset of tech_costs) with rows indexed
+    by technology name and columns of cost/efficiency parameters. Columns that
+    are all-NaN for the selected technologies are dropped for readability.
+    """
+    if tech_costs_used is None or tech_costs_used.empty:
+        print("[save_cost_assumptions_csv] No tech_costs_used data available — skipping.")
+        return None
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tech_costs_used.dropna(axis=1, how="all").to_csv(out)
+    return tech_costs_used
+
+
+def save_pypsa_statistics(n, file_path):
+    """Save n.statistics() DataFrame as CSV."""
+    try:
+        stats = n.statistics()
+    except Exception as e:
+        print(f"[save_pypsa_statistics] n.statistics() failed: {e}")
+        return None
+    out = Path(file_path)
+    if out.suffix.lower() != ".csv":
+        out = out.with_suffix(".csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    stats.to_csv(out)
+    return stats
+
+
 # Filter very small capacities:
 def filter_items_by_capacity_threshold(
     n,
     items,
-    default_th=0.0,
+    default_th=1e-3,
     include_exi=True,
     verbose=False,
 ):
@@ -798,6 +1085,714 @@ def filter_items_by_capacity_threshold(
 
     return filtered
 
+
+def filter_bus_list_mp(n, bus_list, link_th=0.5):
+    """Return buses from bus_list that have at least one injecting link with capacity >= link_th.
+
+    Checks every link where the bus appears as bus1..bus5 (output side).
+    Buses not present in the network's marginal_price table are also dropped.
+    """
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    cap_col = next((col for col in ("p_nom_opt", "p_nom") if not links.empty and col in links.columns), None)
+    mp_cols = set(n.buses_t.marginal_price.columns) if not n.buses_t.marginal_price.empty else set()
+    if isinstance(n.buses_t.marginal_price.columns, pd.MultiIndex):
+        mp_cols = set(n.buses_t.marginal_price.columns.get_level_values("name"))
+
+    keep, dropped = [], []
+    for bus in bus_list:
+        # Always keep buses that appear in marginal_price with any content,
+        # but only if at least one injecting link is above threshold.
+        has_link = False
+        if cap_col is not None:
+            for bus_col in ("bus1", "bus2", "bus3", "bus4", "bus5"):
+                if bus_col not in links.columns:
+                    continue
+                mask = links[bus_col] == bus
+                if mask.any() and (links.loc[mask, cap_col].abs() >= link_th).any():
+                    has_link = True
+                    break
+
+        if has_link or (not links.empty and cap_col is None):
+            keep.append(bus)
+        else:
+            dropped.append(bus)
+
+    if dropped:
+        print(f"[shadow prices] buses filtered out (no injecting link ≥ {link_th} MW): {dropped}")
+    return keep
+
+
+def _bus_net_injection(n, bus):
+    """Total power injected INTO `bus` at each snapshot (MW).
+
+    Uses link p0 × efficiency for each output port (positive efficiency only),
+    plus generator output and storage-unit discharge at that bus.
+    For stochastic networks, uses the first scenario's p0.
+    """
+    result = pd.Series(0.0, index=n.snapshots)
+
+    # Generators
+    if not n.generators.empty and "bus" in n.generators.columns:
+        p_gen = getattr(n.generators_t, "p", None)
+        if p_gen is not None:
+            for g in n.generators.index[n.generators["bus"] == bus]:
+                if g in p_gen.columns:
+                    result = result.add(p_gen[g].reindex(n.snapshots, fill_value=0.0), fill_value=0.0)
+
+    # Links: injection at each output port = p0 × efficiency_i (if > 0)
+    if not n.links.empty:
+        p0_raw = getattr(n.links_t, "p0", None)
+        if p0_raw is not None and not p0_raw.empty:
+            if isinstance(p0_raw.columns, pd.MultiIndex):
+                first_scen = p0_raw.columns.get_level_values(0)[0]
+                p0_df = p0_raw[first_scen]
+            else:
+                p0_df = p0_raw
+            links = _slice_df_first_scenario(n.links)
+            for bus_col, eff_col in [
+                ("bus1", "efficiency"),
+                ("bus2", "efficiency2"),
+                ("bus3", "efficiency3"),
+                ("bus4", "efficiency4"),
+                ("bus5", "efficiency5"),
+            ]:
+                if bus_col not in links.columns:
+                    continue
+                for lk in links.index[links[bus_col] == bus]:
+                    if lk not in p0_df.columns:
+                        continue
+                    eff = float(links.at[lk, eff_col]) if eff_col in links.columns else 1.0
+                    if eff > 0:
+                        result = result.add(
+                            (p0_df[lk] * eff).reindex(n.snapshots, fill_value=0.0),
+                            fill_value=0.0,
+                        )
+
+    # StorageUnits discharging
+    if not n.storage_units.empty and "bus" in n.storage_units.columns:
+        p_su = getattr(n.storage_units_t, "p", None)
+        if p_su is not None:
+            for su in n.storage_units.index[n.storage_units["bus"] == bus]:
+                if su in p_su.columns:
+                    result = result.add(
+                        p_su[su].reindex(n.snapshots, fill_value=0.0).clip(lower=0),
+                        fill_value=0.0,
+                    )
+
+    return result.clip(lower=0)
+
+
+def export_shadow_prices_mean_csv(n, bus_list, out_path):
+    """Save energy-weighted mean marginal price for each bus; returns {bus: mean} dict.
+
+    Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
+    Falls back to duration-weighted mean when a bus receives no measurable flow.
+    """
+    mp = n.buses_t.marginal_price
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+
+    rows = []
+    means = {}
+
+    for bus in bus_list:
+        if isinstance(mp.columns, pd.MultiIndex):
+            bus_cols = mp.loc[:, mp.columns.get_level_values("name") == bus]
+            if bus_cols.empty:
+                continue
+            λ = bus_cols.iloc[:, 0]
+        else:
+            if bus not in mp.columns:
+                continue
+            λ = mp[bus]
+
+        λ = pd.to_numeric(λ, errors="coerce").reindex(n.snapshots, fill_value=0.0)
+
+        q    = _bus_net_injection(n, bus)
+        e_w  = (q * snap_w).reindex(n.snapshots, fill_value=0.0)
+        denom = float(e_w.sum())
+
+        if denom > 1e-6:
+            wmean = float((λ * e_w).sum() / denom)
+        else:
+            wmean = float((λ * snap_w).sum() / snap_w.sum())
+
+        means[bus] = wmean
+        rows.append({"bus": bus, "energy weighted mean (EUR/MWh)": round(wmean, 4)})
+
+    if rows:
+        pd.DataFrame(rows).set_index("bus").to_csv(out_path)
+        print(f"[shadow prices] energy-weighted mean prices saved → {out_path}")
+
+    return means
+
+
+def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (energy-weighted)",
+                                bus_filter=None):
+    """Bar chart of energy-weighted mean marginal prices by bus.
+
+    Parameters
+    ----------
+    means : dict {bus: float}  (as returned by export_shadow_prices_mean_csv)
+    out_path : str or Path
+    bus_filter : list[str] or None
+        If given, only buses in this list are plotted (preserves order of bus_filter).
+    """
+    if not means:
+        return
+
+    if bus_filter is not None:
+        buses = [b for b in bus_filter if b in means]
+    else:
+        buses = list(means.keys())
+    values = [means[b] for b in buses]
+
+    fig, ax = plt.subplots(figsize=(max(6, 0.55 * len(buses)), 4.2))
+    bars = ax.bar(range(len(buses)), values, color="#2196f3", edgecolor="white", linewidth=0.5)
+
+    # value labels on top of bars
+    for bar, val in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(abs(v) for v in values) * 0.01,
+            f"{val:.1f}",
+            ha="center", va="bottom", fontsize=8,
+        )
+
+    ax.set_xticks(range(len(buses)))
+    ax.set_xticklabels(buses, rotation=60, ha="right", fontsize=9)
+    ax.set_ylabel("€/MWh")
+    ax.set_title(title)
+    ax.grid(axis="y", alpha=0.3)
+    ax.axhline(0, color="black", linewidth=0.6)
+
+    plt.tight_layout()
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[shadow prices] mean bar chart saved → {out_path}")
+
+
+# ---- LCOP BY TECHNOLOGY ----
+
+def compute_lcop_by_technology(n, out_csv, out_plot):
+    """Compute LCOP, revenue, and annual profit for each technology injecting
+    into a product collection bus (tagged is_product_bus=True).
+
+    Definitions (one row per multilink lk with bus1 = collection bus):
+
+      indirect OPEX  = feedstock costs − by-product credits, via KKT:
+                     = −Σ_{k≠bus1} eff_k × Σ_t(p0_t × λ_{bus_k,t} × snap_w_t)
+                       [eff_0 = −1 for bus0; positive = net cost, typical case]
+
+      LCOP [€/MWh]   = (CAPEX + OPEX + indirect OPEX) / annual production
+
+      revenue main product = eff1 × Σ_t(p0_t × λ_{bus1,t} × snap_w_t)
+
+      net market value = revenue main product − indirect OPEX
+
+      annual profit    = net market value − CAPEX − OPEX
+                       = what the market pays you for your product and
+                         by-products, minus every cost you incur.
+                         ≈ 0 for the marginal (price-setting) technology;
+                         > 0 for infra-marginal (lower-cost) technologies.
+
+    Shared components (compressors, storage with their own carrier) are NOT
+    included — their cost enters implicitly via the KKT at the interface buses.
+
+    Saves a presentable CSV and a two-panel bar chart.
+    Returns results as a DataFrame (column names match the CSV headers).
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[LCOP] no 'is_product_bus' column on buses — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[LCOP] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[LCOP] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[LCOP] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    # ── Statistics ─────────────────────────────────────────────────────────
+    try:
+        capex_s = n.statistics.capex(groupby=False)
+        opex_s  = n.statistics.opex(groupby=False)
+    except Exception as e:
+        _warn.warn(f"[LCOP] n.statistics failed: {e}")
+        capex_s = pd.Series(dtype=float)
+        opex_s  = pd.Series(dtype=float)
+
+    def _get_stat(series, name):
+        if series.empty:
+            return 0.0
+        if isinstance(series.index, pd.MultiIndex):
+            try:
+                val = series.xs(name, level=-1)
+                return float(val.sum()) if hasattr(val, "sum") else float(val)
+            except KeyError:
+                return 0.0
+        return float(series.get(name, 0.0))
+
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+
+    mp = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    if p0_raw is not None and not p0_raw.empty:
+        p0_df = (
+            p0_raw[p0_raw.columns.get_level_values(0)[0]]
+            if isinstance(p0_raw.columns, pd.MultiIndex)
+            else p0_raw
+        )
+    else:
+        p0_df = pd.DataFrame(index=n.snapshots)
+
+    def _kkt_term(bus, eff, p0):
+        """eff × Σ_t(p0_t × λ_{bus,t} × snap_w_t); 0 if bus unavailable."""
+        if pd.isna(bus) or str(bus) == "" or str(bus) not in mp.columns:
+            return 0.0
+        λ = mp[str(bus)].reindex(n.snapshots, fill_value=0.0)
+        return float((p0 * float(eff) * λ * snap_w).sum())
+
+    rows = []
+    link_names = []
+    for lk in product_links:
+        capex = _get_stat(capex_s, lk)
+        opex  = _get_stat(opex_s,  lk)
+
+        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        p0 = (
+            p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+            if lk in p0_df.columns
+            else pd.Series(0.0, index=n.snapshots)
+        )
+        annual_production = float((p0 * eff1 * snap_w).sum()) if eff1 > 0 else 0.0
+        if annual_production <= 0:
+            continue
+
+        # ── KKT at bus0 (implicit eff = -1: primary feedstock consumed) ───
+        bus0 = links.at[lk, "bus0"] if "bus0" in links.columns else ""
+        net_kkt_non_main = _kkt_term(bus0, -1.0, p0)
+
+        # ── KKT at bus2..bus5 (additional inputs eff<0 and by-products eff>0)
+        for bus_col, eff_col in [("bus2", "efficiency2"), ("bus3", "efficiency3"),
+                                  ("bus4", "efficiency4"), ("bus5", "efficiency5")]:
+            if bus_col not in links.columns or eff_col not in links.columns:
+                continue
+            eff_k = links.at[lk, eff_col]
+            if pd.isna(eff_k) or float(eff_k) == 0.0:
+                continue
+            net_kkt_non_main += _kkt_term(links.at[lk, bus_col], eff_k, p0)
+
+        # indirect OPEX = feedstock costs − by-product credits (positive = net cost)
+        indirect_opex = -net_kkt_non_main
+
+        # ── KKT at bus1 (main product at collection bus) ───────────────────
+        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
+        revenue_main = _kkt_term(bus1, eff1, p0)
+
+        net_market_value = revenue_main - indirect_opex
+        lcop             = (capex + opex + indirect_opex) / annual_production
+        annual_profit    = net_market_value - capex - opex
+
+        product = n.buses.at[bus1, "product"] if ("product" in n.buses.columns and bus1 in n.buses.index) else ""
+        link_names.append(lk)
+        rows.append({
+            "carrier":                      links.at[lk, "carrier"] if "carrier" in links.columns else "",
+            "product":                      product,
+            "CAPEX (EUR)":                  round(capex, 0),
+            "OPEX (EUR)":                   round(opex, 0),
+            "indirect OPEX (EUR)":          round(indirect_opex, 0),
+            "revenue main product (EUR)":   round(revenue_main, 0),
+            "net market value (EUR)":       round(net_market_value, 0),
+            "annual production (MWh)":      round(annual_production, 0),
+            "LCOP (EUR/MWh)":               round(lcop, 2),
+            "annual profit (EUR)":          round(annual_profit, 0),
+        })
+
+    if not rows:
+        print("[LCOP] no product links with positive output — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows, index=pd.Index(link_names, name="link"))
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv)
+    print(f"[LCOP] saved → {out_csv}")
+
+    _plot_lcop_bar(df, Path(out_plot))
+    return df
+
+
+def compute_lcop_kkt_by_technology(n, out_csv):
+    """KKT-based LCOP: production-weighted average shadow price at the product bus.
+
+    For each technology s injecting into a product collection bus (bus1):
+
+        LCOP_kkt_s = Σ_t( w_t · η₁ · p0_{s,t} · π_{bus1,t} )
+                     ─────────────────────────────────────────
+                          Σ_t( w_t · η₁ · p0_{s,t} )
+
+    where π_{bus1,t} is the nodal shadow price (marginal_price) at bus1.
+
+    The theory (see docs/economics.rst and KKTs_interpretation_v2.tex) proves
+    that at optimum this equals the cost-based LCOP from compute_lcop_by_technology.
+    This function lets you verify that equality numerically.
+
+    Returns a DataFrame indexed by link name with columns:
+        carrier, product, annual_production_MWh, LCOP_cost (EUR/MWh),
+        LCOP_kkt (EUR/MWh), diff (cost − kkt), π_bus1_mean, π_bus1_std
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[LCOP-KKT] no 'is_product_bus' column — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[LCOP-KKT] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[LCOP-KKT] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[LCOP-KKT] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+    mp = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    p0_df = (
+        (p0_raw[p0_raw.columns.get_level_values(0)[0]]
+         if isinstance(p0_raw.columns, pd.MultiIndex) else p0_raw)
+        if p0_raw is not None and not p0_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    # --- also pull cost-based LCOP for comparison ---
+    try:
+        cost_df = compute_lcop_by_technology.__wrapped__(n) if hasattr(
+            compute_lcop_by_technology, "__wrapped__") else None
+    except Exception:
+        cost_df = None
+    # Simpler: re-read the already-saved cost CSV if it exists alongside out_csv
+    cost_csv = Path(out_csv).parent / "lcop_by_technology.csv"
+    if cost_df is None and cost_csv.exists():
+        try:
+            cost_df = pd.read_csv(cost_csv, index_col=0)
+        except Exception:
+            cost_df = None
+
+    rows = []
+    link_names = []
+    for lk in product_links:
+        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
+        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+
+        p0 = (
+            p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+            if lk in p0_df.columns
+            else pd.Series(0.0, index=n.snapshots)
+        )
+        annual_production = float((p0 * eff1 * snap_w).sum())
+        if annual_production <= 0:
+            continue
+
+        if bus1 not in mp.columns:
+            _warn.warn(f"[LCOP-KKT] '{lk}': bus1 '{bus1}' not in marginal_price — skipping")
+            continue
+
+        pi = mp[bus1].reindex(n.snapshots, fill_value=0.0)
+        # production-weighted average shadow price
+        numerator = float((p0 * eff1 * pi * snap_w).sum())
+        lcop_kkt  = numerator / annual_production
+
+        # cost-based LCOP for comparison
+        lcop_cost = float(cost_df.at[lk, "LCOP (EUR/MWh)"]) if (
+            cost_df is not None and lk in cost_df.index and "LCOP (EUR/MWh)" in cost_df.columns
+        ) else float("nan")
+
+        product = n.buses.at[bus1, "product"] if (
+            "product" in n.buses.columns and bus1 in n.buses.index) else ""
+
+        link_names.append(lk)
+        rows.append({
+            "carrier":                  links.at[lk, "carrier"] if "carrier" in links.columns else "",
+            "product":                  product,
+            "annual_production_MWh":    round(annual_production, 0),
+            "LCOP_cost (EUR/MWh)":      round(lcop_cost, 4),
+            "LCOP_kkt (EUR/MWh)":       round(lcop_kkt, 4),
+            "diff cost−kkt (EUR/MWh)":  round(lcop_cost - lcop_kkt, 6) if not np.isnan(lcop_cost) else float("nan"),
+            "π_bus1_mean (EUR/MWh)":    round(float(pi.mean()), 4),
+            "π_bus1_std (EUR/MWh)":     round(float(pi.std()), 6),
+            "π_bus1_prod_weighted (EUR/MWh)": round(lcop_kkt, 4),
+        })
+
+    if not rows:
+        print("[LCOP-KKT] no product links with positive output — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows, index=pd.Index(link_names, name="link"))
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv)
+    print(f"[LCOP-KKT] saved → {out_csv}")
+    return df
+
+
+def _plot_lcop_bar(df, out_path):
+    """Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom)."""
+    labels  = df.index.tolist()
+    lcops   = df["LCOP (EUR/MWh)"].tolist()
+    profits = (df["annual profit (EUR)"] / 1e3).tolist()
+    if not labels:
+        return
+
+    n_tech = len(labels)
+    fig, axes = plt.subplots(2, 1, figsize=(max(6, 0.65 * n_tech), 8))
+
+    def _draw_bars(ax, values, ylabel, title, color):
+        bars = ax.bar(range(n_tech), values, color=color, edgecolor="white", linewidth=0.5)
+        y_range = max(abs(v) for v in values) if values else 1.0
+        for bar, val in zip(bars, values):
+            ypos = bar.get_height() + y_range * 0.01 if val >= 0 else bar.get_height() - y_range * 0.04
+            ax.text(bar.get_x() + bar.get_width() / 2, ypos,
+                    f"{val:.1f}", ha="center", va="bottom", fontsize=8)
+        ax.set_xticks(range(n_tech))
+        ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=9)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid(axis="y", alpha=0.3)
+        ax.axhline(0, color="black", linewidth=0.6)
+
+    _draw_bars(axes[0], lcops,   "€/MWh",
+               "LCOP  =  (CAPEX + OPEX + indirect OPEX) / annual production",
+               "#43a047")
+    _draw_bars(axes[1], profits, "k€/year",
+               "Annual profit  =  revenue main product − indirect OPEX − CAPEX − OPEX",
+               "#1565c0")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[LCOP] bar chart saved → {out_path}")
+
+
+# ---- VARIABLE COST BY TECHNOLOGY ----
+
+def compute_srmc_by_technology(n, out_csv, out_plot):
+    """Short-run marginal cost (SRMC) for each product-bus technology at every snapshot.
+
+    For technology s at snapshot t:
+
+        SRMC_{s,t} = [ λ_{bus0,t}  −  Σ_{k≥2} η_k · λ_{bus_k,t}  +  VOM_{s,t} ]  /  η_1
+
+    This is the instantaneous production cost per MWh of primary output — the cost of
+    producing one more MWh right now given current input market prices. It drives the
+    merit order. Note: VOM here is the model input (marginal_cost on links), not to be
+    confused with this output metric.
+
+    Saved outputs
+    -------------
+    CSV  : long-form table  (snapshot, link, product, SRMC_EUR_per_MWh, dispatch_MW,
+                              π_product_bus, in_merit)
+    Plot : one subplot per product — SRMC time series per technology + product shadow price.
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[SRMC] no 'is_product_bus' column — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[SRMC] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links  = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[SRMC] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[SRMC] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    mp     = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    p0_df  = (
+        (p0_raw[p0_raw.columns.get_level_values(0)[0]]
+         if isinstance(p0_raw.columns, pd.MultiIndex) else p0_raw)
+        if p0_raw is not None and not p0_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    vom_t_raw = getattr(n.links_t, "marginal_cost", None)
+    vom_df = (
+        (vom_t_raw[vom_t_raw.columns.get_level_values(0)[0]]
+         if isinstance(vom_t_raw.columns, pd.MultiIndex) else vom_t_raw)
+        if vom_t_raw is not None and not vom_t_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    def _price(bus):
+        if pd.isna(bus) or str(bus) not in mp.columns:
+            return pd.Series(0.0, index=n.snapshots)
+        return mp[str(bus)].reindex(n.snapshots, fill_value=0.0)
+
+    rows = []
+    for lk in product_links:
+        bus1  = links.at[lk, "bus1"]
+        eff1  = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        if eff1 == 0:
+            continue
+
+        # feedstock cost at bus0 (always consumed): positive = cost
+        bus0  = links.at[lk, "bus0"] if "bus0" in links.columns else ""
+        net_input_cost = _price(bus0)   # λ_{bus0,t}: cost of consuming bus0
+
+        # secondary buses: subtract by-product credits (eff>0) and add extra input costs (eff<0)
+        # unified formula: net_input_cost -= eff_k * λ_{bus_k,t} for all k≥2
+        for bus_col, eff_col in [("bus2","efficiency2"),("bus3","efficiency3"),
+                                  ("bus4","efficiency4"),("bus5","efficiency5")]:
+            if bus_col not in links.columns or eff_col not in links.columns:
+                continue
+            eff_k = links.at[lk, eff_col]
+            if pd.isna(eff_k) or float(eff_k) == 0.0:
+                continue
+            net_input_cost = net_input_cost - float(eff_k) * _price(links.at[lk, bus_col])
+
+        # VOM (static scalar or time-varying series)
+        vom_scalar = float(links.at[lk, "marginal_cost"]) if "marginal_cost" in links.columns else 0.0
+        if lk in vom_df.columns:
+            vom_series = vom_df[lk].reindex(n.snapshots, fill_value=vom_scalar)
+        else:
+            vom_series = pd.Series(vom_scalar, index=n.snapshots)
+
+        # VC per MWh of primary output (bus1)
+        vc = (net_input_cost + vom_series) / eff1
+
+        # dispatch and product shadow price for reference
+        p0 = (p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+              if lk in p0_df.columns else pd.Series(0.0, index=n.snapshots))
+        pi1 = _price(bus1)
+
+        product_name = n.buses.at[bus1, "product"] if (
+            "product" in n.buses.columns and bus1 in n.buses.index) else bus1
+
+        for t in n.snapshots:
+            rows.append({
+                "snapshot":          t,
+                "link":              lk,
+                "product":           product_name,
+                "SRMC_EUR_per_MWh":  round(float(vc.at[t]), 4),
+                "dispatch_MW":       round(float(p0.at[t] * eff1), 4),
+                "π_product_bus":     round(float(pi1.at[t]), 4),
+                "in_merit":          float(vc.at[t]) <= float(pi1.at[t]) + 1e-3,
+            })
+
+    if not rows:
+        print("[SRMC] no data — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv, index=False)
+    print(f"[SRMC] saved → {out_csv}")
+
+    _plot_srmc(df, Path(out_plot))
+    return df
+
+
+def _plot_srmc(df, out_path):
+    """One subplot per product: SRMC time series per technology + product shadow price."""
+    products = df["product"].unique()
+    n_prod   = len(products)
+    if n_prod == 0:
+        return
+
+    carrier_colors_default = [
+        "#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd",
+        "#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf",
+    ]
+
+    fig, axes = plt.subplots(n_prod, 1,
+                              figsize=(16, 4 * n_prod),
+                              sharex=False,
+                              squeeze=False)
+
+    for ax, product in zip(axes[:, 0], products):
+        sub = df[df["product"] == product].copy()
+        sub = sub.sort_values("snapshot")
+
+        technologies = sub["link"].unique()
+        colors = {t: carrier_colors_default[i % len(carrier_colors_default)]
+                  for i, t in enumerate(technologies)}
+
+        for tech in technologies:
+            ts = sub[sub["link"] == tech].set_index("snapshot")["SRMC_EUR_per_MWh"]
+            ax.plot(ts.index, ts.values,
+                    label=tech, linewidth=0.8,
+                    color=colors[tech], alpha=0.85)
+
+        # product bus shadow price — one series (same for all techs on this bus)
+        pi_ts = sub.groupby("snapshot")["π_product_bus"].first()
+        if pi_ts.std() > 0.01:
+            ax.plot(pi_ts.index, pi_ts.values,
+                    label=f"π ({product} bus)", color="black",
+                    linewidth=1.2, linestyle="--", alpha=0.7)
+        else:
+            ax.axhline(pi_ts.mean(), color="black", linewidth=1.2,
+                       linestyle="--", alpha=0.6,
+                       label=f"π = {pi_ts.mean():.1f} €/MWh (flat)")
+
+        ax.set_ylabel("SRMC  [€/MWh output]")
+        ax.set_title(f"Short-run marginal cost (SRMC) — {product}")
+        ax.legend(fontsize=8, loc="upper right")
+        ax.grid(True, alpha=0.3)
+
+        # clip y-axis to ± 3× mean shadow price so outliers don't collapse the view
+        pi_mean = float(pi_ts.mean())
+        y_ceil  = max(pi_mean * 3, 50)
+        y_floor = -pi_mean * 0.5
+        ax.set_ylim(y_floor, y_ceil)
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[SRMC] plot saved → {out_path}")
+
+
 # ---- OPTIMAL CAPACITIES ----
 def _slice_df_first_scenario(df: pd.DataFrame):
     if df is None or df.empty:
@@ -864,6 +1859,14 @@ def _cap_series_one(n, kind):
         sus = _slice_df_first_scenario(n.storage_units)
         col = "p_nom_opt" if "p_nom_opt" in sus.columns else ("p_nom" if "p_nom" in sus.columns else None)
         return sus[col] if col else None
+    if kind == "StorageUnit_E":
+        sus = _slice_df_first_scenario(n.storage_units)
+        col = "p_nom_opt" if "p_nom_opt" in sus.columns else ("p_nom" if "p_nom" in sus.columns else None)
+        if col is None:
+            return None
+        p_nom = sus[col]
+        mh = sus["max_hours"].reindex(p_nom.index, fill_value=1.0) if "max_hours" in sus.columns else 1.0
+        return p_nom * mh
     raise ValueError(kind)
 
 def _bus_unit_and_carrier(n, bus_name):
@@ -913,13 +1916,15 @@ def _carrier_unit_for_item(n, kind, name):
         carrier, unit = _bus_unit_and_carrier(n, bus)
         return carrier, _convert_store_unit_to_energy(unit)
 
-    # NEW
-    if kind == "StorageUnit":
+    if kind in ("StorageUnit", "StorageUnit_E"):
         sus = _slice_df_first_scenario(n.storage_units)
         if sus is None or name not in sus.index or "bus" not in sus.columns:
             return ("", "")
         bus = sus.at[name, "bus"]
-        return _bus_unit_and_carrier(n, bus)
+        carrier, unit = _bus_unit_and_carrier(n, bus)
+        if kind == "StorageUnit_E":
+            unit = _convert_store_unit_to_energy(unit)
+        return carrier, unit
 
     return ("", "")
 
@@ -968,6 +1973,13 @@ def build_capacity_compare_from_items(
             if key not in meta:  # preserve order, avoid duplicates
                 rows.append(key)
                 meta[key] = {"label": label, "th": th}
+
+            # Auto-add energy capacity row for every StorageUnit power row
+            if kind == "StorageUnit":
+                e_key = ("StorageUnit_E", nm)
+                if e_key not in meta:
+                    rows.append(e_key)
+                    meta[e_key] = {"label": label + " [Energy]", "th": th}
 
     idx = pd.MultiIndex.from_tuples(rows, names=["kind", "name"])
     out = pd.DataFrame(index=idx)
@@ -1045,7 +2057,7 @@ def plot_capacity_compare_from_items(
         keep = d[value_cols].max(axis=1).sort_values(ascending=False).head(max_items).index
         d = d.loc[keep]
 
-    comp_order = {"Link": 0, "Store": 1, "Generator": 2, "StorageUnit" :3}
+    comp_order = {"Link": 0, "Store": 1, "Generator": 2, "StorageUnit": 3, "StorageUnit_E": 4}
     d = d.sort_index(key=lambda idx: [comp_order.get(i[0], 99) for i in idx])
 
     xlabels = [d.at[i, "label"] if d.at[i, "label"] else i[1] for i in d.index]
@@ -1356,16 +2368,12 @@ def shadow_prices_violinplot_stoch(
     fig, ax = plt.subplots(figsize=(max(9, 0.45 * len(labels)), 4.6))
     vp = ax.violinplot(data, showmeans=True, showmedians=False, showextrema=True)
 
-    ax.set_xticks(range(1, len(labels) + 1), labels, rotation=90)
-    ax.set_title(title)
-    ax.grid(True, alpha=0.25)
-
     vp["cmeans"].set_color(mean_color)
     vp["cmeans"].set_linewidth(mean_linewidth)
 
-    #vp["cmedians"].set_color(median_color)
-    #vp["cmedians"].set_linewidth(median_linewidth)
-
+    ax.set_xticks(range(1, len(labels) + 1), labels, rotation=90)
+    ax.set_title(title)
+    ax.grid(True, alpha=0.25)
 
     ax.text(0.02, 0.95, scen_txt, transform=ax.transAxes, fontsize=9, va="top",
             bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
@@ -1765,6 +2773,7 @@ def plot_utilization_ldc_by_scenario(
     scenario_weight_col="weight",
     stochastic_label="stochastic (scenario×snapshot weighted)",
     n_points_stochastic=1001,  # resolution for the weighted LDC
+    carrier_colors=None,
 ):
     """
     items = [{"label","kind","field","selector"}, ...]
@@ -1908,7 +2917,7 @@ def plot_utilization_ldc_by_scenario(
     # Build curve specs
     for it in items:
         kind = it["kind"]
-        field = it["field"]
+        field = it.get("field", "p")
         base_label = it["label"]
         selector = it.get("selector")
         lw0 = it.get("lw", 1.8)
@@ -1947,13 +2956,33 @@ def plot_utilization_ldc_by_scenario(
                 })
 
     # Stable colors per (kind,name) across scenarios and modes
+    # Look up carrier for each component and use fixed carrier_colors when available.
+    _carrier_colors = carrier_colors or {}
+    _comp_tables = {
+        "Generator":   getattr(n, "generators",    None),
+        "Link":        getattr(n, "links",          None),
+        "StorageUnit": getattr(n, "storage_units",  None),
+        "Store":       getattr(n, "stores",         None),
+    }
+
+    def _get_carrier(kind, name):
+        df = _comp_tables.get(kind)
+        if df is None or df.empty or name not in df.index:
+            return None
+        return df.at[name, "carrier"] if "carrier" in df.columns else None
+
     uniq_keys, seen = [], set()
     for spec in curve_specs:
         key = (spec["kind"], spec["name"])
         if key not in seen:
             seen.add(key)
             uniq_keys.append(key)
-    color_map = {k: cmap(i % cmap.N) for i, k in enumerate(uniq_keys)}
+
+    color_map = {}
+    for i, k in enumerate(uniq_keys):
+        kind, name = k
+        carrier = _get_carrier(kind, name)
+        color_map[k] = _carrier_colors.get(carrier, cmap(i % cmap.N))
 
     # -------- Legend handles (global)
     legend_map = {}  # label -> handle (first occurrence) for non-SU + SU names (colors)
@@ -2126,7 +3155,8 @@ def plot_utilization_ldc_by_scenario(
         ax.set_xlabel("Percent of hours (%)")
         if any_plotted:
             ax.set_ylabel("Utilization / capacity factor (-)")
-        ax.set_ylim(0, 1)
+        ax.set_ylim(0, 1.05)
+        ax.axhline(1.0, color="gray", lw=0.8, ls="--", alpha=0.45, zorder=0)
         ax.grid(True, alpha=0.25)
 
     # Hide unused axes
@@ -2423,6 +3453,12 @@ def figure_heatmaps_compare_scenarios(
         cand_union = set()
         for scen in scenarios:
             cand_union.update(_available_names_from_tcols(ts_df, scen))
+            # StorageUnit: state_of_charge may be absent/empty after some solvers;
+            # also scan the dispatch (p) timeseries so candidates are never missed.
+            if kind == "StorageUnit":
+                _p_ts = getattr(n.storage_units_t, "p", None)
+                if _p_ts is not None:
+                    cand_union.update(_available_names_from_tcols(_p_ts, scen))
         cand_union = sorted(cand_union)
 
         matches = _match_names(cand_union, selector)
@@ -2464,14 +3500,20 @@ def figure_heatmaps_compare_scenarios(
             cap = _cap_from_component_table(comp_df, scen, name, ["e_nom_opt", "e_nom"])
 
         elif kind == "StorageUnit":
-            # SOC time series
-            ts_df = getattr(n.storage_units_t, field, None) if field else getattr(n.storage_units_t, "state_of_charge", None)
-            s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
-
-            # energy capacity = p_nom * max_hours
-            p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
-            cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
+            if field in ("p", "dispatch"):
+                ts_df = getattr(n.storage_units_t, "p", None)
+                s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
+                s = pd.Series(s, copy=False).abs() if s is not None else None
+                cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
+                if cap is not None:
+                    cap = float(cap)
+            else:
+                # state_of_charge (default)
+                ts_df = getattr(n.storage_units_t, "state_of_charge", None) if not field else getattr(n.storage_units_t, field, None)
+                s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
+                p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
+                mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
+                cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
 
         else:
             return None
@@ -2660,9 +3702,6 @@ def figure_heatmaps_compare_scenarios(
             cbar.set_label("Normalized (0–1)")
 
         fig.suptitle(title, y=1.02)
-
-        # Give a little extra bottom margin for rotated month labels
-        fig.subplots_adjust(bottom=0.12)
 
     if outpath:
         outpath = Path(outpath)
@@ -2882,8 +3921,15 @@ def figure_heatmaps_compare_scenarios_actual(
         cand_union = set()
         for scen in scenarios:
             cand_union.update(_available_names_from_tcols(ts_df_default, scen))
+            # StorageUnit: state_of_charge may be absent/empty after some solvers;
+            # also scan the dispatch (p) timeseries so candidates are never missed.
+            if kind == "StorageUnit":
+                _p_ts = getattr(n.storage_units_t, "p", None)
+                if _p_ts is not None:
+                    cand_union.update(_available_names_from_tcols(_p_ts, scen))
         cand_union = sorted(cand_union)
 
+        th = it.get("th", 0)
         matches = _match_names(cand_union, selector)
         for name in matches:
             expanded.append({
@@ -2891,10 +3937,27 @@ def figure_heatmaps_compare_scenarios_actual(
                 "kind": kind,
                 "field": field,
                 "name": name,
+                "th": th,
             })
 
     if not expanded:
         raise ValueError("No matching components found for the provided items/selectors.")
+
+    # ---- Pre-filter: drop rows whose capacity is below threshold in every scenario
+    # This prevents empty panels appearing in the figure for near-zero components.
+    def _cap_passes_threshold(row):
+        comp_df, _, cap_cols = kind_map[row["kind"]]
+        for scen in scenarios:
+            cap = _cap_from_component_table(comp_df, scen, row["name"], cap_cols)
+            if cap is not None and float(cap) >= row["th"]:
+                return True
+        return False
+
+    expanded = [row for row in expanded if _cap_passes_threshold(row)]
+
+    if not expanded:
+        print("Warning: all components filtered out by capacity threshold — nothing to plot.")
+        return
 
     # ---- Get actual series + capacity-based norm (per row)
     def _get_series_and_norm(scen, row):
@@ -2911,7 +3974,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.generators_t, field, None) if field else getattr(n.generators_t, "p", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2921,7 +3984,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.links_t, field, None) if field else getattr(n.links_t, "p0", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             s = pd.Series(s, copy=False)
             if abs_links:
@@ -2934,7 +3997,7 @@ def figure_heatmaps_compare_scenarios_actual(
             ts_df = getattr(n.stores_t, field, None) if field else getattr(n.stores_t, "e", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["e_nom_opt", "e_nom"])
-            if s is None or cap is None or cap <= 0:
+            if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
@@ -2948,7 +4011,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 p_nom = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
                 mh = _cap_from_component_table(comp_df, scen, name, ["max_hours"])
                 cap = (float(p_nom) * float(mh)) if (p_nom is not None and mh is not None) else None
-                if s is None or cap is None or cap <= 0:
+                if s is None or cap is None or float(cap) < row["th"]:
                     return NONE5
                 cap = float(cap)
                 norm = Normalize(vmin=0.0, vmax=cap)
@@ -2959,7 +4022,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 ts_df = getattr(n.storage_units_t, "p", None)
                 s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
                 cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-                if s is None or cap is None or cap <= 0:
+                if s is None or cap is None or float(cap) < row["th"]:
                     return NONE5
                 cap = float(cap)
                 norm = TwoSlopeNorm(vmin=-cap, vcenter=0.0, vmax=cap)
@@ -3161,7 +4224,7 @@ def figure_heatmaps_compare_scenarios_actual(
 
         for i, row in enumerate(expanded):
             ax = axes[i]
-            s, norm, cmap_use, _, _ = _get_series_and_norm(None, row)
+            s, norm, cmap_use, quantity, cap = _get_series_and_norm(None, row)
 
             im = heatmap_day_hour_actual(
                 s if s is not None else pd.Series(dtype=float),
@@ -3172,12 +4235,29 @@ def figure_heatmaps_compare_scenarios_actual(
                 show_months=(i // n_cols == n_rows - 1)
             )
 
+            if norm is not None and im is not None:
+                from matplotlib.cm import ScalarMappable
+                from matplotlib.colors import TwoSlopeNorm
+                sm = ScalarMappable(norm=norm, cmap=cmap_use or cmap_pos)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
+                comp_df, _, _ = kind_map[row["kind"]]
+                unit = _row_unit_from_bus(
+                    n=n, kind=row["kind"], comp_df=comp_df,
+                    scen=None, name=row["name"],
+                    quantity=quantity, field=row.get("field"),
+                ) or ""
+                if isinstance(norm, TwoSlopeNorm):
+                    lbl = f"{unit} (±{cap:g})" if unit else f"(±{cap:g})"
+                else:
+                    lbl = f"{unit} (0–{cap:g})" if unit else f"(0–{cap:g})"
+                cbar.set_label(lbl, fontsize=8)
+                cbar.ax.tick_params(labelsize=8)
+
         for j in range(n_plots, len(axes)):
             axes[j].set_visible(False)
 
-
         fig.suptitle(title, y=1.02)
-        fig.subplots_adjust(bottom=0.12)
 
     if outpath:
         outpath = Path(outpath)
@@ -4008,9 +5088,10 @@ def run_plot_and_export(
     csv_folder: str | Path,
     plot_folder: str | Path,
     items: list[dict],
-    thresholds: dict,
     bus_list_mp: list[str],
     network_comp_allocation: Optional[dict] = None,
+    comp_tech_map: Optional[dict] = None,
+    tech_costs_used=None,
     scenarios: Optional[Dict[Any, float]] = None,
     networks_dict: Optional[Dict[Any, Any]] = None,
 ) -> Dict[str, Exception]:
@@ -4107,7 +5188,6 @@ def run_plot_and_export(
             n,
             network_comp_allocation,
             csv_folder / "optimal_capacities",
-            thresholds=thresholds,
         )
 
         opt_cap_holder["obj"] = opt_cap
@@ -4116,7 +5196,6 @@ def run_plot_and_export(
         items_f = filter_items_by_capacity_threshold(
             n,
             items,
-            default_th=0.0,
             include_exi=True,
             verbose=True,
         )
@@ -4172,9 +5251,23 @@ def run_plot_and_export(
         )
 
     def step_shadow_prices() -> None:
+        # Build bus list: demand mode → delivery buses only; price mode → all buses
+        driver = c.targets_dict.get("driver", "demand")
+        if driver == "price":
+            bus_list_bar = list(bus_list_mp)
+        else:
+            bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
+
+        # CSV and bar chart use the same bus list
+        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
+                                    bus_filter=bus_list_bar)
+
+        # Violin + LDC: same list, further filtered by capacity threshold
+        bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)
         shadow_prices_violinplot_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4183,11 +5276,12 @@ def run_plot_and_export(
             handle_spikes="clip",
             quantile_hi=0.98,
             n_draws=25000,
+            title="Shadow prices — snapshot distribution over time (mean: scenario-weighted)",
         )
 
         shadow_prices_ldc_stoch(
             n,
-            bus_list=bus_list_mp,
+            bus_list=bus_list_f,
             folder=str(plot_folder),
             link_mc_items=[
                 {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
@@ -4197,6 +5291,7 @@ def run_plot_and_export(
             quantile_hi=0.98,
             n_points=1001,
             fname="shd_prices_ldc.png",
+            title="Shadow prices — load-duration curves over snapshots",
         )
 
     def step_operation_plots() -> None:
@@ -4210,6 +5305,7 @@ def run_plot_and_export(
             outpath=plot_folder / "CF_operation_by_scenario.png",
             title="Utilization LDCs by scenario (exact + EXI only)",
             ncols=3,
+            carrier_colors=c.carrier_colors,
         )
 
         figure_heatmaps_compare_scenarios(
@@ -4235,22 +5331,389 @@ def run_plot_and_export(
             stochastic_col_label="stochastic",
         )
 
+    def step_full_component_table() -> None:
+        alloc = _require_allocation("full_component_table")
+        save_full_component_csv(
+            n,
+            alloc,
+            csv_folder / "full_component_table.csv",
+            comp_tech_map=comp_tech_map,
+        )
+
+    def step_cost_assumptions() -> None:
+        save_cost_assumptions_csv(tech_costs_used, csv_folder / "cost_assumptions.csv")
+
+    def step_pypsa_statistics() -> None:
+        save_pypsa_statistics(n, csv_folder / "pypsa_statistics.csv")
+
+    def step_lcop() -> None:
+        compute_lcop_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_by_technology.csv",
+            out_plot=plot_folder / "lcop_by_technology.png",
+        )
+
+    def step_lcop_kkt() -> None:
+        compute_lcop_kkt_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_kkt_by_technology.csv",
+        )
+
+    def step_srmc() -> None:
+        compute_srmc_by_technology(
+            n,
+            out_csv=csv_folder / "srmc_by_technology.csv",
+            out_plot=plot_folder / "srmc_by_technology.png",
+        )
+
     # ---------------- Run in order ----------------
 
     _safe_step("cost_by_carrier", step_cost_by_carrier)
     _safe_step("cost_by_agent", step_cost_by_agent)
 
     _safe_step("save_optimal_capacities", step_save_opt_caps)
+    _safe_step("full_component_table", step_full_component_table)
+    _safe_step("cost_assumptions", step_cost_assumptions)
+    _safe_step("pypsa_statistics", step_pypsa_statistics)
     _safe_step("filter_items", step_filter_items)
     _safe_step("capacity_compare_sp_vs_ws", step_capacity_compare_sp_vs_ws)
 
     _safe_step("inputs_ldc_by_scenario", step_inputs_ldc)
     _safe_step("shadow_prices", step_shadow_prices)
+    _safe_step("lcop", step_lcop)
+    _safe_step("lcop_kkt", step_lcop_kkt)
+    _safe_step("srmc", step_srmc)
     _safe_step("operation_plots", step_operation_plots)
 
     if failures:
         print(f"[plot/export] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
     else:
         print("[plot/export] Finished successfully.")
+
+    return failures
+
+
+def run_plot_operational(
+    *,
+    n,
+    c,
+    plot_folder: str | Path,
+    csv_folder: str | Path,
+    items: list[dict],
+    bus_list_mp: list[str],
+) -> Dict[str, Exception]:
+    """Run only the operational (dispatch) plots.
+
+    Produces the same three operational figures as ``run_plot_and_export``
+    (utilisation LDCs, CF heatmaps, actual-value heatmaps) plus the input
+    LDC and shadow-price plots.  Capacity and cost steps are skipped because
+    they are not meaningful for a dispatch-only RH result.
+
+    Intended to be called from the rolling-horizon plotting script.
+    """
+    if not c.n_flags_opt.get("plot", False):
+        return {}
+
+    plot_folder = Path(plot_folder)
+    plot_folder.mkdir(parents=True, exist_ok=True)
+    csv_folder = Path(csv_folder)
+    csv_folder.mkdir(parents=True, exist_ok=True)
+
+    failures: Dict[str, Exception] = {}
+
+    def _safe(name: str, fn: Callable[[], None]) -> None:
+        try:
+            fn()
+        except Exception as e:
+            failures[name] = e
+            warnings.warn(
+                f"[plot/rh] Step failed: {name}\n  {type(e).__name__}: {e}",
+                category=RuntimeWarning,
+                stacklevel=2,
+            )
+
+    items_f_holder: Dict[str, Any] = {}
+
+    def step_filter_items() -> None:
+        items_f_holder["items_f"] = filter_items_by_capacity_threshold(
+            n, items, include_exi=True, verbose=True,
+        )
+
+    def step_inputs_ldc() -> None:
+        plot_ldc_inputs_by_scenario(
+            n,
+            outpath=plot_folder / "inputs_LDC_by_scenario.png",
+            ncols=3,
+            price_links=[
+                {"label": "El purchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
+                {"label": "El selling price",  "name": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"},   "ls": "-", "lw": 1.8},
+                {"label": "NG selling price",  "name": "bioCH4_to_delivery",            "ls": "-", "lw": 1.8},
+                {"label": "DH selling price",  "name": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "name": "biochar sequestration",     "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
+            ],
+            price_gens=[
+                {"label": "Pellets price",  "selector": "pellets market",       "ls": "-.", "lw": 1.8},
+                {"label": "Biomass chips",  "selector": "moist biomass market", "ls": "-.", "lw": 1.8},
+            ],
+            cf_gens=[
+                {"label": "Wind CF",  "name": "onshorewind", "ls": "--", "lw": 1.8},
+                {"label": "Solar CF", "name": "solar",       "ls": "--", "lw": 1.8},
+            ],
+        )
+
+    def step_shadow_prices() -> None:
+        # Build bus list: demand mode → delivery buses only; price mode → all buses
+        driver = c.targets_dict.get("driver", "demand")
+        if driver == "price":
+            bus_list_bar = list(bus_list_mp)
+        else:
+            bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
+
+        # CSV and bar chart use the same bus list
+        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
+                                    bus_filter=bus_list_bar)
+
+        # Violin + LDC: same list, further filtered by capacity threshold
+        bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)
+        shadow_prices_violinplot_stoch(
+            n,
+            bus_list=bus_list_f,
+            folder=str(plot_folder),
+            link_mc_items=[
+                {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"}},
+            ],
+            handle_spikes="clip",
+            quantile_hi=0.98,
+            n_draws=25000,
+            title="Shadow prices — snapshot distribution over time (mean: scenario-weighted)",
+        )
+        shadow_prices_ldc_stoch(
+            n,
+            bus_list=bus_list_f,
+            folder=str(plot_folder),
+            link_mc_items=[
+                {"label": "Electricity price", "selector": {"contains": "DK1_to_El_"}},
+                {"label": "NG price",          "selector": {"regex": r"_NG boiler$"}},
+            ],
+            handle_spikes="clip",
+            quantile_hi=0.98,
+            n_points=1001,
+            fname="shd_prices_ldc.png",
+            title="Shadow prices — load-duration curves over snapshots",
+        )
+
+    def step_operation_plots() -> None:
+        items_f = items_f_holder.get("items_f")
+        if items_f is None:
+            raise RuntimeError("items_f not available; filter_items step likely failed.")
+
+        plot_utilization_ldc_by_scenario(
+            n,
+            items=items_f,
+            outpath=plot_folder / "CF_operation_by_scenario.png",
+            title="Utilization LDCs (rolling horizon)",
+            ncols=3,
+            carrier_colors=c.carrier_colors,
+        )
+
+        figure_heatmaps_compare_scenarios(
+            n,
+            items_f,
+            outpath=plot_folder / "CF_operation_heat_maps_by_scenario.png",
+            title="CF patterns — rolling horizon (normalized 0–1)",
+            cmap="viridis",
+            abs_links=True,
+        )
+
+        figure_heatmaps_compare_scenarios_actual(
+            n,
+            items,
+            outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
+            title="Operational heatmaps — rolling horizon (actual values)",
+            cmap_pos="viridis",
+            cmap_div="coolwarm",
+            abs_links=True,
+            snapshot_weight_col="objective",
+            scenario_weight_col="weight",
+            add_stochastic_column=False,
+        )
+
+    def step_lcop() -> None:
+        compute_lcop_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_by_technology.csv",
+            out_plot=plot_folder / "lcop_by_technology.png",
+        )
+
+    def step_lcop_kkt() -> None:
+        compute_lcop_kkt_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_kkt_by_technology.csv",
+        )
+
+    def step_srmc() -> None:
+        compute_srmc_by_technology(
+            n,
+            out_csv=csv_folder / "srmc_by_technology.csv",
+            out_plot=plot_folder / "srmc_by_technology.png",
+        )
+
+    _safe("filter_items",       step_filter_items)
+    _safe("inputs_ldc",         step_inputs_ldc)
+    _safe("shadow_prices",      step_shadow_prices)
+    _safe("lcop",               step_lcop)
+    _safe("lcop_kkt",           step_lcop_kkt)
+    _safe("srmc",               step_srmc)
+    _safe("operation_plots",    step_operation_plots)
+
+    if failures:
+        print(f"[plot/rh] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
+    else:
+        print("[plot/rh] Finished successfully.")
+
+    return failures
+
+
+def run_plot_rh_comparison(
+    *,
+    n_pf,
+    n_rh,
+    plot_folder: str | Path,
+    csv_folder:  str | Path,
+    c,
+) -> Dict[str, Exception]:
+    """Generate side-by-side PF vs RH cost comparison plots and CSV.
+
+    Produces three outputs:
+
+    * ``PF_vs_RH_total_cost.png``  — stacked-bar total system cost (PF | RH)
+      broken down by carrier, reusing :func:`plot_total_system_cost_stacked`.
+    * ``PF_vs_RH_opex_delta.png``  — per-carrier OPEX difference (RH − PF).
+      Red = RH costs more, green = RH costs less.
+    * ``PF_vs_RH_costs.csv``       — wide comparison table with capex/opex/total
+      for both networks and the delta per carrier.
+
+    Both networks must have correct ``statistics.capex()`` / ``statistics.opex()``
+    — for the RH network this requires that the extendability flags were restored
+    after the dispatch solve (done in ``snakemake_rolling_horizon.py``).
+    """
+    if not c.n_flags_opt.get("plot", False):
+        return {}
+
+    plot_folder = Path(plot_folder)
+    csv_folder  = Path(csv_folder)
+    plot_folder.mkdir(parents=True, exist_ok=True)
+    csv_folder.mkdir(parents=True, exist_ok=True)
+
+    failures: Dict[str, Exception] = {}
+
+    def _safe(name: str, fn: Callable[[], None]) -> None:
+        try:
+            fn()
+        except Exception as e:
+            failures[name] = e
+            warnings.warn(
+                f"[plot/rh_compare] Step failed: {name}\n  {type(e).__name__}: {e}",
+                category=RuntimeWarning, stacklevel=2,
+            )
+
+    # ── Shared data ────────────────────────────────────────────────────────────
+    summary_pf = make_global_summary_costs(n_pf)
+    summary_rh = make_global_summary_costs(n_rh)
+
+    def _rename_scenario(costs_long: pd.DataFrame, new_name: str) -> pd.DataFrame:
+        """Rename all scenario-level values in a (scenario, group) MultiIndex."""
+        if not isinstance(costs_long.index, pd.MultiIndex):
+            return costs_long
+        mapper = {v: new_name for v in costs_long.index.get_level_values("scenario").unique()}
+        return costs_long.rename(index=mapper, level="scenario")
+
+    costs_pf = _rename_scenario(summary_pf["costs_long"].copy(), "PF")
+    costs_rh = _rename_scenario(summary_rh["costs_long"].copy(), "RH")
+    combined_long = pd.concat([costs_pf, costs_rh])
+
+    combined_summary = {
+        "costs_long":       combined_long,
+        "expected_long":    None,
+        "total_by_scenario": combined_long["total"].groupby(level="scenario").sum(),
+        "total_expected":   None,
+        "scenario_weights": None,
+    }
+
+    # ── Steps ─────────────────────────────────────────────────────────────────
+
+    def step_comparison_csv() -> None:
+        pf_df = costs_pf.droplevel("scenario").rename(
+            columns={"capex": "capex_pf", "opex": "opex_pf", "total": "total_pf"}
+        )
+        rh_df = costs_rh.droplevel("scenario").rename(
+            columns={"capex": "capex_rh", "opex": "opex_rh", "total": "total_rh"}
+        )
+        merged = pf_df.join(rh_df, how="outer").fillna(0.0)
+        merged["delta_opex"]  = merged["opex_rh"]  - merged["opex_pf"]
+        merged["delta_total"] = merged["total_rh"] - merged["total_pf"]
+
+        totals = merged.sum(numeric_only=True)
+        totals.name = "TOTAL"
+        merged = pd.concat([merged, totals.to_frame().T])
+        merged.index.name = "carrier"
+        merged["unit"] = "€/y"
+        merged.to_csv(csv_folder / "PF_vs_RH_costs.csv")
+
+    def step_total_cost_bar() -> None:
+        plot_total_system_cost_stacked(
+            combined_summary,
+            outpath=str(plot_folder / "PF_vs_RH_total_cost.png"),
+            title="Total system cost: Perfect Foresight vs Rolling Horizon",
+            which="total",
+            add_expected=False,
+            figsize=(10, 5),
+        )
+
+    def step_opex_delta() -> None:
+        pf_opex = costs_pf.droplevel("scenario")["opex"]
+        rh_opex = costs_rh.droplevel("scenario")["opex"]
+        all_idx = pf_opex.index.union(rh_opex.index)
+        delta   = (rh_opex.reindex(all_idx, fill_value=0.0)
+                   - pf_opex.reindex(all_idx, fill_value=0.0)).sort_values()
+
+        total_pf_opex  = pf_opex.sum()
+        total_rh_opex  = rh_opex.sum()
+        total_pf_total = n_pf.statistics.capex().sum() + total_pf_opex
+        total_rh_total = n_rh.statistics.capex().sum() + total_rh_opex
+
+        fig, ax = plt.subplots(figsize=(max(8, len(delta) * 0.65 + 2), 5))
+        colors = ["#d73027" if v > 0 else "#1a9850" for v in delta.values]
+        ax.bar(range(len(delta)), delta.values / 1e3, color=colors,
+               edgecolor="black", linewidth=0.5)
+        ax.set_xticks(range(len(delta)))
+        ax.set_xticklabels(delta.index, rotation=45, ha="right", fontsize=9)
+        ax.axhline(0, color="black", linewidth=0.8)
+        ax.set_ylabel("k€/y   (positive = RH costs more)")
+        ax.set_title(
+            "OPEX delta per carrier: RH − PF\n"
+            f"OPEX  PF={total_pf_opex/1e6:.2f} M€   RH={total_rh_opex/1e6:.2f} M€   "
+            f"Δ={(total_rh_opex - total_pf_opex)/1e6:+.3f} M€\n"
+            f"Total PF={total_pf_total/1e6:.2f} M€   RH={total_rh_total/1e6:.2f} M€   "
+            f"Δ={(total_rh_total - total_pf_total)/1e6:+.3f} M€  "
+            f"({(total_rh_total / total_pf_total - 1) * 100:+.2f} %)",
+            fontsize=10,
+        )
+        fig.tight_layout()
+        fig.savefig(str(plot_folder / "PF_vs_RH_opex_delta.png"), dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+    _safe("comparison_csv",  step_comparison_csv)
+    _safe("total_cost_bar",  step_total_cost_bar)
+    _safe("opex_delta",      step_opex_delta)
+
+    if failures:
+        print(f"[plot/rh_compare] Finished with {len(failures)} failing step(s): {list(failures.keys())}")
+    else:
+        print("[plot/rh_compare] Finished successfully.")
 
     return failures

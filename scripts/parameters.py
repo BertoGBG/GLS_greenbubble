@@ -1,7 +1,44 @@
+# SPDX-License-Identifier: MIT
+"""Global parameters and file-path constants for the GreenBubble model.
+
+This module centralises every scalar constant, API token, and input/output
+file path used across the pre-processing, network-building and optimisation
+scripts.  It is imported as ``p`` throughout the codebase::
+
+    from scripts import parameters as p
+    p.RN_token          # Renewables.ninja API token
+    p.El_price_input_file  # path to the electricity price CSV
+
+.. note::
+   File paths are derived from ``config.yaml`` (via :mod:`scripts.config`)
+   and the project location coordinates.  EU locations write to
+   ``data/Inputs_{year}/``; US/California locations write to
+   ``data/California/Inputs_{year}/``.
+"""
+
 import pandas as pd
 import os
-from scripts.config import En_price_year, year_EU, latitude, longitude
+
+from pathlib import Path
+from scripts.config import En_price_year, year_investment, latitude, longitude, EUR_to_DKK
 from scripts.helpers import build_snapshots, is_eu_or_us
+
+
+def _load_dotenv(path: str = ".env") -> None:
+    """Load key=value pairs from a .env file into os.environ (no-op if missing)."""
+    env_file = Path(path)
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            os.environ.setdefault(key, val)
+
+
+_load_dotenv()
 
 # --------------------------------------
 ''' Constants'''
@@ -15,24 +52,27 @@ lhv_NG = 0.010 # MWh/Nm3
 # Retrieve Technology-data
 technology_data_url = "https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/"
 cost_folder = "data/technology-data/outputs"
-cost_file = "costs_" + str(year_EU) + ".csv"
+cost_file = "costs_" + str(year_investment) + ".csv"
 cost_path = os.path.join(cost_folder, cost_file)
 
 # Stored US data
-cost_file_US = "costs_" + str(year_EU) + '_US' + ".csv"
+cost_file_US = "costs_" + str(year_investment) + '_US' + ".csv"
 cost_path_US = os.path.join(cost_folder, cost_file)
 
-# token to download  factors from Renewable Ninjas
-# obtain your own token from : https://www.renewables.ninja/documentation/api
-RN_token = "3665f7dcb14437156a2071ac917e37a9165f9be8"  #
-entsoe_api = "5f634ee5-faa2-4257-8a63-9cb21a1c356d" # EU
-eia_api = 's9EmSaPvrh8X3CYL5GjsznA3JfaueLUWjmNvXGlB' # US
+# API tokens — loaded from environment variables (or .env file in project root).
+# Copy .env.example to .env and fill in your own tokens.  Never commit .env.
+# Obtain tokens at:
+#   Renewables.ninja : https://www.renewables.ninja/documentation/api
+#   ENTSO-E          : https://transparency.entsoe.eu/usrm/user/createPublicUser
+#   EIA (US)         : https://www.eia.gov/opendata/register.php
+RN_token   = os.environ.get("RN_TOKEN", "")
+entsoe_api = os.environ.get("ENTSOE_API_KEY", "")
+eia_api    = os.environ.get("EIA_API_KEY", "")
 
-""" Crete an external NG demand"""
-NG_demand_year = 2019 # year for NG demand
+
 
 '''Build snapshots Time Period in DK'''
-hours_in_period, start_date, end_date = build_snapshots (En_price_year)
+hours_in_period, start_date, end_date = build_snapshots(En_price_year)
 
 '''Define reference empty data frame''' #  used in preprocessing
 ref_col_name = 'ref col'
@@ -40,9 +80,10 @@ ref_df = pd.DataFrame(index=hours_in_period, columns=[ref_col_name])
 ref_df[ref_col_name] = 0
 
 '''set area to DK1 (for data pre-processing, where applicable)'''
-#filter_area = r'filter={"PriceArea":"DK1"}' # for energidata
+filter_area = r'filter={"PriceArea":"DK1"}'  # for energidata
 price_area = 'DK1'
-bidding_zone = 'DK_1' # for entsoe
+bidding_zone = 'DK_1'  # for entsoe
+currency = 'EUR'        # currency for el spot price column (SpotPriceEUR)
 
 ''' District heating external demand '''
 # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
@@ -52,7 +93,7 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 # --------------------------------------
 '''Location of CSV files as input to the model'''
-# retrieve data from to these folder and files AND loads these csv files in the preprocessign for the network
+# retrieve data from to these folder and files AND loads these csv files in the preprocessing for the network
 
 folder_model_inputs='data' # folder where csv files for model input are saved after the pre-processing
 if is_eu_or_us(latitude,longitude)  == 'EU':
@@ -65,17 +106,10 @@ os.makedirs(folder_data, exist_ok=True)  # Create the folder if it doesn't exist
 GL_input_file = folder_model_inputs + '/GreenLab_Input_file.xlsx'
 El_price_input_file = folder_data + '/Elspotprices_input.csv'
 CO2emis_input_file = folder_data + '/CO2emis_input.csv'
-El_external_demand_input_file = folder_data + '/El_demand_input.csv'
 NG_price_year_input_file = folder_data + '/NG_price_year_input.csv'
-NG_demand_input_file = folder_data + '/NG_demand_DK_input.csv'
-Methanol_demand_input_file = folder_data + '/Methanol_demand_GL_max_input.csv'
-Methanation_demand_input_file = folder_data + '/Methanation_demand_GL_max_input.csv'
-DH_external_demand_input_file = folder_data + '/DH_external_demand_input.csv'
+DH_external_demand_input_file = 'data/common/DH_external_demand_input.csv'
 CF_wind_input_file = folder_data + '/CF_wind.csv'
 CF_solar_input_file = folder_data + '/CF_solar.csv'
-bioCH4_prod_input_file = folder_data + '/bioCH4_demand.csv'
-H2_demand_input_file = folder_data + '/H2_demand_input.csv'
-NG_price_data_folder = folder_model_inputs + '/NG_price_year_2019'
 DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/kWh
 
 # --------------------------------------
@@ -97,7 +131,6 @@ DH_data_folder = folder_model_inputs + '/DH_weather_data'  # prices in currency/
 # --------------------------
 '''Tolerances to avoid free-energy loops in model'''
 loop_tol = 5e-6
-
 
 # --------------------------
 """mapping to US costs """
@@ -126,6 +159,7 @@ dict_tech_US_EU ={"DH heat exchanger" : '',
                   'centrifugal dewatering' : '',
                   'biogas' : 'biogas',
                   'biogas storage' : '',
+                  'biogas engine': '',
                   'onwind' : 'onwind',
                   'solar' : 'solar',
                   'electrolysis' : 'electrolysis',

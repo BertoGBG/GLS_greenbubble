@@ -1,15 +1,9 @@
-# config/config.yml
-run_name: H2_meth_dmd_DK # keep it short
+# Any content on this file will override config/config_default.yaml
+# Use it for customization of the model
 
-# CO2 tax for fossil emissions and reward for negative emissions
-CO2_cost: 100 # €/t (CO2_cost)
 
-# existing CO2 cost (tax) in the reference year (if included in energy prices)
-CO2_cost_ref_year: 0
-
-# Annual Demands or price targets
-# if driver == 'demand': Demands must be present AND Prices are not used in the model
-# if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
+###### Enter content below this line #####
+run_name: BF_test_flex_D
 
 targets:
   driver: 'demand' # 'price' | 'demand'
@@ -60,43 +54,8 @@ outputs_folder: outputs/single_analysis
 # RFNBOs
 rfnbos_dict:
   limit: 'price'         # emissions | price | unlimited | disconnected
-  price_threshold: 20      # €/MWh
-  emission_threshold: 0.0648   # tCO2e/MWh
 
-# Economics
-year_EU: 2030
-USD_to_EUR: 0.85
-DKK_Euro: 7.46
-discount_rate: 0.2
-
-# tariffs
-tariffs_dict:
-  el_transmission_tariff : 9.92   # TSO Tariff from energinet € /MWh
-  el_system_tariff : 6.84   # €/MWh
-  el_afgift : 45 # state tarif set to 45 ore/kWh (DK) previously 72, but 0.8 for 2026 - 2027
-  el_net_tariff_low : 2   # Euro/MWh DSO Tariff for 60/10kV transformer (A_low customer)
-  el_net_tariff_high : 6
-  el_net_tariff_peak : 12
-  el_tariff_sell : 1.4  # Selling tariff
-  NG_dso_tariff : 1.8  #  Eur/MWh - NG grid tariffs DSO : https://evida.dk/tarifblad010125/
-  NG_tso_tariff :  0.01 #  Eur/MWh - NG grid tariff TSO : https://en.energinet.dk/media/fhslybmk/transmission-tariffs-effective-as-of-1st-january-2025-updated-1st-june-2024.pdf
-
-# Stochastic optimization
-stochastic:
-  stochastic: false # true -> stochastic optimization across scenarios (scripts/create_stoch_scenarios.py),  false -> deterministic optimization
-  scenarios: {'2022': 0.05, # name of scenarios and their probabilities
-              '2023': 0.25,
-              '2024': 0.35,
-              '2025': 0.35}
-  CO2_cost_s : {"2022": 100,  # CO2 cost (tax) per scenario
-                "2023": 100,
-                "2024": 100,
-                "2025": 100}
-  CO2_cost_ref_year_s: {"2022": 0,  # CO2 cost (tax) per scenario
-                "2023": 0,
-                "2024": 0,
-                "2025": 0}
-  EVPI : true # runs additional deterministic optimization for each scenario and calcualtes EVPI (automatically false if stochastic: false)
+amortization_period: 8
 
 # SOLVER
 optimization:
@@ -104,7 +63,3 @@ optimization:
   solver_profile : "gurobi-barrier-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
   collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
   return_model: true  # returns linopy model
-  overrides: null
-    #overrides:     # examples are illustrative
-     #OutputFlag: 1
-     #BarConvTol: 1e-8

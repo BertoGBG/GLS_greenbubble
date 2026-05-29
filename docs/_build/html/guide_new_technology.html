@@ -1,0 +1,838 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Guide for Adding New Technologies &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guide_new_technology';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Setting Product Demands" href="guide_demands.html" />
+    <link rel="prev" title="Workflow" href="workflow.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Fguide_new_technology.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/guide_new_technology.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Guide for Adding New Technologies</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-register-the-technology-in-n-config">Step 1 — Register the technology in <code class="docutils literal notranslate"><span class="pre">n_config</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-declare-the-tech-name-in-the-techs-list">Step 2 — Declare the tech name in the <code class="docutils literal notranslate"><span class="pre">techs</span></code> list</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-call-add-targets-before-building-the-plant">Step 3 — Call <code class="docutils literal notranslate"><span class="pre">add_targets()</span></code> before building the plant</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-write-the-add-cap-exp-inner-function">Step 4 — Write the <code class="docutils literal notranslate"><span class="pre">add_*_cap_exp</span></code> inner function</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-call-the-inner-function-for-capacity-and-expansion">Step 5 — Call the inner function for capacity and expansion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-log-new-components-and-return">Step 6 — Log new components and return</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-7-handle-the-case-where-nothing-is-added">Step 7 — Handle the case where nothing is added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-rules">Key Rules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#product-keyword-matching-in-add-targets">Product keyword matching in <code class="docutils literal notranslate"><span class="pre">add_targets</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-demand-for-a-new-product">Adding a demand for a new product</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#economic-interpretation-of-the-new-technology">Economic interpretation of the new technology</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="guide-for-adding-new-technologies">
+<span id="guide-new-technology"></span><h1>Guide for Adding New Technologies<a class="headerlink" href="#guide-for-adding-new-technologies" title="Link to this heading">#</a></h1>
+<p>This guide explains how to add a new technology inside an existing main
+<code class="docutils literal notranslate"><span class="pre">add_</span></code> function in <code class="docutils literal notranslate"><span class="pre">scripts/prepare_network.py</span></code>.  A later section will
+cover adding an entirely new <code class="docutils literal notranslate"><span class="pre">add_</span></code> function.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>Each sector of the GreenBubble network is built by a top-level function:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>add_biogas()          add_electrolysis()     add_meoh()
+add_methanation()     add_central_heat_MT()  add_symbiosis()
+</pre></div>
+</div>
+<p>These are called in sequence by <code class="docutils literal notranslate"><span class="pre">build_network()</span></code>.  Each function must work
+independently — the optimisation problem must be feasible whether or not the
+other functions run.</p>
+<p>—</p>
+</section>
+<section id="step-1-register-the-technology-in-n-config">
+<h2>Step 1 — Register the technology in <code class="docutils literal notranslate"><span class="pre">n_config</span></code><a class="headerlink" href="#step-1-register-the-technology-in-n-config" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">n_config</span></code> is loaded from a CSV file and indexed by technology name.
+Every technology that can be switched on/off or sized needs the following
+columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span></code></p></td>
+<td><p>MW installed from day one (0 = none)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">expansion</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code> / <code class="docutils literal notranslate"><span class="pre">False</span></code> — allow the optimiser to expand</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cost</span> <span class="pre">factor</span></code></p></td>
+<td><p>Multiplier applied to the base capital cost from <code class="docutils literal notranslate"><span class="pre">tech_costs</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Add a row for each variant of the new technology
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;biomethanation</span> <span class="pre">CO2&quot;</span></code>).</p>
+<p>—</p>
+</section>
+<section id="step-2-declare-the-tech-name-in-the-techs-list">
+<h2>Step 2 — Declare the tech name in the <code class="docutils literal notranslate"><span class="pre">techs</span></code> list<a class="headerlink" href="#step-2-declare-the-tech-name-in-the-techs-list" title="Link to this heading">#</a></h2>
+<p>Inside the relevant <code class="docutils literal notranslate"><span class="pre">add_</span></code> function, append the technology name to the
+<code class="docutils literal notranslate"><span class="pre">techs</span></code> list exactly as it appears in <code class="docutils literal notranslate"><span class="pre">n_config</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">techs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;methanolisation&quot;</span><span class="p">,</span> <span class="s2">&quot;my new tech&quot;</span><span class="p">]</span>   <span class="c1"># existing + new</span>
+<span class="n">cap_to_add</span><span class="p">,</span> <span class="n">exp_to_add</span> <span class="o">=</span> <span class="n">tech_to_add</span><span class="p">(</span><span class="n">techs</span><span class="p">,</span> <span class="n">n0_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tech_to_add()</span></code> compares <code class="docutils literal notranslate"><span class="pre">n_config</span></code> with the current network state and
+returns:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cap_to_add</span></code> — techs that need an initial-capacity component (<code class="docutils literal notranslate"><span class="pre">EXI_</span></code> prefix)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exp_to_add</span></code> — techs that need an extendable expansion component</p></li>
+</ul>
+<p>—</p>
+</section>
+<section id="step-3-call-add-targets-before-building-the-plant">
+<h2>Step 3 — Call <code class="docutils literal notranslate"><span class="pre">add_targets()</span></code> before building the plant<a class="headerlink" href="#step-3-call-add-targets-before-building-the-plant" title="Link to this heading">#</a></h2>
+<p>If the technology produces a product sold or delivered to an external bus
+(H2, bioCH4, Methanol), call <code class="docutils literal notranslate"><span class="pre">add_targets</span></code> <strong>before</strong> adding the multilink.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">techs</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">cap_to_add</span> <span class="ow">or</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">exp_to_add</span><span class="p">:</span>   <span class="c1"># correct form — see Key Rules</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;Carrier&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">product_bus</span> <span class="o">=</span> <span class="n">add_targets</span><span class="p">(</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">plant</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+            <span class="n">inputs_dict</span><span class="o">=</span><span class="n">inputs_dict</span><span class="p">,</span>
+            <span class="n">tech_costs</span><span class="o">=</span><span class="n">tech_costs</span><span class="p">,</span>
+            <span class="n">n_options</span><span class="o">=</span><span class="n">n_options</span><span class="p">,</span>
+            <span class="n">targets_dict</span><span class="o">=</span><span class="n">targets_dict</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;product bus&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">product_bus</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">add_targets</span></code> creates the following network elements (once per product, shared
+across all plants that produce it):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;{product}</span> <span class="pre">collection&quot;</span></code> — shared collection bus, returned as <code class="docutils literal notranslate"><span class="pre">product_bus</span></code>
+and tagged <code class="docutils literal notranslate"><span class="pre">is_product_bus=True</span></code> so other modules can discover it</p></li>
+<li><p>Collection-to-delivery/demand link and Store/Load at the delivery bus
+(<code class="docutils literal notranslate"><span class="pre">&quot;{product}</span> <span class="pre">delivery&quot;</span></code>) — created once regardless of how many plants run</p></li>
+</ul>
+<p>Plants inject <strong>directly</strong> into the collection bus via their multilink’s <code class="docutils literal notranslate"><span class="pre">bus1</span></code>.
+There is no per-technology intermediate bus.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Do <strong>not</strong> copy <code class="docutils literal notranslate"><span class="pre">product</span> <span class="pre">bus</span></code> from another column of <code class="docutils literal notranslate"><span class="pre">my_buses</span></code> inside
+your <code class="docutils literal notranslate"><span class="pre">add_*_cap_exp</span></code> function.  <code class="docutils literal notranslate"><span class="pre">add_targets</span></code> has already set it
+correctly for both <code class="docutils literal notranslate"><span class="pre">price</span></code> and <code class="docutils literal notranslate"><span class="pre">demand</span></code> drivers.  Overwriting it breaks
+price mode.</p>
+</div>
+<p>—</p>
+</section>
+<section id="step-4-write-the-add-cap-exp-inner-function">
+<h2>Step 4 — Write the <code class="docutils literal notranslate"><span class="pre">add_*_cap_exp</span></code> inner function<a class="headerlink" href="#step-4-write-the-add-cap-exp-inner-function" title="Link to this heading">#</a></h2>
+<p>This inner function receives <code class="docutils literal notranslate"><span class="pre">prefix</span></code>, <code class="docutils literal notranslate"><span class="pre">capital_cost</span></code>, <code class="docutils literal notranslate"><span class="pre">capacity</span></code>,
+<code class="docutils literal notranslate"><span class="pre">expansion</span></code>, <code class="docutils literal notranslate"><span class="pre">carrier</span></code>, and the buses DataFrame.  It should:</p>
+<ol class="arabic simple">
+<li><p>Update the buses DataFrame for the new tech by copying shared buses from
+the base column — <strong>never</strong> the <code class="docutils literal notranslate"><span class="pre">product</span> <span class="pre">bus</span></code> row.</p></li>
+<li><p>Add multilinks or generators using those buses.</p></li>
+<li><p>Return <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">my_buses)</span></code>.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">add_my_tech_cap_exp</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">capital_cost</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">expansion</span><span class="p">,</span> <span class="n">carrier</span><span class="p">,</span> <span class="n">my_buses</span><span class="p">):</span>
+    <span class="c1"># Copy shared buses from base column — never overwrite &#39;product bus&#39;</span>
+    <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;H2 in bus&quot;</span><span class="p">,</span>    <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;H2 in bus&quot;</span><span class="p">,</span>    <span class="s2">&quot;base&quot;</span><span class="p">]</span>
+    <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;CO2 in bus&quot;</span><span class="p">,</span>   <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;CO2 in bus&quot;</span><span class="p">,</span>   <span class="s2">&quot;base&quot;</span><span class="p">]</span>
+    <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;local EL bus&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;local EL bus&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">]</span>
+    <span class="c1"># product bus is already set by add_targets — do NOT copy it here</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="s2">&quot;Link&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+        <span class="n">carrier</span><span class="o">=</span><span class="n">carrier</span><span class="p">,</span>
+        <span class="n">bus0</span><span class="o">=</span><span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;H2 in bus&quot;</span><span class="p">,</span>    <span class="n">t</span><span class="p">],</span>
+        <span class="n">bus1</span><span class="o">=</span><span class="n">my_buses</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;product bus&quot;</span><span class="p">,</span>  <span class="n">t</span><span class="p">],</span>   <span class="c1"># collection bus — direct injection</span>
+        <span class="n">efficiency</span><span class="o">=...</span><span class="p">,</span>
+        <span class="n">p_nom</span><span class="o">=</span><span class="n">capacity</span><span class="p">,</span>
+        <span class="n">p_nom_extendable</span><span class="o">=</span><span class="n">expansion</span><span class="p">,</span>
+        <span class="n">capital_cost</span><span class="o">=</span><span class="n">capital_cost</span> <span class="k">if</span> <span class="n">expansion</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">marginal_cost</span><span class="o">=...</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">my_buses</span>
+</pre></div>
+</div>
+<p>—</p>
+</section>
+<section id="step-5-call-the-inner-function-for-capacity-and-expansion">
+<h2>Step 5 — Call the inner function for capacity and expansion<a class="headerlink" href="#step-5-call-the-inner-function-for-capacity-and-expansion" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">cap_to_add</span><span class="p">:</span>
+    <span class="n">cap</span> <span class="o">=</span> <span class="n">n_config</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;initial capacity&quot;</span><span class="p">]</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">my_buses</span> <span class="o">=</span> <span class="n">add_my_tech_cap_exp</span><span class="p">(</span>
+        <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;EXI_&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">cap</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">carrier</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">my_buses</span><span class="o">=</span><span class="n">my_buses</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">exp_to_add</span><span class="p">:</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">tech_costs</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="s2">&quot;my base tech&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_config</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;cost factor&quot;</span><span class="p">]</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">my_buses</span> <span class="o">=</span> <span class="n">add_my_tech_cap_exp</span><span class="p">(</span>
+        <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">carrier</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">my_buses</span><span class="o">=</span><span class="n">my_buses</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;EXI_&quot;</span></code> prefix marks initial-capacity (fixed) components.  The
+expansion component uses an empty prefix and carries the capital cost.</p>
+<p>—</p>
+</section>
+<section id="step-6-log-new-components-and-return">
+<h2>Step 6 — Log new components and return<a class="headerlink" href="#step-6-log-new-components-and-return" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_components</span> <span class="o">=</span> <span class="n">log_new_components</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n0_dict</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">new_components</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">log_new_components</span></code> diffs the network before and after to return a dict of
+newly added links, buses, stores, etc., used for reporting and stochastic setup.</p>
+<p>—</p>
+</section>
+<section id="step-7-handle-the-case-where-nothing-is-added">
+<h2>Step 7 — Handle the case where nothing is added<a class="headerlink" href="#step-7-handle-the-case-where-nothing-is-added" title="Link to this heading">#</a></h2>
+<p>If neither list has entries for this sector, return an empty dict immediately
+so the function is a clean no-op:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">cap_to_add</span> <span class="ow">or</span> <span class="n">exp_to_add</span><span class="p">):</span>
+    <span class="n">empty</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span>
+             <span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">,</span> <span class="s2">&quot;generators&quot;</span><span class="p">,</span> <span class="s2">&quot;loads&quot;</span><span class="p">,</span> <span class="s2">&quot;stores&quot;</span><span class="p">,</span> <span class="s2">&quot;buses&quot;</span><span class="p">,</span> <span class="s2">&quot;storage_units&quot;</span><span class="p">]}</span>
+    <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">empty</span>
+</pre></div>
+</div>
+<p>—</p>
+</section>
+<section id="key-rules">
+<h2>Key Rules<a class="headerlink" href="#key-rules" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 55.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Rule</p></th>
+<th class="head"><p>Why</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Always write <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">t</span> <span class="pre">in</span> <span class="pre">cap_to_add</span> <span class="pre">or</span> <span class="pre">t</span> <span class="pre">in</span> <span class="pre">exp_to_add:</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">t</span> <span class="pre">in</span> <span class="pre">(list_a</span> <span class="pre">or</span> <span class="pre">list_b):</span></code> only checks the first non-empty list — silent bug</p></td>
+</tr>
+<tr class="row-odd"><td><p>Call <code class="docutils literal notranslate"><span class="pre">add_targets()</span></code> before building the multilink</p></td>
+<td><p>Sets <code class="docutils literal notranslate"><span class="pre">product_bus</span></code> (the collection bus) before the link wires to it</p></td>
+</tr>
+<tr class="row-even"><td><p>Never overwrite <code class="docutils literal notranslate"><span class="pre">product</span> <span class="pre">bus</span></code> inside <code class="docutils literal notranslate"><span class="pre">add_*_cap_exp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">add_targets</span></code> sets it to the collection bus for both <code class="docutils literal notranslate"><span class="pre">price</span></code> and <code class="docutils literal notranslate"><span class="pre">demand</span></code> drivers</p></td>
+</tr>
+<tr class="row-odd"><td><p>Set <code class="docutils literal notranslate"><span class="pre">bus1</span> <span class="pre">=</span> <span class="pre">my_buses.at[&quot;product</span> <span class="pre">bus&quot;,</span> <span class="pre">t]</span></code> (the collection bus)</p></td>
+<td><p>Plants inject directly into the collection bus — no per-tech intermediate bus</p></td>
+</tr>
+<tr class="row-even"><td><p>Use <code class="docutils literal notranslate"><span class="pre">add_requirements_buses()</span></code> for any bus that may already exist</p></td>
+<td><p>Idempotent — safe even if another tech already created the bus</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tag any shared bus via <code class="docutils literal notranslate"><span class="pre">n.buses.loc[bus,</span> <span class="pre">&quot;my_tag&quot;]</span></code></p></td>
+<td><p>Lets <code class="docutils literal notranslate"><span class="pre">add_symbiosis</span></code> and other modules discover it without hardcoded names</p></td>
+</tr>
+<tr class="row-even"><td><p>Return <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">new_components)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">empty)</span></code> — never raise</p></td>
+<td><p>Every <code class="docutils literal notranslate"><span class="pre">add_</span></code> function must leave the network in a feasible state</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>—</p>
+</section>
+<section id="product-keyword-matching-in-add-targets">
+<h2>Product keyword matching in <code class="docutils literal notranslate"><span class="pre">add_targets</span></code><a class="headerlink" href="#product-keyword-matching-in-add-targets" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">add_targets</span></code> infers which product bus topology to use from the plant name:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Keywords in plant name (case-insensitive)</p></th>
+<th class="head"><p>Product</p></th>
+<th class="head"><p>Collection bus</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;biogas&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;methanation&quot;</span></code></p></td>
+<td><p>bioCH4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;bioCH4</span> <span class="pre">collection&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;electrolysis&quot;</span></code></p></td>
+<td><p>H2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;H2</span> <span class="pre">collection&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;methanol&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;methanolisation&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;meoh&quot;</span></code></p></td>
+<td><p>Methanol</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Methanol</span> <span class="pre">collection&quot;</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Name the new technology so it contains the right keyword, or extend
+<code class="docutils literal notranslate"><span class="pre">build_bus_list_demand_or_price</span></code> inside <code class="docutils literal notranslate"><span class="pre">add_targets</span></code> for a new product
+type.</p>
+</section>
+<hr class="docutils" />
+<section id="adding-a-demand-for-a-new-product">
+<h2>Adding a demand for a new product<a class="headerlink" href="#adding-a-demand-for-a-new-product" title="Link to this heading">#</a></h2>
+<p>If the new technology produces a product whose <strong>demand and delivery store</strong>
+are not yet defined, you also need to configure the demand system.  See the
+full reference at <a class="reference internal" href="guide_demands.html#guide-demands"><span class="std std-ref">Setting Product Demands</span></a>.  The short version:</p>
+<ol class="arabic">
+<li><p><strong>Config</strong> — add the demand target and mode keys in <code class="docutils literal notranslate"><span class="pre">config/config.yaml</span></code>
+under <code class="docutils literal notranslate"><span class="pre">targets</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">demand_MyProduct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span><span class="w">       </span><span class="c1"># MWh/year</span>
+<span class="w">  </span><span class="nt">MyProduct_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_flat</span><span class="w">   </span><span class="c1"># flat | profile | bins_flat | bins_profile</span>
+<span class="w">  </span><span class="nt">MyProduct_bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">MyProduct_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Preprocessing</strong> — call <code class="docutils literal notranslate"><span class="pre">build_product_demand_ts</span></code> inside
+<code class="docutils literal notranslate"><span class="pre">build_demands_TS</span></code> in <code class="docutils literal notranslate"><span class="pre">scripts/preprocessing.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">myproduct_ts</span><span class="p">,</span> <span class="n">myproduct_e_nom_max</span> <span class="o">=</span> <span class="n">build_product_demand_ts</span><span class="p">(</span>
+    <span class="n">annual_demand</span>        <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">][</span><span class="s2">&quot;demand_MyProduct&quot;</span><span class="p">],</span>
+    <span class="n">mode</span>                 <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_demand_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">),</span>
+    <span class="n">snapshots</span>            <span class="o">=</span> <span class="n">snapshots</span><span class="p">,</span>
+    <span class="n">n_bins</span>               <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_bins&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">flexibility_fraction</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_flexibility&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="n">store_buffer</span>         <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;demand_store_buffer&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="n">col_name</span>             <span class="o">=</span> <span class="s2">&quot;demand MWh&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;MyProduct_demand_ts&quot;</span><span class="p">]</span>       <span class="o">=</span> <span class="n">myproduct_ts</span>
+<span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;MyProduct_store_e_nom_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myproduct_e_nom_max</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Network</strong> — in <code class="docutils literal notranslate"><span class="pre">scripts/prepare_network.py</span></code>, wire the load and delivery
+store inside the relevant <code class="docutils literal notranslate"><span class="pre">add_&lt;sector&gt;()</span></code> function following the same
+pattern used in <code class="docutils literal notranslate"><span class="pre">add_targets_per_product</span></code>.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The delivery store is automatically sized by <code class="docutils literal notranslate"><span class="pre">build_product_demand_ts</span></code>
+based on the chosen mode.  Do not set <code class="docutils literal notranslate"><span class="pre">e_nom_max</span></code> manually in the network
+script — read it from <code class="docutils literal notranslate"><span class="pre">inputs_dict[&quot;MyProduct_store_e_nom_max&quot;]</span></code>.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="economic-interpretation-of-the-new-technology">
+<h2>Economic interpretation of the new technology<a class="headerlink" href="#economic-interpretation-of-the-new-technology" title="Link to this heading">#</a></h2>
+<p>Once the network is built and solved, the post-processing pipeline
+automatically computes economic metrics for every technology injecting into a
+collection bus.  See <a class="reference internal" href="guide_economic_analysis.html#guide-economic-analysis"><span class="std std-ref">Economic Analysis of Results</span></a> for the full derivation.
+The short version relevant to technology design:</p>
+<dl>
+<dt><strong>LCOP (Levelised Cost of Production)</strong></dt><dd><p>Defined over the multilink’s bus ports:</p>
+<div class="math notranslate nohighlight">
+\[\text{LCOP} = \frac{\text{CAPEX} + \text{OPEX}
+                    - \sum_{k \neq \text{bus1}} \eta_k \cdot
+                      \overline{(\lambda_k \cdot p_0)}}{Q_\text{main}}\]</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">indirect</span> <span class="pre">OPEX</span></code> = feedstock costs − by-product credits via KKT
+(positive = net cost).  Bus0 uses <span class="math notranslate nohighlight">\(\eta_0 = -1\)</span> (primary feedstock
+consumed); additional input ports add cost; by-product ports give credit.
+Shared components (compressors, storage) are excluded — their cost enters
+via the KKT at the shared interface bus.</p>
+</dd>
+</dl>
+<p><strong>Topology choices that affect LCOP:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bus1</span></code> must be the collection bus (<code class="docutils literal notranslate"><span class="pre">is_product_bus=True</span></code>) so the
+pipeline discovers the link automatically.</p></li>
+<li><p>By-product ports (heat, CO2, etc.) with positive efficiency contribute a
+KKT credit.  Connect them to the correct shared bus so their shadow price
+is non-zero.</p></li>
+<li><p>Additional input ports (eff &lt; 0) will add to the LCOP numerator via the
+KKT at that bus — make sure the bus has a meaningful shadow price (i.e. it
+is connected to a real supply with cost).</p></li>
+</ul>
+<p><strong>Annual profit</strong></p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\text{annual profit} = \text{revenue main product} - \text{indirect OPEX}
+                       - \text{CAPEX} - \text{OPEX}\]</div>
+<p>A value near zero means the technology is the marginal (price-setting)
+producer for its product; a positive value indicates intra-marginal rent.</p>
+</div></blockquote>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="workflow.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Workflow</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="guide_demands.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Setting Product Demands</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-register-the-technology-in-n-config">Step 1 — Register the technology in <code class="docutils literal notranslate"><span class="pre">n_config</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-declare-the-tech-name-in-the-techs-list">Step 2 — Declare the tech name in the <code class="docutils literal notranslate"><span class="pre">techs</span></code> list</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-call-add-targets-before-building-the-plant">Step 3 — Call <code class="docutils literal notranslate"><span class="pre">add_targets()</span></code> before building the plant</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-write-the-add-cap-exp-inner-function">Step 4 — Write the <code class="docutils literal notranslate"><span class="pre">add_*_cap_exp</span></code> inner function</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-call-the-inner-function-for-capacity-and-expansion">Step 5 — Call the inner function for capacity and expansion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-log-new-components-and-return">Step 6 — Log new components and return</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-7-handle-the-case-where-nothing-is-added">Step 7 — Handle the case where nothing is added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-rules">Key Rules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#product-keyword-matching-in-add-targets">Product keyword matching in <code class="docutils literal notranslate"><span class="pre">add_targets</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-demand-for-a-new-product">Adding a demand for a new product</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#economic-interpretation-of-the-new-technology">Economic interpretation of the new technology</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

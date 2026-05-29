@@ -1,0 +1,198 @@
+# plots_config.default.yaml
+# BASE DEFAULTS — edit directly (plots rarely change between scenarios).
+# To override, create config/plots_config.yaml with only the keys you want to change.
+#
+# EXPORT AND PLOTS
+# Add to this section the component that you are interested in plotting
+# selector: the component name in the network (all components containing it will be selected),
+# field : variable type
+# kind : component type
+# th: capacity threshold for filtering low residual capacities
+
+# ── Fixed colors per carrier ───────────────────────────────────────────────────
+# These are applied consistently in all operational plots so a component always
+# gets the same color regardless of which other components are present.
+# Keys must match the carrier attribute set on the PyPSA component in the network.
+carrier_colors:
+  # Renewables
+  onwind:               "#4daf4a"   # green
+  solar:                "#ff9800"   # amber / solar yellow
+
+  # Grid
+  grid connection:      "#9c27b0"   # purple
+  rfnbos_grid_import:   "#ce93d8"   # light purple
+
+  # Electrolysis / H2
+  electrolysis:         "#2196f3"   # blue
+  H2 HP storage:        "#90caf9"   # light blue
+  H2 compressor:        "#64b5f6"   # medium blue
+  H2 pipe:              "#42a5f5"   # blue
+
+  # Biogas / Biomass chain
+  biogas:               "#8c510a"   # brown
+  biogas storage:       "#bf812d"   # tan brown
+  biogas upgrading:     "#543005"   # dark brown
+  biogas engine:        "#6d4c41"   # warm dark brown
+  dewatering:           "#a1887f"   # rose brown
+  biomass boiler:       "#795548"   # medium brown
+  biomass belt dryer:   "#d7ccc8"   # very light brown
+  pyrolysis:            "#5d4037"   # deep brown
+  pelletization:        "#bcaaa4"   # light rose
+
+  # Gas boilers / utilities
+  NG boiler:            "#78909c"   # blue-grey
+  El boiler:            "#0288d1"   # dark blue
+
+  # Methanation routes (greens — making CH4)
+  biomethanation biogas: "#74c476"  # light green
+  biomethanation CO2:    "#43a047"  # medium green
+  methanation biogas:    "#2e7d32"  # forest green
+  methanation CO2:       "#1b5e20"  # dark forest green
+
+  # Methanol
+  methanolisation:       "#f44336"  # red
+
+  # Battery / electrical storage
+  battery:               "#1565c0"  # dark blue
+
+  # CO2 storage / handling
+  CO2 HP storage:        "#9e9e9e"  # grey
+  CO2 Liq storage:       "#616161"  # dark grey
+  CO2 compressor:        "#bdbdbd"  # light grey
+  CO2 pipe:              "#757575"  # medium grey
+
+  # Heat / TES
+  TES DH:                "#e91e63"  # pink / magenta
+  TES concrete:          "#ff5722"  # deep orange
+  heat pump:             "#f48fb1"  # light pink
+  central heat:          "#ff8a65"  # salmon
+  DH heat exchanger:     "#ef9a9a"  # very light red
+  El boiler:             "#0288d1"  # dark blue (shared with El boiler above)
+
+plotting:
+  capacity_items:
+
+    - label: Wind
+      kind: Generator
+      field: p
+      selector: onshorewind
+
+    - label: Solar
+      kind: Generator
+      field: p
+      selector: solar
+
+    - label: Electrolyzer
+      kind: Link
+      field: p0
+      selector: electrolysis
+
+    - label: Biogas
+      kind: Link
+      field: p0
+      selector: biogas
+
+    - label: Biogas upgrading
+      kind: Link
+      field: p0
+      selector: biogas upgrading
+
+    - label: Methanolisation
+      kind: Link
+      field: p0
+      selector: methanolisation
+
+    - label: biomethanation CO2
+      kind: Link
+      field: p0
+      selector: biomethanation CO2
+
+    - label: biomethanation biogas
+      kind: Link
+      field: p0
+      selector: biomethanation biogas
+
+    - label: methanation CO2
+      kind: Link
+      field: p0
+      selector: methanation CO2
+
+    - label: methanation biogas
+      kind: Link
+      field: p0
+      selector: methanation biogas
+
+    - label: Battery Power
+      kind: StorageUnit
+      field: p
+      selector: battery
+
+    - label: Battery SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: battery
+
+    - label: H2 HP Store
+      kind: Store
+      field: e
+      selector: H2 HP storage
+
+    - label: CO2 HP Store
+      kind: Store
+      field: e
+      selector: CO2 HP storage
+
+    - label: CO2 Liq Store
+      kind: Store
+      field: e
+      selector: CO2 Liq storage
+
+    - label: CO2 liquefaction
+      kind: Store
+      field: e
+      selector: CO2 liquefaction
+
+    - label: CO2 Liq sequestration
+      kind: Store
+      field: e
+      selector: CO2 Liq sequestration
+
+    - label: biochar sequestred
+      kind: Store
+      field: e
+      selector: CO2 Liq sequestration
+
+    - label: TES DH Power
+      kind: StorageUnit
+      field: p
+      selector: TES DH
+
+    - label: TES DH SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: TES DH
+
+    - label: TES concrete Power
+      kind: StorageUnit
+      field: p
+      selector: TES concrete
+
+    - label: TES concrete SOC
+      kind: StorageUnit
+      field: state_of_charge
+      selector: TES concrete
+
+# list of internal buses for plotting shadow prices
+  bus_list_mp:
+    - El3 bus
+    - H2 collection
+    - H2 delivery
+    - H2 distribution
+    - bioCH4 collection
+    - bioCH4 delivery
+    - Methanol collection
+    - Methanol delivery
+    - Heat MT
+    - Heat DH
+    - Heat LT
+    - CO2 distribution

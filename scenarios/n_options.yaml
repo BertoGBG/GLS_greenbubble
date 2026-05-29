@@ -1,0 +1,34 @@
+# n_options.yaml
+
+# -------------------  options config (alphabetical) -------------------
+# expansion
+biochar credits:
+  enable: false
+
+CO2 Liq credits:
+  enable: true
+  efficiency: 0.95 # assumption including boil off
+
+Dig biomass:
+  max capacity: .inf # t/y of manure and biomass
+  price : 0 # 19.8676 # EUR/MWh biogas from JRC ENSPRESO
+
+DH: #
+  enable: false
+  price : 30 # €/MWh
+  load multiplier : 1 # keeps the load profile but multiplies the demand to represent new locations
+
+moist biomass market:
+  enable: false
+  max capacity: 20000 # (MWh/y) max limit  if biochar credits['expansion'] : true
+  price : 43 # €/MWh
+
+pellets market:
+  enable: true
+  max capacity: .inf # (MWh/y) max limit if biochar credits['expansion'] : true
+  price : 45 # €/MWh
+
+symbiosis El transformer:
+  expansion: true
+
+

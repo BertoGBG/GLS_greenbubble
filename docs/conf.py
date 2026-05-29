@@ -1,56 +1,60 @@
-# -- Path setup --------------------------------------------------------------
+import os
+import sys
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
 project = "GreenBubble"
-copyright = "2022, GreenBubble Authors"
+copyright = "2024, GreenBubble Authors"
 author = "Alberto Alamia"
-
+release = "0.1"
 
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    "sphinx.ext.duration",
-    "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",       # Google/NumPy docstrings
     "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "myst_parser",               # Markdown support
+    "sphinxcontrib.bibtex",
 ]
 
+autosummary_generate = True
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+
+autodoc_mock_imports = ["snakemake"]
+
+bibtex_bibfiles = []
+
 intersphinx_mapping = {
-    "rtd": ("https://docs.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
-    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+    "pypsa":  ("https://pypsa.readthedocs.io/en/latest/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
 }
-intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
-
-# -- Options for EPUB output
-epub_show_urls = "footnote"
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-# -- Options for HTML output -------------------------------------------------
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md":  "markdown",
+}
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
+# -- HTML output -------------------------------------------------------------
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+html_theme = "sphinx_book_theme"
+html_title = "GreenBubble"
+
+html_theme_options = {
+    "repository_url": "https://github.com/BertoGBG/GLS_greenbubble",
+    "use_repository_button": True,
+    "use_issues_button": True,
+    "use_edit_page_button": False,
+    "show_navbar_depth": 2,
+}
+
 html_static_path = ["_static"]

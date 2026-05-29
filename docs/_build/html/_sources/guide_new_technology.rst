@@ -1,0 +1,337 @@
+.. _guide-new-technology:
+
+Guide for Adding New Technologies
+==================================
+
+This guide explains how to add a new technology inside an existing main
+``add_`` function in ``scripts/prepare_network.py``.  A later section will
+cover adding an entirely new ``add_`` function.
+
+Overview
+--------
+
+Each sector of the GreenBubble network is built by a top-level function:
+
+.. code-block:: text
+
+   add_biogas()          add_electrolysis()     add_meoh()
+   add_methanation()     add_central_heat_MT()  add_symbiosis()
+
+These are called in sequence by ``build_network()``.  Each function must work
+independently — the optimisation problem must be feasible whether or not the
+other functions run.
+
+---
+
+Step 1 — Register the technology in ``n_config``
+-------------------------------------------------
+
+``n_config`` is loaded from a CSV file and indexed by technology name.
+Every technology that can be switched on/off or sized needs the following
+columns:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Column
+     - Meaning
+   * - ``initial capacity``
+     - MW installed from day one (0 = none)
+   * - ``expansion``
+     - ``True`` / ``False`` — allow the optimiser to expand
+   * - ``cost factor``
+     - Multiplier applied to the base capital cost from ``tech_costs``
+
+Add a row for each variant of the new technology
+(e.g. ``"biomethanation CO2"``).
+
+---
+
+Step 2 — Declare the tech name in the ``techs`` list
+-----------------------------------------------------
+
+Inside the relevant ``add_`` function, append the technology name to the
+``techs`` list exactly as it appears in ``n_config``:
+
+.. code-block:: python
+
+   techs = ["methanolisation", "my new tech"]   # existing + new
+   cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
+
+``tech_to_add()`` compares ``n_config`` with the current network state and
+returns:
+
+- ``cap_to_add`` — techs that need an initial-capacity component (``EXI_`` prefix)
+- ``exp_to_add`` — techs that need an extendable expansion component
+
+---
+
+Step 3 — Call ``add_targets()`` before building the plant
+----------------------------------------------------------
+
+If the technology produces a product sold or delivered to an external bus
+(H2, bioCH4, Methanol), call ``add_targets`` **before** adding the multilink.
+
+.. code-block:: python
+
+   for t in techs:
+       if t in cap_to_add or t in exp_to_add:   # correct form — see Key Rules
+           n.add("Carrier", t)
+           n, product_bus = add_targets(
+               n, plant=t,
+               inputs_dict=inputs_dict,
+               tech_costs=tech_costs,
+               n_options=n_options,
+               targets_dict=targets_dict,
+           )
+           my_buses.at["product bus", t] = product_bus
+
+``add_targets`` creates the following network elements (once per product, shared
+across all plants that produce it):
+
+- ``"{product} collection"`` — shared collection bus, returned as ``product_bus``
+  and tagged ``is_product_bus=True`` so other modules can discover it
+- Collection-to-delivery/demand link and Store/Load at the delivery bus
+  (``"{product} delivery"``) — created once regardless of how many plants run
+
+Plants inject **directly** into the collection bus via their multilink's ``bus1``.
+There is no per-technology intermediate bus.
+
+.. important::
+
+   Do **not** copy ``product bus`` from another column of ``my_buses`` inside
+   your ``add_*_cap_exp`` function.  ``add_targets`` has already set it
+   correctly for both ``price`` and ``demand`` drivers.  Overwriting it breaks
+   price mode.
+
+---
+
+Step 4 — Write the ``add_*_cap_exp`` inner function
+----------------------------------------------------
+
+This inner function receives ``prefix``, ``capital_cost``, ``capacity``,
+``expansion``, ``carrier``, and the buses DataFrame.  It should:
+
+1. Update the buses DataFrame for the new tech by copying shared buses from
+   the base column — **never** the ``product bus`` row.
+2. Add multilinks or generators using those buses.
+3. Return ``(n, my_buses)``.
+
+.. code-block:: python
+
+   def add_my_tech_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, my_buses):
+       # Copy shared buses from base column — never overwrite 'product bus'
+       my_buses.at["H2 in bus",    t] = my_buses.at["H2 in bus",    "base"]
+       my_buses.at["CO2 in bus",   t] = my_buses.at["CO2 in bus",   "base"]
+       my_buses.at["local EL bus", t] = my_buses.at["local EL bus", "base"]
+       # product bus is already set by add_targets — do NOT copy it here
+
+       name = f"{prefix}{t}"
+       n.add(
+           "Link", name,
+           carrier=carrier,
+           bus0=my_buses.at["H2 in bus",    t],
+           bus1=my_buses.at["product bus",  t],   # collection bus — direct injection
+           efficiency=...,
+           p_nom=capacity,
+           p_nom_extendable=expansion,
+           capital_cost=capital_cost if expansion else 0,
+           marginal_cost=...,
+       )
+       return n, my_buses
+
+---
+
+Step 5 — Call the inner function for capacity and expansion
+-----------------------------------------------------------
+
+.. code-block:: python
+
+       if t in cap_to_add:
+           cap = n_config.at[t, "initial capacity"]
+           n, my_buses = add_my_tech_cap_exp(
+               n, "EXI_", 0, cap, False, carrier=t, my_buses=my_buses)
+
+       if t in exp_to_add:
+           cost = tech_costs.at["my base tech", "fixed"] * n_config.at[t, "cost factor"]
+           n, my_buses = add_my_tech_cap_exp(
+               n, "", cost, 0, True, carrier=t, my_buses=my_buses)
+
+The ``"EXI_"`` prefix marks initial-capacity (fixed) components.  The
+expansion component uses an empty prefix and carries the capital cost.
+
+---
+
+Step 6 — Log new components and return
+---------------------------------------
+
+.. code-block:: python
+
+   new_components = log_new_components(n, n0_dict)
+   return n, new_components
+
+``log_new_components`` diffs the network before and after to return a dict of
+newly added links, buses, stores, etc., used for reporting and stochastic setup.
+
+---
+
+Step 7 — Handle the case where nothing is added
+------------------------------------------------
+
+If neither list has entries for this sector, return an empty dict immediately
+so the function is a clean no-op:
+
+.. code-block:: python
+
+   if not (cap_to_add or exp_to_add):
+       empty = {k: [] for k in
+                ["links", "generators", "loads", "stores", "buses", "storage_units"]}
+       return n, empty
+
+---
+
+Key Rules
+---------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 55 45
+
+   * - Rule
+     - Why
+   * - Always write ``if t in cap_to_add or t in exp_to_add:``
+     - ``if t in (list_a or list_b):`` only checks the first non-empty list — silent bug
+   * - Call ``add_targets()`` before building the multilink
+     - Sets ``product_bus`` (the collection bus) before the link wires to it
+   * - Never overwrite ``product bus`` inside ``add_*_cap_exp``
+     - ``add_targets`` sets it to the collection bus for both ``price`` and ``demand`` drivers
+   * - Set ``bus1 = my_buses.at["product bus", t]`` (the collection bus)
+     - Plants inject directly into the collection bus — no per-tech intermediate bus
+   * - Use ``add_requirements_buses()`` for any bus that may already exist
+     - Idempotent — safe even if another tech already created the bus
+   * - Tag any shared bus via ``n.buses.loc[bus, "my_tag"]``
+     - Lets ``add_symbiosis`` and other modules discover it without hardcoded names
+   * - Return ``(n, new_components)`` or ``(n, empty)`` — never raise
+     - Every ``add_`` function must leave the network in a feasible state
+
+---
+
+Product keyword matching in ``add_targets``
+--------------------------------------------
+
+``add_targets`` infers which product bus topology to use from the plant name:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 20 40
+
+   * - Keywords in plant name (case-insensitive)
+     - Product
+     - Collection bus
+   * - ``"biogas"``, ``"methanation"``
+     - bioCH4
+     - ``"bioCH4 collection"``
+   * - ``"electrolysis"``
+     - H2
+     - ``"H2 collection"``
+   * - ``"methanol"``, ``"methanolisation"``, ``"meoh"``
+     - Methanol
+     - ``"Methanol collection"``
+
+Name the new technology so it contains the right keyword, or extend
+``build_bus_list_demand_or_price`` inside ``add_targets`` for a new product
+type.
+
+----
+
+Adding a demand for a new product
+-----------------------------------
+
+If the new technology produces a product whose **demand and delivery store**
+are not yet defined, you also need to configure the demand system.  See the
+full reference at :ref:`guide-demands`.  The short version:
+
+1. **Config** — add the demand target and mode keys in ``config/config.yaml``
+   under ``targets``:
+
+   .. code-block:: yaml
+
+      targets:
+        demand_MyProduct: 50000       # MWh/year
+        MyProduct_demand_mode: bins_flat   # flat | profile | bins_flat | bins_profile
+        MyProduct_bins: 12
+        MyProduct_flexibility: 0.0
+
+2. **Preprocessing** — call ``build_product_demand_ts`` inside
+   ``build_demands_TS`` in ``scripts/preprocessing.py``:
+
+   .. code-block:: python
+
+      myproduct_ts, myproduct_e_nom_max = build_product_demand_ts(
+          annual_demand        = cfg["targets"]["demand_MyProduct"],
+          mode                 = cfg["targets"].get("MyProduct_demand_mode", "bins_flat"),
+          snapshots            = snapshots,
+          n_bins               = cfg["targets"].get("MyProduct_bins", 1),
+          flexibility_fraction = cfg["targets"].get("MyProduct_flexibility", 0.0),
+          store_buffer         = cfg["targets"].get("demand_store_buffer", 0.0),
+          col_name             = "demand MWh",
+      )
+      inputs_dict["MyProduct_demand_ts"]       = myproduct_ts
+      inputs_dict["MyProduct_store_e_nom_max"] = myproduct_e_nom_max
+
+3. **Network** — in ``scripts/prepare_network.py``, wire the load and delivery
+   store inside the relevant ``add_<sector>()`` function following the same
+   pattern used in ``add_targets_per_product``.
+
+.. note::
+
+   The delivery store is automatically sized by ``build_product_demand_ts``
+   based on the chosen mode.  Do not set ``e_nom_max`` manually in the network
+   script — read it from ``inputs_dict["MyProduct_store_e_nom_max"]``.
+
+----
+
+Economic interpretation of the new technology
+-----------------------------------------------
+
+Once the network is built and solved, the post-processing pipeline
+automatically computes economic metrics for every technology injecting into a
+collection bus.  See :ref:`guide-economic-analysis` for the full derivation.
+The short version relevant to technology design:
+
+**LCOP (Levelised Cost of Production)**
+  Defined over the multilink's bus ports:
+
+  .. math::
+
+     \text{LCOP} = \frac{\text{CAPEX} + \text{OPEX}
+                         - \sum_{k \neq \text{bus1}} \eta_k \cdot
+                           \overline{(\lambda_k \cdot p_0)}}{Q_\text{main}}
+
+  where ``indirect OPEX`` = feedstock costs − by-product credits via KKT
+  (positive = net cost).  Bus0 uses :math:`\eta_0 = -1` (primary feedstock
+  consumed); additional input ports add cost; by-product ports give credit.
+  Shared components (compressors, storage) are excluded — their cost enters
+  via the KKT at the shared interface bus.
+
+**Topology choices that affect LCOP:**
+
+- ``bus1`` must be the collection bus (``is_product_bus=True``) so the
+  pipeline discovers the link automatically.
+- By-product ports (heat, CO2, etc.) with positive efficiency contribute a
+  KKT credit.  Connect them to the correct shared bus so their shadow price
+  is non-zero.
+- Additional input ports (eff < 0) will add to the LCOP numerator via the
+  KKT at that bus — make sure the bus has a meaningful shadow price (i.e. it
+  is connected to a real supply with cost).
+
+**Annual profit**
+
+  .. math::
+
+     \text{annual profit} = \text{revenue main product} - \text{indirect OPEX}
+                            - \text{CAPEX} - \text{OPEX}
+
+  A value near zero means the technology is the marginal (price-setting)
+  producer for its product; a positive value indicates intra-marginal rent.
