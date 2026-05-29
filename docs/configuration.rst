@@ -422,6 +422,44 @@ built in 2022, no new capacity allowed:
      construction_year: 2022
      remaining_investment_fraction: 0.4
 
+.. _config-committable:
+
+Committable components
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``committable`` column in ``n_config`` enables **unit commitment** (on/off
+binary dispatch) for a technology.
+
+.. code-block:: yaml
+
+   biogas engine:
+     committable: true   # activate unit commitment (dispatch only)
+     min load: 0.4       # minimum load fraction when online (p_min_pu)
+
+**Current GreenBubble behaviour**
+
+In ``prepare_network.py``, ``committable`` is only activated when
+``expansion: false`` — i.e. for fixed-capacity brownfield assets.  When a
+technology is extendable (``expansion: true``), the capacity expansion solve
+runs as a pure LP regardless of the ``committable`` flag.
+
+This is a deliberate choice to keep the investment problem fast and compatible
+with stochastic mode.  PyPSA itself *does* support committable + extendable
+simultaneously in deterministic capacity expansion via a big-M MILP
+formulation — see the
+`PyPSA committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_.
+
+**Committable in rolling horizon**
+
+After ``fix_capacities()`` fixes all ``p_nom``, ``enable_committable_for_rh``
+re-activates ``committable=True`` for any technology that has it set in
+``n_config``, so the dispatch-only RH solve can include unit commitment.
+
+**Stochastic mode**
+
+``committable: true`` is incompatible with stochastic mode — the multi-scenario
+LP requires a pure LP (no binary variables).  See :ref:`guide-stochastic`.
+
 ----
 
 plots_config.default.yaml

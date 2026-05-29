@@ -82,9 +82,12 @@ It is automatically disabled when ``stochastic: false``.
 Limitations
 -----------
 
-- **MILP (committable links)** is incompatible with stochastic mode — PyPSA
-  cannot couple extendable and committable components in a multi-scenario LP.
+- **MILP (committable links)** is incompatible with stochastic mode — PyPSA's
+  stochastic multi-scenario LP requires a pure LP (no binary variables).
   Set ``committable: false`` for all technologies when using stochastic mode.
+  Note: committable + extendable *is* supported in deterministic capacity
+  expansion via PyPSA's big-M formulation; see
+  `committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_.
 - **Temporal resampling** with stochastic mode issues a warning (scenarios are
   resampled independently — see :ref:`guide-temporal-resolution`).
 
