@@ -1748,7 +1748,7 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
     # ------------------
     # Filename
     # ------------------
-    tr = f"_TR_{resolution}" if resolution else ""
+    tr = resolution if resolution else "1h"
 
     file_name = (
         f"{prefix}"
@@ -1759,7 +1759,8 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
         f"CH4_{CH4_t}_"
         f"{year}_"
         f"El_{max_RE_to_grid}_"
-        f"{stch}{tr}_"
+        f"{stch}_"
+        f"{tr}_"
         f"{run_name}"
     )
 

@@ -35,24 +35,24 @@ in ``Snakefile`` before any rule executes.
 
 .. code-block:: text
 
-   {flags}CO2_{co2}_{tD|tP}_H2_{h2}_MeOH_{meoh}_CH4_{ch4}_{year}_El_{el}_{DET|STC}[_TR_{res}]_{run_name}
+   {flags}CO2_{co2}_{tD|tP}_H2_{h2}_MeOH_{meoh}_CH4_{ch4}_{year}_El_{el}_{DET|STC}_{res}_{run_name}
 
-**Example — full resolution (default):**
+**Example — full resolution (default, 1 h):**
 
 .. code-block:: text
 
-   B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK
+   B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_1h_H2_meth_dmd_DK
 
 **Example — 4-hour temporal resolution:**
 
 .. code-block:: text
 
-   B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_TR_4h_H2_meth_dmd_DK
+   B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_4h_H2_meth_dmd_DK
 
 The segments encode (in order): active technology flags, CO₂ cost, demand driver,
-demand targets, energy year, grid export share, stochastic mode, optional time
-resolution token (``TR_{res}`` — only present when
-``clustering.temporal.resolution`` is set), and run name.
+demand targets, energy year, grid export share, stochastic mode, time resolution
+(``1h`` when ``clustering.temporal.resolution: false``; otherwise the configured
+offset string), and run name.
 
 **Constraint:** literal match against the pre-computed ``NETWORK`` string
 (via ``wildcard_constraints: network = NETWORK_PATTERN``).
