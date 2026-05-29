@@ -72,7 +72,7 @@ Solver setup
 Running the model
 -----------------
 
-**Option A — Snakemake workflow** (recommended)::
+Run with Snakemake::
 
    # Preview the execution plan without running
    snakemake -n
@@ -84,13 +84,6 @@ Running the model
    snakemake -j1 --forcerun preprocess_inputs
 
 See :ref:`rules` for a description of each step.
-
-**Option B — standalone script**::
-
-   python greenbubble_main.py
-
-This runs the full pipeline in a single Python process (no Snakemake required).
-Useful for quick tests or debugging individual steps.
 
 
 Updating input data
