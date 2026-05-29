@@ -26,15 +26,96 @@ import pandas as pd
 import hashlib
 import re
 from scripts.parameters import loop_tol
-from scripts.helpers import en_market_prices_w_CO2, add_el_grid_import_RFNBOs, ensure_bus, ensure_carrier
+from scripts.helpers import (en_market_prices_w_CO2, add_el_grid_import_RFNBOs,
+                             ensure_bus, ensure_carrier, annuity, read_costs_at_year)
 from scripts.config import (n_options,
                             n_config,
                             rfnbos_dict,
                             run_name,
-                            targets_dict)
+                            targets_dict,
+                            discount_rate,
+                            year_investment,
+                            amortization_period)
+import warnings as _warnings
 from scripts.technology_inputs import symbiosis_n, mixture_database
 import CoolProp.CoolProp as CP
 from pypsa.optimization.constraints import define_total_supply_constraints
+
+# ---- EXI_ capital-cost context (set by build_network before plant functions run) ----
+_COSTS_DIR: str | None = None
+_USD_TO_EUR: float = 0.85
+_TECH_INPUTS: dict | None = None
+
+
+def _n_config_val(key: str, param: str, default):
+    """Safely read a value from the n_config DataFrame; return default if missing/NaN."""
+    if key not in n_config.index:
+        return default
+    val = n_config.at[key, param]
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return default
+    return val
+
+
+def _exi_capital_cost(tech_name: str, config_key: str, tech_costs: pd.DataFrame,
+                       pre_annualized_cc: float | None = None) -> float:
+    """Annualised capital charge [EUR/MW/year] for an EXI_ (brownfield) component.
+
+    Parameters
+    ----------
+    tech_name : str
+        Key into *tech_costs* (the resolved technology name, e.g. ``"electrolysis"``).
+    config_key : str
+        Key into ``n_config`` for reading ``construction_year`` and
+        ``remaining_investment_fraction`` (e.g. ``"electrolysis"`` or a carrier name).
+    tech_costs : pd.DataFrame
+        Main cost table at *year_investment*.
+    pre_annualized_cc : float | None
+        If provided (e.g. compressors whose cost is from ``tech_inputs`` rather than
+        the technology-data CSV), this is the base annualised cost at *year_investment*.
+        Construction-year interpolation is skipped; only the amortization-period
+        adjustment is applied.
+
+    Returns
+    -------
+    float
+    """
+    rif = float(_n_config_val(config_key, "remaining_investment_fraction", 0.0))
+    if rif == 0.0:
+        return 0.0
+
+    cy_raw = _n_config_val(config_key, "construction_year", None)
+    cy = int(cy_raw) if cy_raw is not None else (year_investment - 10)
+    cy = max(cy, 2020)
+
+    lifetime = float(tech_costs.at[tech_name, "lifetime"]) if tech_name in tech_costs.index else 25.0
+    eff_period = float(amortization_period) if amortization_period is not None else lifetime
+    remaining_lifetime = cy + lifetime - year_investment
+
+    if remaining_lifetime < eff_period:
+        _warnings.warn(
+            f"EXI_ '{tech_name}' (built {cy}): remaining lifetime {remaining_lifetime:.0f}y "
+            f"< amortization period {eff_period:.0f}y — re-investment may be needed "
+            "within the planning horizon.",
+            UserWarning, stacklevel=3,
+        )
+
+    if pre_annualized_cc is not None:
+        # Pre-computed annualised cost: re-scale for effective amortization period.
+        ann_lifetime = annuity(lifetime, discount_rate)
+        ann_eff = annuity(eff_period, discount_rate)
+        inv_approx = pre_annualized_cc / ann_lifetime if ann_lifetime > 0 else pre_annualized_cc
+        return rif * inv_approx * ann_eff
+
+    # Standard case: look up investment at construction year.
+    if _COSTS_DIR is not None:
+        costs_cy = read_costs_at_year(cy, _COSTS_DIR, _TECH_INPUTS, _USD_TO_EUR, discount_rate)
+        inv_cy = float(costs_cy.at[tech_name, "investment"]) if tech_name in costs_cy.index else 0.0
+    else:
+        inv_cy = float(tech_costs.at[tech_name, "investment"]) if tech_name in tech_costs.index else 0.0
+
+    return rif * inv_cy * annuity(eff_period, discount_rate)
+
 
 # ---- Component → tech_costs key mapping helpers ----
 # Maps carrier names that differ from their tech_costs index entry.
@@ -999,7 +1080,7 @@ def add_biomass_drying(
 
     if t in cap_to_add:
         capacity = n_config.at["biomass belt dryer", "initial capacity"]
-        _exi_cc = tech_costs.at["biomass belt dryer", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("biomass belt dryer", t, tech_costs)
         n = add_biomass_belt_dryer_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False)
 
     if t in exp_to_add:
@@ -1128,7 +1209,7 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = tech_costs.at["CO2 storage tank small", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("CO2 storage tank small", t, tech_costs)
         n = add_CO2_Liq_storage_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier= t)
 
     if t in exp_to_add:
@@ -1472,8 +1553,9 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
 
     if t in cap_to_add:
         _cf = n_config.at[f"{fluid} compressor", "cost factor"] if f"{fluid} compressor" in n_config.index else 1
-        _rcf = n_config.at[f"{fluid} compressor", "residual cost factor"] if f"{fluid} compressor" in n_config.index else 0
-        _exi_cc = capital_cost / max(_cf, 1e-9) * _rcf if capital_cost else 0
+        _base_cc = capital_cost / max(_cf, 1e-9) if capital_cost else 0
+        _exi_cc = _exi_capital_cost(f"{fluid} compressor", f"{fluid} compressor", tech_costs,
+                                     pre_annualized_cc=_base_cc)
         n = add_compressor_cap_exp(n = n, prefix=f"EXI_", capital_cost=_exi_cc, marginal_cost = marginal_cost, lifetime =lifetime, capacity=capacity[0], expansion=False, comp_dict = comp_dict, compressor_data = compressor_data)
 
     if t in exp_to_add:
@@ -1489,8 +1571,9 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
 
         if t in cap_to_add:
             _cf = n_config.at[f"{fluid} HP storage", "cost factor"] if f"{fluid} HP storage" in n_config.index else 1
-            _rcf = n_config.at[f"{fluid} HP storage", "residual cost factor"] if f"{fluid} HP storage" in n_config.index else 0
-            _exi_cc = capital_cost / max(_cf, 1e-9) * _rcf if capital_cost else 0
+            _base_cc = capital_cost / max(_cf, 1e-9) if capital_cost else 0
+            _exi_cc = _exi_capital_cost(f"{fluid} HP storage", f"{fluid} HP storage", tech_costs,
+                                         pre_annualized_cc=_base_cc)
             n = add_HP_storage_cap_exp(
                 n, prefix="EXI_", capital_cost=_exi_cc, lifetime= lifetime, capacity=capacity[1], expansion=False, comp_dict = comp_dict)
 
@@ -1590,7 +1673,7 @@ def add_battery_old(n, n_flags, inputs_dict, tech_costs, n_config):
     t = "battery"
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = tech_costs.at["battery storage", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("battery storage", t, tech_costs)
         n = add_battery_cap_exp(n=n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False,carrier = t)
 
     if t in exp_to_add:
@@ -1664,7 +1747,8 @@ def add_battery(n, n_flags, inputs_dict, tech_costs, n_config):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = (tech_costs.at["battery storage", "fixed"] / n_config.at["battery", "max hours"] + tech_costs.at["battery inverter", "fixed"]) * n_config.at[t, "residual cost factor"]
+        _exi_cc = (_exi_capital_cost("battery storage", t, tech_costs) / n_config.at["battery", "max hours"]
+                   + _exi_capital_cost("battery inverter", t, tech_costs))
         n = add_battery_cap_exp(n=n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False,carrier = t)
 
     if t in exp_to_add:
@@ -1781,7 +1865,7 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = tech_costs.at["central water tank storage", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("central water tank storage", t, tech_costs)
         n = add_TES_storage_DH_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier = t)
     if t in exp_to_add:
         capital_cost = tech_costs.at["central water tank storage", "fixed"] * n_config.at[t, "cost factor"]
@@ -1793,7 +1877,7 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
 
     if t in cap_to_add:
         capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = tech_costs.at["Concrete-store", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("Concrete-store", t, tech_costs)
         n = add_TES_storage_concrete_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier = t)
     if t in exp_to_add:
         capital_cost = tech_costs.at["Concrete-store", "fixed"] * n_config.at[t, "cost factor"]
@@ -1859,7 +1943,7 @@ def add_heat_pump(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity']
-            _exi_cc = tech_costs.at['industrial heat pump medium temperature', 'fixed'] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('industrial heat pump medium temperature', t, tech_costs)
             n = add_heat_pump_cap_exp(
                 n=n, prefix='EXI_', capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier =t)
 
@@ -2334,7 +2418,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity'] / GL_eff.loc["bioCH4", "SkiveBiogas"]
-            _exi_cc = tech_costs.at['biogas', 'fixed'] / GL_eff.loc["bioCH4", "SkiveBiogas"] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('biogas', t, tech_costs) / GL_eff.loc["bioCH4", "SkiveBiogas"]
             n = add_biogas_cap_exp(n= n, prefix = 'EXI_', capital_cost = _exi_cc, capacity = capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
@@ -2347,7 +2431,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity']
-            _exi_cc = tech_costs.at['biogas storage', 'fixed'] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('biogas storage', t, tech_costs)
             n = add_biogas_storage_cap_exp(n= n, prefix = 'EXI_', capital_cost = _exi_cc, capacity= capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
@@ -2364,7 +2448,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at[t,'initial capacity']
-            _exi_cc = tech_costs.at['biogas upgrading', 'fixed'] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('biogas upgrading', t, tech_costs)
             n = add_biogas_upgrading_cap_exp(n= n, product_bus = product_bus, prefix = 'EXI_', capital_cost = _exi_cc, capacity= capacity, expansion= False, carrier = t)
 
         if t in exp_to_add:
@@ -2377,7 +2461,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             capacity = n_config.at['dewatering', 'initial capacity']
-            _exi_cc = tech_costs.at['centrifugal dewatering', 'fixed'] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('centrifugal dewatering', t, tech_costs)
             n = add_dewatering_cap_exp(n=n, prefix='EXI_', capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier = t)
 
         if t in exp_to_add:
@@ -2390,7 +2474,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         # add exisitng capacity
         if t in cap_to_add:
             capacity = n_config.at[t, 'initial capacity']
-            _exi_cc = tech_costs.at['biogas engine', 'fixed'] * n_config.at[t, 'residual cost factor']
+            _exi_cc = _exi_capital_cost('biogas engine', t, tech_costs)
             n = add_biogas_engine_cap_exp(n, prefix='EXI_', capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier=t)
         # add expandable engine
         if t in exp_to_add:
@@ -2401,7 +2485,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             # add connection to the external grid (based on "add_local_el_connections")
             gc_init = n_config.at['grid connection', 'initial capacity']
             if gc_init > 0:
-                _exi_cc = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'residual cost factor']
+                _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
                 n = add_grid_connection_cap_exp(
                     n, 'EXI_El3_to_DK1', _exi_cc, gc_init, False,
                     carrier='grid connection',
@@ -2503,7 +2587,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'onwind' in cap_to_add:
         cap = n_config.at['onwind', 'initial capacity']
-        _exi_cc = tech_costs.at['onwind', 'fixed'] * n_config.at['onwind', 'residual cost factor']
+        _exi_cc = _exi_capital_cost('onwind', 'onwind', tech_costs)
         n = add_onwind_cap_exp(n, 'EXI_', _exi_cc, cap, False, carrier = t)
     if 'onwind' in exp_to_add:
         cost = tech_costs.at['onwind', 'fixed'] * n_config.at['onwind', 'cost factor']
@@ -2516,7 +2600,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'solar' in cap_to_add:
         cap = n_config.at['solar', 'initial capacity']
-        _exi_cc = tech_costs.at['solar', 'fixed'] * n_config.at['solar', 'residual cost factor']
+        _exi_cc = _exi_capital_cost('solar', 'solar', tech_costs)
         n = add_solar_cap_exp(n, 'EXI_', _exi_cc, cap, False, carrier = t)
     if 'solar' in exp_to_add:
         cost = tech_costs.at['solar', 'fixed'] * n_config.at['solar', 'cost factor']
@@ -2529,7 +2613,7 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'grid connection' in cap_to_add:
         cap = n_config.at['grid connection', 'initial capacity']
-        _exi_cc = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'residual cost factor']
+        _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
         n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', _exi_cc, cap, False, carrier = t, en_market_prices=en_market_prices)
     if 'grid connection' in exp_to_add:
         cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor']
@@ -2632,7 +2716,8 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
             if t in cap_to_add:
                 cap = n_config.at[t, 'initial capacity']
                 _cf = n_config.at[t, 'cost factor']
-                _exi_cc = electrolysis_cost / max(_cf, 1e-9) * n_config.at[t, 'residual cost factor']
+                _exi_cc = _exi_capital_cost('electrolysis', t, tech_costs,
+                                             pre_annualized_cc=electrolysis_cost / max(_cf, 1e-9))
                 n = add_H2_cap_exp(n, product_bus, 'EXI_', _exi_cc, cap, False, carrier=t)
             if t in exp_to_add:
                 n = add_H2_cap_exp(n, product_bus, '', electrolysis_cost, 0, True, carrier = t)
@@ -2838,7 +2923,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
 
     if t in cap_to_add:
         cap = n_config.at[t, "initial capacity"]
-        _exi_cc = tech_costs.at["methanolisation", "fixed"] * n_config.at[t, "residual cost factor"]
+        _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs)
         n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
 
     if t in exp_to_add:
@@ -3285,14 +3370,14 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         if t in cap_to_add:
             cap = n_config.at[t, "initial capacity"]
             if "methanation biogas" in t or "methanation CO2" in t:
-                _base_cc = tech_costs.at["methanation biogas", "fixed"]
+                _tech_nm = "methanation biogas"
             elif "biomethanation biogas" in t:
-                _base_cc = tech_costs.at["biomethanation biogas", "fixed"]
+                _tech_nm = "biomethanation biogas"
             elif "biomethanation CO2" in t:
-                _base_cc = tech_costs.at["biomethanation CO2", "fixed"]
+                _tech_nm = "biomethanation CO2"
             else:
-                _base_cc = 0
-            _exi_cc = _base_cc * n_config.at[t, "residual cost factor"]
+                _tech_nm = None
+            _exi_cc = _exi_capital_cost(_tech_nm, t, tech_costs) if _tech_nm else 0.0
             n, methanation_buses = add_fn(n, "EXI_", _exi_cc, cap, False, carrier=t, methanation_buses=methanation_buses)
 
         if t in exp_to_add:
@@ -3459,7 +3544,8 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             n = add_biochar_sequestration(n)
 
             if t in cap_to_add:
-                _exi_cc = (tech_costs.at["biochar pyrolysis", "fixed"] / tech_costs.at["biochar pyrolysis", "biomass input"]) * n_config.at[t, "residual cost factor"]
+                _exi_cc = (_exi_capital_cost("biochar pyrolysis", t, tech_costs)
+                           / tech_costs.at["biochar pyrolysis", "biomass input"])
                 n = add_pyrolysis_cap_exp(n, "EXI_", _exi_cc, n_config.at["pyrolysis", "initial capacity"], False, carrier = t)
             if t in exp_to_add:
                 cost = (
@@ -3499,7 +3585,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             n.add('Carrier', t)
 
             if t in cap_to_add:
-                _exi_cc = tech_costs.at['biomass boiler', "fixed"] * n_config.at[t, "residual cost factor"]
+                _exi_cc = _exi_capital_cost('biomass boiler', t, tech_costs)
                 n = add_C_biomass_boiler_cap_exp(n, "EXI_", _exi_cc, n_config.at["biomass boiler", "initial capacity"], False, carrier = t)
             if t in exp_to_add:
                 cost = tech_costs.at['biomass boiler', "fixed"] * n_config.at["biomass boiler", "cost factor"]
@@ -3536,7 +3622,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             n.add('Carrier', t)
 
             if t in cap_to_add:
-                _exi_cc = tech_costs.at["gas boiler steam", "fixed"] * n_config.at[t, "residual cost factor"]
+                _exi_cc = _exi_capital_cost("gas boiler steam", t, tech_costs)
                 n = add_C_NG_boiler_cap_exp(n, "EXI_", _exi_cc, n_config.at["NG boiler", "initial capacity"], False, carrier = t)
             if t in exp_to_add:
                 cost = tech_costs.at["gas boiler steam", "fixed"] * n_config.at["NG boiler", "cost factor"]
@@ -3572,7 +3658,7 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             n.add('Carrier', t)
 
             if t in cap_to_add:
-                _exi_cc = tech_costs.at["electric boiler steam", "fixed"] * n_config.at[t, "residual cost factor"]
+                _exi_cc = _exi_capital_cost("electric boiler steam", t, tech_costs)
                 n = add_C_El_boiler_cap_exp(n, "EXI_", _exi_cc, n_config.at["El boiler", "initial capacity"], False, carrier = t)
             if t in exp_to_add:
                 cost = tech_costs.at["electric boiler steam", "fixed"] * n_config.at["El boiler", "cost factor"]
@@ -3784,8 +3870,8 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
 def _apply_exi_residual_costs(n):
     """Convert EXI_ components with capital_cost > 0 to extendable-fixed.
 
-    When residual cost factor > 0 in n_config, the EXI_ call site passes
-    capital_cost = tech_cost * residual_cost_factor instead of 0.
+    When remaining_investment_fraction > 0 in n_config, the EXI_ call site passes
+    capital_cost = rif × investment(construction_year) × annuity(amortization_period, discount_rate).
     This function then sets p_nom_extendable=True with p_nom_min=p_nom_max=capacity
     so the cost enters n.objective_constant and n.statistics.capex() accounts for it.
     Components with capital_cost = 0 are left untouched (pure brownfield / sunk cost).
@@ -3811,7 +3897,10 @@ def _apply_exi_residual_costs(n):
 
 
 # BUILD THE NETWORK
-def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
+def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
+                  costs_dir: str | None = None,
+                  USD_to_EUR: float | None = None,
+                  tech_inputs: dict | None = None):
     """
     Build the full PyPSA network (Greenbubble) using all modular plant functions.
 
@@ -3827,11 +3916,23 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
         Configuration options (market toggles, cost factors, etc.)
     p : module or object
         Parameter container with time series, constants, etc.
+    costs_dir : str | None
+        Directory containing ``costs_{year}.csv`` files for all TECH_DATA_YEARS.
+        Required to look up investment costs at ``construction_year`` for EXI_ components.
+        If None, falls back to investment costs at ``year_investment``.
+    USD_to_EUR : float | None
+        Exchange rate used when loading construction-year costs.
+    tech_inputs : dict | None
+        Project-specific technology overrides used when loading construction-year costs.
 
     Returns
     -------
     network : pypsa.Network
     """
+    global _COSTS_DIR, _USD_TO_EUR, _TECH_INPUTS
+    _COSTS_DIR    = costs_dir
+    _USD_TO_EUR   = USD_to_EUR if USD_to_EUR is not None else 0.85
+    _TECH_INPUTS  = tech_inputs
 
     # ---------------------------------------------------------
     # 1. Initialize the network
@@ -3892,7 +3993,7 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p):
     for col in [c for c in network.components["Link"].static.columns if c.startswith("efficiency")]:
         network.links[col] = network.links[col].fillna(1.0)
 
-    # Convert EXI_ components with residual cost factor > 0 to extendable-fixed
+    # Convert EXI_ components with remaining_investment_fraction > 0 to extendable-fixed
     _apply_exi_residual_costs(network)
 
     return network

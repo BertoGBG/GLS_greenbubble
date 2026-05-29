@@ -105,7 +105,9 @@ CO2_cost_ref_year        = _cfg["CO2_cost_ref_year"]
 
 rfnbos_dict              = dict(_cfg["rfnbos_dict"])
 
-year_EU                  = _cfg["year_EU"]
+year_investment          = _cfg["year_investment"]
+_ap_raw                  = _cfg.get("amortization_period", None)
+amortization_period      = None if (_ap_raw is None or str(_ap_raw).lower() in {"null", "none", ""}) else float(_ap_raw)
 USD_to_EUR               = _cfg["USD_to_EUR"]
 EUR_to_DKK                 = _cfg["EUR_to_DKK"]
 discount_rate            = _cfg["discount_rate"]

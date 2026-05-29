@@ -5,29 +5,33 @@
 # ── Greenfield / Brownfield configuration ───────────────────────────────────
 # Three parameters jointly define each technology's investment mode:
 #
-#   initial capacity   expansion   residual cost factor   →  Mode
-#   ────────────────   ─────────   ────────────────────   ──────────────────────────────
-#        0             false            any               Technology absent (rcf ignored)
-#        0             true              0                Greenfield — pure new capacity
-#        0             true             >0                Degenerate: rcf ignored (no EXI_)
-#       >0             false             0                Brownfield — fixed, sunk cost
-#       >0             false            >0                Brownfield — fixed, residual CAPEX charged
-#       >0             true              0                Mixed — existing (free) + expandable
-#       >0             true             >0                Mixed — existing (residual CAPEX) + expandable
+#   initial capacity   expansion   remaining_investment_fraction   →  Mode
+#   ────────────────   ─────────   ─────────────────────────────   ──────────────────────────────
+#        0             false              any                      Technology absent (rif ignored)
+#        0             true               0                        Greenfield — pure new capacity
+#       >0             false              0                        Brownfield — fixed, sunk cost
+#       >0             false             >0                        Brownfield — fixed, residual CAPEX charged
+#       >0             true               0                        Mixed — existing (free) + expandable
+#       >0             true              >0                        Mixed — existing (residual CAPEX) + expandable
 #
-# cost factor        — multiplier on capital_cost for NEW capacity (sensitivity analysis).
-# residual cost factor — fraction of the tech capital_cost charged for EXISTING (EXI_) capacity.
-#                        0 = sunk cost (no charge); 1 = full annualised cost recovered.
-#                        Only effective when initial capacity > 0.
+# cost factor                   — multiplier on capital_cost for NEW capacity (sensitivity analysis).
+# construction_year             — year the existing asset was built; null = year_investment - 10
+#                                 (capped at 2020, the earliest available technology-data year).
+#                                 Used to look up investment cost at the actual build year.
+# remaining_investment_fraction — fraction of investment(construction_year) still to recover.
+#                                 0 = sunk cost (no annual charge); 1 = full remaining investment.
+#                                 Annual charge = rif × investment(construction_year)
+#                                               × annuity(discount_rate, amortization_period).
 # ────────────────────────────────────────────────────────────────────────────
 
 # common defaults for most technologies
 base: &base
-  initial capacity: 0    # MW (or unit of bus0) of already-installed capacity
-  expansion: true        # allow new capacity to be built on top of initial
-  cost factor: 1         # capital cost multiplier for new capacity (1 = tech-data value)
-  residual cost factor: 0  # fraction of capital cost charged for existing capacity
-  max capacity: .inf     # upper bound on total capacity
+  initial capacity: 0              # MW (or unit of bus0) of already-installed capacity
+  expansion: true                  # allow new capacity to be built on top of initial
+  cost factor: 1                   # capital cost multiplier for new capacity (1 = tech-data value)
+  construction_year: null          # null → year_investment - 10 (capped at 2020)
+  remaining_investment_fraction: 0 # fraction of investment(construction_year) still to recover
+  max capacity: .inf               # upper bound on total capacity
 
 # -------------------  config (alphabetical) -------------------
 # Units refer to bus0 in the network except for 'biogas'
@@ -130,14 +134,6 @@ electrolysis: # (bus0 unit: MW el )
 
 DH heat exchanger:
   <<: *base
-
-#eSMR meoh: # TODO add to the model
-#  <<: *base
-#  ramp limit up: 0.08 # % of total power capacity per hour
-#  ramp limit down: 0.08 # % of total power capacity per hour
-#  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-#  expansion : false # KEEP false
-#  initial capacity : 0 # KEEP 0
 
 grid connection:
   <<: *base

@@ -20,7 +20,7 @@ import pandas as pd
 import os
 
 from pathlib import Path
-from scripts.config import En_price_year, year_EU, latitude, longitude, EUR_to_DKK
+from scripts.config import En_price_year, year_investment, latitude, longitude, EUR_to_DKK
 from scripts.helpers import build_snapshots, is_eu_or_us
 
 
@@ -52,11 +52,11 @@ lhv_NG = 0.010 # MWh/Nm3
 # Retrieve Technology-data
 technology_data_url = "https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/"
 cost_folder = "data/technology-data/outputs"
-cost_file = "costs_" + str(year_EU) + ".csv"
+cost_file = "costs_" + str(year_investment) + ".csv"
 cost_path = os.path.join(cost_folder, cost_file)
 
 # Stored US data
-cost_file_US = "costs_" + str(year_EU) + '_US' + ".csv"
+cost_file_US = "costs_" + str(year_investment) + '_US' + ".csv"
 cost_path_US = os.path.join(cost_folder, cost_file)
 
 # API tokens — loaded from environment variables (or .env file in project root).

@@ -8,13 +8,13 @@ run_name: default # keep it short
 # if driver == 'price': Price must be present AND Demands are set as maximum annual production (e_nom_max)
 
 targets:
-  driver: 'price' # 'price' | 'demand'
-  demand_H2 :  200000 # MWh_H2 /y  Demand OR max production for H2 GRID (nto internal consumption)
+  driver: 'demand' # 'price' | 'demand'
+  demand_H2 :  200000 # MWh_H2 /y  Demand OR max production for H2 GRID (not internal consumption)
   demand_CH4 : 350000 # MWh_CH4 /y Demand OR max production
   demand_meoh : 9000 # Mwh_meoh /y Demand OR max production
-  price_H2 : 90 # €/MWh prices are required only for driver : 'price'
+  price_H2 : 100 # €/MWh prices are required only for driver : 'price'
   price_bioCH4 : 200 # NG_based # €/MWh can be 'NG_based' (calculated from NG price + CO2 tax) or a value.
-  price_meoh : 110 # €/MWh prices are required only for driver : 'price'
+  price_meoh : 200 # €/MWh prices are required only for driver : 'price'
 
   # Demand shape per product (applied in both 'demand' and 'price' driver modes)
   # mode: flat | profile | bins_flat | bins_profile
@@ -86,10 +86,11 @@ rfnbos_dict:
   emission_threshold: 0.0648   # tCO2e/MWh
 
 # Economics
-year_EU: 2030
+year_investment: 2030   # year for new-capacity technology costs (available: 2020-2050 in 5y steps)
+amortization_period: null  # null = use each technology's technical lifetime
 USD_to_EUR: 0.85
 EUR_to_DKK: 7.46
-discount_rate: 0.07
+discount_rate: 0.07  # real discount rate (constant EUR, excludes inflation)
 tariffs_dict:
   el_transmission_tariff : 9.92   # TSO Tariff from energinet € /MWh
   el_system_tariff : 6.84   # €/MWh

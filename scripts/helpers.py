@@ -384,6 +384,65 @@ def read_costs(cost_path: str, tech_inputs: dict, USD_to_EUR: float,
     return costs
 
 
+TECH_DATA_YEARS = [2020, 2025, 2030, 2035, 2040, 2045, 2050]
+_COSTS_YEAR_CACHE: dict = {}  # {(year, costs_dir): pd.DataFrame}
+
+
+def read_costs_at_year(year: int, costs_dir: str, tech_inputs: dict,
+                       USD_to_EUR: float, discount_rate: float) -> "pandas.DataFrame":
+    """Return a tech-costs DataFrame interpolated to *year*.
+
+    Loads the two adjacent CSVs from *costs_dir* (e.g. ``costs_2025.csv`` and
+    ``costs_2030.csv`` for year 2027) and linearly interpolates the ``investment``
+    and ``FOM`` columns.  Results are cached so repeated calls for the same year
+    do not re-read disk.  Years before 2020 are capped to 2020; years after 2050
+    are capped to 2050.
+
+    Parameters
+    ----------
+    year : int
+        Construction year for which to retrieve investment costs.
+    costs_dir : str
+        Directory containing ``costs_{year}.csv`` files.
+    tech_inputs : dict
+        Project-specific technology overrides (see :func:`read_costs`).
+    USD_to_EUR : float
+        Exchange rate for USD-denominated entries.
+    discount_rate : float
+        Project real discount rate (used when filling missing values).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Wide-format cost table (same layout as :func:`read_costs`).
+    """
+    cache_key = (year, str(costs_dir))
+    if cache_key in _COSTS_YEAR_CACHE:
+        return _COSTS_YEAR_CACHE[cache_key]
+
+    year_capped = max(min(year, max(TECH_DATA_YEARS)), min(TECH_DATA_YEARS))
+
+    if year_capped in TECH_DATA_YEARS:
+        path = os.path.join(costs_dir, f"costs_{year_capped}.csv")
+        result = read_costs(path, tech_inputs, USD_to_EUR, discount_rate)
+    else:
+        lower = max(y for y in TECH_DATA_YEARS if y <= year_capped)
+        upper = min(y for y in TECH_DATA_YEARS if y >= year_capped)
+        lo = read_costs(os.path.join(costs_dir, f"costs_{lower}.csv"), tech_inputs, USD_to_EUR, discount_rate)
+        hi = read_costs(os.path.join(costs_dir, f"costs_{upper}.csv"), tech_inputs, USD_to_EUR, discount_rate)
+        t = (year_capped - lower) / (upper - lower)
+        result = lo.copy()
+        for col in ["investment", "FOM"]:
+            if col in lo.columns and col in hi.columns:
+                result[col] = lo[col] + t * (hi[col] - lo[col])
+        # Recompute annualised fixed cost after interpolation
+        af = lambda v: annuity(v["lifetime"], v["discount rate"]) + v["FOM"] / 100
+        result["fixed"] = [af(v) * v["investment"] for _, v in result.iterrows()]
+
+    _COSTS_YEAR_CACHE[cache_key] = result
+    return result
+
+
 def prepare_costs(latitude: float, longitude: float, tech_inputs: dict,
                   USD_to_EUR: float, discount_rate: float,
                   cost_path_EU: str, cost_path_US: str = None,
