@@ -137,6 +137,64 @@ in parallel (one Snakemake job per year) before building the coupled network.
 ``EVPI: true`` adds one deterministic solve per scenario to compute the EVPI;
 automatically disabled when ``stochastic: false``.
 
+.. _config-clustering:
+
+clustering
+^^^^^^^^^^
+
+Reduces the number of snapshots by resampling hourly input data to a coarser
+time interval before the network is built.
+
+.. code-block:: yaml
+
+   clustering:
+     temporal:
+       resolution: false   # false | "4h" | "8h" | "24h" | ...
+
+``false`` (default) keeps native 1-hour resolution.
+Any pandas offset string that represents an interval ≥ 1 hour is accepted
+(``"4h"``, ``"8h"``, ``"24h"`` are the most common choices).
+Sub-hourly strings raise ``NotImplementedError``.
+
+Effect on snapshot count:
+
+.. list-table::
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - resolution
+     - snapshots
+     - typical speed-up
+   * - ``false`` (1 h)
+     - 8 760
+     - baseline
+   * - ``"4h"``
+     - 2 190
+     - ~4×
+   * - ``"8h"``
+     - 1 095
+     - ~8×
+   * - ``"24h"``
+     - 365
+     - ~20×
+
+**Resampling rules**
+
+- Prices, capacity factors, and demands → ``mean()`` over the interval.
+- Store upper bounds (``e_max_pu``) → ``min()`` over the interval (conservative).
+- Store lower bounds (``e_min_pu``) → ``max()`` over the interval (conservative).
+- Snapshot weightings → ``sum()`` so annual energy totals are preserved.
+
+**Incompatibilities**
+
+- ``rolling_horizon.enabled: true`` — resampling is skipped with a warning;
+  the RH solver operates on the full hourly network provided via ``network_path``.
+- ``stochastic.stochastic: true`` — allowed but issues a warning; each scenario
+  is resampled independently, so inter-scenario sub-period correlations are lost.
+
+See :ref:`guide-temporal-resolution` for worked examples and advice on choosing
+a resolution.
+
 .. _config-optimization:
 
 optimization
@@ -226,7 +284,7 @@ parameters are combined to compute residual annual capital charges.
 .. _brownfield-greenfield:
 
 Greenfield and Brownfield configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Three parameters jointly determine the investment mode for each technology:
 
