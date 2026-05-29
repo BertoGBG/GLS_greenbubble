@@ -23,6 +23,7 @@ GreenBubble Documentation
 
    network_model
    technologies
+   economics
    methods
 
 .. toctree::

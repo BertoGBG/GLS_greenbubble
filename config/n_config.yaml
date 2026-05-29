@@ -6,9 +6,14 @@
 biogas: # (unit: MW CH4,  for simplicity)
   initial capacity : 30
   expansion : false
+  construction_year : 2020
+  remaining_investment_fraction: 0.3
 
 H2 HP storage:
   expansion : false
 
 onwind:
-  expansion : false
+  expansion : true
+  initial capacity : 15
+  construction_year : 2025
+  remaining_investment_fraction : 0.7

@@ -35,7 +35,12 @@ with open(snakemake.input.inputs, "rb") as fh:
     inputs_dict = pickle.load(fh)
 
 n_flags_OK = network_dependencies(c.n_flags)
-n = build_network(tech_costs, inputs_dict, n_flags_OK, c.n_options, p)
+n = build_network(
+    tech_costs, inputs_dict, n_flags_OK, c.n_options, p,
+    costs_dir   = p.cost_folder,
+    USD_to_EUR  = c.USD_to_EUR,
+    tech_inputs = tech_inputs,
+)
 # Suppress spurious "not optimized" warnings from PyPSA's property accessors
 # during consistency_check and export — the PRE network is intentionally unoptimized.
 _pypsa_log = logging.getLogger("pypsa.networks")

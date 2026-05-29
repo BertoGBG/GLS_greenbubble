@@ -23,8 +23,9 @@ rule prepare_inputs:
 rule build_network:
     """Build PyPSA network; add stochastic scenarios if configured. Saves PRE network."""
     input:
-        costs_eu = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
-        inputs   = f"resources/inputs_{YEAR}.pkl",
+        costs_eu   = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
+        costs_all  = expand("data/technology-data/outputs/costs_{year}.csv", year=TECH_DATA_YEARS),
+        inputs     = f"resources/inputs_{YEAR}.pkl",
     output:
         network    = "resources/{network}/{network}_PRE.nc",
         comp_alloc = "resources/{network}/{network}_comp_alloc.pkl",

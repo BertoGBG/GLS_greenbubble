@@ -161,10 +161,14 @@ Economics
 
 .. code-block:: yaml
 
-   year_EU:       2030   # target year for technology cost projections
-   discount_rate: 0.2    # annual discount rate for annualised capital costs
-   DKK_Euro:      7.46   # DKK → EUR exchange rate
-   USD_to_EUR:    0.85   # USD → EUR exchange rate
+   year_investment:    2030   # target year for new-capacity technology costs
+   amortization_period: null  # null = use each technology's technical lifetime
+   discount_rate:      0.07   # real discount rate (constant EUR, excludes inflation)
+   EUR_to_DKK:         7.46   # EUR → DKK exchange rate
+   USD_to_EUR:         0.85   # USD → EUR exchange rate
+
+See :ref:`economics` for a full explanation of how these parameters interact with
+technology costs, brownfield initial conditions, and the annuity formula.
 
 .. _config-tariffs:
 
@@ -210,11 +214,14 @@ Each entry sets the initial installed capacity, expansion allowance, cost factor
 and operational constraints (ramp limits, minimum load) for one technology group.
 
 Key investment parameters: ``initial capacity``, ``expansion``, ``cost factor``,
-``residual cost factor``, ``max capacity``.
+``construction_year``, ``remaining_investment_fraction``, ``max capacity``.
 
 The ``options:`` section at the bottom of this file controls external market
 connections: biomass purchase markets, district heating sales, biochar and CO₂
 sequestration credits, and electrical transformer sizing.
+
+See :ref:`economics-brownfield` for a full explanation of how brownfield
+parameters are combined to compute residual annual capital charges.
 
 .. _brownfield-greenfield:
 
@@ -225,71 +232,72 @@ Three parameters jointly determine the investment mode for each technology:
 
 .. list-table::
    :header-rows: 1
-   :widths: 18 12 22 48
+   :widths: 18 12 28 42
 
    * - ``initial capacity``
      - ``expansion``
-     - ``residual cost factor``
+     - ``remaining_investment_fraction``
      - Result
    * - ``0``
      - ``false``
      - any
-     - **Technology absent.** Not added to the model. ``residual cost factor`` is ignored.
+     - **Technology absent.** Not added to the model.
    * - ``0``
      - ``true``
      - ``0``
-     - **Pure greenfield.** Only a new expandable component is built; the optimizer decides the capacity.
-   * - ``0``
-     - ``true``
-     - ``> 0``
-     - **Degenerate.** No existing plant exists, so ``residual cost factor`` has no effect — same as pure greenfield.
+     - **Pure greenfield.** Only a new expandable component is built.
    * - ``> 0``
      - ``false``
      - ``0``
-     - **Pure brownfield (sunk cost).** Existing capacity is fixed in the model, capital cost is fully sunk — no CAPEX charged to the objective.
+     - **Pure brownfield (sunk cost).** Existing capacity is fixed; no CAPEX charged.
    * - ``> 0``
      - ``false``
      - ``> 0``
-     - **Brownfield with residual CAPEX.** Existing capacity is fixed; a fraction of the annualised capital cost is charged to the system cost (e.g. remaining loan repayments).
+     - **Brownfield with residual CAPEX.** Existing capacity is fixed; annual charge = ``rif × investment(construction_year) × annuity(r, amortization_period)``.
    * - ``> 0``
      - ``true``
      - ``0``
-     - **Mixed — existing free, expandable.** Existing capacity dispatches at zero capital cost; additional capacity can be built at full cost.
+     - **Mixed — existing free, expandable.** Existing capacity at zero capital cost; additional capacity can be built at full cost.
    * - ``> 0``
      - ``true``
      - ``> 0``
-     - **Mixed — existing with residual CAPEX, expandable.** Existing capacity carries a residual capital charge; additional capacity can be built on top at full cost.
+     - **Mixed — existing with residual CAPEX, expandable.**
 
 **Parameter meanings**
 
 ``cost factor``
    Multiplier applied to the capital cost of **new** capacity (``expansion=true`` component).
    Used for cost sensitivity analysis: ``1.0`` = tech-data value, ``0.5`` = 50% cost reduction scenario.
-   Does not affect existing capacity.
 
-``residual cost factor``
-   Fraction of the technology capital cost charged for **existing** (``EXI_``) capacity.
-   Represents annualised residual CAPEX still to be recovered (e.g. a plant halfway through
-   its financing period has ``residual cost factor ≈ 0.5``).
-   ``0`` = sunk cost (default); ``1`` = full annualised cost charged.
+``construction_year``
+   Year the existing plant was built.  Used to look up the investment cost at the actual
+   build year (technology costs differ between years due to learning curves).
+   ``null`` defaults to ``year_investment - 10``, capped at 2020.
+
+``remaining_investment_fraction``
+   Fraction of ``investment(construction_year)`` still to be financially recovered.
+   ``0`` = fully amortised / sunk cost (default); ``1`` = the full original investment
+   is still outstanding.
 
 **PyPSA implementation**
 
-Internally, an ``EXI_<tech>`` component with ``residual cost factor > 0`` is built as
+Internally, an ``EXI_<tech>`` component with ``remaining_investment_fraction > 0`` is built as
 ``p_nom_extendable=True`` with ``p_nom_min = p_nom_max = initial_capacity``.
-This forces the LP variable to its fixed value, moving the capital cost term into
-``n.objective_constant``.  ``n.statistics.capex()`` reads ``capital_cost × p_nom_opt``
-after solving and correctly accounts for the residual charge in LCOP and TSC outputs.
+This forces the LP variable to its fixed value, moving the capital cost into
+``n.objective_constant``.  ``n.statistics.capex()`` correctly accounts for the
+residual charge in LCOP and TSC outputs.
 
-**Example** — existing biogas plant, 40 % CAPEX still to recover, no new capacity allowed:
+**Example** — existing biogas plant, 40 % of original investment still outstanding,
+built in 2022, no new capacity allowed:
 
 .. code-block:: yaml
 
    # config/n_config.yaml  (user override)
    biogas:
-     initial capacity: 5.0   # MW CH4
+     initial capacity: 5.0          # MW CH4
      expansion: false
-     residual cost factor: 0.4
+     construction_year: 2022
+     remaining_investment_fraction: 0.4
 
 ----
 

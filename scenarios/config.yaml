@@ -84,7 +84,7 @@ rfnbos_dict:
   emission_threshold: 0.0648   # tCO2e/MWh
 
 # Economics
-year_EU: 2030
+year_investment: 2030
 USD_to_EUR: 0.85
 EUR_to_DKK: 7.46
 discount_rate: 0.07

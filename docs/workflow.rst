@@ -49,7 +49,7 @@ Downloads the technology-cost CSV from the
 The file is cached locally; a SHA check at workflow start triggers
 re-download automatically if the remote file has changed.
 
-- **Output**: ``data/technology-data/outputs/costs_{year_EU}.csv``
+- **Output**: ``data/technology-data/outputs/costs_{year_investment}.csv``
 - **Script**: ``scripts/snakemake_retrieve_tech.py``
 
 ---

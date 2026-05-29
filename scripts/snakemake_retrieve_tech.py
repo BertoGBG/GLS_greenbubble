@@ -8,4 +8,5 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.retrieve import retrieve_technology_data
 from scripts import parameters as p
 
-retrieve_technology_data(snakemake.output.costs_eu, p.technology_data_url)
+for _out_path in snakemake.output.costs:
+    retrieve_technology_data(_out_path, p.technology_data_url)

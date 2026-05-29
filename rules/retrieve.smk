@@ -4,11 +4,11 @@
 
 
 rule retrieve_tech_data:
-    """Download technology cost CSV from remote repo if not already up-to-date."""
+    """Download all technology-cost CSVs (2020-2050) from remote repo if not already up-to-date."""
     output:
-        costs_eu = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
+        costs = expand("data/technology-data/outputs/costs_{year}.csv", year=TECH_DATA_YEARS),
     log:
-        f"logs/retrieve_tech_data_{YEAR_EU}.log",
+        "logs/retrieve_tech_data.log",
     script:
         "../scripts/snakemake_retrieve_tech.py"
 

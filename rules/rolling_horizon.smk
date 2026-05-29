@@ -26,7 +26,7 @@ if _rh.get("enabled", False):
         """
         input:
             network      = _rh["network_path"],
-            costs_eu     = f"data/technology-data/outputs/costs_{YEAR_EU}.csv",
+            costs_eu     = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
             extra_inputs = _rh_extra_inputs,
         output:
             network = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",

@@ -1438,6 +1438,131 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
     return df
 
 
+def compute_lcop_kkt_by_technology(n, out_csv):
+    """KKT-based LCOP: production-weighted average shadow price at the product bus.
+
+    For each technology s injecting into a product collection bus (bus1):
+
+        LCOP_kkt_s = Σ_t( w_t · η₁ · p0_{s,t} · π_{bus1,t} )
+                     ─────────────────────────────────────────
+                          Σ_t( w_t · η₁ · p0_{s,t} )
+
+    where π_{bus1,t} is the nodal shadow price (marginal_price) at bus1.
+
+    The theory (see docs/economics.rst and KKTs_interpretation_v2.tex) proves
+    that at optimum this equals the cost-based LCOP from compute_lcop_by_technology.
+    This function lets you verify that equality numerically.
+
+    Returns a DataFrame indexed by link name with columns:
+        carrier, product, annual_production_MWh, LCOP_cost (EUR/MWh),
+        LCOP_kkt (EUR/MWh), diff (cost − kkt), π_bus1_mean, π_bus1_std
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[LCOP-KKT] no 'is_product_bus' column — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[LCOP-KKT] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[LCOP-KKT] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[LCOP-KKT] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
+    mp = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    p0_df = (
+        (p0_raw[p0_raw.columns.get_level_values(0)[0]]
+         if isinstance(p0_raw.columns, pd.MultiIndex) else p0_raw)
+        if p0_raw is not None and not p0_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    # --- also pull cost-based LCOP for comparison ---
+    try:
+        cost_df = compute_lcop_by_technology.__wrapped__(n) if hasattr(
+            compute_lcop_by_technology, "__wrapped__") else None
+    except Exception:
+        cost_df = None
+    # Simpler: re-read the already-saved cost CSV if it exists alongside out_csv
+    cost_csv = Path(out_csv).parent / "lcop_by_technology.csv"
+    if cost_df is None and cost_csv.exists():
+        try:
+            cost_df = pd.read_csv(cost_csv, index_col=0)
+        except Exception:
+            cost_df = None
+
+    rows = []
+    link_names = []
+    for lk in product_links:
+        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
+        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+
+        p0 = (
+            p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+            if lk in p0_df.columns
+            else pd.Series(0.0, index=n.snapshots)
+        )
+        annual_production = float((p0 * eff1 * snap_w).sum())
+        if annual_production <= 0:
+            continue
+
+        if bus1 not in mp.columns:
+            _warn.warn(f"[LCOP-KKT] '{lk}': bus1 '{bus1}' not in marginal_price — skipping")
+            continue
+
+        pi = mp[bus1].reindex(n.snapshots, fill_value=0.0)
+        # production-weighted average shadow price
+        numerator = float((p0 * eff1 * pi * snap_w).sum())
+        lcop_kkt  = numerator / annual_production
+
+        # cost-based LCOP for comparison
+        lcop_cost = float(cost_df.at[lk, "LCOP (EUR/MWh)"]) if (
+            cost_df is not None and lk in cost_df.index and "LCOP (EUR/MWh)" in cost_df.columns
+        ) else float("nan")
+
+        product = n.buses.at[bus1, "product"] if (
+            "product" in n.buses.columns and bus1 in n.buses.index) else ""
+
+        link_names.append(lk)
+        rows.append({
+            "carrier":                  links.at[lk, "carrier"] if "carrier" in links.columns else "",
+            "product":                  product,
+            "annual_production_MWh":    round(annual_production, 0),
+            "LCOP_cost (EUR/MWh)":      round(lcop_cost, 4),
+            "LCOP_kkt (EUR/MWh)":       round(lcop_kkt, 4),
+            "diff cost−kkt (EUR/MWh)":  round(lcop_cost - lcop_kkt, 6) if not np.isnan(lcop_cost) else float("nan"),
+            "π_bus1_mean (EUR/MWh)":    round(float(pi.mean()), 4),
+            "π_bus1_std (EUR/MWh)":     round(float(pi.std()), 6),
+            "π_bus1_prod_weighted (EUR/MWh)": round(lcop_kkt, 4),
+        })
+
+    if not rows:
+        print("[LCOP-KKT] no product links with positive output — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows, index=pd.Index(link_names, name="link"))
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv)
+    print(f"[LCOP-KKT] saved → {out_csv}")
+    return df
+
+
 def _plot_lcop_bar(df, out_path):
     """Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom)."""
     labels  = df.index.tolist()
@@ -1475,6 +1600,197 @@ def _plot_lcop_bar(df, out_path):
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"[LCOP] bar chart saved → {out_path}")
+
+
+# ---- VARIABLE COST BY TECHNOLOGY ----
+
+def compute_srmc_by_technology(n, out_csv, out_plot):
+    """Short-run marginal cost (SRMC) for each product-bus technology at every snapshot.
+
+    For technology s at snapshot t:
+
+        SRMC_{s,t} = [ λ_{bus0,t}  −  Σ_{k≥2} η_k · λ_{bus_k,t}  +  VOM_{s,t} ]  /  η_1
+
+    This is the instantaneous production cost per MWh of primary output — the cost of
+    producing one more MWh right now given current input market prices. It drives the
+    merit order. Note: VOM here is the model input (marginal_cost on links), not to be
+    confused with this output metric.
+
+    Saved outputs
+    -------------
+    CSV  : long-form table  (snapshot, link, product, SRMC_EUR_per_MWh, dispatch_MW,
+                              π_product_bus, in_merit)
+    Plot : one subplot per product — SRMC time series per technology + product shadow price.
+    """
+    import warnings as _warn
+
+    if "is_product_bus" not in n.buses.columns:
+        print("[SRMC] no 'is_product_bus' column — skipping")
+        return pd.DataFrame()
+
+    collection_buses = set(n.buses.index[n.buses["is_product_bus"].eq(True)])
+    if not collection_buses:
+        print("[SRMC] no collection buses tagged — skipping")
+        return pd.DataFrame()
+
+    links  = _slice_df_first_scenario(n.links) if not n.links.empty else pd.DataFrame()
+    if links.empty or "bus1" not in links.columns:
+        print("[SRMC] no links — skipping")
+        return pd.DataFrame()
+
+    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    if not product_links:
+        print("[SRMC] no links inject into collection buses — skipping")
+        return pd.DataFrame()
+
+    mp     = n.buses_t.marginal_price
+    if isinstance(mp.columns, pd.MultiIndex):
+        mp = mp[mp.columns.get_level_values(0)[0]]
+
+    p0_raw = getattr(n.links_t, "p0", None)
+    p0_df  = (
+        (p0_raw[p0_raw.columns.get_level_values(0)[0]]
+         if isinstance(p0_raw.columns, pd.MultiIndex) else p0_raw)
+        if p0_raw is not None and not p0_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    vom_t_raw = getattr(n.links_t, "marginal_cost", None)
+    vom_df = (
+        (vom_t_raw[vom_t_raw.columns.get_level_values(0)[0]]
+         if isinstance(vom_t_raw.columns, pd.MultiIndex) else vom_t_raw)
+        if vom_t_raw is not None and not vom_t_raw.empty
+        else pd.DataFrame(index=n.snapshots)
+    )
+
+    def _price(bus):
+        if pd.isna(bus) or str(bus) not in mp.columns:
+            return pd.Series(0.0, index=n.snapshots)
+        return mp[str(bus)].reindex(n.snapshots, fill_value=0.0)
+
+    rows = []
+    for lk in product_links:
+        bus1  = links.at[lk, "bus1"]
+        eff1  = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        if eff1 == 0:
+            continue
+
+        # feedstock cost at bus0 (always consumed): positive = cost
+        bus0  = links.at[lk, "bus0"] if "bus0" in links.columns else ""
+        net_input_cost = _price(bus0)   # λ_{bus0,t}: cost of consuming bus0
+
+        # secondary buses: subtract by-product credits (eff>0) and add extra input costs (eff<0)
+        # unified formula: net_input_cost -= eff_k * λ_{bus_k,t} for all k≥2
+        for bus_col, eff_col in [("bus2","efficiency2"),("bus3","efficiency3"),
+                                  ("bus4","efficiency4"),("bus5","efficiency5")]:
+            if bus_col not in links.columns or eff_col not in links.columns:
+                continue
+            eff_k = links.at[lk, eff_col]
+            if pd.isna(eff_k) or float(eff_k) == 0.0:
+                continue
+            net_input_cost = net_input_cost - float(eff_k) * _price(links.at[lk, bus_col])
+
+        # VOM (static scalar or time-varying series)
+        vom_scalar = float(links.at[lk, "marginal_cost"]) if "marginal_cost" in links.columns else 0.0
+        if lk in vom_df.columns:
+            vom_series = vom_df[lk].reindex(n.snapshots, fill_value=vom_scalar)
+        else:
+            vom_series = pd.Series(vom_scalar, index=n.snapshots)
+
+        # VC per MWh of primary output (bus1)
+        vc = (net_input_cost + vom_series) / eff1
+
+        # dispatch and product shadow price for reference
+        p0 = (p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
+              if lk in p0_df.columns else pd.Series(0.0, index=n.snapshots))
+        pi1 = _price(bus1)
+
+        product_name = n.buses.at[bus1, "product"] if (
+            "product" in n.buses.columns and bus1 in n.buses.index) else bus1
+
+        for t in n.snapshots:
+            rows.append({
+                "snapshot":          t,
+                "link":              lk,
+                "product":           product_name,
+                "SRMC_EUR_per_MWh":  round(float(vc.at[t]), 4),
+                "dispatch_MW":       round(float(p0.at[t] * eff1), 4),
+                "π_product_bus":     round(float(pi1.at[t]), 4),
+                "in_merit":          float(vc.at[t]) <= float(pi1.at[t]) + 1e-3,
+            })
+
+    if not rows:
+        print("[SRMC] no data — skipping")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv, index=False)
+    print(f"[SRMC] saved → {out_csv}")
+
+    _plot_srmc(df, Path(out_plot))
+    return df
+
+
+def _plot_srmc(df, out_path):
+    """One subplot per product: SRMC time series per technology + product shadow price."""
+    products = df["product"].unique()
+    n_prod   = len(products)
+    if n_prod == 0:
+        return
+
+    carrier_colors_default = [
+        "#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd",
+        "#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf",
+    ]
+
+    fig, axes = plt.subplots(n_prod, 1,
+                              figsize=(16, 4 * n_prod),
+                              sharex=False,
+                              squeeze=False)
+
+    for ax, product in zip(axes[:, 0], products):
+        sub = df[df["product"] == product].copy()
+        sub = sub.sort_values("snapshot")
+
+        technologies = sub["link"].unique()
+        colors = {t: carrier_colors_default[i % len(carrier_colors_default)]
+                  for i, t in enumerate(technologies)}
+
+        for tech in technologies:
+            ts = sub[sub["link"] == tech].set_index("snapshot")["SRMC_EUR_per_MWh"]
+            ax.plot(ts.index, ts.values,
+                    label=tech, linewidth=0.8,
+                    color=colors[tech], alpha=0.85)
+
+        # product bus shadow price — one series (same for all techs on this bus)
+        pi_ts = sub.groupby("snapshot")["π_product_bus"].first()
+        if pi_ts.std() > 0.01:
+            ax.plot(pi_ts.index, pi_ts.values,
+                    label=f"π ({product} bus)", color="black",
+                    linewidth=1.2, linestyle="--", alpha=0.7)
+        else:
+            ax.axhline(pi_ts.mean(), color="black", linewidth=1.2,
+                       linestyle="--", alpha=0.6,
+                       label=f"π = {pi_ts.mean():.1f} €/MWh (flat)")
+
+        ax.set_ylabel("SRMC  [€/MWh output]")
+        ax.set_title(f"Short-run marginal cost (SRMC) — {product}")
+        ax.legend(fontsize=8, loc="upper right")
+        ax.grid(True, alpha=0.3)
+
+        # clip y-axis to ± 3× mean shadow price so outliers don't collapse the view
+        pi_mean = float(pi_ts.mean())
+        y_ceil  = max(pi_mean * 3, 50)
+        y_floor = -pi_mean * 0.5
+        ax.set_ylim(y_floor, y_ceil)
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[SRMC] plot saved → {out_path}")
 
 
 # ---- OPTIMAL CAPACITIES ----
@@ -5037,6 +5353,19 @@ def run_plot_and_export(
             out_plot=plot_folder / "lcop_by_technology.png",
         )
 
+    def step_lcop_kkt() -> None:
+        compute_lcop_kkt_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_kkt_by_technology.csv",
+        )
+
+    def step_srmc() -> None:
+        compute_srmc_by_technology(
+            n,
+            out_csv=csv_folder / "srmc_by_technology.csv",
+            out_plot=plot_folder / "srmc_by_technology.png",
+        )
+
     # ---------------- Run in order ----------------
 
     _safe_step("cost_by_carrier", step_cost_by_carrier)
@@ -5052,6 +5381,8 @@ def run_plot_and_export(
     _safe_step("inputs_ldc_by_scenario", step_inputs_ldc)
     _safe_step("shadow_prices", step_shadow_prices)
     _safe_step("lcop", step_lcop)
+    _safe_step("lcop_kkt", step_lcop_kkt)
+    _safe_step("srmc", step_srmc)
     _safe_step("operation_plots", step_operation_plots)
 
     if failures:
@@ -5218,10 +5549,25 @@ def run_plot_operational(
             out_plot=plot_folder / "lcop_by_technology.png",
         )
 
+    def step_lcop_kkt() -> None:
+        compute_lcop_kkt_by_technology(
+            n,
+            out_csv=csv_folder / "lcop_kkt_by_technology.csv",
+        )
+
+    def step_srmc() -> None:
+        compute_srmc_by_technology(
+            n,
+            out_csv=csv_folder / "srmc_by_technology.csv",
+            out_plot=plot_folder / "srmc_by_technology.png",
+        )
+
     _safe("filter_items",       step_filter_items)
     _safe("inputs_ldc",         step_inputs_ldc)
     _safe("shadow_prices",      step_shadow_prices)
     _safe("lcop",               step_lcop)
+    _safe("lcop_kkt",           step_lcop_kkt)
+    _safe("srmc",               step_srmc)
     _safe("operation_plots",    step_operation_plots)
 
     if failures:

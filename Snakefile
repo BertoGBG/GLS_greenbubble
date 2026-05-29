@@ -52,10 +52,11 @@ def build_network_name(cfg):
     return f"{prefix}CO2_{co2}_{target}_H2_{H2}_MeOH_{MeOH}_CH4_{CH4}_{year}_El_{el}_{stch}_{run}"
 
 
-NETWORK         = build_network_name(config)
-NETWORK_PATTERN = re.escape(NETWORK)   # literal regex for wildcard_constraints
-YEAR_EU         = config["year_eu"] if "year_eu" in config else config["year_EU"]
-YEAR            = config["En_price_year"]
+NETWORK          = build_network_name(config)
+NETWORK_PATTERN  = re.escape(NETWORK)   # literal regex for wildcard_constraints
+YEAR_INVESTMENT  = config["year_investment"]
+YEAR             = config["En_price_year"]
+TECH_DATA_YEARS  = [2020, 2025, 2030, 2035, 2040, 2045, 2050]
 OUTDIR          = config["outputs_folder"]
 
 # Years that need preprocessed inputs: always the main year + all scenario years if stochastic
@@ -81,33 +82,33 @@ if RH_ENABLED and RH_YEAR != YEAR:
     PREPROCESS_YEARS = sorted(set(list(PREPROCESS_YEARS) + [str(RH_YEAR)]))
 
 onstart:
-    # Check whether the remote technology-data CSV has changed since the last
-    # download.  If the git blob SHA differs from the cached value, delete the
-    # local file so Snakemake sees a missing output and re-runs retrieve_tech_data
-    # automatically — without any --forcerun needed.
+    # Check whether any technology-data CSV has changed since the last download.
+    # If the git blob SHA differs from the cached value, delete the local file so
+    # Snakemake sees a missing output and re-runs retrieve_tech_data automatically.
     import sys as _sys
     import os as _os
     _sys.path.insert(0, ".")
     from scripts.retrieve import fetch_remote_sha, get_cached_sha
     from scripts import parameters as _p
 
-    _csv = f"data/technology-data/outputs/costs_{YEAR_EU}.csv"
-    _fname = _os.path.basename(_csv)
-    _remote = fetch_remote_sha(_p.technology_data_url, _fname)
-    _cached = get_cached_sha(_csv)
+    for _yr in TECH_DATA_YEARS:
+        _csv = f"data/technology-data/outputs/costs_{_yr}.csv"
+        _fname = _os.path.basename(_csv)
+        _remote = fetch_remote_sha(_p.technology_data_url, _fname)
+        _cached = get_cached_sha(_csv)
 
-    if _remote is None:
-        print(f"[onstart] Could not reach GitHub API — skipping staleness check for {_fname}.")
-    elif _remote != _cached:
-        short_old = _cached[:8] if _cached else "none"
-        print(f"[onstart] {_fname} changed on remote (SHA {short_old}... → {_remote[:8]}...). Removing local copy to force re-download.")
-        if _os.path.exists(_csv):
-            _os.remove(_csv)
-        _sha_file = _csv + ".sha"
-        if _os.path.exists(_sha_file):
-            _os.remove(_sha_file)
-    else:
-        print(f"[onstart] {_fname} is up-to-date (SHA {_remote[:8]}...).")
+        if _remote is None:
+            print(f"[onstart] Could not reach GitHub API — skipping staleness check for {_fname}.")
+        elif _remote != _cached:
+            short_old = _cached[:8] if _cached else "none"
+            print(f"[onstart] {_fname} changed on remote (SHA {short_old}... → {_remote[:8]}...). Removing local copy to force re-download.")
+            if _os.path.exists(_csv):
+                _os.remove(_csv)
+            _sha_file = _csv + ".sha"
+            if _os.path.exists(_sha_file):
+                _os.remove(_sha_file)
+        else:
+            print(f"[onstart] {_fname} is up-to-date (SHA {_remote[:8]}...).")
 
 
 include: "rules/retrieve.smk"
