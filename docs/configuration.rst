@@ -82,6 +82,28 @@ In **demand mode** (``driver: 'demand'``), annual production targets are fixed c
 In **price mode** (``driver: 'price'``), demands become upper bounds and the model
 maximises revenue at the given prices.
 
+Each product also has a demand **shape** and optional **flexibility store**:
+
+.. code-block:: yaml
+
+   targets:
+     CH4_demand_mode: flat          # flat | profile | bins_flat | bins_profile
+     CH4_bins:         1            # number of equal bins (bins_* modes only)
+     CH4_flexibility:  0.00         # fraction of annual demand used as store e_nom_max
+     CH4_profile:      null         # path to CSV seasonal profile; null = built-in NG_DK
+     H2_demand_mode:   profile
+     H2_bins:          12
+     H2_flexibility:   0.1
+     H2_profile:       data/common/NG_demand_DK_profile.csv
+     MeOH_demand_mode: bins_profile
+     MeOH_bins:        2
+     MeOH_flexibility: 0.0
+     MeOH_profile:     data/common/NG_demand_DK_profile.csv
+     demand_store_buffer: 0.5       # extra headroom for bins_profile stores
+
+See :ref:`guide-demands` for a full explanation of demand modes, flexibility stores,
+and seasonal profiles.
+
 .. _config-nflags:
 
 n_flags — technology activation
@@ -107,6 +129,20 @@ Setting a flag to ``false`` removes the corresponding components entirely.
 .. note::
    The ``n_flags`` combination is encoded into the output folder name,
    making each run uniquely identifiable.
+
+.. _config-nflags-opt:
+
+n_flags_opt — output control
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Controls which post-solve artefacts are generated.
+
+.. code-block:: yaml
+
+   n_flags_opt:
+     print:  true    # save SVG of the optimal network topology
+     export: true    # export the solved network to a .nc file
+     plot:   true    # run the full post-processing plot suite
 
 .. _config-stochastic:
 
@@ -195,6 +231,30 @@ Effect on snapshot count:
 See :ref:`guide-temporal-resolution` for worked examples and advice on choosing
 a resolution.
 
+.. _config-rolling-horizon:
+
+rolling_horizon
+^^^^^^^^^^^^^^^
+
+Dispatch-only solve on a pre-existing fixed-capacity network.
+When enabled, the capacity-expansion ``solve_network`` rule is bypassed entirely.
+
+.. code-block:: yaml
+
+   rolling_horizon:
+     enabled:      false
+     horizon:      168    # window size in hours (e.g. 168 = 1 week)
+     overlap:       72    # overlap in hours between consecutive windows
+     network_path: ''     # REQUIRED — path to a solved .nc network
+     rh_year:      null   # null = same as En_price_year; or an integer year
+
+``network_path`` is required when ``enabled: true``.
+Setting ``rh_year`` to a different year than ``En_price_year`` replaces all
+time-varying inputs (prices, capacity factors) with data from that year.
+
+See :ref:`guide-rolling-horizon` for the full workflow, cross-year analysis,
+committable dispatch, and cost comparison outputs.
+
 .. _config-optimization:
 
 optimization
@@ -207,10 +267,15 @@ optimization
      solver_profile: 'gurobi-barrier-fast'  # preset from scripts/solver_profiles.py
      collect_all_duals: true           # save dual variables for shadow price analysis
      return_model: true                # return Linopy model object after solving
-     overrides: null                   # optional raw solver parameters
+     overrides: null                   # optional raw solver parameters (dict)
+     zero_threshold_MW: 0.01           # MW — components built below this are zeroed out
 
 Solver profiles are defined in ``scripts/solver_profiles.py``.
 Common Gurobi profiles: ``gurobi-barrier-fast``, ``gurobi-simplex``.
+``zero_threshold_MW`` removes solver-noise artefacts: any extendable component
+whose ``p_nom_opt`` (or ``e_nom_opt``) is strictly below this value is treated
+as "not built" — its optimal capacity and result time series are zeroed before
+export.
 
 .. _config-economics:
 
