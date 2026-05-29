@@ -49,7 +49,10 @@ def build_network_name(cfg):
     stch = "STC" if cfg["stochastic"]["stochastic"] else "DET"
     run  = cfg["run_name"]
 
-    return f"{prefix}CO2_{co2}_{target}_H2_{H2}_MeOH_{MeOH}_CH4_{CH4}_{year}_El_{el}_{stch}_{run}"
+    resolution = (cfg.get("clustering") or {}).get("temporal", {}).get("resolution", False)
+    tr = resolution if resolution else "1h"
+
+    return f"{prefix}CO2_{co2}_{target}_H2_{H2}_MeOH_{MeOH}_CH4_{CH4}_{year}_El_{el}_{stch}_{tr}_{run}"
 
 
 NETWORK          = build_network_name(config)
