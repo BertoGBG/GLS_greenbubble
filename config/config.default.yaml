@@ -135,6 +135,20 @@ stochastic:
                 "2025": 0}
   EVPI : true # runs additional deterministic optimization for each scenario and calcualtes EVPI (automatically false if stochastic: false)
 
+# Temporal clustering / resampling
+# Reduce time resolution by resampling hourly input data to a coarser interval.
+# false  → keep native 1-hour resolution (default)
+# "4h"   → 4-hour resolution (8760 → 2190 snapshots)
+# "8h"   → 8-hour resolution (8760 → 1095 snapshots)
+# "24h"  → daily averages     (8760 →  365 snapshots)
+# Sub-hourly strings (e.g. "30min") raise NotImplementedError.
+# Note: incompatible with rolling_horizon mode (resampling is silently skipped).
+# Note: stochastic mode issues a warning — scenarios are resampled independently,
+#       so inter-scenario correlations at sub-period level are lost.
+clustering:
+  temporal:
+    resolution: false
+
 # Rolling horizon dispatch optimisation
 # Runs dispatch-only on a fixed-capacity network — bypasses capacity expansion entirely.
 # When enabled, `snakemake` targets the RH output and does NOT run solve_network.

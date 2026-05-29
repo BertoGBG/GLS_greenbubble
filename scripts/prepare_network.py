@@ -27,7 +27,8 @@ import hashlib
 import re
 from scripts.parameters import loop_tol
 from scripts.helpers import (en_market_prices_w_CO2, add_el_grid_import_RFNBOs,
-                             ensure_bus, ensure_carrier, annuity, read_costs_at_year)
+                             ensure_bus, ensure_carrier, annuity, read_costs_at_year,
+                             resample_network)
 from scripts.config import (n_options,
                             n_config,
                             rfnbos_dict,
@@ -35,7 +36,9 @@ from scripts.config import (n_options,
                             targets_dict,
                             discount_rate,
                             year_investment,
-                            amortization_period)
+                            amortization_period,
+                            clustering,
+                            rolling_horizon)
 import warnings as _warnings
 from scripts.technology_inputs import symbiosis_n, mixture_database
 import CoolProp.CoolProp as CP
@@ -3995,5 +3998,10 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
 
     # Convert EXI_ components with remaining_investment_fraction > 0 to extendable-fixed
     _apply_exi_residual_costs(network)
+
+    # Temporal resampling (skipped in rolling-horizon mode — RH uses its own windowing)
+    resolution = clustering["temporal"]["resolution"]
+    if resolution and not rolling_horizon["enabled"]:
+        network = resample_network(network, resolution)
 
     return network
