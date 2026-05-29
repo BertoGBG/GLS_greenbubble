@@ -49,6 +49,9 @@ source_suffix = {
 html_theme = "sphinx_book_theme"
 html_title = "GreenBubble"
 
+html_static_path = ["_static"]
+html_js_files = ["open_external_links.js"]
+
 html_theme_options = {
     "repository_url": "https://github.com/BertoGBG/GLS_greenbubble",
     "use_repository_button": True,
