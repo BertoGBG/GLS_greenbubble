@@ -75,6 +75,7 @@ snakemake -j4
 ```
 
 See the [installation guide](https://gls-greenbubble.readthedocs.io/en/latest/installation.html) for platform-specific instructions and solver setup (Gurobi / HiGHS).
+New to Snakemake? See the [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/).
 
 ---
 

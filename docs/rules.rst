@@ -3,7 +3,7 @@
 Rules Overview
 ==============
 
-The GreenBubble workflow is managed by `Snakemake <https://snakemake.readthedocs.io>`_.
+The GreenBubble workflow is managed by `Snakemake <https://snakemake.readthedocs.io/en/stable/>`_.
 Rules are defined in the ``rules/`` folder and assembled by the ``Snakefile``.
 
 DAG

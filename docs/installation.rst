@@ -72,7 +72,7 @@ Solver setup
 Running the model
 -----------------
 
-Run with Snakemake::
+Run with `Snakemake <https://snakemake.readthedocs.io/en/stable/>`_::
 
    # Preview the execution plan without running
    snakemake -n
