@@ -9,7 +9,7 @@ def _default_threads(fallback=8):
         return fallback
 
 GUROBI_PROFILES = {
-    # ✅ Default: simplex for stable duals
+    # Default: simplex for stable duals
     "gurobi-default": {
         "Threads": _default_threads(8),
         "Method": 1,          # dual simplex :contentReference[oaicite:1]{index=1}
@@ -17,7 +17,7 @@ GUROBI_PROFILES = {
         "Seed": 123,
     },
 
-    # 🚀 Second choice: barrier (often faster on some big sparse LPs)
+    # Second choice: barrier (faster on big sparse LPs)
     "gurobi-barrier": {
         "Threads": _default_threads(8),
         "Method": 2,          # barrier :contentReference[oaicite:2]{index=2}
@@ -26,7 +26,7 @@ GUROBI_PROFILES = {
         "Seed": 123,
     },
 
-    # Keep your special profiles (they’re useful)
+    #
     "gurobi-numeric-focus": {
         "NumericFocus": 3,
         "Method": 2,
@@ -40,30 +40,6 @@ GUROBI_PROFILES = {
         "Seed": 123,
     },
 
-    "gurobi-barhom-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 2,
-        "Crossover": 0,
-        "BarHomogeneous": 1,
-        "DualReductions": 0,
-        "InfUnbdInfo": 1,
-        "NumericFocus": 3,
-        "BarConvTol": 1e-6,
-        "FeasibilityTol": 1e-6,
-        "OptimalityTol": 1e-6,
-        "Seed": 123,
-    },
-
-    "gurobi-simplex-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 1,
-        "DualReductions": 0,
-        "InfUnbdInfo": 1,
-        "Presolve": 2,
-        "NumericFocus": 3,
-        "Seed": 123,
-    },
-
     "gurobi-barrier-fast": {
         "Threads": _default_threads(8),
         "Method": 2,                 # barrier
@@ -74,18 +50,10 @@ GUROBI_PROFILES = {
         "PreDual": 0,
     },
 
-    "gurobi-stoch-diagnose": {
-        "Threads": _default_threads(8),
-        "Method": 1,          # simplex diagnose tends to give cleaner certs
-        "DualReductions": 0,  # key: remove ambiguity
-        "InfUnbdInfo": 1,
-        "Seed": 123,
-    }
-
 }
 
 HIGHS_PROFILES = {
-    # ✅ Default: simplex (good duals, predictable)
+    # Default: simplex (good duals, predictable)
     "highs-default": {
         "threads": _default_threads(8),
         "solver": "simplex",    # :contentReference[oaicite:5]{index=5}
@@ -96,7 +64,7 @@ HIGHS_PROFILES = {
         "random_seed": 123,
     },
 
-    # 🚀 Second choice: IPM (barrier-like) + crossover ON
+    # Second choice: IPM (barrier-like) + crossover ON
     "highs-ipm": {
         "threads": _default_threads(8),
         "solver": "ipm",         # :contentReference[oaicite:7]{index=7}
@@ -131,3 +99,16 @@ HIGHS_PROFILES = {
 }
 
 SOLVER_PROFILES = {"gurobi": GUROBI_PROFILES, "highs": HIGHS_PROFILES}
+
+
+def get_solver_options(solver, profile):
+    """Return the solver options dict for a given solver and profile name."""
+    if solver not in SOLVER_PROFILES:
+        raise ValueError(f"Unknown solver '{solver}'. Available: {list(SOLVER_PROFILES)}")
+    profiles = SOLVER_PROFILES[solver]
+    if profile not in profiles:
+        raise ValueError(
+            f"Unknown profile '{profile}' for solver '{solver}'. "
+            f"Available: {list(profiles.keys())}"
+        )
+    return dict(profiles[profile])

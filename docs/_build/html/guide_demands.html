@@ -1,0 +1,823 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Setting Product Demands &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guide_demands';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Rolling Horizon Dispatch Optimisation" href="guide_rolling_horizon.html" />
+    <link rel="prev" title="Guide for Adding New Technologies" href="guide_new_technology.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Fguide_demands.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/guide_demands.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Setting Product Demands</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#demand-modes-at-a-glance">Demand modes at a glance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-keys">Configuration keys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-details">Mode details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-constant-delivery"><code class="docutils literal notranslate"><span class="pre">flat</span></code> — constant delivery</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#profile-seasonally-shaped-delivery"><code class="docutils literal notranslate"><span class="pre">profile</span></code> — seasonally shaped delivery</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-flat-periodic-equal-deliveries"><code class="docutils literal notranslate"><span class="pre">bins_flat</span></code> — periodic equal deliveries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-profile-profile-weighted-periodic-deliveries"><code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> — profile-weighted periodic deliveries</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seasonal-profiles">Seasonal profiles</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-default">Built-in default</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#year-remapping">Year remapping</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-custom-profile">Using a custom profile</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-delivery-buffer-store">The delivery buffer store</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-demand-for-a-new-product">Adding demand for a new product</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rolling-horizon-demand-and-store-handling">Rolling horizon — demand and store handling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-and-profile-modes">Flat and profile modes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-modes-annual-n-bins-1">Bins modes (annual, n_bins = 1)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-modes-n-bins-1">Bins modes (n_bins &gt; 1)</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="setting-product-demands">
+<span id="guide-demands"></span><h1>Setting Product Demands<a class="headerlink" href="#setting-product-demands" title="Link to this heading">#</a></h1>
+<p>GreenBubble supports four <strong>demand modes</strong> per product. Each mode controls the
+shape of the demand time series and whether (and how large) a <strong>flexibility
+store</strong> (delivery buffer) is added to the network.</p>
+<p>The demand system is configured entirely in <code class="docutils literal notranslate"><span class="pre">config/config.yaml</span></code> under the
+<code class="docutils literal notranslate"><span class="pre">targets</span></code> key.  Seasonal profiles for <code class="docutils literal notranslate"><span class="pre">profile</span></code> and <code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> modes
+are loaded from <code class="docutils literal notranslate"><span class="pre">data/common/</span></code> — a year-agnostic folder separate from the
+per-year <code class="docutils literal notranslate"><span class="pre">data/Inputs_{year}/</span></code> directories.</p>
+<hr class="docutils" />
+<section id="demand-modes-at-a-glance">
+<h2>Demand modes at a glance<a class="headerlink" href="#demand-modes-at-a-glance" title="Link to this heading">#</a></h2>
+<a class="reference internal image-reference" href="_images/demand_modes_overview.png"><img alt="Four demand modes overview" src="_images/demand_modes_overview.png" style="width: 100%;" />
+</a>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 18.0%" />
+<col style="width: 32.0%" />
+<col style="width: 18.0%" />
+<col style="width: 32.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Mode</p></th>
+<th class="head"><p>Demand TS</p></th>
+<th class="head"><p>Store added?</p></th>
+<th class="head"><p>Store <code class="docutils literal notranslate"><span class="pre">e_nom_max</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">flat</span></code></p></td>
+<td><p>constant rate (annual / 8760)</p></td>
+<td><p>if <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">×</span> <span class="pre">annual</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">profile</span></code></p></td>
+<td><p>scaled NG seasonal profile</p></td>
+<td><p>if <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">×</span> <span class="pre">annual</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bins_flat</span></code></p></td>
+<td><p>equal spike at each bin end</p></td>
+<td><p>always</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">annual</span> <span class="pre">/</span> <span class="pre">n_bins</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bins_profile</span></code></p></td>
+<td><p>profile-weighted spike at each bin end</p></td>
+<td><p>always</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">max_bin</span> <span class="pre">×</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">buffer)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="reference internal image-reference" href="_images/demand_store_sizing.png"><img alt="Store sizing summary" src="_images/demand_store_sizing.png" style="width: 80%;" />
+</a>
+</section>
+<hr class="docutils" />
+<section id="configuration-keys">
+<h2>Configuration keys<a class="headerlink" href="#configuration-keys" title="Link to this heading">#</a></h2>
+<p>For each product (<code class="docutils literal notranslate"><span class="pre">CH4</span></code>, <code class="docutils literal notranslate"><span class="pre">H2</span></code>, <code class="docutils literal notranslate"><span class="pre">MeOH</span></code>) the following keys live inside
+the <code class="docutils literal notranslate"><span class="pre">targets</span></code> block of <code class="docutils literal notranslate"><span class="pre">config/config.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># ── bioCH4 ──────────────────────────────────────────────────────────</span>
+<span class="w">  </span><span class="nt">demand_CH4</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300000</span><span class="w">          </span><span class="c1"># MWh/year  (or max production if driver=&#39;price&#39;)</span>
+<span class="w">  </span><span class="nt">CH4_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flat</span><span class="w">       </span><span class="c1"># flat | profile | bins_flat | bins_profile</span>
+<span class="w">  </span><span class="nt">CH4_bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                 </span><span class="c1"># number of equal time bins (ignored for flat/profile)</span>
+<span class="w">  </span><span class="nt">CH4_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.02</span><span class="w">       </span><span class="c1"># fraction of annual demand used as store e_nom_max</span>
+<span class="w">                              </span><span class="c1"># (only for flat/profile; 0 = rigid, no store)</span>
+
+<span class="w">  </span><span class="c1"># ── H2 ──────────────────────────────────────────────────────────────</span>
+<span class="w">  </span><span class="nt">demand_H2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">H2_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_flat</span>
+<span class="w">  </span><span class="nt">H2_bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">H2_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+
+<span class="w">  </span><span class="c1"># ── Methanol ─────────────────────────────────────────────────────────</span>
+<span class="w">  </span><span class="nt">demand_meoh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4000</span>
+<span class="w">  </span><span class="nt">MeOH_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_flat</span>
+<span class="w">  </span><span class="nt">MeOH_bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">MeOH_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+
+<span class="w">  </span><span class="c1"># ── shared ──────────────────────────────────────────────────────────</span>
+<span class="w">  </span><span class="nt">demand_store_buffer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">    </span><span class="c1"># extra headroom for bins_profile stores</span>
+
+<span class="w">  </span><span class="c1"># ── seasonal profiles (only relevant for profile / bins_profile modes) ──</span>
+<span class="w">  </span><span class="c1"># null  → use data/common/NG_demand_DK_profile.csv (seeded automatically)</span>
+<span class="w">  </span><span class="c1"># path  → any semicolon-separated CSV in data/common/ or elsewhere</span>
+<span class="w">  </span><span class="nt">CH4_profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">  </span><span class="nt">H2_profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">  </span><span class="nt">MeOH_profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="mode-details">
+<h2>Mode details<a class="headerlink" href="#mode-details" title="Link to this heading">#</a></h2>
+<section id="flat-constant-delivery">
+<h3><code class="docutils literal notranslate"><span class="pre">flat</span></code> — constant delivery<a class="headerlink" href="#flat-constant-delivery" title="Link to this heading">#</a></h3>
+<p>The product is demanded at a <strong>constant MW rate</strong> throughout the year:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span> <span class="o">=</span> <span class="n">annual_demand</span> <span class="o">/</span> <span class="mi">8760</span>  <span class="p">[</span><span class="n">MW</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>A <strong>flexibility store</strong> is added when <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>. Its maximum capacity
+is <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">×</span> <span class="pre">annual_demand</span></code> MWh. The store is cyclic, so the optimiser
+can shift some production within the year while meeting the total annual demand.
+Setting <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">=</span> <span class="pre">0</span></code> makes the demand completely rigid (no store).</p>
+<p><strong>Typical use:</strong> biogas-derived CH4 with a small intra-day buffer
+(<code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">≈</span> <span class="pre">0.01–0.05</span></code>).</p>
+</section>
+<section id="profile-seasonally-shaped-delivery">
+<h3><code class="docutils literal notranslate"><span class="pre">profile</span></code> — seasonally shaped delivery<a class="headerlink" href="#profile-seasonally-shaped-delivery" title="Link to this heading">#</a></h3>
+<p>The demand is shaped by the Danish natural-gas consumption seasonal profile
+(winter-heavy). The profile is normalised so the annual total equals
+<code class="docutils literal notranslate"><span class="pre">annual_demand</span></code>. A flexibility store is added under the same rules as
+<code class="docutils literal notranslate"><span class="pre">flat</span></code>. The reference profile can be changed by the user</p>
+<p><strong>Typical use:</strong> products sold to the NG grid with seasonal off-take variation.</p>
+</section>
+<section id="bins-flat-periodic-equal-deliveries">
+<h3><code class="docutils literal notranslate"><span class="pre">bins_flat</span></code> — periodic equal deliveries<a class="headerlink" href="#bins-flat-periodic-equal-deliveries" title="Link to this heading">#</a></h3>
+<p>The year is divided into <code class="docutils literal notranslate"><span class="pre">n_bins</span></code> equal time windows. At the <strong>end</strong> of each
+bin a single delivery of <code class="docutils literal notranslate"><span class="pre">annual_demand</span> <span class="pre">/</span> <span class="pre">n_bins</span></code> MWh is required. Between
+deliveries the demand is zero — the optimiser accumulates product in the
+delivery buffer store and empties it at the bin endpoint.</p>
+<p>The delivery store <code class="docutils literal notranslate"><span class="pre">e_nom_max</span></code> is set to <code class="docutils literal notranslate"><span class="pre">annual</span> <span class="pre">/</span> <span class="pre">n_bins</span></code> (one bin’s worth),
+preventing the optimiser from carrying surplus across more than one period.</p>
+<p>Common <code class="docutils literal notranslate"><span class="pre">n_bins</span></code> values:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">n_bins</span></code></p></th>
+<th class="head"><p>Delivery frequency</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>once per year (end of year)</p></td>
+</tr>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p>once per month</p></td>
+</tr>
+<tr class="row-even"><td><p>52</p></td>
+<td><p>once per week</p></td>
+</tr>
+<tr class="row-odd"><td><p>N</p></td>
+<td><p>N equal intervals</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Typical use:</strong> H2 delivered by truck or pipeline at regular intervals.</p>
+</section>
+<section id="bins-profile-profile-weighted-periodic-deliveries">
+<h3><code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> — profile-weighted periodic deliveries<a class="headerlink" href="#bins-profile-profile-weighted-periodic-deliveries" title="Link to this heading">#</a></h3>
+<p>Same binning as <code class="docutils literal notranslate"><span class="pre">bins_flat</span></code>, but each bin’s delivery is proportional to the
+integral of the NG seasonal profile within that bin. Winter bins receive more
+product than summer bins.</p>
+<p>The delivery store <code class="docutils literal notranslate"><span class="pre">e_nom_max</span></code> is set to
+<code class="docutils literal notranslate"><span class="pre">max_bin_demand</span> <span class="pre">×</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">store_buffer)</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">demand_store_buffer</span></code> key (default 0.0) adds extra headroom as a
+fraction, e.g. 0.05 gives +5%.</p>
+<p><strong>Typical use:</strong> products with seasonal demand profiles sold in periodic batches.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="seasonal-profiles">
+<h2>Seasonal profiles<a class="headerlink" href="#seasonal-profiles" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">profile</span></code> and <code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> modes require a reference time series that
+represents the seasonal shape of demand.  Profiles live in <code class="docutils literal notranslate"><span class="pre">data/common/</span></code>
+(not in the per-year <code class="docutils literal notranslate"><span class="pre">data/Inputs_{year}/</span></code> directories) so that:</p>
+<ul class="simple">
+<li><p>the same profile can be reused across any optimization year without
+re-downloading;</p></li>
+<li><p>different products can have different profiles;</p></li>
+<li><p>user-supplied profiles from any source can be dropped in without touching
+the preprocessing scripts.</p></li>
+</ul>
+<section id="built-in-default">
+<h3>Built-in default<a class="headerlink" href="#built-in-default" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">data/common/NG_demand_DK_profile.csv</span></code> — the Danish natural-gas consumption
+seasonal profile (daily data, winter-heavy).  It is seeded automatically the
+first time any year is preprocessed and does not need to be managed manually.</p>
+</section>
+<section id="year-remapping">
+<h3>Year remapping<a class="headerlink" href="#year-remapping" title="Link to this heading">#</a></h3>
+<p>The profile’s timestamps are remapped to the optimization year automatically.
+A profile from 2023 is therefore valid for a 2024 or 2022 optimization run —
+only the seasonal shape (day-of-year pattern) is used, not the absolute dates.</p>
+</section>
+<section id="using-a-custom-profile">
+<h3>Using a custom profile<a class="headerlink" href="#using-a-custom-profile" title="Link to this heading">#</a></h3>
+<ol class="arabic">
+<li><p>Create a semicolon-separated CSV with a datetime index (daily or hourly)
+and one numeric column representing demand or consumption intensity.</p></li>
+<li><p>Place it in <code class="docutils literal notranslate"><span class="pre">data/common/</span></code> (or any path reachable from the project root).</p></li>
+<li><p>Set the <code class="docutils literal notranslate"><span class="pre">*_profile</span></code> key for the relevant product:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">CH4_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_profile</span>
+<span class="w">  </span><span class="nt">CH4_profile</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;data/common/my_biogas_season.csv&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>The file format must match the project standard (semicolons, datetime index in
+the first column, values in the second column).</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="the-delivery-buffer-store">
+<h2>The delivery buffer store<a class="headerlink" href="#the-delivery-buffer-store" title="Link to this heading">#</a></h2>
+<p>For <code class="docutils literal notranslate"><span class="pre">bins_flat</span></code> and <code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> modes the store is always added. For
+<code class="docutils literal notranslate"><span class="pre">flat</span></code> and <code class="docutils literal notranslate"><span class="pre">profile</span></code> modes it is added only if <code class="docutils literal notranslate"><span class="pre">flexibility</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>.</p>
+<p>The store represents a product tank or pipeline buffer:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">e_cyclic</span> <span class="pre">=</span> <span class="pre">True</span></code> — start-of-year SOC equals end-of-year SOC (annual
+balance enforced).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e_nom_extendable</span> <span class="pre">=</span> <span class="pre">True</span></code> — the optimiser sizes the tank up to <code class="docutils literal notranslate"><span class="pre">e_nom_max</span></code>.</p></li>
+<li><p>Marginal cost is zero (no cost to hold product in the buffer).</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="adding-demand-for-a-new-product">
+<h2>Adding demand for a new product<a class="headerlink" href="#adding-demand-for-a-new-product" title="Link to this heading">#</a></h2>
+<ol class="arabic">
+<li><p>Add an annual demand target in <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">demand_MyProduct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span><span class="w">      </span><span class="c1"># MWh/year</span>
+<span class="w">  </span><span class="nt">MyProduct_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_flat</span>
+<span class="w">  </span><span class="nt">MyProduct_bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">MyProduct_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+</pre></div>
+</div>
+</li>
+<li><p>In <code class="docutils literal notranslate"><span class="pre">scripts/preprocessing.py</span></code>, call <code class="docutils literal notranslate"><span class="pre">build_product_demand_ts</span></code> inside
+<code class="docutils literal notranslate"><span class="pre">build_demands_TS</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">myproduct_ts</span><span class="p">,</span> <span class="n">myproduct_e_nom_max</span> <span class="o">=</span> <span class="n">build_product_demand_ts</span><span class="p">(</span>
+    <span class="n">annual_demand</span>        <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">][</span><span class="s2">&quot;demand_MyProduct&quot;</span><span class="p">],</span>
+    <span class="n">mode</span>                 <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_demand_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;bins_flat&quot;</span><span class="p">),</span>
+    <span class="n">snapshots</span>            <span class="o">=</span> <span class="n">snapshots</span><span class="p">,</span>
+    <span class="n">profile_ts</span>           <span class="o">=</span> <span class="n">ng_profile</span><span class="p">,</span>
+    <span class="n">n_bins</span>               <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_bins&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">flexibility_fraction</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MyProduct_flexibility&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="n">store_buffer</span>         <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;targets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;demand_store_buffer&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="n">col_name</span>             <span class="o">=</span> <span class="s2">&quot;demand MWh&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;MyProduct_demand_ts&quot;</span><span class="p">]</span>       <span class="o">=</span> <span class="n">myproduct_ts</span>
+<span class="n">inputs_dict</span><span class="p">[</span><span class="s2">&quot;MyProduct_store_e_nom_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myproduct_e_nom_max</span>
+</pre></div>
+</div>
+</li>
+<li><p>In <code class="docutils literal notranslate"><span class="pre">scripts/prepare_network.py</span></code>, wire up the load and delivery store in
+the relevant <code class="docutils literal notranslate"><span class="pre">add_&lt;sector&gt;()</span></code> function following the same pattern used for
+<code class="docutils literal notranslate"><span class="pre">add_targets_per_product</span></code>.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="rolling-horizon-demand-and-store-handling">
+<h2>Rolling horizon — demand and store handling<a class="headerlink" href="#rolling-horizon-demand-and-store-handling" title="Link to this heading">#</a></h2>
+<p>See also: <a class="reference internal" href="guide_rolling_horizon.html#guide-rolling-horizon"><span class="std std-ref">Rolling Horizon Dispatch Optimisation</span></a>.</p>
+<section id="flat-and-profile-modes">
+<h3>Flat and profile modes<a class="headerlink" href="#flat-and-profile-modes" title="Link to this heading">#</a></h3>
+<p>The delivery store carries a cyclic SOC across the full year in the capacity
+expansion run. In rolling horizon (RH) the store is kept <strong>non-cyclic</strong>
+(<code class="docutils literal notranslate"><span class="pre">e_cyclic</span> <span class="pre">=</span> <span class="pre">False</span></code>) so each window starts from the SOC carried over from
+the previous window rather than an arbitrary optimised value.</p>
+<p>The store capacity is left at the optimised value — the RH solver can use the
+same buffer to absorb hourly variability within each window.</p>
+</section>
+<section id="bins-modes-annual-n-bins-1">
+<h3>Bins modes (annual, n_bins = 1)<a class="headerlink" href="#bins-modes-annual-n-bins-1" title="Link to this heading">#</a></h3>
+<p>When a product has a single annual delivery the delivery store accumulates the
+entire year’s production before releasing it at year-end. This is incompatible
+with rolling horizon because:</p>
+<ul class="simple">
+<li><p>With <code class="docutils literal notranslate"><span class="pre">e_cyclic</span> <span class="pre">=</span> <span class="pre">False</span></code> the optimizer front-loads all production in the
+first window and ends with a massive surplus.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">e_cyclic</span> <span class="pre">=</span> <span class="pre">True</span></code> PyPSA treats the initial SOC as a free optimisation
+variable, allowing phantom energy at window start.</p></li>
+</ul>
+<p>The RH solver automatically detects annual point-load products (stores with
+&gt;95% of throughput concentrated in a single timestep) and:</p>
+<ol class="arabic simple">
+<li><p><strong>Redistributes</strong> the demand to a flat hourly rate for the RH run.</p></li>
+<li><p><strong>Caps</strong> the delivery store to <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">×</span> <span class="pre">(annual</span> <span class="pre">/</span> <span class="pre">n_windows)</span></code> MWh, preventing
+multi-window carry-over while keeping a one-window buffer.</p></li>
+</ol>
+<p>The annual production target is preserved — only the delivery shape within the
+RH run changes.</p>
+</section>
+<section id="bins-modes-n-bins-1">
+<h3>Bins modes (n_bins &gt; 1)<a class="headerlink" href="#bins-modes-n-bins-1" title="Link to this heading">#</a></h3>
+<p>For weekly or monthly bins (<code class="docutils literal notranslate"><span class="pre">n_bins</span> <span class="pre">≥</span> <span class="pre">12</span></code>) no redistribution is applied.
+Each bin’s delivery is small enough that the store fills and empties within a
+single rolling window, so cyclic constraints within each window are naturally
+satisfied.</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="guide_new_technology.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Guide for Adding New Technologies</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="guide_rolling_horizon.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Rolling Horizon Dispatch Optimisation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#demand-modes-at-a-glance">Demand modes at a glance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-keys">Configuration keys</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-details">Mode details</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-constant-delivery"><code class="docutils literal notranslate"><span class="pre">flat</span></code> — constant delivery</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#profile-seasonally-shaped-delivery"><code class="docutils literal notranslate"><span class="pre">profile</span></code> — seasonally shaped delivery</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-flat-periodic-equal-deliveries"><code class="docutils literal notranslate"><span class="pre">bins_flat</span></code> — periodic equal deliveries</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-profile-profile-weighted-periodic-deliveries"><code class="docutils literal notranslate"><span class="pre">bins_profile</span></code> — profile-weighted periodic deliveries</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#seasonal-profiles">Seasonal profiles</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-default">Built-in default</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#year-remapping">Year remapping</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-custom-profile">Using a custom profile</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-delivery-buffer-store">The delivery buffer store</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-demand-for-a-new-product">Adding demand for a new product</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rolling-horizon-demand-and-store-handling">Rolling horizon — demand and store handling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flat-and-profile-modes">Flat and profile modes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-modes-annual-n-bins-1">Bins modes (annual, n_bins = 1)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bins-modes-n-bins-1">Bins modes (n_bins &gt; 1)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

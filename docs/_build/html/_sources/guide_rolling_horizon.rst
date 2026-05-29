@@ -1,0 +1,323 @@
+.. _guide-rolling-horizon:
+
+Rolling Horizon Dispatch Optimisation
+======================================
+
+The rolling horizon (RH) pipeline runs a **dispatch-only** optimisation on a
+network whose capacities have already been fixed by a previous capacity
+expansion run.  It is useful for:
+
+- Evaluating how a fixed plant configuration performs in a different weather or
+  price year (cross-year analysis).
+- Running high-resolution dispatch on a large network without solving a full
+  investment problem.
+
+When rolling horizon is enabled, Snakemake targets the RH output directly and
+the ``solve_network`` (capacity expansion) rule is **never triggered**.
+
+---
+
+How it works
+------------
+
+1. The OPT network produced by the capacity expansion run is loaded.
+2. All capacities are fixed: ``p_nom = p_nom_opt``, ``p_nom_extendable = False``.
+3. *(Cross-year only)* All year-dependent time series (wind/solar capacity
+   factors, electricity and gas prices, RFNBO constraints, product sale prices)
+   are replaced with data from ``rh_year``.
+4. A rolling horizon dispatch solve is run: the year is split into overlapping
+   windows of ``horizon`` hours, each solved sequentially with ``overlap`` hours
+   of carry-over to avoid end-of-window artefacts.
+5. The result is saved as a NetCDF network file containing full hourly dispatch
+   time series.
+
+---
+
+Configuration
+-------------
+
+All settings live under the ``rolling_horizon`` key in ``config/config.yaml``:
+
+.. code-block:: yaml
+
+   rolling_horizon:
+     enabled: false          # set true to activate the RH pipeline
+     horizon: 168            # window size in hours (168 = 1 week)
+     overlap: 24             # overlap between consecutive windows in hours
+     network_path: null      # REQUIRED: path to the .nc OPT network to load
+     rh_year: null           # optional: dispatch year (defaults to En_price_year)
+
+.. list-table:: Parameters
+   :header-rows: 1
+   :widths: 20 10 70
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``enabled``
+     - bool
+     - Activates the RH pipeline. When ``true``, ``rule all`` targets the RH
+       output instead of the standard plots.
+   * - ``horizon``
+     - int
+     - Rolling window size in hours. Typical values: 168 (week), 720 (month).
+   * - ``overlap``
+     - int
+     - Hours of overlap between consecutive windows. Reduces boundary
+       artefacts. A value of 24 is usually sufficient.
+   * - ``network_path``
+     - string
+     - Absolute or relative path to the optimised ``.nc`` network.
+       **Required** when ``enabled: true``.
+   * - ``rh_year``
+     - int / null
+     - Year whose weather and price data are used for dispatch. If ``null``
+       or equal to ``En_price_year``, the same data as the capacity expansion
+       run is used.
+
+---
+
+Same-year mode
+--------------
+
+Use this when you want to run dispatch on the same year as the capacity
+expansion without re-solving the full investment problem.
+
+.. code-block:: yaml
+
+   rolling_horizon:
+     enabled: true
+     horizon: 168
+     overlap: 24
+     network_path: outputs/single_analysis/.../networks/..._OPT.nc
+     rh_year: null
+
+---
+
+Cross-year mode
+---------------
+
+Use this to evaluate the optimised capacities under a different year's
+weather and energy prices.  The network topology and component sizes remain
+exactly as in the OPT network; only the time series data is replaced.
+
+.. code-block:: yaml
+
+   rolling_horizon:
+     enabled: true
+     horizon: 168
+     overlap: 24
+     network_path: outputs/single_analysis/.../networks/..._OPT.nc
+     rh_year: 2019   # dispatch with 2019 wind/solar CFs and electricity prices
+
+The preprocessed inputs for ``rh_year`` (``data/Inputs_2019/``) must exist.
+If they do not, Snakemake will run ``preprocess_inputs`` for that year
+automatically before the RH solve.
+
+---
+
+Running
+-------
+
+With ``enabled: true`` and ``network_path`` set, run Snakemake as normal:
+
+.. code-block:: bash
+
+   snakemake --cores 4
+
+Snakemake's DAG will target only the RH output.  No capacity expansion rule
+is triggered.
+
+---
+
+Output
+------
+
+The result is saved as a NetCDF file at:
+
+.. code-block:: text
+
+   {outputs_folder}/{network_name}/networks/rolling_horizon/{network_name}_RH.nc
+
+Load it with PyPSA to access the full dispatch time series:
+
+.. code-block:: python
+
+   import pypsa
+   n = pypsa.Network("path/to/network_RH.nc")
+
+   n.generators_t.p                    # generator dispatch [MW]
+   n.links_t.p0                        # link flow at bus0 [MW]
+   n.stores_t.e                        # store energy content [MWh]
+   n.storage_units_t.state_of_charge   # storage state of charge [MWh]
+
+---
+
+What changes between years
+--------------------------
+
+When ``rh_year`` differs from ``En_price_year``, the following are replaced
+with data from ``data/Inputs_{rh_year}/``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 50
+
+   * - Data
+     - Source file
+   * - Wind capacity factors
+     - ``CF_wind.csv``
+   * - Solar capacity factors
+     - ``CF_solar.csv``
+   * - Electricity spot price (buy / sell)
+     - ``Elspotprices_input.csv``
+   * - Natural gas price
+     - ``NG_price_year_input.csv``
+   * - RFNBO hourly import constraint
+     - derived from electricity price
+   * - Product sale prices (bioCH4, etc.)
+     - derived from NG price + CO₂ cost
+
+Capital costs, efficiencies, network topology, and component capacities are
+**not** changed — they come from the OPT network.
+
+----
+
+Demands and flexibility stores in rolling horizon
+--------------------------------------------------
+
+See also: :ref:`guide-demands`.
+
+Flat and profile modes
+^^^^^^^^^^^^^^^^^^^^^^
+
+The delivery store carries a cyclic SOC across the full year in the capacity
+expansion run. In RH the store is made **non-cyclic** (``e_cyclic = False``)
+so each window starts from the SOC carried forward from the previous window
+rather than an arbitrary optimised value. The store capacity is left at the
+optimised value.
+
+Annual point-load products (bins_flat / bins_profile with n_bins = 1)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When a product has a single annual delivery the delivery buffer store
+accumulates the full year's production before releasing it at year-end. This
+is incompatible with rolling horizon:
+
+- With ``e_cyclic = False`` the optimizer front-loads all production in the
+  first window, ending with a massive surplus.
+- With ``e_cyclic = True`` PyPSA treats the initial SOC as a free optimisation
+  variable, injecting phantom energy at window start.
+
+The RH solver automatically detects these annual point-load stores (>95% of
+throughput concentrated in a single timestep) and:
+
+1. **Redistributes** the demand to a flat hourly rate for the duration of the
+   RH run — the load shape changes but the annual total is preserved.
+2. **Caps** the delivery store to ``2 × (annual / n_windows)`` MWh, preventing
+   multi-window carry-over while keeping a one-window buffer.
+
+Weekly / monthly bins (n_bins ≥ 12)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For higher delivery frequencies no redistribution is needed. Each bin's
+delivery fits within a single rolling window, so the store fills and empties
+naturally within each window. The store cap is the per-bin size set during
+network building.
+
+---
+
+Custom constraints in rolling horizon
+--------------------------------------
+
+The capacity expansion solve applies several custom constraints via
+``extra_functionality`` that are not part of the standard PyPSA model.
+The RH solve must replicate these constraints in every window, otherwise
+the RH dispatch is less constrained than the PF solve and the cost
+comparison is meaningless.
+
+RE export fraction constraint
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The most important custom constraint limits how much renewable electricity
+the site may sell back to the grid relative to the amount it consumes
+on-site:
+
+.. math::
+
+   E_{\text{export, window}} \leq \alpha \times E_{\text{consumed, window}}
+
+where :math:`\alpha` is ``max_RE_to_grid`` from ``config.yaml``.
+
+**In the perfect-foresight (PF) solve** this is a single annual constraint:
+the full-year export total must not exceed :math:`\alpha` times the full-year
+on-site consumption total.
+
+**In rolling horizon** the constraint cannot be applied as a single annual
+expression, because each window is solved as an independent optimisation
+problem with its own linopy model that only contains the window's snapshots.
+Instead the same constraint is added to *every window* using the window's own
+snapshot set — effectively enforcing the fraction locally within each 168-hour
+(or chosen ``horizon``) period.
+
+This per-window enforcement is **strictly tighter** than the original annual
+constraint: if the fraction is satisfied in every window it is guaranteed to be
+satisfied over the full year.  The practical consequence is that the RH
+dispatch may curtail slightly more RE or shift slightly more production
+internally compared to a hypothetical annual-constraint RH, but the direction
+of the bound is always conservative.
+
+.. warning::
+
+   Omitting this constraint from the RH solve causes the optimizer to export
+   far more electricity to the grid than the PF solve (observed: 2.5× more
+   annual export in an unconstrained RH run), making the RH total system cost
+   appear lower than PF.  This is an artefact — the system is "profiting" from
+   unplanned grid exports rather than using the electricity for green fuel
+   production.  The constraint must always be applied to both solves to ensure
+   a fair comparison.
+
+Implementation
+^^^^^^^^^^^^^^
+
+The constraint is injected via the ``extra_functionality`` hook that PyPSA's
+``optimize_with_rolling_horizon`` passes to each per-window ``n.optimize()``
+call:
+
+.. code-block:: python
+
+   def _rh_extra_functionality(n, snapshots):
+       m = getattr(n, "model", None)
+       if m is None:
+           return
+       add_max_RE_sales_constraint(
+           n, m,
+           bus="El3",
+           export_pattern="El3_to",
+           export_bus="ElDK1 sell bus",
+           alpha=c.max_RE_to_grid,
+           name="El3_export_fraction_of_total_RE",
+           n_flags=c.n_flags,
+           include_agents=["biogas", "electrolysis", "methanation", "meoh"],
+           snapshots=snapshots,   # <-- window snapshots, not full-year
+       )
+
+   n.optimize.optimize_with_rolling_horizon(
+       ...
+       extra_functionality=_rh_extra_functionality,
+   )
+
+The ``snapshots`` argument is critical: without it,
+``add_max_RE_sales_constraint`` would call ``_snapshots_by_scenario(n)`` and
+receive the full 8760-snapshot index, but the linopy model variables only
+contain the current window's timestamps, causing a ``KeyError`` when the
+function tries to select non-existent snapshots from the model variables.
+
+Adding a new custom constraint to the PF solve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you add a new ``extra_functionality`` constraint to ``helpers.py`` for the
+capacity expansion run, you **must** also add it to ``_rh_extra_functionality``
+in ``scripts/snakemake_rolling_horizon.py``, passing ``snapshots=snapshots``
+(or an equivalent window-aware argument) so the constraint operates on the
+current window's snapshot set rather than the full network index.

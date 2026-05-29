@@ -1,3 +1,19 @@
+# SPDX-License-Identifier: MIT
+"""Project-specific technology parameters not available in the technology-data catalogue.
+
+This module defines techno-economic and physical parameters for technologies
+that are specific to the GreenBubble / GreenLab Skive cluster.  Values are
+compiled into the ``tech_inputs`` dict, which is merged into the standard
+cost DataFrame by :func:`scripts.helpers.read_costs`.
+
+Physical property calculations (compressor work, isentropic efficiency, etc.)
+use `CoolProp <http://www.coolprop.org/>`_ for rigorous thermodynamic data.
+
+.. note::
+   Temperature and pressure levels for compressors are defined at the top of
+   this module and referenced throughout.
+"""
+
 import numpy as np
 import pandas as pd
 import CoolProp.CoolProp as CP
@@ -40,6 +56,9 @@ symbiosis_data = {
     'Heat DH min': {"fluid": 'Water', "T": 90, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat DH' ,'DH grid', "Heat DH storage"] },
     'Heat LT min': {"fluid": 'Water', "T": 50, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat LT'] },
     'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1, 'carrier' : 'Heat' , 'buses' : ['Heat amb'] },
+    'H2 normal': {"fluid": 'H2', "T": 0, 'P': 1, 'LHV': lhv_h2, 'carrier': 'H2', 'buses': []},
+    'CO2 normal': {"fluid": 'CO2', "T": 0, 'P': 1, 'LHV': 0, 'carrier': 'CO2', 'buses': []},
+    'CH4 normal': {"fluid": 'CH4', "T": 0, 'P': 1, 'LHV': lhv_ch4, 'carrier': 'gas', 'buses': []},
     'NG grid': {"fluid": 'CH4', "T": T_ambient, 'P': 40, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['NG'] },
     'H2 production': {"fluid": 'H2', "T": 50, 'P': 30, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2' , 'H2 distribution', 'H2 delivery']},
     'H2 to methanolisation': {"fluid": 'H2', "T": T_max_comp, 'P': 80 , 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanolisation']},

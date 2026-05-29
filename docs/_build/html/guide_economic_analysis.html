@@ -1,0 +1,780 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Economic Analysis of Results &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'guide_economic_analysis';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Rolling Horizon Dispatch Optimisation" href="guide_rolling_horizon.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Economic Analysis of Results</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Fguide_economic_analysis.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/guide_economic_analysis.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Economic Analysis of Results</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#network-topology-as-a-market">Network topology as a market</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#product-topology">Product topology</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shared-components">Shared components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lcop-levelised-cost-of-production">LCOP — Levelised Cost of Production</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revenue-net-market-value-and-annual-profit">Revenue, net market value, and annual profit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shadow-price-outputs">Shadow price outputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-lcop-to-shadow-prices">Comparing LCOP to shadow prices</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="economic-analysis-of-results">
+<span id="guide-economic-analysis"></span><h1>Economic Analysis of Results<a class="headerlink" href="#economic-analysis-of-results" title="Link to this heading">#</a></h1>
+<p>This guide describes the economic interpretation framework built into
+GreenBubble’s post-processing pipeline (<code class="docutils literal notranslate"><span class="pre">scripts/plots.py</span></code>).  It covers:</p>
+<ul class="simple">
+<li><p>how the network represents markets via buses and shadow prices,</p></li>
+<li><p>the product topology (collection bus + delivery bus),</p></li>
+<li><p>the Levelised Cost of Production (LCOP) formula and its components,</p></li>
+<li><p>the full KKT revenue and annual profit, and</p></li>
+<li><p>how to interpret LCOP versus the shadow price at the collection bus.</p></li>
+</ul>
+<p>—</p>
+<section id="network-topology-as-a-market">
+<h2>Network topology as a market<a class="headerlink" href="#network-topology-as-a-market" title="Link to this heading">#</a></h2>
+<p>GreenBubble is a linear PyPSA model.  Every <strong>bus</strong> is a commodity market
+at a specific location and quality level.  The <strong>KKT multiplier</strong> at a bus
+(<code class="docutils literal notranslate"><span class="pre">n.buses_t.marginal_price</span></code>) is the shadow price of the energy balance
+constraint there — the marginal value of one additional unit of that
+commodity at that time step.</p>
+<p><strong>Links</strong> are technologies that convert commodities.  A multilink with
+ports <code class="docutils literal notranslate"><span class="pre">bus0</span> <span class="pre">…</span> <span class="pre">busN</span></code> satisfies:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>flow at bus_k = p0 × efficiency_k   (k ≥ 1)
+flow at bus0  = −p0                  (convention: bus0 always consumes)
+</pre></div>
+</div>
+<p>Positive <code class="docutils literal notranslate"><span class="pre">efficiency_k</span></code> → the link <em>produces</em> at bus_k (output or by-product).
+Negative <code class="docutils literal notranslate"><span class="pre">efficiency_k</span></code> → the link <em>consumes</em> from bus_k (additional input).</p>
+<p>—</p>
+</section>
+<section id="product-topology">
+<h2>Product topology<a class="headerlink" href="#product-topology" title="Link to this heading">#</a></h2>
+<p>Every product (bioCH4, H2, Methanol) uses a two-bus structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[technology A] ──┐
+[technology B] ──┤──► bioCH4 collection ──► bioCH4 delivery ──► demand / store
+[technology C] ──┘              ▲
+                       is_product_bus = True
+</pre></div>
+</div>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">bioCH4</span> <span class="pre">collection</span></code></dt><dd><p>The <strong>collection bus</strong>.  All technologies producing bioCH4 inject here
+directly via <code class="docutils literal notranslate"><span class="pre">bus1</span></code> of their multilink.  Tagged <code class="docutils literal notranslate"><span class="pre">is_product_bus=True</span></code>
+in the network so post-processing can discover it automatically.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bioCH4</span> <span class="pre">delivery</span></code></dt><dd><p>The <strong>delivery bus</strong>.  The exogenous demand load (demand mode) or the
+price-setting sale link (price mode) is attached here.  In price mode the
+marginal cost of the <code class="docutils literal notranslate"><span class="pre">collection_to_delivery</span></code> link is the exogenous
+selling price time series.</p>
+</dd>
+</dl>
+<p>The shadow price at the collection bus (<code class="docutils literal notranslate"><span class="pre">λ_collection</span></code>) is determined at
+equilibrium by the marginal producer — the highest-cost technology that is
+still dispatched.  Technologies with lower cost earn an <em>intra-marginal rent</em>.</p>
+<p>—</p>
+</section>
+<section id="shared-components">
+<h2>Shared components<a class="headerlink" href="#shared-components" title="Link to this heading">#</a></h2>
+<p>Compressors, HP storage, and other auxiliary equipment often serve multiple
+technologies and are modelled as a single shared component (separate carrier).
+They are <strong>not</strong> included in the LCOP computation for the production
+technologies themselves.</p>
+<p>Their capital and operational costs appear implicitly via the shadow price at
+the buses they connect to (e.g. <code class="docutils literal notranslate"><span class="pre">H2</span> <span class="pre">distribution</span></code>, <code class="docutils literal notranslate"><span class="pre">CO2</span> <span class="pre">distribution</span></code>).
+When a production technology draws H2 from <code class="docutils literal notranslate"><span class="pre">H2</span> <span class="pre">distribution</span></code>, the KKT
+<code class="docutils literal notranslate"><span class="pre">λ_{H2</span> <span class="pre">distribution}</span></code> already reflects the full cost of H2 at that
+pressure level, including compression.</p>
+<p>—</p>
+</section>
+<section id="lcop-levelised-cost-of-production">
+<h2>LCOP — Levelised Cost of Production<a class="headerlink" href="#lcop-levelised-cost-of-production" title="Link to this heading">#</a></h2>
+<p>For a multilink <code class="docutils literal notranslate"><span class="pre">lk</span></code> whose <code class="docutils literal notranslate"><span class="pre">bus1</span></code> is a collection bus (<code class="docutils literal notranslate"><span class="pre">is_product_bus=True</span></code>),
+first define the <strong>indirect OPEX</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\text{indirect OPEX} = -\sum_{k \neq 1} \eta_k \cdot \overline{(\lambda_{k} \cdot p_0)}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta_0 = -1\)</span> for bus0 (primary feedstock, always consumed), and
+<span class="math notranslate nohighlight">\(\overline{(\lambda_k \cdot p_0)} = \sum_t p_{0,t} \cdot \lambda_{k,t} \cdot w_t\)</span>
+with snapshot weights <span class="math notranslate nohighlight">\(w_t\)</span> from <code class="docutils literal notranslate"><span class="pre">snapshot_weightings[&quot;objective&quot;]</span></code>.</p>
+<p>The sign convention makes indirect OPEX <strong>positive when input costs dominate</strong> (the
+typical case) and negative only if by-product credits exceed all feedstock costs.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id1">
+<caption><span class="caption-text">Port contributions to indirect OPEX</span><a class="headerlink" href="#id1" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 28.0%" />
+<col style="width: 12.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\eta_k\)</span></p></th>
+<th class="head"><p>Contribution to indirect OPEX</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>bus0 — primary feedstock</p></td>
+<td><p>−1</p></td>
+<td><p><span class="math notranslate nohighlight">\(+p_0 \cdot \lambda_{\text{bus0}} \cdot w\)</span> — adds feedstock cost</p></td>
+</tr>
+<tr class="row-odd"><td><p>bus2..N — additional input</p></td>
+<td><p>&lt; 0</p></td>
+<td><p><span class="math notranslate nohighlight">\(+|\eta_k| \cdot p_0 \cdot \lambda_k \cdot w\)</span> — adds feedstock cost</p></td>
+</tr>
+<tr class="row-even"><td><p>bus2..N — by-product output</p></td>
+<td><p>&gt; 0</p></td>
+<td><p><span class="math notranslate nohighlight">\(-\eta_k \cdot p_0 \cdot \lambda_k \cdot w\)</span> — subtracts by-product credit</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Then:</p>
+<div class="math notranslate nohighlight">
+\[\text{LCOP} = \frac{\text{CAPEX} + \text{OPEX} + \text{indirect OPEX}}{Q_\text{main}}\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\text{CAPEX}\)</span> = <code class="docutils literal notranslate"><span class="pre">n.statistics.capex()</span></code> for the link (annualised capital cost)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\text{OPEX}\)</span> = <code class="docutils literal notranslate"><span class="pre">n.statistics.opex()</span></code> for the link (explicit <code class="docutils literal notranslate"><span class="pre">marginal_cost</span></code> × dispatch — variable O&amp;M such as enzyme or maintenance rates, <strong>not</strong> feedstock costs)</p></li>
+<li><p><span class="math notranslate nohighlight">\(Q_\text{main} = \sum_t p_{0,t} \cdot \eta_1 \cdot w_t\)</span> — annual production at bus1</p></li>
+</ul>
+<p><strong>No double-counting:</strong> <code class="docutils literal notranslate"><span class="pre">OPEX</span></code> is the explicit variable O&amp;M declared in
+<code class="docutils literal notranslate"><span class="pre">tech_costs</span></code> (VOM).  Indirect OPEX captures the <em>market value</em> of feedstocks
+consumed and by-products produced via KKT shadow prices.  These measure
+different things and do not overlap.</p>
+<p><strong>Existing (EXI_) assets:</strong> <code class="docutils literal notranslate"><span class="pre">capital_cost</span> <span class="pre">=</span> <span class="pre">0</span></code> in the network for fixed-capacity
+components, so <code class="docutils literal notranslate"><span class="pre">CAPEX</span> <span class="pre">=</span> <span class="pre">0</span></code> from statistics.  Their LCOP reflects short-run
+marginal cost only (OPEX + indirect OPEX).</p>
+<p>—</p>
+</section>
+<section id="revenue-net-market-value-and-annual-profit">
+<h2>Revenue, net market value, and annual profit<a class="headerlink" href="#revenue-net-market-value-and-annual-profit" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[\text{revenue main product} = \eta_1 \cdot \sum_t p_{0,t} \cdot \lambda_{\text{bus1},t} \cdot w_t\]</div>
+<p>This is the market value of the main product at the collection bus — what the
+market would pay for everything the technology produces there.</p>
+<div class="math notranslate nohighlight">
+\[\text{net market value} = \text{revenue main product} - \text{indirect OPEX}\]</div>
+<div class="math notranslate nohighlight">
+\[\text{annual profit} = \text{net market value} - \text{CAPEX} - \text{OPEX}
+                     = \text{revenue main product} - \text{indirect OPEX}
+                       - \text{CAPEX} - \text{OPEX}\]</div>
+<p>Annual profit is the economic rent: what the market pays the technology for its
+product, minus every cost it incurs (capital, O&amp;M, feedstocks net of by-products).</p>
+<ul class="simple">
+<li><p><strong>annual profit ≈ 0</strong> — the technology is the marginal (price-setting) producer.</p></li>
+<li><p><strong>annual profit &gt; 0</strong> — intra-marginal rent; technology has lower cost than the price-setter.</p></li>
+<li><p><strong>annual profit &lt; 0</strong> — technology is loss-making under current market conditions (possible for EXI_ assets if market prices are low).</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The zero-profit condition holds for optimally expanded technologies in a
+fully endogenous problem.  When exogenous selling prices are set (price mode),
+the complementary slackness argument breaks down and all dispatched
+technologies can earn positive profit if the price exceeds the LCOP of the
+marginal producer.</p>
+</div>
+<p><strong>Intra-marginal rent:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>rent_per_MWh ≈ λ̄_collection − LCOP
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">λ̄_collection</span></code> is the energy-weighted mean shadow price at the
+collection bus (from <code class="docutils literal notranslate"><span class="pre">shadow_prices_mean.csv</span></code>).  The technology with
+<code class="docutils literal notranslate"><span class="pre">LCOP</span> <span class="pre">≈</span> <span class="pre">λ̄_collection</span></code> is the price-setter; all others earn rent proportional
+to the cost gap.</p>
+<p>—</p>
+</section>
+<section id="output-files">
+<h2>Output files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">compute_lcop_by_technology()</span></code> in <code class="docutils literal notranslate"><span class="pre">scripts/plots.py</span></code> produces:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">csv/lcop_by_technology.csv</span></code></dt><dd><p>One row per product link (index column: <code class="docutils literal notranslate"><span class="pre">link</span></code>).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 38.0%" />
+<col style="width: 62.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">carrier</span></code></p></td>
+<td><p>PyPSA carrier name of the link</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">product</span></code></p></td>
+<td><p>Product name (bioCH4, H2, Methanol …)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CAPEX</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p>Annualised capital cost from <code class="docutils literal notranslate"><span class="pre">n.statistics.capex()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OPEX</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p>Variable O&amp;M from <code class="docutils literal notranslate"><span class="pre">n.statistics.opex()</span></code> (explicit marginal cost × dispatch)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">indirect</span> <span class="pre">OPEX</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p>Feedstock costs minus by-product credits via KKT shadow prices;
+positive = net cost (typical), negative = by-products exceed feedstock cost</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">revenue</span> <span class="pre">main</span> <span class="pre">product</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p>Market value of annual main-product output at the collection bus</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">net</span> <span class="pre">market</span> <span class="pre">value</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">revenue</span> <span class="pre">main</span> <span class="pre">product</span></code> − <code class="docutils literal notranslate"><span class="pre">indirect</span> <span class="pre">OPEX</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">annual</span> <span class="pre">production</span> <span class="pre">(MWh)</span></code></p></td>
+<td><p>Annual energy output at bus1 = <span class="math notranslate nohighlight">\(\sum_t p_{0,t} \cdot \eta_1 \cdot w_t\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LCOP</span> <span class="pre">(EUR/MWh)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(CAPEX</span> <span class="pre">+</span> <span class="pre">OPEX</span> <span class="pre">+</span> <span class="pre">indirect</span> <span class="pre">OPEX)</span> <span class="pre">/</span> <span class="pre">annual</span> <span class="pre">production</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">annual</span> <span class="pre">profit</span> <span class="pre">(EUR)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">net</span> <span class="pre">market</span> <span class="pre">value</span> <span class="pre">−</span> <span class="pre">CAPEX</span> <span class="pre">−</span> <span class="pre">OPEX</span></code>; economic rent earned by the technology</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">plots/lcop_by_technology.png</span></code></dt><dd><p>Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom).</p>
+</dd>
+</dl>
+<p>—</p>
+</section>
+<section id="shadow-price-outputs">
+<h2>Shadow price outputs<a class="headerlink" href="#shadow-price-outputs" title="Link to this heading">#</a></h2>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">csv/shadow_prices_mean.csv</span></code></dt><dd><p>Energy-weighted mean KKT for every bus in <code class="docutils literal notranslate"><span class="pre">plots_config.yaml</span> <span class="pre">→</span> <span class="pre">bus_list_mp</span></code>,
+including collection buses.  Computed regardless of whether any technology
+actively dispatches to the bus.</p>
+<p>Formula:</p>
+<div class="math notranslate nohighlight">
+\[\bar{\lambda}_\text{bus} = \frac{\sum_t \lambda_{t} \cdot q_t \cdot w_t}{\sum_t q_t \cdot w_t}\]</div>
+<p>where <span class="math notranslate nohighlight">\(q_t\)</span> is the net injection at the bus (generators + positive-efficiency
+link outputs + storage discharge), and <span class="math notranslate nohighlight">\(w_t\)</span> is the snapshot weight.
+Falls back to duration-weighted mean when a bus has no measurable injection.</p>
+<p>Columns:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bus</span></code> (index)</p></td>
+<td><p>Bus name from <code class="docutils literal notranslate"><span class="pre">bus_list_mp</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">energy</span> <span class="pre">weighted</span> <span class="pre">mean</span> <span class="pre">(EUR/MWh)</span></code></p></td>
+<td><p>Energy-weighted mean shadow price at that bus</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">plots/shd_prices_mean_bar.png</span></code></dt><dd><p>Bar chart of energy-weighted mean shadow prices.  Collection buses are
+excluded — delivery buses are sufficient to read the product market price.
+Buses with no active injection are also dropped.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">plots/shd_prices_violin.png</span></code>, <code class="docutils literal notranslate"><span class="pre">plots/shd_prices_ldc.png</span></code></dt><dd><p><strong>Snapshot distribution</strong> of shadow prices (one observation per time step),
+with the scenario-weighted mean marked.  These show <em>when</em> prices are high
+or low, not an energy-weighted average.  Restricted to the same delivery-bus
+subset as the bar chart, further filtered to buses with at least one injecting
+link above the <code class="docutils literal notranslate"><span class="pre">LINK_TH</span></code> capacity threshold.</p>
+</dd>
+</dl>
+<p>—</p>
+</section>
+<section id="comparing-lcop-to-shadow-prices">
+<h2>Comparing LCOP to shadow prices<a class="headerlink" href="#comparing-lcop-to-shadow-prices" title="Link to this heading">#</a></h2>
+<p>A practical diagnostic workflow:</p>
+<ol class="arabic simple">
+<li><p>Look at <code class="docutils literal notranslate"><span class="pre">shadow_prices_mean.csv</span></code> — read the <code class="docutils literal notranslate"><span class="pre">energy</span> <span class="pre">weighted</span> <span class="pre">mean</span> <span class="pre">(EUR/MWh)</span></code>
+for the delivery bus of each product (e.g. <code class="docutils literal notranslate"><span class="pre">bioCH4</span> <span class="pre">delivery</span></code>) — this is
+<code class="docutils literal notranslate"><span class="pre">λ̄_delivery</span></code>, which equals <code class="docutils literal notranslate"><span class="pre">λ̄_collection</span></code> when the collection-to-delivery
+link is zero-cost.</p></li>
+<li><p>Look at <code class="docutils literal notranslate"><span class="pre">lcop_by_technology.csv</span></code> — compare each technology’s <code class="docutils literal notranslate"><span class="pre">LCOP</span> <span class="pre">(EUR/MWh)</span></code>
+to <code class="docutils literal notranslate"><span class="pre">λ̄_delivery</span></code> of its product.</p></li>
+<li><p>Technologies with <code class="docutils literal notranslate"><span class="pre">annual_profit_EUR</span> <span class="pre">≈</span> <span class="pre">0</span></code> are price-setters.</p></li>
+<li><p>Technologies with <code class="docutils literal notranslate"><span class="pre">annual_profit_EUR</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> earn intra-marginal rent —
+check whether they are EXI_ (legacy) assets or optimally expanded.</p></li>
+<li><p>In price mode, all technologies that run may earn positive profit if the
+exogenous selling price exceeds the LCOP of the marginal producer.</p></li>
+</ol>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="guide_rolling_horizon.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Rolling Horizon Dispatch Optimisation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="api.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API Reference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#network-topology-as-a-market">Network topology as a market</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#product-topology">Product topology</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shared-components">Shared components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lcop-levelised-cost-of-production">LCOP — Levelised Cost of Production</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#revenue-net-market-value-and-annual-profit">Revenue, net market value, and annual profit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shadow-price-outputs">Shadow price outputs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-lcop-to-shadow-prices">Comparing LCOP to shadow prices</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

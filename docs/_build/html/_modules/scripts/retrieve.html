@@ -1,0 +1,789 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scripts.retrieve &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scripts/retrieve';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_economic_analysis.html">Economic Analysis of Results</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2F_modules/scripts/retrieve.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scripts.retrieve</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: MIT</span>
+<span class="sd">&quot;&quot;&quot;Data retrieval utilities for external energy-market APIs.</span>
+
+<span class="sd">This module provides functions to download time-series data from three</span>
+<span class="sd">external sources used by the GreenBubble preprocessing pipeline:</span>
+
+<span class="sd">* **Energi Data Service** (``api.energidataservice.dk``) — Danish electricity</span>
+<span class="sd">  spot prices, CO₂ emission intensities and natural gas prices.</span>
+<span class="sd">* **Renewables.ninja** — hourly wind and solar capacity-factor profiles for</span>
+<span class="sd">  any geographic location (MERRA-2 reanalysis data).</span>
+<span class="sd">* **ENTSO-E Transparency Platform** — historical electricity demand for</span>
+<span class="sd">  European bidding zones.</span>
+<span class="sd">* **EIA / CAISO** — US-side electricity data (California runs).</span>
+
+<span class="sd">All functions return :class:`pandas.DataFrame` objects indexed on UTC-naive</span>
+<span class="sd">hourly timestamps matching the model snapshot index built by</span>
+<span class="sd">:func:`scripts.helpers.build_snapshots`.</span>
+
+<span class="sd">.. note::</span>
+<span class="sd">   API tokens for Renewables.ninja and ENTSO-E are stored in</span>
+<span class="sd">   :mod:`scripts.parameters`.  Obtain your own tokens before running the</span>
+<span class="sd">   pipeline on a new machine.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scripts</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span> <span class="k">as</span> <span class="n">p</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">entsoe</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntsoePandasClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytz</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
+
+
+<span class="c1"># ------ INPUTS PRE-PROCESSING ----</span>
+<div class="viewcode-block" id="GL_inputs_to_eff">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.GL_inputs_to_eff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GL_inputs_to_eff</span><span class="p">(</span><span class="n">GL_inputs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39; function that reads csv file with GreenLab energy and material flows for each plant and calculates</span>
+<span class="sd">     efficiencies for multilinks in the network&#39;&#39;&#39;</span>
+
+    <span class="c1"># NOTE: (-) refers to energy or material flow CONSUMED by the plant</span>
+    <span class="c1">#      (+) refers to energy or material flow PRODUCED by the plant</span>
+    <span class="c1"># Calculates Efficiencies for MultiLinks</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_inputs</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;Bus Unit&#39;</span><span class="p">)</span>  <span class="c1"># drops not relevant columns</span>
+    <span class="n">GL_eff</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="s1">&#39;bus0&#39;</span><span class="p">)</span>
+    <span class="c1"># bus-to-bus efficiency set with bus0 as reference (normalized)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">GL_eff</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="n">bus0_prc</span> <span class="o">=</span> <span class="n">GL_inputs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;bus0&#39;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">bus0_val</span> <span class="o">=</span> <span class="n">GL_inputs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">bus0_prc</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">GL_eff</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">GL_eff</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="o">-</span><span class="n">bus0_val</span>
+        <span class="n">GL_eff</span><span class="p">[</span><span class="n">GL_eff</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">GL_eff</span></div>
+
+
+
+<span class="c1"># ----- EXTERNAL ENERGY MARKETS</span>
+
+<div class="viewcode-block" id="remove_feb_29">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.remove_feb_29">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_feb_29</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="c1"># Function to remove February 29 if it&#39;s a leap year, works on df and series</span>
+    <span class="c1"># Check if the year is a leap year</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">29</span><span class="p">)):</span>
+        <span class="c1"># Remove rows where the date is February 29</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="p">((</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">29</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+
+<div class="viewcode-block" id="download_energidata">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.download_energidata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_energidata</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">sort_val</span><span class="p">,</span> <span class="n">filter_area</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a dataset from the Energi Data Service REST API.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataset_name : str</span>
+<span class="sd">        Name of the dataset endpoint, e.g. ``&quot;Elspotprices&quot;`` or</span>
+<span class="sd">        ``&quot;DeclarationGridEmission&quot;``.</span>
+<span class="sd">    start_date : str</span>
+<span class="sd">        Start of the requested period in ``&quot;YYYY-MM-DD HH:MM&quot;`` format.</span>
+<span class="sd">        Spaces are replaced with ``T`` before sending the request.</span>
+<span class="sd">    end_date : str</span>
+<span class="sd">        End of the requested period, same format as *start_date*.</span>
+<span class="sd">    sort_val : str</span>
+<span class="sd">        Pre-encoded sort parameter string, e.g. ``&quot;sort=HourDK%20asc&quot;``.</span>
+<span class="sd">        The function URL-decodes this before passing it to *requests* to</span>
+<span class="sd">        avoid double-encoding.</span>
+<span class="sd">    filter_area : str</span>
+<span class="sd">        Filter expression string, e.g. ``r&#39;filter={&quot;PriceArea&quot;:&quot;DK1&quot;}&#39;``.</span>
+<span class="sd">        String values are automatically wrapped in arrays as required by</span>
+<span class="sd">        the API (``{&quot;PriceArea&quot;: [&quot;DK1&quot;]}``).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas.DataFrame</span>
+<span class="sd">        Flat DataFrame of all records returned by the API (``result[&quot;records&quot;]``</span>
+<span class="sd">        normalised with :func:`pandas.json_normalize`).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    requests.HTTPError</span>
+<span class="sd">        If the API returns a non-2xx status code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://api.energidataservice.dk/dataset/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="c1"># API expects T separator: &quot;2023-01-01T00:00&quot; not &quot;2023-01-01 00:00&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">sort_val</span><span class="p">:</span>
+        <span class="c1"># sort_val may already be %-encoded (e.g. &quot;sort=HourDK%20asc&quot;) — decode first</span>
+        <span class="c1"># so requests doesn&#39;t double-encode it</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">sort_val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;sort=&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">filter_area</span><span class="p">:</span>
+        <span class="c1"># filter_area is e.g. r&#39;filter={&quot;PriceArea&quot;:&quot;DK1&quot;}&#39; — extract the JSON part</span>
+        <span class="n">filter_json_str</span> <span class="o">=</span> <span class="n">filter_area</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;filter=&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">filter_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">filter_json_str</span><span class="p">)</span>
+        <span class="c1"># API expects array values: {&quot;PriceArea&quot;: [&quot;DK1&quot;]}</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+                                       <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">filter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">records</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="retrieve_renewable_capacity_factors">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.retrieve_renewable_capacity_factors">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve_renewable_capacity_factors</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve hourly wind and solar capacity factors from the Renewables.ninja API.</span>
+
+<span class="sd">    Uses MERRA-2 reanalysis data.  Solar tilt is estimated from latitude via</span>
+<span class="sd">    ``tilt = 0.87 * lat + 3.1``; wind is modelled as a Vestas V80 2000 kW</span>
+<span class="sd">    turbine at 100 m hub height.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    token : str</span>
+<span class="sd">        Personal API token for Renewables.ninja (see</span>
+<span class="sd">        ``https://www.renewables.ninja/documentation/api``).</span>
+<span class="sd">    start_date : str</span>
+<span class="sd">        First day of the period in ``&quot;YYYY-MM-DD&quot;`` format.</span>
+<span class="sd">    end_date : str</span>
+<span class="sd">        Last day of the period in ``&quot;YYYY-MM-DD&quot;`` format.</span>
+<span class="sd">    latitude : float</span>
+<span class="sd">        Site latitude in decimal degrees.</span>
+<span class="sd">    longitude : float</span>
+<span class="sd">        Site longitude in decimal degrees.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    CF_solar : pandas.DataFrame</span>
+<span class="sd">        Hourly solar capacity factors with column ``&quot;CF solar&quot;``.</span>
+<span class="sd">    CF_wind : pandas.DataFrame</span>
+<span class="sd">        Hourly wind capacity factors with column ``&quot;CF wind&quot;``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    requests.HTTPError</span>
+<span class="sd">        If either API request fails (e.g. 429 rate-limit after retries).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">api_base</span> <span class="o">=</span> <span class="s1">&#39;https://www.renewables.ninja/api/&#39;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">session</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;Token &#39;</span> <span class="o">+</span> <span class="n">token</span><span class="p">}</span>
+
+    <span class="c1"># Solar PV request</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">api_base</span> <span class="o">+</span> <span class="s1">&#39;data/pv&#39;</span>
+    <span class="n">optimal_tilt</span> <span class="o">=</span> <span class="n">latitude</span> <span class="o">*</span> <span class="mf">0.87</span> <span class="o">+</span> <span class="mf">3.1</span>  <span class="c1">#  simple optimal tilt expression</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+        <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+        <span class="s1">&#39;date_from&#39;</span><span class="p">:</span> <span class="n">start_date</span><span class="p">,</span>
+        <span class="s1">&#39;date_to&#39;</span><span class="p">:</span> <span class="n">end_date</span><span class="p">,</span>
+        <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="s1">&#39;merra2&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;capacity&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;system_loss&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="s1">&#39;tracking&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;tilt&#39;</span><span class="p">:</span> <span class="n">optimal_tilt</span><span class="p">,</span>
+        <span class="s1">&#39;azim&#39;</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span>
+        <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;json&#39;</span>
+    <span class="p">}</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>  <span class="c1"># Raise an error if request fails</span>
+    <span class="n">parsed_response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">CF_solar</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parsed_response</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">])),</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+    <span class="n">CF_solar</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">CF_solar</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="s1">&#39;CF solar&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Wind power request</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">api_base</span> <span class="o">+</span> <span class="s1">&#39;data/wind&#39;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+        <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+        <span class="s1">&#39;date_from&#39;</span><span class="p">:</span> <span class="n">start_date</span><span class="p">,</span>
+        <span class="s1">&#39;date_to&#39;</span><span class="p">:</span> <span class="n">end_date</span><span class="p">,</span>
+        <span class="s1">&#39;capacity&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s1">&#39;turbine&#39;</span><span class="p">:</span> <span class="s1">&#39;Vestas V80 2000&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;json&#39;</span>
+    <span class="p">}</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">parsed_response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">CF_wind</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parsed_response</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">])),</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+    <span class="n">CF_wind</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">CF_wind</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="s1">&#39;CF wind&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CF_solar</span><span class="p">,</span> <span class="n">CF_wind</span></div>
+
+
+
+<div class="viewcode-block" id="retrive_entsoe_el_demand">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.retrive_entsoe_el_demand">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrive_entsoe_el_demand</span><span class="p">(</span><span class="n">API_KEY</span><span class="p">,</span> <span class="n">start_day</span><span class="p">,</span> <span class="n">end_day</span><span class="p">,</span> <span class="n">country_code</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve historical electricity demand from the ENTSO-E Transparency Platform.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">       Country codes are listed at</span>
+<span class="sd">       ``https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    API_KEY : str</span>
+<span class="sd">        ENTSO-E API key (stored in :mod:`scripts.parameters` as ``entsoe_api``).</span>
+<span class="sd">    start_day : str</span>
+<span class="sd">        Start date in ``&quot;YYYY-MM-DD&quot;`` format.</span>
+<span class="sd">    end_day : str</span>
+<span class="sd">        End date in ``&quot;YYYY-MM-DD&quot;`` format.</span>
+<span class="sd">    country_code : str</span>
+<span class="sd">        ENTSO-E bidding-zone code, e.g. ``&quot;DK_1&quot;`` for Western Denmark.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas.Series</span>
+<span class="sd">        Hourly electricity load in MW, UTC-localised index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># NOTE: list of country codes available here: https://github.com/EnergieID/entsoe-py/blob/master/entsoe/mappings.py</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="n">EntsoePandasClient</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span> <span class="n">API_KEY</span><span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start_day</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;Europe/Brussels&#39;</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end_day</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;Europe/Brussels&#39;</span><span class="p">)</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">query_load</span><span class="p">(</span><span class="n">country_code</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ts</span></div>
+
+
+
+<span class="c1"># ---- Technology data</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_raw_url_to_api_url</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a raw.githubusercontent.com URL to a GitHub Contents API URL.&quot;&quot;&quot;</span>
+    <span class="n">raw_prefix</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">raw_prefix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">base_url</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">raw_prefix</span><span class="p">):]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># owner, repo, branch, path_prefix</span>
+    <span class="n">owner</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">branch</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">path_prefix</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;https://api.github.com/repos/</span><span class="si">{</span><span class="n">owner</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">/contents/</span><span class="si">{</span><span class="n">path_prefix</span><span class="si">}{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">?ref=</span><span class="si">{</span><span class="n">branch</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="fetch_remote_sha">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.fetch_remote_sha">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_remote_sha</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the git blob SHA for *file_name* in the remote GitHub repo.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    base_url : str</span>
+<span class="sd">        Raw GitHub URL prefix (``https://raw.githubusercontent.com/...``).</span>
+<span class="sd">    file_name : str</span>
+<span class="sd">        Bare file name, e.g. ``&quot;costs_2030.csv&quot;``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        The blob SHA string, or ``None`` if the API is unreachable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">api_url</span> <span class="o">=</span> <span class="n">_raw_url_to_api_url</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">api_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">api_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/vnd.github+json&quot;</span><span class="p">},</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sha&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[fetch_remote_sha] Could not reach GitHub API: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="get_cached_sha">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.get_cached_sha">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_cached_sha</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the SHA stored in ``&lt;local_file_path&gt;.sha``, or ``None``.&quot;&quot;&quot;</span>
+    <span class="n">sha_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.sha&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sha_path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sha_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_git_blob_sha</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the git blob SHA1 for raw file bytes (matches GitHub&#39;s blob SHA).&quot;&quot;&quot;</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;blob </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="si">}</span><span class="se">\0</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">header</span> <span class="o">+</span> <span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="retrieve_technology_data">
+<a class="viewcode-back" href="../../api.html#scripts.retrieve.retrieve_technology_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve_technology_data</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a cost CSV from the remote technology-data repo.</span>
+
+<span class="sd">    Downloads and verifies the git blob SHA of the content against the GitHub</span>
+<span class="sd">    Contents API.  Retries up to *max_retries* times if the CDN serves stale</span>
+<span class="sd">    content (blob SHA mismatch).  Writes the verified SHA to</span>
+<span class="sd">    ``&lt;local_file_path&gt;.sha`` so the Snakefile ``onstart`` block can detect</span>
+<span class="sd">    future changes without downloading.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    local_file_path : str</span>
+<span class="sd">        Destination path for the downloaded CSV.</span>
+<span class="sd">    base_url : str</span>
+<span class="sd">        Raw GitHub URL prefix, e.g.</span>
+<span class="sd">        ``&quot;https://raw.githubusercontent.com/BertoGBG/technology-data/pypsa-eur_AA/outputs/&quot;``.</span>
+<span class="sd">    max_retries : int</span>
+<span class="sd">        Number of download attempts before giving up on SHA verification.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        Path to the downloaded file, or ``None`` on network error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">local_file_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span>
+    <span class="n">local_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)</span>
+    <span class="n">sha_cache_path</span> <span class="o">=</span> <span class="n">local_file_path</span> <span class="o">+</span> <span class="s2">&quot;.sha&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">local_folder</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">remote_sha</span> <span class="o">=</span> <span class="n">fetch_remote_sha</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+    <span class="n">file_url</span> <span class="o">=</span> <span class="n">base_url</span> <span class="o">+</span> <span class="n">file_name</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">file_url</span><span class="p">,</span>
+                <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Cache-Control&quot;</span><span class="p">:</span> <span class="s2">&quot;no-cache&quot;</span><span class="p">,</span> <span class="s2">&quot;Pragma&quot;</span><span class="p">:</span> <span class="s2">&quot;no-cache&quot;</span><span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
+
+            <span class="c1"># Verify content against the git blob SHA from the API.</span>
+            <span class="c1"># raw.githubusercontent.com can serve CDN-cached stale content</span>
+            <span class="c1"># right after a push, causing us to store old data with a new SHA.</span>
+            <span class="k">if</span> <span class="n">remote_sha</span><span class="p">:</span>
+                <span class="n">actual_sha</span> <span class="o">=</span> <span class="n">_git_blob_sha</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">actual_sha</span> <span class="o">!=</span> <span class="n">remote_sha</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[retrieve] Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2">: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;SHA mismatch for </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(expected </span><span class="si">{</span><span class="n">remote_sha</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">..., got </span><span class="si">{</span><span class="n">actual_sha</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">...). &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;CDN likely served stale content — retrying.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[retrieve] Giving up SHA verification after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts. Saving anyway.&quot;</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">remote_sha</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sha_cache_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                    <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">remote_sha</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Technology-data downloaded: </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2"> (SHA: </span><span class="si">{</span><span class="n">remote_sha</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">local_file_path</span>
+
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error downloading </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2"> (attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_retries</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

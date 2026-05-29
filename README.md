@@ -1,5 +1,7 @@
 # GreenLab skive - greenbubble model
 
+[![Documentation Status](https://readthedocs.org/projects/gls-greenbubble/badge/?version=latest)](https://gls-greenbubble.readthedocs.io/en/latest/)
+
 GLS greenbubble is a open model of the PtX section of the GreenLab Skive industrial hub, developped in [PyPSA](https://github.com/PyPSA/pypsa). This model allows for capacity and dispatch optimization of the GreenLab Skive Power-to-X site for driven by demands for H2 and Methanol and it is used in the in the paper "Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants" https://doi.org/10.1016/j.enconman.2024.119175.
 
 <img width="1184" alt="Screenshot 2025-02-19 at 12 31 24" src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" />
@@ -98,7 +100,49 @@ these include:
     c) n_options.yaml : config for options relative to external markets. e.g. enable biomass purchase, sales of biochar credits etc...
 
 2) Run the model:
-   - from terminal run:  greenbubble_main.py  
+
+   **Option A — standalone script (original)**
+   ```
+   python greenbubble_main.py
+   ```
+
+   **Option B — Snakemake workflow**
+
+   Install Snakemake into the environment (once):
+   ```
+   conda install -c conda-forge snakemake-minimal>=8
+   ```
+
+   Dry-run to preview the execution plan:
+   ```
+   snakemake -n
+   ```
+
+   Run the full workflow:
+   ```
+   snakemake --cores 4
+   ```
+
+   Run a specific rule only (e.g. just build the network):
+   ```
+   snakemake --cores 4 build_network
+   ```
+
+   Force re-run of a rule even if outputs exist:
+   ```
+   snakemake --cores 4 --forcerun solve_network
+   ```
+
+   The Snakemake DAG follows these steps:
+   ```
+   retrieve_tech_data  ──┐
+   preprocess_inputs   ──┤
+                         ├─► prepare_costs ──┐
+                         └─► prepare_inputs ─┤
+                                             └─► build_network ─► solve_network ─► plot_results
+   ```
+   Intermediate files are stored in `resources/` and logs in `logs/` (both gitignored).
+   Final outputs go to `outputs/single_analysis/{network_name}/` as configured in `config.yaml`.
 
 3) preprocessing:
    Data packages for Skive are pre-downloaded in ../data/ . See ../scripts/paramaters.py for inputs to the pre-processing.

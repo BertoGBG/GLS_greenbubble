@@ -1,0 +1,667 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Network Model &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'network_model';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Technologies" href="technologies.html" />
+    <link rel="prev" title="Running the Model with Snakemake" href="guide_snakemake.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2Fnetwork_model.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/network_model.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Network Model</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-energy-representation">Multi-energy representation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pypsa-component-types">PyPSA component types</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimisation-problem">Optimisation problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brownfield-vs-greenfield">Brownfield vs. greenfield</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output files</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="network-model">
+<span id="id1"></span><h1>Network Model<a class="headerlink" href="#network-model" title="Link to this heading">#</a></h1>
+<p>GreenBubble represents an industrial cluster as a multi-energy network built
+with <a class="reference external" href="https://pypsa.readthedocs.io">PyPSA</a> and solved as a linear programme
+via <a class="reference external" href="https://linopy.readthedocs.io">Linopy</a>.  This page describes the
+network structure, the optimisation problem, and how the two fit together.</p>
+<p>—</p>
+<section id="multi-energy-representation">
+<h2>Multi-energy representation<a class="headerlink" href="#multi-energy-representation" title="Link to this heading">#</a></h2>
+<p>The cluster is modelled as a set of <strong>buses</strong> — one per energy carrier.
+Components (generators, conversion units, storage) connect to these buses
+via <strong>links</strong>, <strong>stores</strong>, and <strong>loads</strong>.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id2">
+<caption><span class="caption-text">Energy and material carriers</span><a class="headerlink" href="#id2" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Carrier</p></th>
+<th class="head"><p>Unit</p></th>
+<th class="head"><p>Role in the network</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Electricity</p></td>
+<td><p>MW<sub>el</sub></p></td>
+<td><p>Grid connection, wind, solar, electrolysis input, internal distribution</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hydrogen</p></td>
+<td><p>MW<sub>H₂</sub></p></td>
+<td><p>Electrolysis output, methanation / methanol feed, internal distribution</p></td>
+</tr>
+<tr class="row-even"><td><p>CO₂</p></td>
+<td><p>t<sub>CO₂</sub>/h</p></td>
+<td><p>Captured from biogas, consumed by methanation and methanol synthesis</p></td>
+</tr>
+<tr class="row-odd"><td><p>Biomethane (CH₄)</p></td>
+<td><p>MW<sub>CH₄</sub></p></td>
+<td><p>Biogas upgrading output, methanation output, product delivery</p></td>
+</tr>
+<tr class="row-even"><td><p>Methanol</p></td>
+<td><p>t<sub>MeOH</sub>/h</p></td>
+<td><p>Methanol synthesis output, product delivery</p></td>
+</tr>
+<tr class="row-odd"><td><p>Heat — medium temperature</p></td>
+<td><p>MW<sub>th</sub></p></td>
+<td><p>Waste heat from conversion processes, biomass drying</p></td>
+</tr>
+<tr class="row-even"><td><p>Heat — district heating (DH)</p></td>
+<td><p>MW<sub>th</sub></p></td>
+<td><p>Optional sale to external DH grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>Heat — low temperature</p></td>
+<td><p>MW<sub>th</sub></p></td>
+<td><p>Low-grade heat from cooling loops</p></td>
+</tr>
+<tr class="row-even"><td><p>Biomass (moist / pellets)</p></td>
+<td><p>MW<sub>bio</sub></p></td>
+<td><p>Biogas feedstock</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Each carrier may have <strong>multiple buses</strong> representing distinct physical
+locations or pressure levels (e.g. H₂ at the electrolyser vs. H₂ at the
+methanation inlet).  Internal pipes and compressors are explicit links with
+their own efficiency losses and, optionally, expandable capacity.</p>
+</section>
+<section id="pypsa-component-types">
+<h2>PyPSA component types<a class="headerlink" href="#pypsa-component-types" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Use in GreenBubble</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Generator</span></code></p></td>
+<td><p>Renewable electricity sources (wind, solar) and biogas input; may be
+extendable (greenfield) or capacity-fixed (brownfield)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Link</span></code></p></td>
+<td><p>All conversion processes: electrolysis, methanation, methanol synthesis,
+biogas engine, belt dryer, compressors.  A link can have up to five
+outputs (bus0 … bus4), enabling combined heat-and-power units</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Store</span></code></p></td>
+<td><p>Energy buffers where carrier is stored without direct dispatch control:
+CO₂ tanks, product delivery buffers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">StorageUnit</span></code></p></td>
+<td><p>Storage with explicit charge/discharge dispatch: batteries, H₂ vessels,
+thermal stores</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Load</span></code></p></td>
+<td><p>Demand time series for each product and internal energy consumer</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Technology activation is controlled by the <code class="docutils literal notranslate"><span class="pre">n_flags</span></code> dict in
+<code class="docutils literal notranslate"><span class="pre">config/config.default.yaml</span></code>.  Setting a flag to <code class="docutils literal notranslate"><span class="pre">false</span></code> removes <strong>all</strong>
+components of that technology group from the network before the solve — no
+parameters need to change elsewhere.</p>
+</section>
+<section id="optimisation-problem">
+<h2>Optimisation problem<a class="headerlink" href="#optimisation-problem" title="Link to this heading">#</a></h2>
+<p>GreenBubble solves a <strong>single linear programme</strong> that simultaneously determines
+optimal <strong>installed capacities</strong> and <strong>hourly dispatch</strong> over a full year
+(8 760 time steps at 1-hour resolution).</p>
+<p><strong>Objective function</strong></p>
+<p>Minimise total annualised system cost (or maximise revenue, depending on the
+<code class="docutils literal notranslate"><span class="pre">targets.driver</span></code> setting):</p>
+<ul class="simple">
+<li><p><em>Cost mode</em> (<code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">'demand'</span></code>): minimise capital cost + operating cost
+subject to fixed annual production requirements.</p></li>
+<li><p><em>Revenue mode</em> (<code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">'price'</span></code>): maximise net revenue from product sales
+minus system costs; production becomes an upper bound rather than a constraint.</p></li>
+</ul>
+<p>Capital costs are annualised using the discount rate and component lifetime
+from the technology-cost database.  Operating costs include variable O&amp;M and
+fuel purchases.</p>
+<p><strong>Key constraints</strong></p>
+<ul class="simple">
+<li><p><strong>Energy balance</strong> at every bus and every hour (enforced by PyPSA/Linopy)</p></li>
+<li><p><strong>Capacity bounds</strong>: <code class="docutils literal notranslate"><span class="pre">p_nom_min</span> <span class="pre">≤</span> <span class="pre">p_nom</span> <span class="pre">≤</span> <span class="pre">p_nom_max</span></code> per component</p></li>
+<li><p><strong>Ramp limits</strong>: <code class="docutils literal notranslate"><span class="pre">|p(t)</span> <span class="pre">-</span> <span class="pre">p(t-1)|</span> <span class="pre">≤</span> <span class="pre">ramp_limit</span> <span class="pre">×</span> <span class="pre">p_nom</span></code> for selected
+technologies (electrolysis, methanation, methanol synthesis)</p></li>
+<li><p><strong>Minimum load</strong>: <code class="docutils literal notranslate"><span class="pre">p(t)</span> <span class="pre">≥</span> <span class="pre">min_load</span> <span class="pre">×</span> <span class="pre">p_nom</span></code> for online units</p></li>
+<li><p><strong>Annual product targets</strong>: total production ≥ demand (demand mode) or
+≤ capacity × 8760 (price mode)</p></li>
+<li><p><strong>RFNBO constraints</strong>: optional additionality/temporal correlation requirements
+on electrolytic hydrogen (see <a class="reference internal" href="methods.html#methods-rfnbo"><span class="std std-ref">RFNBO compliance</span></a>)</p></li>
+<li><p><strong>CO₂ balance</strong>: captured CO₂ = consumed CO₂ (closed internal loop with
+optional liquefaction and sequestration)</p></li>
+<li><p><strong>Renewable export cap</strong>: <code class="docutils literal notranslate"><span class="pre">RE</span> <span class="pre">export</span> <span class="pre">≤</span> <span class="pre">max_RE_to_grid</span> <span class="pre">×</span> <span class="pre">(internal</span> <span class="pre">use</span> <span class="pre">+</span> <span class="pre">export)</span></code></p></li>
+</ul>
+<p><strong>Solver</strong></p>
+<p>The LP is passed to HiGHS (open-source) or Gurobi via Linopy.
+Solver profiles with pre-tuned tolerance and thread settings are defined in
+<code class="docutils literal notranslate"><span class="pre">scripts/solver_profiles.py</span></code>.</p>
+</section>
+<section id="brownfield-vs-greenfield">
+<h2>Brownfield vs. greenfield<a class="headerlink" href="#brownfield-vs-greenfield" title="Link to this heading">#</a></h2>
+<p>Each technology can be configured independently in <code class="docutils literal notranslate"><span class="pre">n_config.default.yaml</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> + <code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">false</span></code> → brownfield fixed asset
+(costs zeroed, capacity locked)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> + <code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">true</span></code> → brownfield with expansion
+allowed above the initial installed size</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity:</span> <span class="pre">0</span></code> + <code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">true</span></code> → greenfield (capacity is a
+free variable from zero)</p></li>
+</ul>
+<p>This allows modelling real plants at GreenLab Skive (or any other site) by
+setting existing capacities for known assets while leaving greenfield
+expansion open for new investments.</p>
+</section>
+<section id="output-files">
+<h2>Output files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
+<p>After the solve, the optimised PyPSA network is exported to:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>outputs/&lt;run&gt;/&lt;network_name&gt;/
+  networks/
+    &lt;network&gt;_PRE.nc   ← pre-optimisation network (built by build_network)
+    &lt;network&gt;_OPT.nc   ← post-optimisation network with p_nom_opt, dispatch TS
+  plots/
+    ...                ← dispatch figures, capacity charts, shadow prices
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="guide_snakemake.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Running the Model with Snakemake</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="technologies.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Technologies</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-energy-representation">Multi-energy representation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pypsa-component-types">PyPSA component types</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimisation-problem">Optimisation problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brownfield-vs-greenfield">Brownfield vs. greenfield</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-files">Output files</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
