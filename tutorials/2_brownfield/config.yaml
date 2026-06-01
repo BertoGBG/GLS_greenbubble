@@ -1,0 +1,30 @@
+# =====================================================================
+# Tutorial 2 — Brownfield, PRICE-driven
+# =====================================================================
+#   cp tutorials/2_brownfield/config.yaml   config/config.yaml
+#   cp tutorials/2_brownfield/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Brownfield = some assets already exist (their CAPEX is partly sunk) and are
+# NOT re-sized by the optimiser. New capacity can still be built for the
+# technologies left expandable. Existing assets are configured in n_config.yaml.
+# ---------------------------------------------------------------------
+
+run_name: tut2_brownfield
+
+amortization_period: 10
+
+targets:
+  driver: price
+  demand_H2:   0            # NO hydrogen sold to the grid in this tutorial
+  demand_CH4:  350000
+  demand_meoh:   9000
+  price_H2:      100
+  price_bioCH4:  'NG_based'
+  price_meoh:    200
+  CH4_demand_mode:  flat
+  MeOH_demand_mode: flat
+
+clustering:
+  temporal:
+    resolution: 3h

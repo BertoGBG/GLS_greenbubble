@@ -1,0 +1,36 @@
+# =====================================================================
+# Tutorial 3 — Rolling Horizon (dispatch-only) on the brownfield network
+# =====================================================================
+# Prerequisite: run Tutorial 2 first to produce the brownfield *_OPT.nc.
+#   cp tutorials/3_rolling_horizon/config.yaml   config/config.yaml
+#   cp tutorials/3_rolling_horizon/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Rolling horizon bypasses capacity expansion entirely: it loads the solved,
+# fixed-capacity network at `network_path` and re-solves DISPATCH over sliding
+# time windows (here 168 h windows with 72 h overlap). It runs at full hourly
+# resolution (temporal clustering is ignored in RH mode).
+# ---------------------------------------------------------------------
+
+run_name: tut2_brownfield      # keep same base name; RH appends "_RH"
+
+amortization_period: 10
+
+targets:
+  driver: price
+  demand_H2:   0
+  demand_CH4:  350000
+  demand_meoh:   9000
+  price_H2:      100
+  price_bioCH4:  'NG_based'
+  price_meoh:    200
+  CH4_demand_mode:  flat
+  MeOH_demand_mode: flat
+
+rolling_horizon:
+  enabled:      true
+  horizon:      168            # window length (h)
+  overlap:       72            # overlap between consecutive windows (h)
+  rh_year:      2024
+  # [REVIEW] point this at the *_OPT.nc produced by Tutorial 2:
+  network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_100_MeOH_200_CH4_0_2024_El_0.1_DET_3h_tut2_brownfield/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_100_MeOH_200_CH4_0_2024_El_0.1_DET_3h_tut2_brownfield_OPT.nc'
