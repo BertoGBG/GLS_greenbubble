@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Introduction &#8212; GreenBubble</title>
+    <title>GreenBubble &#8212; GreenBubble</title>
   
   
   
@@ -44,6 +44,7 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'introduction';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Installation" href="installation.html" />
@@ -139,29 +140,36 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Introduction</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -352,7 +360,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Introduction</h1>
+    <h1>GreenBubble</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -362,11 +370,11 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-model-can-do">What the model can do</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#technologies-and-processes">Technologies and processes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-markets">External markets</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-sources">Data sources</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licence">Licence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#technologies-examples">Technologies (examples)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick start</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licence-and-citation">Licence and citation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contributors">Contributors</a></li>
 </ul>
             </nav>
         </div>
@@ -378,105 +386,121 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="introduction">
-<span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h1>
-<p><strong>GreenBubble</strong> is an open techno-economic optimisation model for Power-to-X industrial
-clusters, built on the <a class="reference external" href="https://pypsa.readthedocs.io">PyPSA</a> framework.
-It is inspired by the <a class="reference external" href="https://www.greenlab.dk">GreenLab Skive</a> industrial park in Denmark —
-an agricultural-industrial hub that co-locates biogas, electrolysis, methanation,
-and methanol production.</p>
-<a class="reference internal image-reference" href="_images/front_image.png"><img alt="GreenBubble network diagram" class="align-center" src="_images/front_image.png" style="width: 100%;" />
-</a>
-<div class="line-block">
-<div class="line"><br /></div>
-</div>
-<p>The model simultaneously optimises <strong>capacity expansion</strong> and <strong>hourly dispatch</strong> of a
-multi-energy network (electricity, hydrogen, CO₂, heat, biomethane, methanol) over a
-full year at 1-hour resolution. It is used in:</p>
+  <section id="greenbubble">
+<span id="introduction"></span><h1>GreenBubble<a class="headerlink" href="#greenbubble" title="Link to this heading">#</a></h1>
+<p><a class="reference external" href="https://gls-greenbubble.readthedocs.io/en/latest/"><img alt="Documentation" src="https://readthedocs.org/projects/gls-greenbubble/badge/?version=latest" /></a>
+<a class="reference external" href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
+<a class="reference external" href="https://pypsa.readthedocs.io"><img alt="Built on PyPSA" src="https://img.shields.io/badge/built%20on-PyPSA-orange" /></a></p>
+<p><strong>GreenBubble</strong> is an open-source techno-economic optimisation model for <strong>Power-to-X industrial clusters</strong> — co-located plants that share electricity, hydrogen, CO₂, biomethane, methanol and heat infrastructure. Built on <a class="reference external" href="https://pypsa.readthedocs.io">PyPSA</a>, it co-optimises <strong>capacity expansion</strong> and <strong>hourly dispatch</strong> across a multi-energy hub over a full year at 1-hour resolution.</p>
+<p align="center">
+<img src="https://github.com/user-attachments/assets/5f6ee063-35cb-4a9e-b6d0-26efd2ed2069" width="90%" alt="GreenBubble network diagram" />
+</p>
+<p>The model was developed based on the <a class="reference external" href="https://www.greenlab.dk">GreenLab Skive</a> industrial park — an agricultural-industrial hub in Denmark that integrates biogas, electrolysis, methanation and methanol synthesis. The methodology is described in:</p>
 <blockquote>
-<div><p><em>Optimizing hydrogen and e-methanol production through Power-to-X integration in
-biogas plants</em>
-— <a class="reference external" href="https://doi.org/10.1016/j.enconman.2024.119175">https://doi.org/10.1016/j.enconman.2024.119175</a></p>
+<div><p><em>Optimizing hydrogen and e-methanol production through Power-to-X integration in biogas plants</em>, Energy Conversion and Management, 2024.<br />
+DOI: <a class="reference external" href="https://doi.org/10.1016/j.enconman.2024.119175">10.1016/j.enconman.2024.119175</a></p>
 </div></blockquote>
-<section id="what-the-model-can-do">
-<h2>What the model can do<a class="headerlink" href="#what-the-model-can-do" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p>Greenfield and brownfield capacity expansion via linear programming</p></li>
-<li><p>Simultaneous capacity and dispatch optimisation (no decomposition)</p></li>
-<li><p>Multi-energy networks: electricity, H₂, CO₂, biomethane, methanol, heat (3 levels)</p></li>
-<li><p>Internal hydrogen, CO₂, electricity and heat distribution networks</p></li>
-<li><p>Stochastic optimisation across multiple price/weather scenarios</p></li>
-<li><p>Shapley value cost allocation across industrial partners</p></li>
-<li><p>Shadow price analysis for all internal energy and material flows</p></li>
-<li><p>RFNBO compliance constraints (price-based or emission-based)</p></li>
-</ul>
+<p>📖 <strong>Full documentation:</strong> <a class="reference external" href="https://gls-greenbubble.readthedocs.io">gls-greenbubble.readthedocs.io</a></p>
+<hr class="docutils" />
+<section id="key-features">
+<h2>Key features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Multi-energy LP</strong></p></td>
+<td><p>Electricity, H₂, CO₂, biomethane, methanol and heat (3 temperature levels) in a single solve</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Capacity + dispatch</strong></p></td>
+<td><p>No decomposition — capacity expansion and hourly operation co-optimised</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Greenfield &amp; brownfield</strong></p></td>
+<td><p>Existing assets parameterised by construction year and remaining investment fraction</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Stochastic scenarios</strong></p></td>
+<td><p>Multi-scenario LP with expected value of perfect information (EVPI)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Rolling horizon</strong></p></td>
+<td><p>Dispatch-only mode on a fixed network for operational studies</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Industrial symbiosis</strong></p></td>
+<td><p>Shapley-value cost allocation across co-located partners</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>RFNBO compliance</strong></p></td>
+<td><p>Additionality and emission constraints for renewable hydrogen certification</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Economic post-processing</strong></p></td>
+<td><p>LCOP, short-run marginal cost (SRMC), KKT shadow prices, annual profit per technology</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
-<section id="technologies-and-processes">
-<h2>Technologies and processes<a class="headerlink" href="#technologies-and-processes" title="Link to this heading">#</a></h2>
-<p><strong>Hydrogen production</strong></p>
-<ul class="simple">
-<li><p>Alkaline electrolysis</p></li>
-</ul>
-<p><strong>Methane production</strong></p>
-<ul class="simple">
-<li><p>Biogas + upgrading</p></li>
-<li><p>Biomethanation of biogas (with H₂)</p></li>
-<li><p>Biomethanation of CO₂ (with H₂)</p></li>
-<li><p>Catalytic methanation of biogas (with H₂)</p></li>
-<li><p>Catalytic methanation of CO₂ (with H₂)</p></li>
-</ul>
-<p><strong>Methanol production</strong></p>
-<ul class="simple">
-<li><p>CO₂ hydrogenation</p></li>
-<li><p>eSMR + methanol synthesis <em>(coming soon)</em></p></li>
-</ul>
-<p><strong>Renewable electricity</strong></p>
-<ul class="simple">
-<li><p>Onshore wind</p></li>
-<li><p>Solar PV</p></li>
-</ul>
-<p><strong>Storage</strong></p>
-<ul class="simple">
-<li><p>Lithium-ion batteries</p></li>
-<li><p>H₂ in steel vessels</p></li>
-<li><p>CO₂ liquefaction and storage</p></li>
-<li><p>CO₂ pressurised cylinders</p></li>
-<li><p>Hot water thermal storage (district heating style)</p></li>
-<li><p>Concrete-based thermal energy storage</p></li>
-</ul>
-<p><strong>Biomass handling</strong></p>
-<ul class="simple">
-<li><p>Hot air belt dryer</p></li>
-<li><p>Dewatering of digestate fibres</p></li>
-</ul>
+<hr class="docutils" />
+<section id="technologies-examples">
+<h2>Technologies (examples)<a class="headerlink" href="#technologies-examples" title="Link to this heading">#</a></h2>
+<p>GreenBubble is designed to be extensible. The following are examples of technologies currently implemented — the list is not exhaustive:</p>
+<p><strong>Hydrogen production</strong> — Alkaline electrolysis</p>
+<p><strong>Biomethane production</strong> — Biogas upgrading · Biomethanation of biogas or CO₂ · Catalytic methanation of biogas or CO₂</p>
+<p><strong>Methanol production</strong> — CO₂ hydrogenation</p>
+<p><strong>Renewable electricity</strong> — Onshore wind · Solar PV</p>
+<p><strong>Storage</strong> — Li-ion batteries · H₂ in steel vessels · CO₂ liquefaction · Pressurised CO₂ cylinders · Hot-water thermal storage · Concrete-based thermal energy storage</p>
+<p><strong>Biomass handling</strong> — Belt dryer · Digestate dewatering</p>
+<p><strong>Shared infrastructure</strong> — H₂, CO₂ and heat distribution networks · Gas compressors · Grid connection</p>
 </section>
-<section id="external-markets">
-<h2>External markets<a class="headerlink" href="#external-markets" title="Link to this heading">#</a></h2>
-<p>The model is a <strong>price taker</strong> with respect to external markets.
-Exogenous inputs include:</p>
-<ul class="simple">
-<li><p>CO₂ tax on fossil emissions</p></li>
-<li><p>Electricity spot prices, emission intensities, TSO/DSO grid tariffs</p></li>
-<li><p>Natural gas prices</p></li>
-<li><p>District heating price</p></li>
-<li><p>Biomass pellets and chips</p></li>
-<li><p>Digestible biomass (manure)</p></li>
-</ul>
+<hr class="docutils" />
+<section id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/BertoGBG/GLS_greenbubble.git
+<span class="nb">cd</span><span class="w"> </span>GLS_greenbubble
+
+<span class="c1"># Create environment — shown for macOS Apple Silicon; see docs for other platforms</span>
+conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>channel_priority<span class="w"> </span>strict
+conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>conda-lock
+conda-lock<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>greenbubble-pypsa107<span class="w"> </span>--platform<span class="w"> </span>osx-arm64<span class="w"> </span>envs/locks/conda-lock-osx-arm64.yml
+conda<span class="w"> </span>activate<span class="w"> </span>greenbubble-pypsa107
+
+<span class="c1"># Copy and fill in API tokens (required for data retrieval)</span>
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+
+<span class="c1"># Preview the execution plan, then run</span>
+snakemake<span class="w"> </span>-n
+snakemake<span class="w"> </span>-j4
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://gls-greenbubble.readthedocs.io/en/latest/installation.html">installation guide</a> for platform-specific instructions and solver setup (Gurobi / HiGHS).
+New to Snakemake? See the <a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">Snakemake documentation</a>.</p>
 </section>
-<section id="data-sources">
-<h2>Data sources<a class="headerlink" href="#data-sources" title="Link to this heading">#</a></h2>
+<hr class="docutils" />
+<section id="licence-and-citation">
+<h2>Licence and citation<a class="headerlink" href="#licence-and-citation" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Electricity prices, CO₂ intensities, NG prices</strong> — <a class="reference external" href="https://www.energidataservice.dk">Energi Data Service</a></p></li>
-<li><p><strong>Renewable capacity factors</strong> — <a class="reference external" href="https://www.renewables.ninja">Renewables.ninja</a></p></li>
-<li><p><strong>Technology costs</strong> — <a class="reference external" href="https://technology-data.readthedocs.io">technology-data</a> (extended for industrial clusters)</p></li>
-<li><p><strong>GreenLab Skive plant data</strong> — <code class="docutils literal notranslate"><span class="pre">data/GreenLab_Input_file.xlsx</span></code></p></li>
-<li><p><strong>Technology exceptions</strong> (compressors, biomass drying) — <code class="docutils literal notranslate"><span class="pre">scripts/technology_inputs.py</span></code></p></li>
+<li><p>Code: MIT</p></li>
+<li><p>Documentation: CC-BY-4.0</p></li>
 </ul>
+<p>If you use GreenBubble in your research, please cite:</p>
+<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@article</span><span class="p">{</span><span class="nl">greenbubble2024</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="w">   </span><span class="p">=</span><span class="w"> </span><span class="s">{Optimizing hydrogen and e-methanol production through</span>
+<span class="s">             Power-to-X integration in biogas plants}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">journal</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{Energy Conversion and Management}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="w">    </span><span class="p">=</span><span class="w"> </span><span class="s">{2024}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">doi</span><span class="w">     </span><span class="p">=</span><span class="w"> </span><span class="s">{10.1016/j.enconman.2024.119175}</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </section>
-<section id="licence">
-<h2>Licence<a class="headerlink" href="#licence" title="Link to this heading">#</a></h2>
-<p>The code is released under the MIT licence.
-The documentation is released under CC-BY-4.0.</p>
+<hr class="docutils" />
+<section id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Link to this heading">#</a></h2>
+<p>Developed at:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://wind.dtu.dk/research/research-divisions/power-and-energy-systems">DTU Wind and Energy Systems — Power and Energy Systems Division</a>, Technical University of Denmark</p></li>
+<li><p><a class="reference external" href="https://mpe.au.dk/en/">Department of Mechanical and Production Engineering</a>, Aarhus University</p></li>
+<li><p><a class="reference external" href="https://bce.au.dk/en/">Department of Biological and Chemical Engineering</a>, Aarhus University</p></li>
+</ul>
 </section>
 </section>
 
@@ -527,11 +551,11 @@ The documentation is released under CC-BY-4.0.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-model-can-do">What the model can do</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#technologies-and-processes">Technologies and processes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-markets">External markets</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-sources">Data sources</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licence">Licence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#technologies-examples">Technologies (examples)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick start</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#licence-and-citation">Licence and citation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contributors">Contributors</a></li>
 </ul>
   </nav></div>
 

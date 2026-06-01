@@ -189,7 +189,7 @@ Economics
    * - Key
      - Default
      - Description
-   * - ``year_EU``
+   * - ``year_investment``
      - ``2030``
      - Target year for technology cost projections from the cost database.
    * - ``discount_rate``

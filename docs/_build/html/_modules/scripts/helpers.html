@@ -142,27 +142,31 @@
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_temporal_resolution.html">Temporal Resolution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -734,6 +738,68 @@
     <span class="n">annuity_factor</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">annuity</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">&quot;lifetime&quot;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;discount rate&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;FOM&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span>
     <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;fixed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">annuity_factor</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;investment&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">Nyears</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">costs</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()]</span>
     <span class="k">return</span> <span class="n">costs</span></div>
+
+
+
+<span class="n">TECH_DATA_YEARS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="mi">2030</span><span class="p">,</span> <span class="mi">2035</span><span class="p">,</span> <span class="mi">2040</span><span class="p">,</span> <span class="mi">2045</span><span class="p">,</span> <span class="mi">2050</span><span class="p">]</span>
+<span class="n">_COSTS_YEAR_CACHE</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {(year, costs_dir): pd.DataFrame}</span>
+
+
+<div class="viewcode-block" id="read_costs_at_year">
+<a class="viewcode-back" href="../../api.html#scripts.helpers.read_costs_at_year">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_costs_at_year</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">costs_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tech_inputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                       <span class="n">USD_to_EUR</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;pandas.DataFrame&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tech-costs DataFrame interpolated to *year*.</span>
+
+<span class="sd">    Loads the two adjacent CSVs from *costs_dir* (e.g. ``costs_2025.csv`` and</span>
+<span class="sd">    ``costs_2030.csv`` for year 2027) and linearly interpolates the ``investment``</span>
+<span class="sd">    and ``FOM`` columns.  Results are cached so repeated calls for the same year</span>
+<span class="sd">    do not re-read disk.  Years before 2020 are capped to 2020; years after 2050</span>
+<span class="sd">    are capped to 2050.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    year : int</span>
+<span class="sd">        Construction year for which to retrieve investment costs.</span>
+<span class="sd">    costs_dir : str</span>
+<span class="sd">        Directory containing ``costs_{year}.csv`` files.</span>
+<span class="sd">    tech_inputs : dict</span>
+<span class="sd">        Project-specific technology overrides (see :func:`read_costs`).</span>
+<span class="sd">    USD_to_EUR : float</span>
+<span class="sd">        Exchange rate for USD-denominated entries.</span>
+<span class="sd">    discount_rate : float</span>
+<span class="sd">        Project real discount rate (used when filling missing values).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas.DataFrame</span>
+<span class="sd">        Wide-format cost table (same layout as :func:`read_costs`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cache_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">costs_dir</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="n">_COSTS_YEAR_CACHE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_COSTS_YEAR_CACHE</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span>
+
+    <span class="n">year_capped</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">TECH_DATA_YEARS</span><span class="p">)),</span> <span class="nb">min</span><span class="p">(</span><span class="n">TECH_DATA_YEARS</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">year_capped</span> <span class="ow">in</span> <span class="n">TECH_DATA_YEARS</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">costs_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;costs_</span><span class="si">{</span><span class="n">year_capped</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">read_costs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">tech_inputs</span><span class="p">,</span> <span class="n">USD_to_EUR</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">TECH_DATA_YEARS</span> <span class="k">if</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="n">year_capped</span><span class="p">)</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">TECH_DATA_YEARS</span> <span class="k">if</span> <span class="n">y</span> <span class="o">&gt;=</span> <span class="n">year_capped</span><span class="p">)</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="n">read_costs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">costs_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;costs_</span><span class="si">{</span><span class="n">lower</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">),</span> <span class="n">tech_inputs</span><span class="p">,</span> <span class="n">USD_to_EUR</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">)</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="n">read_costs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">costs_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;costs_</span><span class="si">{</span><span class="n">upper</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">),</span> <span class="n">tech_inputs</span><span class="p">,</span> <span class="n">USD_to_EUR</span><span class="p">,</span> <span class="n">discount_rate</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">year_capped</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">lo</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;investment&quot;</span><span class="p">,</span> <span class="s2">&quot;FOM&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">lo</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">hi</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="n">lo</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+        <span class="c1"># Recompute annualised fixed cost after interpolation</span>
+        <span class="n">af</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">annuity</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">&quot;lifetime&quot;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;discount rate&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;FOM&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;fixed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">af</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;investment&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()]</span>
+
+    <span class="n">_COSTS_YEAR_CACHE</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">result</span></div>
 
 
 
@@ -1850,8 +1916,6 @@
     <span class="n">dual_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># ---- Solve + (optional) dual collection ----</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MODEL ID before solve:&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
-
     <span class="k">with</span> <span class="n">capture_pypsa_unassigned_constraints</span><span class="p">()</span> <span class="k">as</span> <span class="n">log_msgs</span><span class="p">:</span>
         <span class="n">status</span><span class="p">,</span> <span class="n">condition</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">solve_model</span><span class="p">(</span>
             <span class="n">solver_name</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
@@ -1859,7 +1923,6 @@
             <span class="n">assign_all_duals</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="o">**</span><span class="n">opts</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MODEL ID after solve:&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
 
         <span class="c1"># primals</span>
         <span class="k">try</span><span class="p">:</span>
@@ -2314,6 +2377,75 @@
 
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[zero_small_capacities] </span><span class="si">{</span><span class="n">c_name</span><span class="si">}</span><span class="s2">: zeroed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">small_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> component(s) &quot;</span>
               <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">nom_opt</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="n">threshold_mw</span><span class="si">}</span><span class="s2"> MW → </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">small_idx</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resample_network">
+<a class="viewcode-back" href="../../api.html#scripts.helpers.resample_network">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resample_network</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">resolution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample all time-varying network data to a coarser time resolution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n: PyPSA network with hourly snapshots.</span>
+<span class="sd">        resolution: pandas offset string, e.g. ``&quot;4h&quot;``, ``&quot;8h&quot;``, ``&quot;24h&quot;``.</span>
+<span class="sd">                    ``False`` / ``None`` → return ``n`` unchanged.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The same network object with snapshots and time-series resampled in-place.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NotImplementedError: if ``resolution`` implies sub-hourly intervals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">resolution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span>
+
+    <span class="n">offset</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolution</span><span class="p">)</span>
+
+    <span class="c1"># Guard against sub-hourly upsampling</span>
+    <span class="n">nanos</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">tseries</span><span class="o">.</span><span class="n">frequencies</span><span class="o">.</span><span class="n">to_offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">nanos</span>
+    <span class="n">freq_hours</span> <span class="o">=</span> <span class="n">nanos</span> <span class="o">/</span> <span class="mi">3_600_000_000_000</span>
+    <span class="k">if</span> <span class="n">freq_hours</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Sub-hourly resolution &#39;</span><span class="si">{</span><span class="n">resolution</span><span class="si">}</span><span class="s2">&#39; requires upsampling of input data&quot;</span>
+            <span class="s2">&quot; — not yet implemented.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Stochastic mode warning</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scripts</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">c</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">stochastic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stochastic&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;temporal resolution=&#39;</span><span class="si">{</span><span class="n">resolution</span><span class="si">}</span><span class="s2">&#39; with stochastic mode: all scenarios &quot;</span>
+            <span class="s2">&quot;are resampled independently. Inter-scenario correlations at sub-period &quot;</span>
+            <span class="s2">&quot;level are lost. Results are approximate.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Resample snapshot weightings (sum over interval → correct annual totals)</span>
+    <span class="n">new_w</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">snapshot_weightings</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">new_w</span> <span class="o">=</span> <span class="n">new_w</span><span class="p">[</span><span class="n">new_w</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># drop zero-weight edge periods if any</span>
+
+    <span class="c1"># Resample all time-varying component attributes</span>
+    <span class="k">for</span> <span class="n">attr_dict_name</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;generators_t&quot;</span><span class="p">,</span> <span class="s2">&quot;links_t&quot;</span><span class="p">,</span> <span class="s2">&quot;loads_t&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;stores_t&quot;</span><span class="p">,</span> <span class="s2">&quot;storage_units_t&quot;</span><span class="p">,</span> <span class="s2">&quot;buses_t&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">pnl</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">attr_dict_name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">pnl</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">attr_dict_name</span> <span class="o">==</span> <span class="s2">&quot;stores_t&quot;</span> <span class="ow">and</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;e_max_pu&quot;</span><span class="p">:</span>
+                <span class="n">pnl</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>   <span class="c1"># conservative upper bound</span>
+            <span class="k">elif</span> <span class="n">attr_dict_name</span> <span class="o">==</span> <span class="s2">&quot;stores_t&quot;</span> <span class="ow">and</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;e_min_pu&quot;</span><span class="p">:</span>
+                <span class="n">pnl</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>   <span class="c1"># conservative lower bound</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pnl</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># prices, CFs, demands</span>
+
+    <span class="n">n</span><span class="o">.</span><span class="n">set_snapshots</span><span class="p">(</span><span class="n">new_w</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">snapshot_weightings</span> <span class="o">=</span> <span class="n">new_w</span>
+    <span class="k">return</span> <span class="n">n</span></div>
 
 
 

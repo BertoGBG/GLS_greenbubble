@@ -44,10 +44,11 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'configuration';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Wildcards" href="wildcards.html" />
-    <link rel="prev" title="Running the Model with Snakemake" href="guide_snakemake.html" />
+    <link rel="prev" title="Analytical Methods" href="methods.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -139,31 +140,36 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -368,14 +374,21 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general">General</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#targets">targets</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-technology-activation">n_flags — technology activation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-opt-output-control">n_flags_opt — output control</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic">stochastic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clustering">clustering</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rolling-horizon">rolling_horizon</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization">optimization</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#economics">Economics</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tariffs-dict">tariffs_dict</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rfnbos-dict">rfnbos_dict</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#greenfield-and-brownfield-configuration">Greenfield and Brownfield configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#committable-components">Committable components</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-default-yaml">plots_config.default.yaml</a></li>
 </ul>
             </nav>
@@ -461,6 +474,25 @@ and external market options (<code class="docutils literal notranslate"><span cl
 <p>In <strong>demand mode</strong> (<code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">'demand'</span></code>), annual production targets are fixed constraints.
 In <strong>price mode</strong> (<code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">'price'</span></code>), demands become upper bounds and the model
 maximises revenue at the given prices.</p>
+<p>Each product also has a demand <strong>shape</strong> and optional <strong>flexibility store</strong>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">CH4_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flat</span><span class="w">          </span><span class="c1"># flat | profile | bins_flat | bins_profile</span>
+<span class="w">  </span><span class="nt">CH4_bins</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">            </span><span class="c1"># number of equal bins (bins_* modes only)</span>
+<span class="w">  </span><span class="nt">CH4_flexibility</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">0.00</span><span class="w">         </span><span class="c1"># fraction of annual demand used as store e_nom_max</span>
+<span class="w">  </span><span class="nt">CH4_profile</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">         </span><span class="c1"># path to CSV seasonal profile; null = built-in NG_DK</span>
+<span class="w">  </span><span class="nt">H2_demand_mode</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">profile</span>
+<span class="w">  </span><span class="nt">H2_bins</span><span class="p">:</span><span class="w">          </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">H2_flexibility</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">  </span><span class="nt">H2_profile</span><span class="p">:</span><span class="w">       </span><span class="l l-Scalar l-Scalar-Plain">data/common/NG_demand_DK_profile.csv</span>
+<span class="w">  </span><span class="nt">MeOH_demand_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bins_profile</span>
+<span class="w">  </span><span class="nt">MeOH_bins</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="nt">MeOH_flexibility</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">  </span><span class="nt">MeOH_profile</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">data/common/NG_demand_DK_profile.csv</span>
+<span class="w">  </span><span class="nt">demand_store_buffer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">       </span><span class="c1"># extra headroom for bins_profile stores</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="guide_demands.html#guide-demands"><span class="std std-ref">Setting Product Demands</span></a> for a full explanation of demand modes, flexibility stores,
+and seasonal profiles.</p>
 </section>
 <section id="n-flags-technology-activation">
 <span id="config-nflags"></span><h3>n_flags — technology activation<a class="headerlink" href="#n-flags-technology-activation" title="Link to this heading">#</a></h3>
@@ -483,6 +515,16 @@ Setting a flag to <code class="docutils literal notranslate"><span class="pre">f
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">n_flags</span></code> combination is encoded into the output folder name,
 making each run uniquely identifiable.</p>
+</div>
+</section>
+<section id="n-flags-opt-output-control">
+<span id="config-nflags-opt"></span><h3>n_flags_opt — output control<a class="headerlink" href="#n-flags-opt-output-control" title="Link to this heading">#</a></h3>
+<p>Controls which post-solve artefacts are generated.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">n_flags_opt</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">print</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># save SVG of the optimal network topology</span>
+<span class="w">  </span><span class="nt">export</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># export the solved network to a .nc file</span>
+<span class="w">  </span><span class="nt">plot</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># run the full post-processing plot suite</span>
+</pre></div>
 </div>
 </section>
 <section id="stochastic">
@@ -509,6 +551,87 @@ in parallel (one Snakemake job per year) before building the coupled network.
 <code class="docutils literal notranslate"><span class="pre">EVPI:</span> <span class="pre">true</span></code> adds one deterministic solve per scenario to compute the EVPI;
 automatically disabled when <code class="docutils literal notranslate"><span class="pre">stochastic:</span> <span class="pre">false</span></code>.</p>
 </section>
+<section id="clustering">
+<span id="config-clustering"></span><h3>clustering<a class="headerlink" href="#clustering" title="Link to this heading">#</a></h3>
+<p>Reduces the number of snapshots by resampling hourly input data to a coarser
+time interval before the network is built.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">clustering</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">temporal</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">   </span><span class="c1"># false | &quot;4h&quot; | &quot;8h&quot; | &quot;24h&quot; | ...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> (default) keeps native 1-hour resolution.
+Any pandas offset string that represents an interval ≥ 1 hour is accepted
+(<code class="docutils literal notranslate"><span class="pre">&quot;4h&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;8h&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;24h&quot;</span></code> are the most common choices).
+Sub-hourly strings raise <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p>
+<p>Effect on snapshot count:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>resolution</p></th>
+<th class="head"><p>snapshots</p></th>
+<th class="head"><p>typical speed-up</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">false</span></code> (1 h)</p></td>
+<td><p>8 760</p></td>
+<td><p>baseline</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;4h&quot;</span></code></p></td>
+<td><p>2 190</p></td>
+<td><p>~4×</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;8h&quot;</span></code></p></td>
+<td><p>1 095</p></td>
+<td><p>~8×</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;24h&quot;</span></code></p></td>
+<td><p>365</p></td>
+<td><p>~20×</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Resampling rules</strong></p>
+<ul class="simple">
+<li><p>Prices, capacity factors, and demands → <code class="docutils literal notranslate"><span class="pre">mean()</span></code> over the interval.</p></li>
+<li><p>Store upper bounds (<code class="docutils literal notranslate"><span class="pre">e_max_pu</span></code>) → <code class="docutils literal notranslate"><span class="pre">min()</span></code> over the interval (conservative).</p></li>
+<li><p>Store lower bounds (<code class="docutils literal notranslate"><span class="pre">e_min_pu</span></code>) → <code class="docutils literal notranslate"><span class="pre">max()</span></code> over the interval (conservative).</p></li>
+<li><p>Snapshot weightings → <code class="docutils literal notranslate"><span class="pre">sum()</span></code> so annual energy totals are preserved.</p></li>
+</ul>
+<p><strong>Incompatibilities</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rolling_horizon.enabled:</span> <span class="pre">true</span></code> — resampling is skipped with a warning;
+the RH solver operates on the full hourly network provided via <code class="docutils literal notranslate"><span class="pre">network_path</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stochastic.stochastic:</span> <span class="pre">true</span></code> — allowed but issues a warning; each scenario
+is resampled independently, so inter-scenario sub-period correlations are lost.</p></li>
+</ul>
+<p>See <a class="reference internal" href="guide_temporal_resolution.html#guide-temporal-resolution"><span class="std std-ref">Temporal Resolution</span></a> for worked examples and advice on choosing
+a resolution.</p>
+</section>
+<section id="rolling-horizon">
+<span id="config-rolling-horizon"></span><h3>rolling_horizon<a class="headerlink" href="#rolling-horizon" title="Link to this heading">#</a></h3>
+<p>Dispatch-only solve on a pre-existing fixed-capacity network.
+When enabled, the capacity-expansion <code class="docutils literal notranslate"><span class="pre">solve_network</span></code> rule is bypassed entirely.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rolling_horizon</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">horizon</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">168</span><span class="w">    </span><span class="c1"># window size in hours (e.g. 168 = 1 week)</span>
+<span class="w">  </span><span class="nt">overlap</span><span class="p">:</span><span class="w">       </span><span class="l l-Scalar l-Scalar-Plain">72</span><span class="w">    </span><span class="c1"># overlap in hours between consecutive windows</span>
+<span class="w">  </span><span class="nt">network_path</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w">     </span><span class="c1"># REQUIRED — path to a solved .nc network</span>
+<span class="w">  </span><span class="nt">rh_year</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">   </span><span class="c1"># null = same as En_price_year; or an integer year</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">network_path</span></code> is required when <code class="docutils literal notranslate"><span class="pre">enabled:</span> <span class="pre">true</span></code>.
+Setting <code class="docutils literal notranslate"><span class="pre">rh_year</span></code> to a different year than <code class="docutils literal notranslate"><span class="pre">En_price_year</span></code> replaces all
+time-varying inputs (prices, capacity factors) with data from that year.</p>
+<p>See <a class="reference internal" href="guide_rolling_horizon.html#guide-rolling-horizon"><span class="std std-ref">Rolling Horizon Dispatch Optimisation</span></a> for the full workflow, cross-year analysis,
+committable dispatch, and cost comparison outputs.</p>
+</section>
 <section id="optimization">
 <span id="config-optimization"></span><h3>optimization<a class="headerlink" href="#optimization" title="Link to this heading">#</a></h3>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">optimization</span><span class="p">:</span>
@@ -516,20 +639,28 @@ automatically disabled when <code class="docutils literal notranslate"><span cla
 <span class="w">  </span><span class="nt">solver_profile</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;gurobi-barrier-fast&#39;</span><span class="w">  </span><span class="c1"># preset from scripts/solver_profiles.py</span>
 <span class="w">  </span><span class="nt">collect_all_duals</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">           </span><span class="c1"># save dual variables for shadow price analysis</span>
 <span class="w">  </span><span class="nt">return_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                </span><span class="c1"># return Linopy model object after solving</span>
-<span class="w">  </span><span class="nt">overrides</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                   </span><span class="c1"># optional raw solver parameters</span>
+<span class="w">  </span><span class="nt">overrides</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                   </span><span class="c1"># optional raw solver parameters (dict)</span>
+<span class="w">  </span><span class="nt">zero_threshold_MW</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">           </span><span class="c1"># MW — components built below this are zeroed out</span>
 </pre></div>
 </div>
 <p>Solver profiles are defined in <code class="docutils literal notranslate"><span class="pre">scripts/solver_profiles.py</span></code>.
-Common Gurobi profiles: <code class="docutils literal notranslate"><span class="pre">gurobi-barrier-fast</span></code>, <code class="docutils literal notranslate"><span class="pre">gurobi-simplex</span></code>.</p>
+Common Gurobi profiles: <code class="docutils literal notranslate"><span class="pre">gurobi-barrier-fast</span></code>, <code class="docutils literal notranslate"><span class="pre">gurobi-simplex</span></code>.
+<code class="docutils literal notranslate"><span class="pre">zero_threshold_MW</span></code> removes solver-noise artefacts: any extendable component
+whose <code class="docutils literal notranslate"><span class="pre">p_nom_opt</span></code> (or <code class="docutils literal notranslate"><span class="pre">e_nom_opt</span></code>) is strictly below this value is treated
+as “not built” — its optimal capacity and result time series are zeroed before
+export.</p>
 </section>
 <section id="economics">
 <span id="config-economics"></span><h3>Economics<a class="headerlink" href="#economics" title="Link to this heading">#</a></h3>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">year_EU</span><span class="p">:</span><span class="w">       </span><span class="l l-Scalar l-Scalar-Plain">2030</span><span class="w">   </span><span class="c1"># target year for technology cost projections</span>
-<span class="nt">discount_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span><span class="w">    </span><span class="c1"># annual discount rate for annualised capital costs</span>
-<span class="nt">DKK_Euro</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">7.46</span><span class="w">   </span><span class="c1"># DKK → EUR exchange rate</span>
-<span class="nt">USD_to_EUR</span><span class="p">:</span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">0.85</span><span class="w">   </span><span class="c1"># USD → EUR exchange rate</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">year_investment</span><span class="p">:</span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">2030</span><span class="w">   </span><span class="c1"># target year for new-capacity technology costs</span>
+<span class="nt">amortization_period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># null = use each technology&#39;s technical lifetime</span>
+<span class="nt">discount_rate</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">0.07</span><span class="w">   </span><span class="c1"># real discount rate (constant EUR, excludes inflation)</span>
+<span class="nt">EUR_to_DKK</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">7.46</span><span class="w">   </span><span class="c1"># EUR → DKK exchange rate</span>
+<span class="nt">USD_to_EUR</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">0.85</span><span class="w">   </span><span class="c1"># USD → EUR exchange rate</span>
 </pre></div>
 </div>
+<p>See <a class="reference internal" href="economics.html#economics"><span class="std std-ref">Economic Assumptions</span></a> for a full explanation of how these parameters interact with
+technology costs, brownfield initial conditions, and the annuity formula.</p>
 </section>
 <section id="tariffs-dict">
 <span id="config-tariffs"></span><h3>tariffs_dict<a class="headerlink" href="#tariffs-dict" title="Link to this heading">#</a></h3>
@@ -561,18 +692,125 @@ Common Gurobi profiles: <code class="docutils literal notranslate"><span class="
 <hr class="docutils" />
 <section id="n-config-default-yaml">
 <h2>n_config.default.yaml<a class="headerlink" href="#n-config-default-yaml" title="Link to this heading">#</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Full documentation coming soon. See inline comments in <code class="docutils literal notranslate"><span class="pre">config/n_config.default.yaml</span></code>.</p>
-</div>
 <p>Per-technology configuration for greenfield/brownfield optimisation.
 Each entry sets the initial installed capacity, expansion allowance, cost factor,
 and operational constraints (ramp limits, minimum load) for one technology group.</p>
-<p>Key parameters: <code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">expansion</span></code>, <code class="docutils literal notranslate"><span class="pre">cost</span> <span class="pre">factor</span></code>,
-<code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">hours</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">ramp</span> <span class="pre">limit</span> <span class="pre">up/down</span></code>.</p>
+<p>Key investment parameters: <code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">expansion</span></code>, <code class="docutils literal notranslate"><span class="pre">cost</span> <span class="pre">factor</span></code>,
+<code class="docutils literal notranslate"><span class="pre">construction_year</span></code>, <code class="docutils literal notranslate"><span class="pre">remaining_investment_fraction</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">capacity</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">options:</span></code> section at the bottom of this file controls external market
 connections: biomass purchase markets, district heating sales, biochar and CO₂
 sequestration credits, and electrical transformer sizing.</p>
+<p>See <a class="reference internal" href="economics.html#economics-brownfield"><span class="std std-ref">Brownfield initial conditions</span></a> for a full explanation of how brownfield
+parameters are combined to compute residual annual capital charges.</p>
+<section id="greenfield-and-brownfield-configuration">
+<span id="brownfield-greenfield"></span><h3>Greenfield and Brownfield configuration<a class="headerlink" href="#greenfield-and-brownfield-configuration" title="Link to this heading">#</a></h3>
+<p>Three parameters jointly determine the investment mode for each technology:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 18.0%" />
+<col style="width: 12.0%" />
+<col style="width: 28.0%" />
+<col style="width: 42.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">initial</span> <span class="pre">capacity</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">expansion</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">remaining_investment_fraction</span></code></p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>any</p></td>
+<td><p><strong>Technology absent.</strong> Not added to the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p><strong>Pure greenfield.</strong> Only a new expandable component is built.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p><strong>Pure brownfield (sunk cost).</strong> Existing capacity is fixed; no CAPEX charged.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><strong>Brownfield with residual CAPEX.</strong> Existing capacity is fixed; annual charge = <code class="docutils literal notranslate"><span class="pre">rif</span> <span class="pre">×</span> <span class="pre">investment(construction_year)</span> <span class="pre">×</span> <span class="pre">annuity(r,</span> <span class="pre">amortization_period)</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p><strong>Mixed — existing free, expandable.</strong> Existing capacity at zero capital cost; additional capacity can be built at full cost.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code></p></td>
+<td><p><strong>Mixed — existing with residual CAPEX, expandable.</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Parameter meanings</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">cost</span> <span class="pre">factor</span></code></dt><dd><p>Multiplier applied to the capital cost of <strong>new</strong> capacity (<code class="docutils literal notranslate"><span class="pre">expansion=true</span></code> component).
+Used for cost sensitivity analysis: <code class="docutils literal notranslate"><span class="pre">1.0</span></code> = tech-data value, <code class="docutils literal notranslate"><span class="pre">0.5</span></code> = 50% cost reduction scenario.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">construction_year</span></code></dt><dd><p>Year the existing plant was built.  Used to look up the investment cost at the actual
+build year (technology costs differ between years due to learning curves).
+<code class="docutils literal notranslate"><span class="pre">null</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">year_investment</span> <span class="pre">-</span> <span class="pre">10</span></code>, capped at 2020.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">remaining_investment_fraction</span></code></dt><dd><p>Fraction of <code class="docutils literal notranslate"><span class="pre">investment(construction_year)</span></code> still to be financially recovered.
+<code class="docutils literal notranslate"><span class="pre">0</span></code> = fully amortised / sunk cost (default); <code class="docutils literal notranslate"><span class="pre">1</span></code> = the full original investment
+is still outstanding.</p>
+</dd>
+</dl>
+<p><strong>PyPSA implementation</strong></p>
+<p>Internally, an <code class="docutils literal notranslate"><span class="pre">EXI_&lt;tech&gt;</span></code> component with <code class="docutils literal notranslate"><span class="pre">remaining_investment_fraction</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> is built as
+<code class="docutils literal notranslate"><span class="pre">p_nom_extendable=True</span></code> with <code class="docutils literal notranslate"><span class="pre">p_nom_min</span> <span class="pre">=</span> <span class="pre">p_nom_max</span> <span class="pre">=</span> <span class="pre">initial_capacity</span></code>.
+This forces the LP variable to its fixed value, moving the capital cost into
+<code class="docutils literal notranslate"><span class="pre">n.objective_constant</span></code>.  <code class="docutils literal notranslate"><span class="pre">n.statistics.capex()</span></code> correctly accounts for the
+residual charge in LCOP and TSC outputs.</p>
+<p><strong>Example</strong> — existing biogas plant, 40 % of original investment still outstanding,
+built in 2022, no new capacity allowed:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config/n_config.yaml  (user override)</span>
+<span class="nt">biogas</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">initial capacity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w">          </span><span class="c1"># MW CH4</span>
+<span class="w">  </span><span class="nt">expansion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">construction_year</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2022</span>
+<span class="w">  </span><span class="nt">remaining_investment_fraction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.4</span>
+</pre></div>
+</div>
+</section>
+<section id="committable-components">
+<span id="config-committable"></span><h3>Committable components<a class="headerlink" href="#committable-components" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">committable</span></code> column in <code class="docutils literal notranslate"><span class="pre">n_config</span></code> enables <strong>unit commitment</strong> (on/off
+binary dispatch) for a technology.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">biogas engine</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">committable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># activate unit commitment (dispatch only)</span>
+<span class="w">  </span><span class="nt">min load</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.4</span><span class="w">       </span><span class="c1"># minimum load fraction when online (p_min_pu)</span>
+</pre></div>
+</div>
+<p><strong>Current GreenBubble behaviour</strong></p>
+<p>In <code class="docutils literal notranslate"><span class="pre">prepare_network.py</span></code>, <code class="docutils literal notranslate"><span class="pre">committable</span></code> is only activated when
+<code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">false</span></code> — i.e. for fixed-capacity brownfield assets.  When a
+technology is extendable (<code class="docutils literal notranslate"><span class="pre">expansion:</span> <span class="pre">true</span></code>), the capacity expansion solve
+runs as a pure LP regardless of the <code class="docutils literal notranslate"><span class="pre">committable</span></code> flag.</p>
+<p>This is a deliberate choice to keep the investment problem fast and compatible
+with stochastic mode.  PyPSA itself <em>does</em> support committable + extendable
+simultaneously in deterministic capacity expansion via a big-M MILP
+formulation — see the
+<a class="reference external" href="https://docs.pypsa.org/latest/examples/committable-extendable/">PyPSA committable-extendable example</a>.</p>
+<p><strong>Committable in rolling horizon</strong></p>
+<p>After <code class="docutils literal notranslate"><span class="pre">fix_capacities()</span></code> fixes all <code class="docutils literal notranslate"><span class="pre">p_nom</span></code>, <code class="docutils literal notranslate"><span class="pre">enable_committable_for_rh</span></code>
+re-activates <code class="docutils literal notranslate"><span class="pre">committable=True</span></code> for any technology that has it set in
+<code class="docutils literal notranslate"><span class="pre">n_config</span></code>, so the dispatch-only RH solve can include unit commitment.</p>
+<p><strong>Stochastic mode</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">committable:</span> <span class="pre">true</span></code> is incompatible with stochastic mode — the multi-scenario
+LP requires a pure LP (no binary variables).  See <a class="reference internal" href="guide_stochastic.html#guide-stochastic"><span class="std std-ref">Stochastic Optimisation</span></a>.</p>
+</section>
 </section>
 <hr class="docutils" />
 <section id="plots-config-default-yaml">
@@ -598,12 +836,12 @@ including capacity thresholds and the list of internal buses for shadow price pl
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="guide_snakemake.html"
+       href="methods.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Running the Model with Snakemake</p>
+        <p class="prev-next-title">Analytical Methods</p>
       </div>
     </a>
     <a class="right-next"
@@ -637,14 +875,21 @@ including capacity thresholds and the list of internal buses for shadow price pl
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general">General</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#targets">targets</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-technology-activation">n_flags — technology activation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#n-flags-opt-output-control">n_flags_opt — output control</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic">stochastic</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clustering">clustering</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rolling-horizon">rolling_horizon</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization">optimization</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#economics">Economics</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tariffs-dict">tariffs_dict</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rfnbos-dict">rfnbos_dict</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#n-config-default-yaml">n_config.default.yaml</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#greenfield-and-brownfield-configuration">Greenfield and Brownfield configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#committable-components">Committable components</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plots-config-default-yaml">plots_config.default.yaml</a></li>
 </ul>
   </nav></div>

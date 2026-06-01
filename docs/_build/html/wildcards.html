@@ -44,9 +44,10 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'wildcards';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="next" title="Setting Product Demands" href="guide_demands.html" />
     <link rel="prev" title="Configuration" href="configuration.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -139,29 +140,36 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Wildcards</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -395,12 +403,22 @@ In stochastic mode, it resolves to each key in <code class="docutils literal not
 <p>A string that uniquely identifies a model run based on the active <code class="docutils literal notranslate"><span class="pre">n_flags</span></code>,
 demands, CO₂ cost, year, and run name. It is constructed by <code class="docutils literal notranslate"><span class="pre">build_network_name()</span></code>
 in <code class="docutils literal notranslate"><span class="pre">Snakefile</span></code> before any rule executes.</p>
-<p><strong>Example value:</strong></p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_H2_meth_dmd_DK
+<p><strong>Format:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{flags}CO2_{co2}_{tD|tP}_H2_{h2}_MeOH_{meoh}_CH4_{ch4}_{year}_El_{el}_{DET|STC}_{res}_{run_name}
+</pre></div>
+</div>
+<p><strong>Example — full resolution (default, 1 h):</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_1h_H2_meth_dmd_DK
+</pre></div>
+</div>
+<p><strong>Example — 4-hour temporal resolution:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_0_MeOH_4_CH4_300_2023_El_0.1_DET_4h_H2_meth_dmd_DK
 </pre></div>
 </div>
 <p>The segments encode (in order): active technology flags, CO₂ cost, demand driver,
-demand targets, energy year, grid export share, stochastic mode, and run name.</p>
+demand targets, energy year, grid export share, stochastic mode, time resolution
+(<code class="docutils literal notranslate"><span class="pre">1h</span></code> when <code class="docutils literal notranslate"><span class="pre">clustering.temporal.resolution:</span> <span class="pre">false</span></code>; otherwise the configured
+offset string), and run name.</p>
 <p><strong>Constraint:</strong> literal match against the pre-computed <code class="docutils literal notranslate"><span class="pre">NETWORK</span></code> string
 (via <code class="docutils literal notranslate"><span class="pre">wildcard_constraints:</span> <span class="pre">network</span> <span class="pre">=</span> <span class="pre">NETWORK_PATTERN</span></code>).</p>
 <p><strong>Outputs:</strong> <code class="docutils literal notranslate"><span class="pre">resources/{network}_PRE.nc</span></code>, <code class="docutils literal notranslate"><span class="pre">outputs/.../{network}/</span></code></p>
@@ -428,11 +446,11 @@ demand targets, energy year, grid export share, stochastic mode, and run name.</
       </div>
     </a>
     <a class="right-next"
-       href="examples.html"
+       href="guide_demands.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Examples</p>
+        <p class="prev-next-title">Setting Product Demands</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

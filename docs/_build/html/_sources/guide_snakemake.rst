@@ -4,8 +4,9 @@ Running the Model with Snakemake
 =================================
 
 This guide walks through how to configure and run GreenBubble using the
-Snakemake workflow, explains the default/override config pattern, and shows
-a concrete example of creating a scenario run.
+`Snakemake <https://snakemake.readthedocs.io/en/stable/>`_ workflow,
+explains the default/override config pattern, and shows a concrete example
+of creating a scenario run.
 
 ---
 
