@@ -1,0 +1,18 @@
+# =====================================================================
+# Tutorial 1 — per-technology overrides (shared by 1.1 demand & 1.2 price)
+# =====================================================================
+# Goal: only BIOLOGICAL methanation (biomethanation of biogas and of CO2) is
+# available; the CATALYTIC (Sabatier) methanation routes are switched off, so
+# the tutorial isolates the competition between biomethanation and biogas
+# upgrading. Each methanation route is added independently from its own
+# n_config entry: a route with expansion=false and initial capacity=0 is absent.
+#
+# Everything else stays at the greenfield defaults (initial capacity 0,
+# expansion true) — i.e. all capacities are built from scratch.
+# ---------------------------------------------------------------------
+
+methanation biogas:   # catalytic CH4 from biogas — OFF
+  expansion: false
+
+methanation CO2:      # catalytic CH4 from CO2 — OFF
+  expansion: false

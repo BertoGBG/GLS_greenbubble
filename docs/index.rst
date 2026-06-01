@@ -39,12 +39,22 @@ multi-energy systems.
 
 .. toctree::
    :maxdepth: 1
+   :caption: Tutorials
+
+   tutorial_1_greenfield
+   tutorial_2_brownfield
+   tutorial_3_rolling_horizon
+   tutorial_4_stochastic
+
+.. toctree::
+   :maxdepth: 1
    :caption: How-to Guides
 
    guide_demands
    guide_stochastic
    guide_temporal_resolution
    guide_rolling_horizon
+   guide_outputs
    guide_economic_analysis
    examples
 
