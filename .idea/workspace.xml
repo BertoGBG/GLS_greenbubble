@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c2febe79-ce63-44ab-8057-674a5c699cf7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/config/config.default.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/config/config.default.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/rules/build_sector.smk" beforeDir="false" afterPath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/rules/build_sector.smk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/scripts/build_perennials_crop_yields_nuts2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur/scripts/build_perennials_crop_yields_nuts2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config/config.yaml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="3CLrcWfGYd3RqLCTHtuRU8RT8Yp" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/Users/albal/Library/CloudStorage/OneDrive-DanmarksTekniskeUniversitet/01_DTU_research/01_Projects/02_greenbubble/GLS_greenbubble",
+    "settings.editor.selected.configurable": "com.jetbrains.snakecharm.framework.SmkFrameworkConfigurableProvider",
+    "to.speed.mode.migration.done": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/text_docs" />
+      <recent name="$PROJECT_DIR$/config" />
+      <recent name="$PROJECT_DIR$/scenarios" />
+      <recent name="$PROJECT_DIR$/text_docs/experiments" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-1cd77e80b48f-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.32098.74" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c2febe79-ce63-44ab-8057-674a5c699cf7" name="Changes" comment="" />
+      <created>1775725513625</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1775725513625</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/scripts/prepare_network.py</url>
+          <line>708</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/scripts/parameters.py</url>
+          <line>18</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

@@ -27,7 +27,7 @@ targets:
   CH4_flexibility:  0.00
   CH4_profile:       null   # null = built-in NG_DK profile
   H2_demand_mode:    profile
-  H2_bins:            12
+  H2_bins:           12
   H2_flexibility:    0.2
   H2_profile:  data/common/NG_demand_DK_profile.csv
   MeOH_demand_mode:  bins_profile

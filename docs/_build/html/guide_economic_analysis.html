@@ -45,9 +45,10 @@
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guide_economic_analysis';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="next" title="Examples" href="examples.html" />
     <link rel="prev" title="Rolling Horizon Dispatch Optimisation" href="guide_rolling_horizon.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -140,31 +141,36 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wildcards.html">Wildcards</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Rules Overview</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules Overview</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Implementation Details</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details for Industrial Clusters</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -392,6 +398,8 @@ GreenBubble’s post-processing pipeline (<code class="docutils literal notransl
 <li><p>how the network represents markets via buses and shadow prices,</p></li>
 <li><p>the product topology (collection bus + delivery bus),</p></li>
 <li><p>the Levelised Cost of Production (LCOP) formula and its components,</p></li>
+<li><p>the KKT-based LCOP verification (zero-profit condition),</p></li>
+<li><p>the short-run marginal cost (SRMC) and merit order,</p></li>
 <li><p>the full KKT revenue and annual profit, and</p></li>
 <li><p>how to interpret LCOP versus the shadow price at the collection bus.</p></li>
 </ul>
@@ -428,9 +436,17 @@ directly via <code class="docutils literal notranslate"><span class="pre">bus1</
 in the network so post-processing can discover it automatically.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">bioCH4</span> <span class="pre">delivery</span></code></dt><dd><p>The <strong>delivery bus</strong>.  The exogenous demand load (demand mode) or the
-price-setting sale link (price mode) is attached here.  In price mode the
-marginal cost of the <code class="docutils literal notranslate"><span class="pre">collection_to_delivery</span></code> link is the exogenous
-selling price time series.</p>
+price-setting sale link (price mode) is attached here.</p>
+<ul class="simple">
+<li><p><strong>Demand mode</strong>: a zero-cost <code class="docutils literal notranslate"><span class="pre">{product}_collection_to_demand</span></code> link
+transfers product to the delivery bus, where a <code class="docutils literal notranslate"><span class="pre">Load</span></code> sets the
+time profile and an optional cyclic <code class="docutils literal notranslate"><span class="pre">Store</span></code> provides intra-period
+flexibility.</p></li>
+<li><p><strong>Price mode</strong>: a <code class="docutils literal notranslate"><span class="pre">{product}_collection_to_delivery</span></code> link carries a
+time-varying <code class="docutils literal notranslate"><span class="pre">marginal_cost</span></code> equal to the exogenous selling price
+series.  A non-cyclic annual <code class="docutils literal notranslate"><span class="pre">Store</span></code> (<code class="docutils literal notranslate"><span class="pre">e_nom_max</span> <span class="pre">=</span> <span class="pre">total_demand</span></code>)
+caps cumulative annual production.</p></li>
+</ul>
 </dd>
 </dl>
 <p>The shadow price at the collection bus (<code class="docutils literal notranslate"><span class="pre">λ_collection</span></code>) is determined at
@@ -504,9 +520,17 @@ typical case) and negative only if by-product credits exceed all feedstock costs
 <code class="docutils literal notranslate"><span class="pre">tech_costs</span></code> (VOM).  Indirect OPEX captures the <em>market value</em> of feedstocks
 consumed and by-products produced via KKT shadow prices.  These measure
 different things and do not overlap.</p>
-<p><strong>Existing (EXI_) assets:</strong> <code class="docutils literal notranslate"><span class="pre">capital_cost</span> <span class="pre">=</span> <span class="pre">0</span></code> in the network for fixed-capacity
-components, so <code class="docutils literal notranslate"><span class="pre">CAPEX</span> <span class="pre">=</span> <span class="pre">0</span></code> from statistics.  Their LCOP reflects short-run
-marginal cost only (OPEX + indirect OPEX).</p>
+<p><strong>Existing (EXI_) assets:</strong> whether CAPEX appears in the LCOP depends on
+<code class="docutils literal notranslate"><span class="pre">remaining_investment_fraction</span></code> (<code class="docutils literal notranslate"><span class="pre">rif</span></code>) in <code class="docutils literal notranslate"><span class="pre">n_config.yaml</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rif</span> <span class="pre">=</span> <span class="pre">0</span></code> (default — sunk cost): <code class="docutils literal notranslate"><span class="pre">capital_cost</span> <span class="pre">=</span> <span class="pre">0</span></code> in the network,
+so <code class="docutils literal notranslate"><span class="pre">CAPEX</span> <span class="pre">=</span> <span class="pre">0</span></code> from statistics.  LCOP reflects short-run cost only
+(OPEX + indirect OPEX).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rif</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> (residual obligation outstanding): <code class="docutils literal notranslate"><span class="pre">capital_cost</span> <span class="pre">=</span> <span class="pre">rif</span> <span class="pre">×</span>
+<span class="pre">I(construction_year)</span> <span class="pre">×</span> <span class="pre">annuity(amortization_period,</span> <span class="pre">discount_rate)</span></code>.
+CAPEX is non-zero and the LCOP includes this residual capital charge.</p></li>
+</ul>
+<p>See <a class="reference internal" href="economics.html#economics-brownfield"><span class="std std-ref">Brownfield initial conditions</span></a> for the full parameter description.</p>
 <p>—</p>
 </section>
 <section id="revenue-net-market-value-and-annual-profit">
@@ -548,7 +572,7 @@ to the cost gap.</p>
 </section>
 <section id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">compute_lcop_by_technology()</span></code> in <code class="docutils literal notranslate"><span class="pre">scripts/plots.py</span></code> produces:</p>
+<p>The following output files are generated by <code class="docutils literal notranslate"><span class="pre">scripts/plots.py</span></code>:</p>
 <dl>
 <dt><code class="docutils literal notranslate"><span class="pre">csv/lcop_by_technology.csv</span></code></dt><dd><p>One row per product link (index column: <code class="docutils literal notranslate"><span class="pre">link</span></code>).</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -598,6 +622,36 @@ positive = net cost (typical), negative = by-products exceed feedstock cost</p><
 </div>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">plots/lcop_by_technology.png</span></code></dt><dd><p>Two-panel bar chart: LCOP [€/MWh] (top) and annual profit [k€] (bottom).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">csv/lcop_kkt_by_technology.csv</span></code></dt><dd><p>Verification table produced by <code class="docutils literal notranslate"><span class="pre">compute_lcop_kkt_by_technology()</span></code>.
+For each product link, LCOP is independently computed as the
+production-weighted average KKT shadow price at the collection bus:</p>
+<div class="math notranslate nohighlight">
+\[\text{LCOP}_\text{kkt} =
+  \frac{\displaystyle\sum_t w_t \cdot \eta_1 \cdot p_{0,t} \cdot \lambda_{\text{bus1},t}}
+       {\displaystyle\sum_t w_t \cdot \eta_1 \cdot p_{0,t}}\]</div>
+<p>At optimum this equals the cost-based LCOP (zero-profit condition).
+The <code class="docutils literal notranslate"><span class="pre">diff</span> <span class="pre">cost−kkt</span></code> column confirms agreement to &lt; 0.01 €/MWh.
+Columns: <code class="docutils literal notranslate"><span class="pre">carrier</span></code>, <code class="docutils literal notranslate"><span class="pre">product</span></code>, <code class="docutils literal notranslate"><span class="pre">annual_production_MWh</span></code>,
+<code class="docutils literal notranslate"><span class="pre">LCOP_cost</span> <span class="pre">(EUR/MWh)</span></code>, <code class="docutils literal notranslate"><span class="pre">LCOP_kkt</span> <span class="pre">(EUR/MWh)</span></code>, <code class="docutils literal notranslate"><span class="pre">diff</span> <span class="pre">cost−kkt</span> <span class="pre">(EUR/MWh)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">π_bus1_mean</span></code>, <code class="docutils literal notranslate"><span class="pre">π_bus1_std</span></code>, <code class="docutils literal notranslate"><span class="pre">π_bus1_prod_weighted</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">csv/srmc_by_technology.csv</span></code> / <code class="docutils literal notranslate"><span class="pre">plots/srmc_by_technology.png</span></code></dt><dd><p>Short-run marginal cost (SRMC) computed by <code class="docutils literal notranslate"><span class="pre">compute_srmc_by_technology()</span></code>.
+For each product technology at every snapshot:</p>
+<div class="math notranslate nohighlight">
+\[\text{SRMC}_{s,t} =
+  \frac{\lambda_{\text{bus0},t}
+        - \displaystyle\sum_{k \geq 2} \eta_k \cdot \lambda_{\text{bus}_k,t}
+        + \text{VOM}_{s}}{\eta_1}\]</div>
+<p>This is the instantaneous cost of producing one more MWh of main product
+at time <em>t</em>, given current input market prices.  It is distinct from
+the model input <code class="docutils literal notranslate"><span class="pre">marginal_cost</span></code> on links (which is the VOM, one term
+in the formula).</p>
+<p>The long-form CSV has columns: <code class="docutils literal notranslate"><span class="pre">snapshot</span></code>, <code class="docutils literal notranslate"><span class="pre">link</span></code>, <code class="docutils literal notranslate"><span class="pre">product</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SRMC_EUR_per_MWh</span></code>, <code class="docutils literal notranslate"><span class="pre">dispatch_MW</span></code>, <code class="docutils literal notranslate"><span class="pre">π_product_bus</span></code>, <code class="docutils literal notranslate"><span class="pre">in_merit</span></code>
+(whether SRMC ≤ product shadow price at that hour).</p>
+<p>The plot shows one subplot per product with SRMC time series per
+technology and the product bus shadow price as a dashed reference line.</p>
 </dd>
 </dl>
 <p>—</p>
@@ -664,6 +718,10 @@ to <code class="docutils literal notranslate"><span class="pre">λ̄_delivery</s
 check whether they are EXI_ (legacy) assets or optimally expanded.</p></li>
 <li><p>In price mode, all technologies that run may earn positive profit if the
 exogenous selling price exceeds the LCOP of the marginal producer.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">srmc_by_technology.csv</span></code> to see <em>when</em> each technology is in-merit
+(<code class="docutils literal notranslate"><span class="pre">in_merit</span> <span class="pre">=</span> <span class="pre">True</span></code>).  Hours with SRMC near the shadow price reveal the
+marginal technology.  Large SRMC variance indicates strong sensitivity to
+electricity or H2 price fluctuations.</p></li>
 </ol>
 </section>
 </section>
@@ -689,11 +747,11 @@ exogenous selling price exceeds the LCOP of the marginal producer.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="api.html"
+       href="examples.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">API Reference</p>
+        <p class="prev-next-title">Examples</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

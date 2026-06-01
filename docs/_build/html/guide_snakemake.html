@@ -44,6 +44,7 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'guide_snakemake';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Network Model" href="network_model.html" />
@@ -139,7 +140,7 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Running the Model with Snakemake</a></li>
 </ul>
@@ -147,6 +148,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
@@ -157,6 +159,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -165,6 +169,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow and Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation Details</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="nav bd-sidenav">
@@ -386,8 +391,9 @@
   <section id="running-the-model-with-snakemake">
 <span id="guide-snakemake"></span><h1>Running the Model with Snakemake<a class="headerlink" href="#running-the-model-with-snakemake" title="Link to this heading">#</a></h1>
 <p>This guide walks through how to configure and run GreenBubble using the
-Snakemake workflow, explains the default/override config pattern, and shows
-a concrete example of creating a scenario run.</p>
+<a class="reference external" href="https://snakemake.readthedocs.io/en/stable/">Snakemake</a> workflow,
+explains the default/override config pattern, and shows a concrete example
+of creating a scenario run.</p>
 <p>—</p>
 <section id="how-the-config-system-works">
 <h2>How the config system works<a class="headerlink" href="#how-the-config-system-works" title="Link to this heading">#</a></h2>

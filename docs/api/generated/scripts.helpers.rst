@@ -41,6 +41,8 @@
       parse_unassigned_constraint_blocks
       prepare_costs
       read_costs
+      read_costs_at_year
+      resample_network
       save_config
       save_network_comp_allocation
       zero_small_capacities

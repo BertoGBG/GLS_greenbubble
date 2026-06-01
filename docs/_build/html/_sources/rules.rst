@@ -3,7 +3,7 @@
 Rules Overview
 ==============
 
-The GreenBubble workflow is managed by `Snakemake <https://snakemake.readthedocs.io>`_.
+The GreenBubble workflow is managed by `Snakemake <https://snakemake.readthedocs.io/en/stable/>`_.
 Rules are defined in the ``rules/`` folder and assembled by the ``Snakefile``.
 
 DAG
@@ -35,9 +35,9 @@ rules/retrieve.smk
 
 Downloads the technology cost CSV from the
 `technology-data <https://github.com/BertoGBG/technology-data>`_ repository
-for the ``year_EU`` set in ``config.yaml``.
+for the ``year_investment`` set in ``config.yaml``.
 
-- Output: ``data/technology-data/outputs/costs_{year_EU}.csv``
+- Output: ``data/technology-data/outputs/costs_{year_investment}.csv``
 - Script: ``scripts/snakemake_retrieve_tech.py``
 
 **preprocess_inputs**
@@ -61,7 +61,7 @@ rules/build.smk
 Builds the ``tech_costs`` DataFrame from the retrieved cost CSV,
 blending EU and US cost assumptions based on the project location.
 
-- Input: ``data/technology-data/outputs/costs_{year_EU}.csv``
+- Input: ``data/technology-data/outputs/costs_{year_investment}.csv``
 - Output: ``resources/tech_costs.pkl``
 - Script: ``scripts/snakemake_prepare_costs.py``
 

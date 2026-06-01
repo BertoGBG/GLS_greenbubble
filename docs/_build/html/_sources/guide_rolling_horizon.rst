@@ -321,3 +321,12 @@ capacity expansion run, you **must** also add it to ``_rh_extra_functionality``
 in ``scripts/snakemake_rolling_horizon.py``, passing ``snapshots=snapshots``
 (or an equivalent window-aware argument) so the constraint operates on the
 current window's snapshot set rather than the full network index.
+
+---
+
+See also
+--------
+
+- `PyPSA rolling horizon example <https://docs.pypsa.org/latest/examples/rolling-horizon/>`_ — original PyPSA documentation and worked example
+- :ref:`config-rolling-horizon` — GreenBubble configuration reference
+- :ref:`guide-temporal-resolution` — reduce snapshot count before solving

@@ -3,7 +3,7 @@
 Workflow and Rules
 ==================
 
-GreenBubble is orchestrated by `Snakemake <https://snakemake.readthedocs.io>`_.
+GreenBubble is orchestrated by `Snakemake <https://snakemake.readthedocs.io/en/stable/>`_.
 Each processing step is a **rule** defined in the ``rules/`` folder.
 The ``Snakefile`` assembles the full directed acyclic graph (DAG) and
 manages file dependencies, caching, and parallelism.
@@ -49,7 +49,7 @@ Downloads the technology-cost CSV from the
 The file is cached locally; a SHA check at workflow start triggers
 re-download automatically if the remote file has changed.
 
-- **Output**: ``data/technology-data/outputs/costs_{year_EU}.csv``
+- **Output**: ``data/technology-data/outputs/costs_{year_investment}.csv``
 - **Script**: ``scripts/snakemake_retrieve_tech.py``
 
 ---

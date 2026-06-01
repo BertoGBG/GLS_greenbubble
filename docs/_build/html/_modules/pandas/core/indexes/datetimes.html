@@ -1,0 +1,1519 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pandas.core.indexes.datetimes &#8212; GreenBubble</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/pandas/core/indexes/datetimes';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">GreenBubble</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide_snakemake.html">Running the Model with Snakemake</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Description</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../network_model.html">Network Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../economics.html">Economic Assumptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../methods.html">Analytical Methods</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../wildcards.html">Wildcards</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide_economic_analysis.html">Economic Analysis of Results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developer Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflow.html">Workflow and Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide_new_technology.html">Guide for Adding New Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../implementation.html">Implementation Details</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../api.html">API Reference</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/BertoGBG/GLS_greenbubble/issues/new?title=Issue%20on%20page%20%2F_modules/pandas/core/indexes/datetimes.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for pandas.core.indexes.datetimes</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytz</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas._libs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NaT</span><span class="p">,</span>
+    <span class="n">Period</span><span class="p">,</span>
+    <span class="n">Timestamp</span><span class="p">,</span>
+    <span class="n">index</span> <span class="k">as</span> <span class="n">libindex</span><span class="p">,</span>
+    <span class="n">lib</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas._libs.tslibs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Resolution</span><span class="p">,</span>
+    <span class="n">Tick</span><span class="p">,</span>
+    <span class="n">Timedelta</span><span class="p">,</span>
+    <span class="n">periods_per_day</span><span class="p">,</span>
+    <span class="n">timezones</span><span class="p">,</span>
+    <span class="n">to_offset</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas._libs.tslibs.offsets</span><span class="w"> </span><span class="kn">import</span> <span class="n">prefix_mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.util._decorators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">cache_readonly</span><span class="p">,</span>
+    <span class="n">doc</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.util._exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_stack_level</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.dtypes.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.dtypes.dtypes</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatetimeTZDtype</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.dtypes.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABCSeries</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.dtypes.missing</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_valid_na_for_dtype</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.arrays.datetimes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DatetimeArray</span><span class="p">,</span>
+    <span class="n">tz_to_dtype</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas.core.common</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">com</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.indexes.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Index</span><span class="p">,</span>
+    <span class="n">maybe_extract_name</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.indexes.datetimelike</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatetimeTimedeltaMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.indexes.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">inherit_names</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.tools.times</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_time</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pandas._typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Dtype</span><span class="p">,</span>
+        <span class="n">DtypeObj</span><span class="p">,</span>
+        <span class="n">Frequency</span><span class="p">,</span>
+        <span class="n">IntervalClosedType</span><span class="p">,</span>
+        <span class="n">Self</span><span class="p">,</span>
+        <span class="n">TimeAmbiguous</span><span class="p">,</span>
+        <span class="n">TimeNonexistent</span><span class="p">,</span>
+        <span class="n">npt</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">PeriodIndex</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas._libs.tslibs.dtypes</span><span class="w"> </span><span class="kn">import</span> <span class="n">OFFSET_TO_PERIOD_FREQSTR</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_new_DatetimeIndex</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is called upon unpickling, rather than the default which doesn&#39;t</span>
+<span class="sd">    have arguments and breaks __new__</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">d</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span> <span class="n">DatetimeIndex</span><span class="p">):</span>
+        <span class="c1"># Avoid need to verify integrity by calling simple_new directly</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">DatetimeArray</span><span class="p">):</span>
+            <span class="c1"># For backward compat with older pickles, we may need to construct</span>
+            <span class="c1">#  a DatetimeArray to adapt to the newer _simple_new signature</span>
+            <span class="n">tz</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;tz&quot;</span><span class="p">)</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">)</span>
+            <span class="n">dta</span> <span class="o">=</span> <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tz_to_dtype</span><span class="p">(</span><span class="n">tz</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dta</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tz&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">]:</span>
+                <span class="c1"># These are already stored in our DatetimeArray; if they are</span>
+                <span class="c1">#  also in the pickle and don&#39;t match, we have a problem.</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dta</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">dta</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="c1"># TODO: If we knew what was going in to **d, we might be able to</span>
+            <span class="c1">#  go through _simple_new instead</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="nd">@inherit_names</span><span class="p">(</span>
+    <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_field_ops</span>
+    <span class="o">+</span> <span class="p">[</span>
+        <span class="n">method</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_datetimelike_methods</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;tz_localize&quot;</span><span class="p">,</span> <span class="s2">&quot;tz_convert&quot;</span><span class="p">,</span> <span class="s2">&quot;strftime&quot;</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">DatetimeArray</span><span class="p">,</span>
+    <span class="n">wrap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nd">@inherit_names</span><span class="p">([</span><span class="s2">&quot;is_normalized&quot;</span><span class="p">],</span> <span class="n">DatetimeArray</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@inherit_names</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="s2">&quot;tz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tzinfo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dtype&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;to_pydatetime&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;timetz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;std&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="o">+</span> <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_bool_ops</span><span class="p">,</span>
+    <span class="n">DatetimeArray</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatetimeIndex</span><span class="p">(</span><span class="n">DatetimeTimedeltaMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Immutable ndarray-like of datetime64 data.</span>
+
+<span class="sd">    Represented internally as int64, and which can be boxed to Timestamp objects</span>
+<span class="sd">    that are subclasses of datetime and carry metadata.</span>
+
+<span class="sd">    .. versionchanged:: 2.0.0</span>
+<span class="sd">        The various numeric date/time attributes (:attr:`~DatetimeIndex.day`,</span>
+<span class="sd">        :attr:`~DatetimeIndex.month`, :attr:`~DatetimeIndex.year` etc.) now have dtype</span>
+<span class="sd">        ``int32``. Previously they had dtype ``int64``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : array-like (1-dimensional)</span>
+<span class="sd">        Datetime-like data to construct index with.</span>
+<span class="sd">    freq : str or pandas offset object, optional</span>
+<span class="sd">        One of pandas date offset strings or corresponding objects. The string</span>
+<span class="sd">        &#39;infer&#39; can be passed in order to set the frequency of the index as the</span>
+<span class="sd">        inferred frequency upon creation.</span>
+<span class="sd">    tz : pytz.timezone or dateutil.tz.tzfile or datetime.tzinfo or str</span>
+<span class="sd">        Set the Timezone of the data.</span>
+<span class="sd">    normalize : bool, default False</span>
+<span class="sd">        Normalize start/end dates to midnight before generating date range.</span>
+
+<span class="sd">        .. deprecated:: 2.1.0</span>
+
+<span class="sd">    closed : {&#39;left&#39;, &#39;right&#39;}, optional</span>
+<span class="sd">        Set whether to include `start` and `end` that are on the</span>
+<span class="sd">        boundary. The default includes boundary points on either end.</span>
+
+<span class="sd">        .. deprecated:: 2.1.0</span>
+
+<span class="sd">    ambiguous : &#39;infer&#39;, bool-ndarray, &#39;NaT&#39;, default &#39;raise&#39;</span>
+<span class="sd">        When clocks moved backward due to DST, ambiguous times may arise.</span>
+<span class="sd">        For example in Central European Time (UTC+01), when going from 03:00</span>
+<span class="sd">        DST to 02:00 non-DST, 02:30:00 local time occurs both at 00:30:00 UTC</span>
+<span class="sd">        and at 01:30:00 UTC. In such a situation, the `ambiguous` parameter</span>
+<span class="sd">        dictates how ambiguous times should be handled.</span>
+
+<span class="sd">        - &#39;infer&#39; will attempt to infer fall dst-transition hours based on</span>
+<span class="sd">          order</span>
+<span class="sd">        - bool-ndarray where True signifies a DST time, False signifies a</span>
+<span class="sd">          non-DST time (note that this flag is only applicable for ambiguous</span>
+<span class="sd">          times)</span>
+<span class="sd">        - &#39;NaT&#39; will return NaT where there are ambiguous times</span>
+<span class="sd">        - &#39;raise&#39; will raise an AmbiguousTimeError if there are ambiguous times.</span>
+<span class="sd">    dayfirst : bool, default False</span>
+<span class="sd">        If True, parse dates in `data` with the day first order.</span>
+<span class="sd">    yearfirst : bool, default False</span>
+<span class="sd">        If True parse dates in `data` with the year first order.</span>
+<span class="sd">    dtype : numpy.dtype or DatetimeTZDtype or str, default None</span>
+<span class="sd">        Note that the only NumPy dtype allowed is `datetime64[ns]`.</span>
+<span class="sd">    copy : bool, default False</span>
+<span class="sd">        Make a copy of input ndarray.</span>
+<span class="sd">    name : label, default None</span>
+<span class="sd">        Name to be stored in the index.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    year</span>
+<span class="sd">    month</span>
+<span class="sd">    day</span>
+<span class="sd">    hour</span>
+<span class="sd">    minute</span>
+<span class="sd">    second</span>
+<span class="sd">    microsecond</span>
+<span class="sd">    nanosecond</span>
+<span class="sd">    date</span>
+<span class="sd">    time</span>
+<span class="sd">    timetz</span>
+<span class="sd">    dayofyear</span>
+<span class="sd">    day_of_year</span>
+<span class="sd">    dayofweek</span>
+<span class="sd">    day_of_week</span>
+<span class="sd">    weekday</span>
+<span class="sd">    quarter</span>
+<span class="sd">    tz</span>
+<span class="sd">    freq</span>
+<span class="sd">    freqstr</span>
+<span class="sd">    is_month_start</span>
+<span class="sd">    is_month_end</span>
+<span class="sd">    is_quarter_start</span>
+<span class="sd">    is_quarter_end</span>
+<span class="sd">    is_year_start</span>
+<span class="sd">    is_year_end</span>
+<span class="sd">    is_leap_year</span>
+<span class="sd">    inferred_freq</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    normalize</span>
+<span class="sd">    strftime</span>
+<span class="sd">    snap</span>
+<span class="sd">    tz_convert</span>
+<span class="sd">    tz_localize</span>
+<span class="sd">    round</span>
+<span class="sd">    floor</span>
+<span class="sd">    ceil</span>
+<span class="sd">    to_period</span>
+<span class="sd">    to_pydatetime</span>
+<span class="sd">    to_series</span>
+<span class="sd">    to_frame</span>
+<span class="sd">    month_name</span>
+<span class="sd">    day_name</span>
+<span class="sd">    mean</span>
+<span class="sd">    std</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Index : The base pandas Index type.</span>
+<span class="sd">    TimedeltaIndex : Index of timedelta64 data.</span>
+<span class="sd">    PeriodIndex : Index of Period data.</span>
+<span class="sd">    to_datetime : Convert argument to datetime.</span>
+<span class="sd">    date_range : Create a fixed-frequency DatetimeIndex.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    To learn more about the frequency strings, please see `this link</span>
+<span class="sd">    &lt;https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases&gt;`__.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; idx = pd.DatetimeIndex([&quot;1/1/2020 10:00:00+00:00&quot;, &quot;2/1/2020 11:00:00+00:00&quot;])</span>
+<span class="sd">    &gt;&gt;&gt; idx</span>
+<span class="sd">    DatetimeIndex([&#39;2020-01-01 10:00:00+00:00&#39;, &#39;2020-02-01 11:00:00+00:00&#39;],</span>
+<span class="sd">    dtype=&#39;datetime64[ns, UTC]&#39;, freq=None)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_typ</span> <span class="o">=</span> <span class="s2">&quot;datetimeindex&quot;</span>
+
+    <span class="n">_data_cls</span> <span class="o">=</span> <span class="n">DatetimeArray</span>
+    <span class="n">_supports_partial_string_indexing</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_engine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">libindex</span><span class="o">.</span><span class="n">DatetimeEngine</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">libindex</span><span class="o">.</span><span class="n">DatetimeEngine</span>
+
+    <span class="n">_data</span><span class="p">:</span> <span class="n">DatetimeArray</span>
+    <span class="n">_values</span><span class="p">:</span> <span class="n">DatetimeArray</span>
+    <span class="n">tz</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+    <span class="c1"># methods that dispatch to DatetimeArray and wrap result</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">strftime</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strftime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_format</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Index</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">date_format</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tz_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tz</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">tz</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="p">)</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tz_localize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tz</span><span class="p">,</span>
+        <span class="n">ambiguous</span><span class="p">:</span> <span class="n">TimeAmbiguous</span> <span class="o">=</span> <span class="s2">&quot;raise&quot;</span><span class="p">,</span>
+        <span class="n">nonexistent</span><span class="p">:</span> <span class="n">TimeNonexistent</span> <span class="o">=</span> <span class="s2">&quot;raise&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">tz</span><span class="p">,</span> <span class="n">ambiguous</span><span class="p">,</span> <span class="n">nonexistent</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">to_period</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PeriodIndex</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pandas.core.indexes.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeriodIndex</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">to_period</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PeriodIndex</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">to_julian_date</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_julian_date</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Index</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">to_julian_date</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeArray</span><span class="o">.</span><span class="n">isocalendar</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">isocalendar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">isocalendar</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@cache_readonly</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolution_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Resolution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_resolution_obj</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+    <span class="c1"># Constructors</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">freq</span><span class="p">:</span> <span class="n">Frequency</span> <span class="o">|</span> <span class="n">lib</span><span class="o">.</span><span class="n">NoDefault</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">,</span>
+        <span class="n">tz</span><span class="o">=</span><span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">lib</span><span class="o">.</span><span class="n">NoDefault</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">,</span>
+        <span class="n">closed</span><span class="o">=</span><span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">,</span>
+        <span class="n">ambiguous</span><span class="p">:</span> <span class="n">TimeAmbiguous</span> <span class="o">=</span> <span class="s2">&quot;raise&quot;</span><span class="p">,</span>
+        <span class="n">dayfirst</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">yearfirst</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">Dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">closed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">:</span>
+            <span class="c1"># GH#52628</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The &#39;closed&#39; keyword in </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> construction is &quot;</span>
+                <span class="s2">&quot;deprecated and will be removed in a future version.&quot;</span><span class="p">,</span>
+                <span class="ne">FutureWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="n">find_stack_level</span><span class="p">(),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">normalize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span><span class="p">:</span>
+            <span class="c1"># GH#52628</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The &#39;normalize&#39; keyword in </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> construction is &quot;</span>
+                <span class="s2">&quot;deprecated and will be removed in a future version.&quot;</span><span class="p">,</span>
+                <span class="ne">FutureWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="n">find_stack_level</span><span class="p">(),</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_raise_scalar_data_error</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># - Cases checked above all return/raise before reaching here - #</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="n">maybe_extract_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">DatetimeArray</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">freq</span> <span class="ow">is</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span>
+            <span class="ow">and</span> <span class="n">tz</span> <span class="ow">is</span> <span class="n">lib</span><span class="o">.</span><span class="n">no_default</span>
+            <span class="ow">and</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="c1"># fastpath, similar logic in TimedeltaIndex.__new__;</span>
+            <span class="c1"># Note in this particular case we retain non-nano.</span>
+            <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">dtarr</span> <span class="o">=</span> <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_from_sequence_not_strict</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">copy</span><span class="o">=</span><span class="n">copy</span><span class="p">,</span>
+            <span class="n">tz</span><span class="o">=</span><span class="n">tz</span><span class="p">,</span>
+            <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span>
+            <span class="n">dayfirst</span><span class="o">=</span><span class="n">dayfirst</span><span class="p">,</span>
+            <span class="n">yearfirst</span><span class="o">=</span><span class="n">yearfirst</span><span class="p">,</span>
+            <span class="n">ambiguous</span><span class="o">=</span><span class="n">ambiguous</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">copy</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="n">ABCSeries</span><span class="p">)):</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">_references</span>
+
+        <span class="n">subarr</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">dtarr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="n">refs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">subarr</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+
+    <span class="nd">@cache_readonly</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_dates_only</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a boolean if we are only dates (and don&#39;t have a timezone)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="n">Tick</span><span class="p">):</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">Timedelta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">delta</span> <span class="o">%</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">_is_dates_only</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">_new_DatetimeIndex</span><span class="p">,</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">d</span><span class="p">),</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_comparable_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">DtypeObj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Can we compare values of the given dtype to our own?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># If we have tz, we can compare to tzaware</span>
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">DatetimeTZDtype</span><span class="p">)</span>
+        <span class="c1"># if we dont have tz, we can only compare to tznaive</span>
+        <span class="k">return</span> <span class="n">lib</span><span class="o">.</span><span class="n">is_np_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">&quot;M&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+    <span class="c1"># Rendering Methods</span>
+
+    <span class="nd">@cache_readonly</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_formatter_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Note this is equivalent to the DatetimeIndexOpsMixin method but</span>
+        <span class="c1">#  uses the maybe-cached self._is_dates_only instead of re-computing it.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pandas.io.formats.format</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_format_datetime64</span>
+
+        <span class="n">formatter</span> <span class="o">=</span> <span class="n">get_format_datetime64</span><span class="p">(</span><span class="n">is_dates_only</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_is_dates_only</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">formatter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+    <span class="c1"># Set Operation Methods</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_can_range_setop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># GH 46702: If self or other have non-UTC tzs, DST transitions prevent</span>
+        <span class="c1"># range representation due to no singular step</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">timezones</span><span class="o">.</span><span class="n">is_utc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">timezones</span><span class="o">.</span><span class="n">is_fixed_offset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">timezones</span><span class="o">.</span><span class="n">is_utc</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">timezones</span><span class="o">.</span><span class="n">is_fixed_offset</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_can_range_setop</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_time_micros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of microseconds since midnight.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray[int64_t]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_local_timestamps</span><span class="p">()</span>
+
+        <span class="n">ppd</span> <span class="o">=</span> <span class="n">periods_per_day</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_creso</span><span class="p">)</span>
+
+        <span class="n">frac</span> <span class="o">=</span> <span class="n">values</span> <span class="o">%</span> <span class="n">ppd</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;ns&quot;</span><span class="p">:</span>
+            <span class="n">micros</span> <span class="o">=</span> <span class="n">frac</span> <span class="o">//</span> <span class="mi">1000</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;us&quot;</span><span class="p">:</span>
+            <span class="n">micros</span> <span class="o">=</span> <span class="n">frac</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;ms&quot;</span><span class="p">:</span>
+            <span class="n">micros</span> <span class="o">=</span> <span class="n">frac</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
+            <span class="n">micros</span> <span class="o">=</span> <span class="n">frac</span> <span class="o">*</span> <span class="mi">1_000_000</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+
+        <span class="n">micros</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_isnan</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">micros</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">snap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="n">Frequency</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatetimeIndex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Snap time stamps to nearest occurring frequency.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DatetimeIndex</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; idx = pd.DatetimeIndex([&#39;2023-01-01&#39;, &#39;2023-01-02&#39;,</span>
+<span class="sd">        ...                        &#39;2023-02-01&#39;, &#39;2023-02-02&#39;])</span>
+<span class="sd">        &gt;&gt;&gt; idx</span>
+<span class="sd">        DatetimeIndex([&#39;2023-01-01&#39;, &#39;2023-01-02&#39;, &#39;2023-02-01&#39;, &#39;2023-02-02&#39;],</span>
+<span class="sd">        dtype=&#39;datetime64[ns]&#39;, freq=None)</span>
+<span class="sd">        &gt;&gt;&gt; idx.snap(&#39;MS&#39;)</span>
+<span class="sd">        DatetimeIndex([&#39;2023-01-01&#39;, &#39;2023-01-01&#39;, &#39;2023-02-01&#39;, &#39;2023-02-01&#39;],</span>
+<span class="sd">        dtype=&#39;datetime64[ns]&#39;, freq=None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Superdumb, punting on any optimizing</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">to_offset</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+
+        <span class="n">dta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">freq</span><span class="o">.</span><span class="n">is_on_offset</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                <span class="n">t0</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="n">t1</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">rollforward</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">s</span><span class="p">):</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="n">t0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="n">t1</span>
+            <span class="n">dta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+
+        <span class="k">return</span> <span class="n">DatetimeIndex</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">dta</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+    <span class="c1"># Indexing Methods</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parsed_string_to_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reso</span><span class="p">:</span> <span class="n">Resolution</span><span class="p">,</span> <span class="n">parsed</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate datetime bounds for parsed time string and its resolution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        reso : Resolution</span>
+<span class="sd">            Resolution provided by parsed string.</span>
+<span class="sd">        parsed : datetime</span>
+<span class="sd">            Datetime from parsed string.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        lower, upper: pd.Timestamp</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">OFFSET_TO_PERIOD_FREQSTR</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reso</span><span class="o">.</span><span class="n">attr_abbrev</span><span class="p">,</span> <span class="n">reso</span><span class="o">.</span><span class="n">attr_abbrev</span><span class="p">)</span>
+        <span class="n">per</span> <span class="o">=</span> <span class="n">Period</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">)</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">per</span><span class="o">.</span><span class="n">start_time</span><span class="p">,</span> <span class="n">per</span><span class="o">.</span><span class="n">end_time</span>
+
+        <span class="c1"># GH 24076</span>
+        <span class="c1"># If an incoming date string contained a UTC offset, need to localize</span>
+        <span class="c1"># the parsed date to this offset first before aligning with the index&#39;s</span>
+        <span class="c1"># timezone</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">start</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">end</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;The index must be timezone aware when indexing &quot;</span>
+                    <span class="s2">&quot;with a date string with a UTC offset&quot;</span>
+                <span class="p">)</span>
+        <span class="c1"># The flipped case with parsed.tz is None and self.tz is not None</span>
+        <span class="c1">#  is ruled out bc parsed and reso are produced by _parse_with_reso,</span>
+        <span class="c1">#  which localizes parsed.</span>
+        <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_with_reso</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">parsed</span><span class="p">,</span> <span class="n">reso</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_parse_with_reso</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">Timestamp</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">parsed</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># we special-case timezone-naive strings and timezone-aware</span>
+            <span class="c1">#  DatetimeIndex</span>
+            <span class="c1"># https://github.com/pandas-dev/pandas/pull/36148#issuecomment-687883081</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">parsed</span><span class="p">,</span> <span class="n">reso</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_disallow_mismatched_indexing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check for mismatched-tzawareness indexing and re-raise as KeyError.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># we get here with isinstance(key, self._data._recognized_scalars)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># GH#36148</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_assert_tzawareness_compat</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_loc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get integer location for requested label</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        loc : int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_indexing_error</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="n">orig_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">if</span> <span class="n">is_valid_na_for_dtype</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">NaT</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_recognized_scalars</span><span class="p">):</span>
+            <span class="c1"># needed to localize naive datetimes</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disallow_mismatched_indexing</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">Timestamp</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">parsed</span><span class="p">,</span> <span class="n">reso</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_with_reso</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">pytz</span><span class="o">.</span><span class="n">NonExistentTimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disallow_mismatched_indexing</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_partial_date_slice</span><span class="p">(</span><span class="n">reso</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partial_date_slice</span><span class="p">(</span><span class="n">reso</span><span class="p">,</span> <span class="n">parsed</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+            <span class="n">key</span> <span class="o">=</span> <span class="n">parsed</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
+            <span class="c1"># GH#20464</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cannot index </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexer_at_time</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># unrecognized type</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Index</span><span class="o">.</span><span class="n">get_loc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">orig_key</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+    <span class="nd">@doc</span><span class="p">(</span><span class="n">DatetimeTimedeltaMixin</span><span class="o">.</span><span class="n">_maybe_cast_slice_bound</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_cast_slice_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># GH#42855 handle date here instead of get_slice_bound</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">date</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+            <span class="c1"># Pandas supports slicing with dates, treated as datetimes at midnight.</span>
+            <span class="c1"># https://github.com/pandas-dev/pandas/issues/31501</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">Timestamp</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+
+        <span class="n">label</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_maybe_cast_slice_bound</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">side</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_assert_tzawareness_compat</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Timestamp</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">slice_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return indexer for specified label slice.</span>
+<span class="sd">        Index.slice_indexer, customized to handle time slicing.</span>
+
+<span class="sd">        In addition to functionality provided by Index.slice_indexer, does the</span>
+<span class="sd">        following:</span>
+
+<span class="sd">        - if both `start` and `end` are instances of `datetime.time`, it</span>
+<span class="sd">          invokes `indexer_between_time`</span>
+<span class="sd">        - if `start` and `end` are both either string or None perform</span>
+<span class="sd">          value-based selection in non-monotonic cases.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># For historical reasons DatetimeIndex supports slices between two</span>
+        <span class="c1"># instances of datetime.time as if it were applying a slice mask to</span>
+        <span class="c1"># an array of (self.hour, self.minute, self.seconds, self.microsecond).</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must have step size of 1 with time slices&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexer_between_time</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Cannot mix time and non-time slice keys&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">check_str_or_none</span><span class="p">(</span><span class="n">point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="c1"># GH#33146 if start and end are combinations of str and None and Index is not</span>
+        <span class="c1"># monotonic, we can not use Index.slice_indexer because it does not honor the</span>
+        <span class="c1"># actual elements, is only searching for start and end</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">check_str_or_none</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">check_str_or_none</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_monotonic_increasing</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">Index</span><span class="o">.</span><span class="n">slice_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">in_index</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start_casted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_cast_slice_bound</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">start_casted</span> <span class="o">&lt;=</span> <span class="bp">self</span>
+            <span class="n">in_index</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">start_casted</span> <span class="o">==</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">end_casted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_cast_slice_bound</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;=</span> <span class="n">end_casted</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">mask</span>
+            <span class="n">in_index</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">end_casted</span> <span class="o">==</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">in_index</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="s2">&quot;Value based partial slicing on non-monotonic DatetimeIndexes &quot;</span>
+                <span class="s2">&quot;with non-existing keys is not allowed.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">indexer</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">][::</span><span class="n">step</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexer</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">indexer</span>
+
+    <span class="c1"># --------------------------------------------------------------------</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inferred_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># b/c datetime is represented as microseconds since the epoch, make</span>
+        <span class="c1"># sure we can&#39;t have ambiguous indexing</span>
+        <span class="k">return</span> <span class="s2">&quot;datetime64&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">indexer_at_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">asof</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return index locations of values at particular time of day.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time : datetime.time or str</span>
+<span class="sd">            Time passed in either as object (datetime.time) or as string in</span>
+<span class="sd">            appropriate format (&quot;%H:%M&quot;, &quot;%H%M&quot;, &quot;%I:%M%p&quot;, &quot;%I%M%p&quot;,</span>
+<span class="sd">            &quot;%H:%M:%S&quot;, &quot;%H%M%S&quot;, &quot;%I:%M:%S%p&quot;, &quot;%I%M%S%p&quot;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray[np.intp]</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        indexer_between_time : Get index locations of values between particular</span>
+<span class="sd">            times of day.</span>
+<span class="sd">        DataFrame.at_time : Select values at particular time of day.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; idx = pd.DatetimeIndex([&quot;1/1/2020 10:00&quot;, &quot;2/1/2020 11:00&quot;,</span>
+<span class="sd">        ...                         &quot;3/1/2020 10:00&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; idx.indexer_at_time(&quot;10:00&quot;)</span>
+<span class="sd">        array([0, 2])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">asof</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;&#39;asof&#39; argument is not supported&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">dateutil.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span>
+
+            <span class="n">time</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">time</span><span class="p">)</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index must be timezone aware.&quot;</span><span class="p">)</span>
+            <span class="n">time_micros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">)</span><span class="o">.</span><span class="n">_get_time_micros</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time_micros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_micros</span><span class="p">()</span>
+        <span class="n">micros</span> <span class="o">=</span> <span class="n">_time_to_micros</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">time_micros</span> <span class="o">==</span> <span class="n">micros</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">indexer_between_time</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">include_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">include_end</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return index locations of values between particular times of day.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        start_time, end_time : datetime.time, str</span>
+<span class="sd">            Time passed either as object (datetime.time) or as string in</span>
+<span class="sd">            appropriate format (&quot;%H:%M&quot;, &quot;%H%M&quot;, &quot;%I:%M%p&quot;, &quot;%I%M%p&quot;,</span>
+<span class="sd">            &quot;%H:%M:%S&quot;, &quot;%H%M%S&quot;, &quot;%I:%M:%S%p&quot;,&quot;%I%M%S%p&quot;).</span>
+<span class="sd">        include_start : bool, default True</span>
+<span class="sd">        include_end : bool, default True</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray[np.intp]</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        indexer_at_time : Get index locations of values at particular time of day.</span>
+<span class="sd">        DataFrame.between_time : Select values between particular times of day.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; idx = pd.date_range(&quot;2023-01-01&quot;, periods=4, freq=&quot;h&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; idx</span>
+<span class="sd">        DatetimeIndex([&#39;2023-01-01 00:00:00&#39;, &#39;2023-01-01 01:00:00&#39;,</span>
+<span class="sd">                           &#39;2023-01-01 02:00:00&#39;, &#39;2023-01-01 03:00:00&#39;],</span>
+<span class="sd">                          dtype=&#39;datetime64[ns]&#39;, freq=&#39;h&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; idx.indexer_between_time(&quot;00:00&quot;, &quot;2:00&quot;, include_end=False)</span>
+<span class="sd">        array([0, 1])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">to_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">to_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
+        <span class="n">time_micros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_micros</span><span class="p">()</span>
+        <span class="n">start_micros</span> <span class="o">=</span> <span class="n">_time_to_micros</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+        <span class="n">end_micros</span> <span class="o">=</span> <span class="n">_time_to_micros</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_start</span> <span class="ow">and</span> <span class="n">include_end</span><span class="p">:</span>
+            <span class="n">lop</span> <span class="o">=</span> <span class="n">rop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">le</span>
+        <span class="k">elif</span> <span class="n">include_start</span><span class="p">:</span>
+            <span class="n">lop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">le</span>
+            <span class="n">rop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">lt</span>
+        <span class="k">elif</span> <span class="n">include_end</span><span class="p">:</span>
+            <span class="n">lop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">lt</span>
+            <span class="n">rop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">le</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lop</span> <span class="o">=</span> <span class="n">rop</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">lt</span>
+
+        <span class="k">if</span> <span class="n">start_time</span> <span class="o">&lt;=</span> <span class="n">end_time</span><span class="p">:</span>
+            <span class="n">join_op</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">and_</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">join_op</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">or_</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">join_op</span><span class="p">(</span><span class="n">lop</span><span class="p">(</span><span class="n">start_micros</span><span class="p">,</span> <span class="n">time_micros</span><span class="p">),</span> <span class="n">rop</span><span class="p">(</span><span class="n">time_micros</span><span class="p">,</span> <span class="n">end_micros</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">mask</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">date_range</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">periods</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">freq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">tz</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inclusive</span><span class="p">:</span> <span class="n">IntervalClosedType</span> <span class="o">=</span> <span class="s2">&quot;both&quot;</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatetimeIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a fixed frequency DatetimeIndex.</span>
+
+<span class="sd">    Returns the range of equally spaced time points (where the difference between any</span>
+<span class="sd">    two adjacent points is specified by the given frequency) such that they all</span>
+<span class="sd">    satisfy `start &lt;[=] x &lt;[=] end`, where the first one and the last one are, resp.,</span>
+<span class="sd">    the first and last time points in that range that fall on the boundary of ``freq``</span>
+<span class="sd">    (if given as a frequency string) or that are valid for ``freq`` (if given as a</span>
+<span class="sd">    :class:`pandas.tseries.offsets.DateOffset`). (If exactly one of ``start``,</span>
+<span class="sd">    ``end``, or ``freq`` is *not* specified, this missing parameter can be computed</span>
+<span class="sd">    given ``periods``, the number of timesteps in the range. See the note below.)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    start : str or datetime-like, optional</span>
+<span class="sd">        Left bound for generating dates.</span>
+<span class="sd">    end : str or datetime-like, optional</span>
+<span class="sd">        Right bound for generating dates.</span>
+<span class="sd">    periods : int, optional</span>
+<span class="sd">        Number of periods to generate.</span>
+<span class="sd">    freq : str, Timedelta, datetime.timedelta, or DateOffset, default &#39;D&#39;</span>
+<span class="sd">        Frequency strings can have multiples, e.g. &#39;5h&#39;. See</span>
+<span class="sd">        :ref:`here &lt;timeseries.offset_aliases&gt;` for a list of</span>
+<span class="sd">        frequency aliases.</span>
+<span class="sd">    tz : str or tzinfo, optional</span>
+<span class="sd">        Time zone name for returning localized DatetimeIndex, for example</span>
+<span class="sd">        &#39;Asia/Hong_Kong&#39;. By default, the resulting DatetimeIndex is</span>
+<span class="sd">        timezone-naive unless timezone-aware datetime-likes are passed.</span>
+<span class="sd">    normalize : bool, default False</span>
+<span class="sd">        Normalize start/end dates to midnight before generating date range.</span>
+<span class="sd">    name : str, default None</span>
+<span class="sd">        Name of the resulting DatetimeIndex.</span>
+<span class="sd">    inclusive : {&quot;both&quot;, &quot;neither&quot;, &quot;left&quot;, &quot;right&quot;}, default &quot;both&quot;</span>
+<span class="sd">        Include boundaries; Whether to set each bound as closed or open.</span>
+
+<span class="sd">        .. versionadded:: 1.4.0</span>
+<span class="sd">    unit : str, default None</span>
+<span class="sd">        Specify the desired resolution of the result.</span>
+
+<span class="sd">        .. versionadded:: 2.0.0</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        For compatibility. Has no effect on the result.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DatetimeIndex</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    DatetimeIndex : An immutable container for datetimes.</span>
+<span class="sd">    timedelta_range : Return a fixed frequency TimedeltaIndex.</span>
+<span class="sd">    period_range : Return a fixed frequency PeriodIndex.</span>
+<span class="sd">    interval_range : Return a fixed frequency IntervalIndex.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Of the four parameters ``start``, ``end``, ``periods``, and ``freq``,</span>
+<span class="sd">    exactly three must be specified. If ``freq`` is omitted, the resulting</span>
+<span class="sd">    ``DatetimeIndex`` will have ``periods`` linearly spaced elements between</span>
+<span class="sd">    ``start`` and ``end`` (closed on both sides).</span>
+
+<span class="sd">    To learn more about the frequency strings, please see `this link</span>
+<span class="sd">    &lt;https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases&gt;`__.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    **Specifying the values**</span>
+
+<span class="sd">    The next four examples generate the same `DatetimeIndex`, but vary</span>
+<span class="sd">    the combination of `start`, `end` and `periods`.</span>
+
+<span class="sd">    Specify `start` and `end`, with the default daily frequency.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, end=&#39;1/08/2018&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-01&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-04&#39;,</span>
+<span class="sd">                   &#39;2018-01-05&#39;, &#39;2018-01-06&#39;, &#39;2018-01-07&#39;, &#39;2018-01-08&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Specify timezone-aware `start` and `end`, with the default daily frequency.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(</span>
+<span class="sd">    ...     start=pd.to_datetime(&quot;1/1/2018&quot;).tz_localize(&quot;Europe/Berlin&quot;),</span>
+<span class="sd">    ...     end=pd.to_datetime(&quot;1/08/2018&quot;).tz_localize(&quot;Europe/Berlin&quot;),</span>
+<span class="sd">    ... )</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-01 00:00:00+01:00&#39;, &#39;2018-01-02 00:00:00+01:00&#39;,</span>
+<span class="sd">                   &#39;2018-01-03 00:00:00+01:00&#39;, &#39;2018-01-04 00:00:00+01:00&#39;,</span>
+<span class="sd">                   &#39;2018-01-05 00:00:00+01:00&#39;, &#39;2018-01-06 00:00:00+01:00&#39;,</span>
+<span class="sd">                   &#39;2018-01-07 00:00:00+01:00&#39;, &#39;2018-01-08 00:00:00+01:00&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns, Europe/Berlin]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Specify `start` and `periods`, the number of periods (days).</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, periods=8)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-01&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-04&#39;,</span>
+<span class="sd">                   &#39;2018-01-05&#39;, &#39;2018-01-06&#39;, &#39;2018-01-07&#39;, &#39;2018-01-08&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Specify `end` and `periods`, the number of periods (days).</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(end=&#39;1/1/2018&#39;, periods=8)</span>
+<span class="sd">    DatetimeIndex([&#39;2017-12-25&#39;, &#39;2017-12-26&#39;, &#39;2017-12-27&#39;, &#39;2017-12-28&#39;,</span>
+<span class="sd">                   &#39;2017-12-29&#39;, &#39;2017-12-30&#39;, &#39;2017-12-31&#39;, &#39;2018-01-01&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Specify `start`, `end`, and `periods`; the frequency is generated</span>
+<span class="sd">    automatically (linearly spaced).</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;2018-04-24&#39;, end=&#39;2018-04-27&#39;, periods=3)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-04-24 00:00:00&#39;, &#39;2018-04-25 12:00:00&#39;,</span>
+<span class="sd">                   &#39;2018-04-27 00:00:00&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=None)</span>
+
+<span class="sd">    **Other Parameters**</span>
+
+<span class="sd">    Changed the `freq` (frequency) to ``&#39;ME&#39;`` (month end frequency).</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, periods=5, freq=&#39;ME&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-31&#39;, &#39;2018-02-28&#39;, &#39;2018-03-31&#39;, &#39;2018-04-30&#39;,</span>
+<span class="sd">                   &#39;2018-05-31&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;ME&#39;)</span>
+
+<span class="sd">    Multiples are allowed</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, periods=5, freq=&#39;3ME&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-31&#39;, &#39;2018-04-30&#39;, &#39;2018-07-31&#39;, &#39;2018-10-31&#39;,</span>
+<span class="sd">                   &#39;2019-01-31&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;3ME&#39;)</span>
+
+<span class="sd">    `freq` can also be specified as an Offset object.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, periods=5, freq=pd.offsets.MonthEnd(3))</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-31&#39;, &#39;2018-04-30&#39;, &#39;2018-07-31&#39;, &#39;2018-10-31&#39;,</span>
+<span class="sd">                   &#39;2019-01-31&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;3ME&#39;)</span>
+
+<span class="sd">    Specify `tz` to set the timezone.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;1/1/2018&#39;, periods=5, tz=&#39;Asia/Tokyo&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-01 00:00:00+09:00&#39;, &#39;2018-01-02 00:00:00+09:00&#39;,</span>
+<span class="sd">                   &#39;2018-01-03 00:00:00+09:00&#39;, &#39;2018-01-04 00:00:00+09:00&#39;,</span>
+<span class="sd">                   &#39;2018-01-05 00:00:00+09:00&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns, Asia/Tokyo]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    `inclusive` controls whether to include `start` and `end` that are on the</span>
+<span class="sd">    boundary. The default, &quot;both&quot;, includes boundary points on either end.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;2017-01-01&#39;, end=&#39;2017-01-04&#39;, inclusive=&quot;both&quot;)</span>
+<span class="sd">    DatetimeIndex([&#39;2017-01-01&#39;, &#39;2017-01-02&#39;, &#39;2017-01-03&#39;, &#39;2017-01-04&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Use ``inclusive=&#39;left&#39;`` to exclude `end` if it falls on the boundary.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;2017-01-01&#39;, end=&#39;2017-01-04&#39;, inclusive=&#39;left&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2017-01-01&#39;, &#39;2017-01-02&#39;, &#39;2017-01-03&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    Use ``inclusive=&#39;right&#39;`` to exclude `start` if it falls on the boundary, and</span>
+<span class="sd">    similarly ``inclusive=&#39;neither&#39;`` will exclude both `start` and `end`.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&#39;2017-01-01&#39;, end=&#39;2017-01-04&#39;, inclusive=&#39;right&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2017-01-02&#39;, &#39;2017-01-03&#39;, &#39;2017-01-04&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[ns]&#39;, freq=&#39;D&#39;)</span>
+
+<span class="sd">    **Specify a unit**</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.date_range(start=&quot;2017-01-01&quot;, periods=10, freq=&quot;100YS&quot;, unit=&quot;s&quot;)</span>
+<span class="sd">    DatetimeIndex([&#39;2017-01-01&#39;, &#39;2117-01-01&#39;, &#39;2217-01-01&#39;, &#39;2317-01-01&#39;,</span>
+<span class="sd">                   &#39;2417-01-01&#39;, &#39;2517-01-01&#39;, &#39;2617-01-01&#39;, &#39;2717-01-01&#39;,</span>
+<span class="sd">                   &#39;2817-01-01&#39;, &#39;2917-01-01&#39;],</span>
+<span class="sd">                  dtype=&#39;datetime64[s]&#39;, freq=&#39;100YS-JAN&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">freq</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">com</span><span class="o">.</span><span class="n">any_none</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="s2">&quot;D&quot;</span>
+
+    <span class="n">dtarr</span> <span class="o">=</span> <span class="n">DatetimeArray</span><span class="o">.</span><span class="n">_generate_range</span><span class="p">(</span>
+        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+        <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span>
+        <span class="n">periods</span><span class="o">=</span><span class="n">periods</span><span class="p">,</span>
+        <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span>
+        <span class="n">tz</span><span class="o">=</span><span class="n">tz</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span>
+        <span class="n">inclusive</span><span class="o">=</span><span class="n">inclusive</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">DatetimeIndex</span><span class="o">.</span><span class="n">_simple_new</span><span class="p">(</span><span class="n">dtarr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bdate_range</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">periods</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">freq</span><span class="p">:</span> <span class="n">Frequency</span> <span class="o">|</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span> <span class="o">=</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span>
+    <span class="n">tz</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">weekmask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">holidays</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">inclusive</span><span class="p">:</span> <span class="n">IntervalClosedType</span> <span class="o">=</span> <span class="s2">&quot;both&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatetimeIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a fixed frequency DatetimeIndex with business day as the default.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    start : str or datetime-like, default None</span>
+<span class="sd">        Left bound for generating dates.</span>
+<span class="sd">    end : str or datetime-like, default None</span>
+<span class="sd">        Right bound for generating dates.</span>
+<span class="sd">    periods : int, default None</span>
+<span class="sd">        Number of periods to generate.</span>
+<span class="sd">    freq : str, Timedelta, datetime.timedelta, or DateOffset, default &#39;B&#39;</span>
+<span class="sd">        Frequency strings can have multiples, e.g. &#39;5h&#39;. The default is</span>
+<span class="sd">        business daily (&#39;B&#39;).</span>
+<span class="sd">    tz : str or None</span>
+<span class="sd">        Time zone name for returning localized DatetimeIndex, for example</span>
+<span class="sd">        Asia/Beijing.</span>
+<span class="sd">    normalize : bool, default False</span>
+<span class="sd">        Normalize start/end dates to midnight before generating date range.</span>
+<span class="sd">    name : str, default None</span>
+<span class="sd">        Name of the resulting DatetimeIndex.</span>
+<span class="sd">    weekmask : str or None, default None</span>
+<span class="sd">        Weekmask of valid business days, passed to ``numpy.busdaycalendar``,</span>
+<span class="sd">        only used when custom frequency strings are passed.  The default</span>
+<span class="sd">        value None is equivalent to &#39;Mon Tue Wed Thu Fri&#39;.</span>
+<span class="sd">    holidays : list-like or None, default None</span>
+<span class="sd">        Dates to exclude from the set of valid business days, passed to</span>
+<span class="sd">        ``numpy.busdaycalendar``, only used when custom frequency strings</span>
+<span class="sd">        are passed.</span>
+<span class="sd">    inclusive : {&quot;both&quot;, &quot;neither&quot;, &quot;left&quot;, &quot;right&quot;}, default &quot;both&quot;</span>
+<span class="sd">        Include boundaries; Whether to set each bound as closed or open.</span>
+
+<span class="sd">        .. versionadded:: 1.4.0</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        For compatibility. Has no effect on the result.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DatetimeIndex</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Of the four parameters: ``start``, ``end``, ``periods``, and ``freq``,</span>
+<span class="sd">    exactly three must be specified.  Specifying ``freq`` is a requirement</span>
+<span class="sd">    for ``bdate_range``.  Use ``date_range`` if specifying ``freq`` is not</span>
+<span class="sd">    desired.</span>
+
+<span class="sd">    To learn more about the frequency strings, please see `this link</span>
+<span class="sd">    &lt;https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases&gt;`__.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Note how the two weekend days are skipped in the result.</span>
+
+<span class="sd">    &gt;&gt;&gt; pd.bdate_range(start=&#39;1/1/2018&#39;, end=&#39;1/08/2018&#39;)</span>
+<span class="sd">    DatetimeIndex([&#39;2018-01-01&#39;, &#39;2018-01-02&#39;, &#39;2018-01-03&#39;, &#39;2018-01-04&#39;,</span>
+<span class="sd">               &#39;2018-01-05&#39;, &#39;2018-01-08&#39;],</span>
+<span class="sd">              dtype=&#39;datetime64[ns]&#39;, freq=&#39;B&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">freq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;freq must be specified for bdate_range; use date_range instead&quot;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">freq</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">weekmask</span> <span class="o">=</span> <span class="n">weekmask</span> <span class="ow">or</span> <span class="s2">&quot;Mon Tue Wed Thu Fri&quot;</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">prefix_mapping</span><span class="p">[</span><span class="n">freq</span><span class="p">](</span><span class="n">holidays</span><span class="o">=</span><span class="n">holidays</span><span class="p">,</span> <span class="n">weekmask</span><span class="o">=</span><span class="n">weekmask</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;invalid custom frequency string: </span><span class="si">{</span><span class="n">freq</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+    <span class="k">elif</span> <span class="n">holidays</span> <span class="ow">or</span> <span class="n">weekmask</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;a custom frequency string is required when holidays or &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;weekmask are passed, got frequency </span><span class="si">{</span><span class="n">freq</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">date_range</span><span class="p">(</span>
+        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+        <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span>
+        <span class="n">periods</span><span class="o">=</span><span class="n">periods</span><span class="p">,</span>
+        <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span>
+        <span class="n">tz</span><span class="o">=</span><span class="n">tz</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">inclusive</span><span class="o">=</span><span class="n">inclusive</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_time_to_micros</span><span class="p">(</span><span class="n">time_obj</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">time_obj</span><span class="o">.</span><span class="n">hour</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="mi">60</span> <span class="o">*</span> <span class="n">time_obj</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">time_obj</span><span class="o">.</span><span class="n">second</span>
+    <span class="k">return</span> <span class="mi">1_000_000</span> <span class="o">*</span> <span class="n">seconds</span> <span class="o">+</span> <span class="n">time_obj</span><span class="o">.</span><span class="n">microsecond</span>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alberto Alamia
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, GreenBubble Authors.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -44,6 +44,7 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
+    <script src="_static/open_external_links.js?v=f36fe4ad"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="References" href="references.html" />
@@ -139,7 +140,7 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">GreenBubble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_snakemake.html">Running the Model with Snakemake</a></li>
 </ul>
@@ -147,6 +148,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="network_model.html">Network Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="technologies.html">Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="economics.html">Economic Assumptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methods.html">Analytical Methods</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Configuration Reference</span></p>
@@ -157,6 +159,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="guide_demands.html">Setting Product Demands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_stochastic.html">Stochastic Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_temporal_resolution.html">Temporal Resolution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_rolling_horizon.html">Rolling Horizon Dispatch Optimisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide_economic_analysis.html">Economic Analysis of Results</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -438,6 +442,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.parse_unassigned_constraint_blocks"><code class="docutils literal notranslate"><span class="pre">parse_unassigned_constraint_blocks()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.prepare_costs"><code class="docutils literal notranslate"><span class="pre">prepare_costs()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs"><code class="docutils literal notranslate"><span class="pre">read_costs()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs_at_year"><code class="docutils literal notranslate"><span class="pre">read_costs_at_year()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.resample_network"><code class="docutils literal notranslate"><span class="pre">resample_network()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_network_comp_allocation"><code class="docutils literal notranslate"><span class="pre">save_network_comp_allocation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.zero_small_capacities"><code class="docutils literal notranslate"><span class="pre">zero_small_capacities()</span></code></a></li>
@@ -583,7 +589,7 @@ and the project location coordinates.  EU locations write to
 
 <dl class="py data">
 <dt class="sig sig-object py" id="scripts.parameters.eia_api">
-<span class="sig-prename descclassname"><span class="pre">scripts.parameters.</span></span><span class="sig-name descname"><span class="pre">eia_api</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'s9EmSaPvrh8X3CYL5GjsznA3JfaueLUWjmNvXGlB'</span></span><a class="headerlink" href="#scripts.parameters.eia_api" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scripts.parameters.</span></span><span class="sig-name descname"><span class="pre">eia_api</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#scripts.parameters.eia_api" title="Link to this definition">#</a></dt>
 <dd><p>Build snapshots Time Period in DK</p>
 </dd></dl>
 
@@ -1344,7 +1350,7 @@ dataframes_as: ‘records’ | ‘split’ | ‘columns’ | ‘csv’ | ‘summ
 
 <dl class="py function">
 <dt class="sig sig-object py" id="scripts.helpers.file_name_network">
-<span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">file_name_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">En_price_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stochastic</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/helpers.html#file_name_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.file_name_network" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">file_name_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">En_price_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stochastic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/helpers.html#file_name_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.file_name_network" title="Link to this definition">#</a></dt>
 <dd><p>Create a descriptive filename for a PyPSA network based on:
 - enabled technologies (n_flags)
 - CO2 price
@@ -1484,6 +1490,55 @@ specify one (default <code class="docutils literal notranslate"><span class="pre
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.helpers.read_costs_at_year">
+<span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">read_costs_at_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">USD_to_EUR</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">discount_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.3)"><span class="pre">pandas.DataFrame</span></a></span></span><a class="reference internal" href="_modules/scripts/helpers.html#read_costs_at_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.read_costs_at_year" title="Link to this definition">#</a></dt>
+<dd><p>Return a tech-costs DataFrame interpolated to <em>year</em>.</p>
+<p>Loads the two adjacent CSVs from <em>costs_dir</em> (e.g. <code class="docutils literal notranslate"><span class="pre">costs_2025.csv</span></code> and
+<code class="docutils literal notranslate"><span class="pre">costs_2030.csv</span></code> for year 2027) and linearly interpolates the <code class="docutils literal notranslate"><span class="pre">investment</span></code>
+and <code class="docutils literal notranslate"><span class="pre">FOM</span></code> columns.  Results are cached so repeated calls for the same year
+do not re-read disk.  Years before 2020 are capped to 2020; years after 2050
+are capped to 2050.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Construction year for which to retrieve investment costs.</p></li>
+<li><p><strong>costs_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Directory containing <code class="docutils literal notranslate"><span class="pre">costs_{year}.csv</span></code> files.</p></li>
+<li><p><strong>tech_inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Project-specific technology overrides (see <a class="reference internal" href="#scripts.helpers.read_costs" title="scripts.helpers.read_costs"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_costs()</span></code></a>).</p></li>
+<li><p><strong>USD_to_EUR</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Exchange rate for USD-denominated entries.</p></li>
+<li><p><strong>discount_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Project real discount rate (used when filling missing values).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Wide-format cost table (same layout as <a class="reference internal" href="#scripts.helpers.read_costs" title="scripts.helpers.read_costs"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_costs()</span></code></a>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.helpers.resample_network">
+<span class="sig-prename descclassname"><span class="pre">scripts.helpers.</span></span><span class="sig-name descname"><span class="pre">resample_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/helpers.html#resample_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.helpers.resample_network" title="Link to this definition">#</a></dt>
+<dd><p>Resample all time-varying network data to a coarser time resolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> – PyPSA network with hourly snapshots.</p></li>
+<li><p><strong>resolution</strong> – pandas offset string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;4h&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;8h&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;24h&quot;</span></code>.
+<code class="docutils literal notranslate"><span class="pre">False</span></code> / <code class="docutils literal notranslate"><span class="pre">None</span></code> → return <code class="docutils literal notranslate"><span class="pre">n</span></code> unchanged.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The same network object with snapshots and time-series resampled in-place.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.14)"><strong>NotImplementedError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">resolution</span></code> implies sub-hourly intervals.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1752,7 +1807,7 @@ product_bus : str  — the collection bus for this product; used as bus1 in plan
 
 <dl class="py function">
 <dt class="sig sig-object py" id="scripts.prepare_network.build_network">
-<span class="sig-prename descclassname"><span class="pre">scripts.prepare_network.</span></span><span class="sig-name descname"><span class="pre">build_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tech_costs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/prepare_network.html#build_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.prepare_network.build_network" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scripts.prepare_network.</span></span><span class="sig-name descname"><span class="pre">build_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tech_costs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costs_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">USD_to_EUR</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/prepare_network.html#build_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.prepare_network.build_network" title="Link to this definition">#</a></dt>
 <dd><p>Build the full PyPSA network (Greenbubble) using all modular plant functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1762,6 +1817,11 @@ product_bus : str  — the collection bus for this product; used as bus1 in plan
 <li><p><strong>n_flags</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Boolean flags controlling which subsystems are active</p></li>
 <li><p><strong>n_options</strong> (<em>pd.DataFrame</em>) – Configuration options (market toggles, cost factors, etc.)</p></li>
 <li><p><strong>p</strong> (<em>module</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><em>object</em></a>) – Parameter container with time series, constants, etc.</p></li>
+<li><p><strong>costs_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Directory containing <code class="docutils literal notranslate"><span class="pre">costs_{year}.csv</span></code> files for all TECH_DATA_YEARS.
+Required to look up investment costs at <code class="docutils literal notranslate"><span class="pre">construction_year</span></code> for <a href="#id3"><span class="problematic" id="id4">EXI_</span></a> components.
+If None, falls back to investment costs at <code class="docutils literal notranslate"><span class="pre">year_investment</span></code>.</p></li>
+<li><p><strong>USD_to_EUR</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>) – Exchange rate used when loading construction-year costs.</p></li>
+<li><p><strong>tech_inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> | </em><em>None</em>) – Project-specific technology overrides used when loading construction-year costs.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2120,6 +2180,8 @@ Works even if folder_data has a trailing slash.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.parse_unassigned_constraint_blocks"><code class="docutils literal notranslate"><span class="pre">parse_unassigned_constraint_blocks()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.prepare_costs"><code class="docutils literal notranslate"><span class="pre">prepare_costs()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs"><code class="docutils literal notranslate"><span class="pre">read_costs()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.read_costs_at_year"><code class="docutils literal notranslate"><span class="pre">read_costs_at_year()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.resample_network"><code class="docutils literal notranslate"><span class="pre">resample_network()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_config"><code class="docutils literal notranslate"><span class="pre">save_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.save_network_comp_allocation"><code class="docutils literal notranslate"><span class="pre">save_network_comp_allocation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#scripts.helpers.zero_small_capacities"><code class="docutils literal notranslate"><span class="pre">zero_small_capacities()</span></code></a></li>

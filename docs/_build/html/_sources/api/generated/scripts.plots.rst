@@ -14,6 +14,8 @@
       component_capex_long_per_scenario
       component_opex_long_per_scenario
       compute_lcop_by_technology
+      compute_lcop_kkt_by_technology
+      compute_srmc_by_technology
       export_shadow_prices_mean_csv
       extract_deterministic_from_stochastic
       figure_heatmaps_compare_scenarios

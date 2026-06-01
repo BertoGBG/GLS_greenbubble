@@ -9,6 +9,10 @@ GreenBubble Documentation
    :width: 100%
    :align: center
 
+GreenBubble is built on `PyPSA <https://docs.pypsa.org/latest/>`_ —
+an open-source toolbox for simulating and optimising modern power and
+multi-energy systems.
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting Started
@@ -23,6 +27,7 @@ GreenBubble Documentation
 
    network_model
    technologies
+   economics
    methods
 
 .. toctree::
@@ -37,6 +42,8 @@ GreenBubble Documentation
    :caption: How-to Guides
 
    guide_demands
+   guide_stochastic
+   guide_temporal_resolution
    guide_rolling_horizon
    guide_economic_analysis
    examples
