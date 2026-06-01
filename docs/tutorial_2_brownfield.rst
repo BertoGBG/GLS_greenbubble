@@ -105,21 +105,36 @@ The common result figures (capacities, operation, shadow prices, system cost)
 are described once in :ref:`guide-outputs` and read as in
 :ref:`tutorial-1-greenfield`; below we focus only on **what brownfield changes**.
 
-.. admonition:: Interpretation [REVIEW]
-   :class: caution
+.. figure:: /_static/tutorials/tut2_Opt_capacities_SP_vs_WS.png
+   :width: 95%
 
-   *Draft — verify before publishing.*
+   Optimal capacities. The ``EXI_`` assets (biogas 30 MW CH₄, wind 52 MW, solar
+   30 MW) are fixed; everything else is sized around them.
 
-   - With wind+solar+biogas fixed, the electrolyser and biomethanation are sized
-     to the **residual** opportunity: compare built electrolyser/biomethanation
-     capacity here vs the greenfield Tutorial 1.
-   - District heating gives waste heat a value (30 EUR/MWh); expect more heat
-     recovered and a small profit improvement — check the heat balance plot and
-     the DH revenue line in ``csv/``.
-   - Ramp + min-load on the electrolyser smooth its operation against the
-     wind/solar profile; inspect the electrolyser dispatch time series.
-   - ``rif`` only changes the *annual cost* of the fixed assets, not the dispatch
-     — it shifts the LCOP, not the operation. *(Fill exact numbers from the run.)*
+.. admonition:: The key change — biomethanation now competes [REVIEW]
+   :class: important
+
+   *Draft reading — verify before publishing.*
+
+   - **Both biomethane routes are built**: biogas upgrading **22 MW** *and*
+     biomethanation **11.3 MW** (vs Tutorial 1, where biomethanation never built).
+     The reason is the **fixed, cheap existing renewables**: 52 MW wind + 30 MW
+     solar power a 25 MW electrolyser whose H₂ makes the extra biomethanation CH₄
+     worthwhile at ``price_bioCH4 = 200``. So the brownfield context is exactly
+     where the upgrading-vs-biomethanation *competition* turns into a *mix*.
+   - **District heating** adds value to waste heat: the DH bus clears at
+     ≈ 20 €/MWh and methanolisation/biomethanation export heat to it.
+   - Profit ≈ **€61.8M/y** (higher than the greenfield price case — the existing
+     assets are largely sunk, so only their residual cost is charged).
+   - ``rif`` (here 0.3 for all existing assets) only changes the *annual capital
+     charge* on those assets — it shifts the LCOP/profit, not the dispatch.
+
+The process constraints above shape *how* these units run: inspect the
+electrolyser dispatch (``CF_operation_by_scenario.png``) to see ramping and
+minimum-load behaviour against the wind/solar profile.
+
+.. figure:: /_static/tutorials/tut2_CF_operation_by_scenario.png
+   :width: 95%
 
 ---
 

@@ -19,8 +19,8 @@ targets:
   demand_H2:   0            # NO hydrogen sold to the grid in this tutorial
   demand_CH4:  350000
   demand_meoh:   9000
-  price_H2:      100
-  price_bioCH4:  'NG_based'
+  price_H2:      120
+  price_bioCH4:  200
   price_meoh:    200
   CH4_demand_mode:  flat
   MeOH_demand_mode: flat
