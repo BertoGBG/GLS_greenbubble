@@ -22,8 +22,8 @@ targets:
   demand_CH4:  350000
   demand_meoh:   9000
   # sale prices for ALL THREE products
-  price_H2:      100        # EUR/MWh
-  price_bioCH4:  'NG_based' # natural-gas-linked price (NG price + CO2 tax)
+  price_H2:      120        # EUR/MWh
+  price_bioCH4:  200        # EUR/MWh
   price_meoh:    200        # EUR/MWh
   # demand shapes still control the temporal profile of the cap
   CH4_demand_mode:  flat

@@ -74,20 +74,32 @@ The output network name gets an ``_RH`` suffix, and plots land in
 3 · Interpret the results
 -------------------------
 
+The RH plot suite (in ``plots_rh/``) adds two **PF-vs-RH comparison** figures.
+
+.. figure:: /_static/tutorials/tut3_PF_vs_RH_total_cost.png
+   :width: 95%
+
+   Net total cost (revenue makes it negative): perfect foresight vs rolling horizon.
+
 .. admonition:: Interpretation [REVIEW]
-   :class: caution
+   :class: important
 
    *Draft — verify before publishing.*
 
-   - Compare the **rolling-horizon dispatch** against the perfect-foresight
-     dispatch from Tutorial 2 (the RH plot suite includes a PF-vs-RH comparison).
-     RH cost is typically **slightly higher** because it cannot see beyond the
-     window — quantify the gap from the comparison CSV.
-   - Storage behaviour is the clearest difference: with a 168 h window the model
-     can shift energy within a week but not across seasons — look at the storage
-     state-of-charge trace.
-   - Verify production targets/prices are still met window-by-window.
-     *(Fill exact PF-vs-RH cost delta from the run.)*
+   - The fixed plant is **almost as profitable under rolling horizon as under
+     perfect foresight**: PF net ≈ **−€49.9M/y** vs RH ≈ **−€50.2M/y** (recall
+     negative = profit), a difference well under 1 %. The lesson: with only
+     short-duration storage on site, a **168 h window already captures essentially
+     all the usable flexibility** — foresight beyond a week adds little here.
+   - *(Caveat for the author [REVIEW]: RH shows a hair more profit than PF, which
+     a windowed solve should not — perfect foresight is the upper bound. This is
+     most likely a storage end-of-window boundary effect in the comparison; worth a
+     quick check before publishing.)*
+   - Storage behaviour is the clearest mechanism: a 168 h window can shift energy
+     within a week but not across seasons — see the operation heat maps.
+
+.. figure:: /_static/tutorials/tut3_CF_operation_by_scenario.png
+   :width: 95%
 
 ---
 

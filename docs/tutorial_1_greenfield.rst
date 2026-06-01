@@ -129,69 +129,125 @@ annualised capital cost, so price mode reads out the **break-even** of each rout
 
 ---
 
-3 · Interpret the results
--------------------------
+3 · Interpret the results (demand case)
+---------------------------------------
 
 This is the most detailed walkthrough in the series — later tutorials only
 revisit what changes. For the full map of the output folder and every file see
-:ref:`guide-outputs`; here we read six figures in order. *(Figures from the 3 h
-reference runs will be embedded; filenames are given so you can open them now.)*
+:ref:`guide-outputs`. We read six figures in order; the numbers quoted are from
+the 3 h reference run.
 
-**(a) Inputs — the drivers** (``inputs_LDC_by_scenario.png``,
-:ref:`outputs-inputs`). Start here: the load-duration curves of electricity
-price, gas price and wind/solar capacity factors set the economics. How often
-electricity is cheap determines how attractive electrolysis (and hence
-biomethanation) is.
+**(a) Inputs — the drivers** (:ref:`outputs-inputs`). Load-duration curves of
+electricity price, gas price and wind/solar capacity factors set the economics:
+how often electricity is cheap decides how attractive electrolysis is.
 
-**(b) Capacities — what gets built** (``Opt_capacities_SP_vs_WS.png``,
-:ref:`outputs-capacities`; data in ``optimal_capacities.csv``). The headline
-result: which technologies are built and how large.
+.. figure:: /_static/tutorials/tut1_demand_inputs_LDC_by_scenario.png
+   :width: 95%
 
-.. admonition:: Biomethanation vs biogas upgrading [REVIEW]
-   :class: caution
+**(b) Capacities — what gets built** (:ref:`outputs-capacities`; data in
+``optimal_capacities.csv``). The model builds **120 MW onshore wind** (CF 0.31),
+**36 MW solar** (CF 0.12), a **52 MW electrolyser** (CF 0.68) and meets the
+350 GWh/y biomethane demand with **40 MW of biogas upgrading running flat-out**
+(CF 1.0).
 
-   *Draft reading — verify before publishing.* Both routes deliver pipeline-grade
-   biomethane: **upgrading** strips CO₂ from biogas (cheap, but discards carbon →
-   lower CH₄ yield); **biomethanation** reacts that CO₂ with green H₂ into
-   *extra* CH₄ (higher yield, but needs an electrolyser + electricity).
+.. figure:: /_static/tutorials/tut1_demand_Opt_capacities_SP_vs_WS.png
+   :width: 95%
 
-   - **Demand case**: ``demand_CH4`` is met by the cheapest mix under a 10-year
-     payback — expect upgrading to cover the base and biomethanation to grow only
-     while cheap renewable H₂ makes the extra CH₄ competitive. Read the split off
-     the capacities plot.
-   - **Price case**: biomethanation appears only if ``price_bioCH4`` (NG-linked)
-     clears the H₂ + reactor cost; otherwise production sits below the cap — the
-     produced-vs-cap gap is the economic signal.
+.. admonition:: Biomethanation vs biogas upgrading — the key result [REVIEW]
+   :class: important
 
-**(c) Operation — how it runs** (``CF_operation_by_scenario.png`` and
-``Operation_heat_maps_by_scenario.png``, :ref:`outputs-operation`). Capacity
-factors show how hard each asset works; the heat maps show *when* (daily/seasonal
-patterns) — e.g. the electrolyser tracking cheap-power hours.
+   *Draft reading — please verify the economic explanation before publishing.*
 
-**(d) Internal-market shadow prices** (``shd_prices_mean_bar.png``,
-:ref:`outputs-shadow-prices`; data in ``shadow_prices_mean.csv``). The
-energy-weighted marginal value of H₂, CO₂, heat, … inside the plant — what each
-internal carrier is "worth". The time-resolved view is
-``srmc_by_technology.png`` (:ref:`outputs-srmc`): where a technology's
-short-run marginal cost sits below the product shadow price, it runs (*in merit*).
+   Both routes deliver pipeline-grade biomethane: **upgrading** strips CO₂ out of
+   biogas (cheap, but the carbon is vented → lower CH₄ yield); **biomethanation**
+   reacts that CO₂ with green H₂ into *extra* CH₄ (higher yield, but needs an
+   electrolyser + electricity).
 
-**(e) Total system cost** (``TSC_by_carrier.png``, :ref:`outputs-costs`; data in
-``TSC_by_carrier.csv``). The annualised CAPEX + OPEX split by technology — the
-clearest view of where the money goes and whether the 10-year payback binds.
-``lcop_by_technology.csv`` gives the levelised cost per product.
+   **At default costs with a 10-year payback, biogas upgrading wins outright:
+   biomethanation is not built at all** (0 MW). The electrolyser that *is* built
+   (52 MW) serves the H₂-to-grid and methanol demands, not methanation. So the
+   "competition" resolves decisively in favour of upgrading here — the extra CH₄
+   from biomethanation does not pay back the H₂ + reactor cost within 10 years.
 
-.. admonition:: Reading the economics [REVIEW]
-   :class: caution
+   *(Teaching note / decision for the author: if the goal is to show biomethanation
+   actually competing, we could lower the H₂ cost, raise the biomethane price, or
+   constrain upgrading. Flagging whether to keep "upgrading dominates" as the
+   lesson or tune the case.)*
 
-   *Draft.* H₂-to-grid (``price_H2 = 100``) and methanol (``price_meoh = 200``)
-   are produced only while profitable — check whether either hits its cap in (b),
-   and confirm in (e)/LCOP that built technologies clear their annualised cost
-   within 10 years. *(Fill exact capacities, LCOP and TSC from the runs.)*
+**(c) Operation — how it runs** (:ref:`outputs-operation`). Capacity factors show
+how hard each asset works; the heat maps show *when*. The electrolyser runs at
+CF 0.68, following cheap-power hours; upgrading runs constantly (CF 1.0).
+
+.. figure:: /_static/tutorials/tut1_demand_CF_operation_by_scenario.png
+   :width: 95%
+
+.. figure:: /_static/tutorials/tut1_demand_Operation_heat_maps_by_scenario.png
+   :width: 95%
+
+**(d) Internal-market shadow prices** (:ref:`outputs-shadow-prices`; data in
+``shadow_prices_mean.csv``). In demand mode these are the **marginal cost of
+meeting each product's demand**: H₂ ≈ **129 €/MWh**, biomethane ≈ **119 €/MWh**,
+methanol ≈ **171 €/MWh**; internal CO₂ ≈ 2.7 €/MWh and medium-temperature heat
+≈ 17 €/MWh. The time-resolved ``srmc_by_technology.png`` (:ref:`outputs-srmc`)
+shows which units are *in merit* hour by hour.
+
+.. figure:: /_static/tutorials/tut1_demand_shd_prices_mean_bar.png
+   :width: 80%
+
+**(e) Total system cost** (:ref:`outputs-costs`; data in ``TSC_by_carrier.csv``).
+Net total **≈ 69 M€/y**, dominated by the **biogas plant (≈ 36 M€/y)**, then
+**wind (≈ 16)**, **electrolysis (≈ 12)**, **upgrading (≈ 3.9)** and **solar
+(≈ 2.3)**, with a small grid-export revenue. In demand mode each product's LCOP
+equals its delivery shadow price (bioCH₄ 119, H₂ 129, MeOH 171 €/MWh) — the
+zero-profit signature of a cost-minimising solve.
+
+.. figure:: /_static/tutorials/tut1_demand_TSC_by_carrier.png
+   :width: 95%
 
 **(f) The data behind it all.** Every number above aggregates
 ``csv/full_component_table.csv`` (:ref:`outputs-full-table`) — one row per
-component with capacity, capacity factor, costs, production and revenue. Open it
-when a figure raises a question.
+component with capacity, capacity factor, costs, production and revenue.
+
+---
+
+4 · The price case
+------------------
+
+Re-run with the price-driven config (Section 2): prices ``price_H2 = 120``,
+``price_bioCH4 = 200``, ``price_meoh = 200`` €/MWh. Now production is optional and
+driven by profitability — the model maximises **profit** (objective ≈ **−€28.4M/y**,
+i.e. €28.4M annual profit).
+
+.. figure:: /_static/tutorials/tut1_price_Opt_capacities_SP_vs_WS.png
+   :width: 95%
+
+.. admonition:: Price-case results [REVIEW]
+   :class: important
+
+   *Draft reading — verify the economic explanation before publishing.* Compare
+   each product's price against its break-even LCOP from the demand case:
+
+   - **Biomethane (price 200 ≫ LCOP 119)** — the big winner: produced up to its
+     cap (350 GWh/y) entirely via **biogas upgrading (40 MW, flat)**. Even at this
+     high price **biomethanation is still not built** — upgrading remains the
+     cheaper way to make each MWh of CH₄, so the profit-maximiser never needs the
+     more expensive route.
+   - **Methanol (price 200 > LCOP 173)** — produced at its full cap (9 GWh/y); a
+     small electrolyser (3.3 MW), wind (12.5 MW) and solar (5.2 MW) are built
+     essentially *to feed methanol*.
+   - **H₂ to grid (price 120 < LCOP 124)** — *not* profitable, so almost none is
+     sold (13 of 200 GWh): the electrolyser is sized for methanol's H₂ need, not
+     for grid sales. This is the clearest "price reveals break-even" signal —
+     drop ``price_H2`` below ~124 and H₂-to-grid disappears.
+
+   *(So vs the demand case: the same upgrading-dominated CH₄ supply, but H₂-to-grid
+   collapses because its price doesn't clear — the value of price mode.)*
+
+.. figure:: /_static/tutorials/tut1_price_TSC_by_carrier.png
+   :width: 95%
+
+The cost-by-carrier plot now shows **revenue bars** (the products sold) against
+the technology costs; the net is a profit rather than a cost.
 
 ---
 

@@ -21,8 +21,8 @@ targets:
   demand_H2:   0
   demand_CH4:  350000
   demand_meoh:   9000
-  price_H2:      100
-  price_bioCH4:  'NG_based'
+  price_H2:      120
+  price_bioCH4:  200
   price_meoh:    200
   CH4_demand_mode:  flat
   MeOH_demand_mode: flat
@@ -33,4 +33,4 @@ rolling_horizon:
   overlap:       72            # overlap between consecutive windows (h)
   rh_year:      2024
   # [REVIEW] point this at the *_OPT.nc produced by Tutorial 2:
-  network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_100_MeOH_200_CH4_0_2024_El_0.1_DET_3h_tut2_brownfield/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_100_MeOH_200_CH4_0_2024_El_0.1_DET_3h_tut2_brownfield_OPT.nc'
+  network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_120_MeOH_200_CH4_200_2024_El_0.1_DET_3h_tut2_brownfield/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_120_MeOH_200_CH4_200_2024_El_0.1_DET_3h_tut2_brownfield_OPT.nc'

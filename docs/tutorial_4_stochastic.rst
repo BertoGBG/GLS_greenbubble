@@ -73,19 +73,36 @@ The output folder uses the ``STC`` token instead of ``DET``.
 3 · Interpret the results
 -------------------------
 
+.. figure:: /_static/tutorials/tut4_Opt_capacities_SP_vs_WS.png
+   :width: 95%
+
+   The single shared (stochastic-program) investment, sized for all three years.
+
 .. admonition:: Interpretation [REVIEW]
-   :class: caution
+   :class: important
 
-   *Draft — verify before publishing.*
+   *Draft reading — verify before publishing.*
 
-   - The stochastic design is a **hedge**: compare its built capacities against
-     the three single-year (deterministic) optima — it usually sits between them,
-     trading a little cost in any one year for robustness across all.
-   - Inspect the **per-scenario dispatch**: the same plant runs differently in
-     each year, revealing which assets are stressed in which conditions.
-   - (Optional) set ``EVPI: true`` to quantify the **Expected Value of Perfect
-     Information** — the cost of not knowing the future. *(Fill the EVPI value and
-     capacity comparison from the run.)*
+   - **Expected profit ≈ €17.7M/y** across 2023/2024/2025 — far below the
+     single-year **2024** brownfield result (≈ €61.8M/y in :ref:`tutorial-2-brownfield`).
+     2024 is an unusually profitable year; averaging in the leaner 2023/2025
+     scenarios pulls the expectation down. This is exactly why optimising on one
+     good year is misleading.
+   - The stochastic design is a **hedge**: it keeps the cheap, always-useful
+     **biogas upgrading (28 MW)** but under-builds the electricity-dependent
+     capacity whose value swings between years — **electrolyser 4.3 MW and
+     biomethanation 1.6 MW**, versus 25 MW and 11.3 MW in the (rosy) single-year
+     2024 design. It invests boldly only where the payoff is robust across
+     scenarios.
+   - Inspect the **per-scenario dispatch** (``CF_operation_by_scenario.png``): the
+     same plant runs differently each year, revealing which assets are stressed in
+     which conditions.
+   - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with perfect
+     foresight and quantify the **Expected Value of Perfect Information** — the
+     annual value of knowing next year's prices in advance.
+
+.. figure:: /_static/tutorials/tut4_CF_operation_by_scenario.png
+   :width: 95%
 
 ---
 
