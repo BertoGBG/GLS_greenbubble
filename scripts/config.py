@@ -174,6 +174,27 @@ rolling_horizon = {
 if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:
     raise ValueError("rolling_horizon.network_path must be set when rolling_horizon.enabled is true.")
 
+# ---------------- Near-optimal space (MGA) config ----------------
+
+_mga = _cfg.get("mga", {}) or {}
+_mga_rob = _mga.get("robustness", {}) or {}
+mga = {
+    "enabled":            bool(_mga.get("enabled", False)),
+    "network_path":       (_mga.get("network_path") or "").strip(),
+    "dimensions":         list(_mga.get("dimensions", []) or []),
+    "slack":              float(_mga.get("slack", 0.05)),
+    "n_directions":       int(_mga.get("n_directions", 0)),
+    "direction_sampling": str(_mga.get("direction_sampling", "halton")),
+    "max_parallel":       int(_mga.get("max_parallel", 1)),
+    "seed":               (None if _mga.get("seed", None) in (None, "", "null")
+                           else int(_mga.get("seed"))),
+    "robustness": {
+        "enabled":    bool(_mga_rob.get("enabled", False)),
+        "years":      dict(_mga_rob.get("years", {}) or {}),
+        "cost_bound": str(_mga_rob.get("cost_bound", "max")),
+    },
+}
+
 # ---------------- Plotting/Export config ----------------
 
 plot_cfg = plt_config["plotting"]

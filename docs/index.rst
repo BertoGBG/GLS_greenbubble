@@ -56,6 +56,7 @@ multi-energy systems.
    guide_temporal_resolution
    guide_rolling_horizon
    guide_outputs
+   guide_near_optimal
    guide_economic_analysis
    examples
 

@@ -202,6 +202,13 @@ automatically disabled when ``stochastic: false``.
    years from ``config.default.yaml`` will not be merged in. All three dicts
    must share the same year keys.
 
+.. warning::
+
+   Stochastic mode requires a pure LP without ramp limits: set every
+   ``ramp limit up`` / ``ramp limit down`` to ``null`` in ``n_config.yaml``
+   (a value such as ``1`` still builds the constraint and crashes), and keep
+   ``committable: false``. See :ref:`guide-stochastic` → *Limitations*.
+
 See also :ref:`guide-stochastic` for required n_config settings (ramp limits,
 unit commitment) and limitations.
 
@@ -286,6 +293,40 @@ time-varying inputs (prices, capacity factors) with data from that year.
 
 See :ref:`guide-rolling-horizon` for the full workflow, cross-year analysis,
 committable dispatch, and cost comparison outputs.
+
+.. _config-mga:
+
+mga
+^^^
+
+Near-optimal space exploration via Modelling to Generate Alternatives (MGA).
+Runs after the network is solved; never alters the normal solve.
+
+.. code-block:: yaml
+
+   mga:
+     enabled:      false
+     network_path: ''            # '' = current-config network; or path to a pre-solved *_OPT.nc
+     dimensions:   [onwind, solar, electrolysis, methanolisation, battery]
+     slack:        0.05          # cost budget = c_opt + slack·|c_opt|
+     n_directions: 40            # 0 ⇒ Tier 1 (ranges) only, no hull
+     direction_sampling: halton  # halton | evenly_spaced | random
+     max_parallel: 4
+     seed:         42
+     robustness:
+       enabled: false
+       years:                    # mirrors stochastic.scenarios structure
+         '2023': {CO2_cost: 100, CO2_cost_ref_year: 0}
+         '2024': {CO2_cost: 100, CO2_cost_ref_year: 0}
+       cost_bound: max           # 'max' (single bound c* = max_i c_opt(i)) | 'per_year'
+
+``dimensions`` is a subset of the technologies that are *extendable* in your
+network (auto-derived; an empty list uses all available). Unknown names raise an
+error listing the available dimensions. ``slack`` is sign-correct for both
+positive (demand-mode) and negative (price-mode) optima.
+
+See :ref:`guide-near-optimal` for the full workflow and the three exploration
+tiers (ranges, hull, robustness).
 
 .. _config-optimization:
 

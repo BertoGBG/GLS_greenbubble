@@ -1393,6 +1393,34 @@ def export_constraint_duals(n, patterns, outpath, compress=True):
     return ds
 
 
+def apply_custom_constraints(n, m, n_flags=None, re_alpha=None):
+    """Add all GreenBubble custom constraints to a freshly created linopy model `m`.
+
+    Single source of truth for the model's custom constraints so that every code
+    path that builds a model — the normal solve (:func:`build_model_solve_network`)
+    and the MGA / near-optimal exploration driver — injects the *identical* set.
+    The MGA helpers in PyPSA build their own model and do not run any
+    ``extra_functionality`` hook, so without this the near-optimal space would be
+    computed against a different (looser) feasible region than the cost-optimal solve.
+
+    ``n_flags`` / ``re_alpha`` default to the live config (module-level ``n_flags`` /
+    ``max_RE_to_grid``). The NOS driver passes the values from the *explored network's*
+    ``config_run.yaml`` instead, so exploring a network solved under a different config
+    re-applies the RE-to-grid constraint with that network's own parameters.
+    """
+    add_max_RE_sales_constraint(
+        n,
+        m,
+        bus="El3",
+        export_pattern="El3_to",
+        export_bus="ElDK1 sell bus",
+        alpha=max_RE_to_grid if re_alpha is None else float(re_alpha),
+        name="El3_export_fraction_of_total_RE",
+        n_flags=n_flags if n_flags is not None else globals()["n_flags"],
+        include_agents=["biogas", "electrolysis", "methanation", "meoh"],  # NOTE DO NOT INCLUDE CENTRAL HEAT
+    )
+
+
 def build_model_solve_network(
     n,
     results_folder,
@@ -1467,6 +1495,39 @@ def build_model_solve_network(
             f"Disable one or the other.\n"
         )
 
+    # ---- ramp-limit + stochastic guard ----
+    # PyPSA (verified 1.0.7 .. 1.2.2) cannot build ramp_limit constraints on a
+    # scenario network — create_model() dies with a cryptic xarray multi-index /
+    # broadcast error. Detect it up front and raise an actionable message instead.
+    if stochastic["stochastic"]:
+        _ramp_offenders = []
+        for _comp in ("generators", "links", "storage_units"):
+            _df = getattr(n, _comp, None)
+            if _df is None or _df.empty:
+                continue
+            _cols = [c for c in ("ramp_limit_up", "ramp_limit_down") if c in _df.columns]
+            if not _cols:
+                continue
+            _mask = _df[_cols].notna().any(axis=1)
+            if _mask.any():
+                _names = _df.index[_mask]
+                # collapse (scenario, name) MultiIndex to plain names for the message
+                if isinstance(_names, pd.MultiIndex) and "name" in (_names.names or []):
+                    _names = _names.get_level_values("name").unique()
+                _ramp_offenders += [(f"{_comp}", n_) for n_ in list(_names)[:20]]
+        if _ramp_offenders:
+            raise ValueError(
+                "\n⚠️  RAMP LIMITS + STOCHASTIC NOT SUPPORTED\n"
+                f"   Components with ramp_limit_up/down set: {_ramp_offenders}\n"
+                "   PyPSA (1.0.7 through 1.2.2) cannot build ramp-limit constraints on a\n"
+                "   stochastic (set_scenarios) network — create_model() raises a cryptic\n"
+                "   xarray multi-index/broadcast error.\n"
+                "   → Set `ramp limit up: null` and `ramp limit down: null` in n_config.yaml\n"
+                "     for these technologies when running stochastic (a value such as 1 still\n"
+                "     builds the constraint), OR disable stochastic in config.yaml.\n"
+                "   See docs: guide_stochastic → Limitations."
+            )
+
     try:
         m = n.optimize.create_model()
         print("Model variables:", list(m.variables))
@@ -1484,17 +1545,7 @@ def build_model_solve_network(
 
     # ----  custom constraints  ----
 
-    add_max_RE_sales_constraint(
-        n,
-        m,
-        bus="El3",
-        export_pattern="El3_to",
-        export_bus="ElDK1 sell bus",
-        alpha=max_RE_to_grid,
-        name="El3_export_fraction_of_total_RE",
-        n_flags=n_flags,
-        include_agents=["biogas", "electrolysis", "methanation", "meoh"],  # NOTE DO NOT INCLUDE CENTRAL HEAT
-    )
+    apply_custom_constraints(n, m, n_flags=n_flags)
 
     add_custom_constraints_stores(n, m, n_config=n_config)
 

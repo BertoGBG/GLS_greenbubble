@@ -127,3 +127,25 @@ rolling_horizon:
   overlap:       72   # hours
   network_path: ''    # REQUIRED when enabled
   rh_year:      2024
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-mga
+mga:
+  enabled:      false
+  network_path: ''
+  # subset (~4-5) of auto-available technology names; [] = use all available dimensions
+  dimensions:   [] # example: [onwind, solar, electrolysis, methanolisation, battery]
+  slack:        0.05          # near-optimal budget: c.x <= c_opt + slack*|c_opt|
+  # Tier 2 (near-optimal hull). n_directions: 0 runs Tier 1 (per-tech min/max ranges) only.
+  n_directions: 40
+  direction_sampling: halton  # halton | evenly_spaced | random
+  max_parallel: 4
+  seed:         42
+  # Tier 3 (robustness): intersect per-year near-optimal spaces, take the Chebyshev centre.
+  # `years` mirrors the stochastic.scenarios structure (weather/energy year + CO2 cost).
+  robustness:
+    enabled: false
+    years:
+      '2023': {CO2_cost: 100, CO2_cost_ref_year: 0}
+      '2024': {CO2_cost: 100, CO2_cost_ref_year: 0}
+      '2025': {CO2_cost: 100, CO2_cost_ref_year: 0}
+    cost_bound: max           # 'max' = single bound c* = max_i c_opt(i) (Grochowicz eq. 9) | 'per_year'

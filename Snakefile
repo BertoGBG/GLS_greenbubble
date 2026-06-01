@@ -83,6 +83,9 @@ else:
 
 _rh_cfg    = config.get("rolling_horizon", {}) or {}
 RH_ENABLED = bool(_rh_cfg.get("enabled", False))
+
+_mga_cfg    = config.get("mga", {}) or {}
+MGA_ENABLED = bool(_mga_cfg.get("enabled", False))
 _rh_year_raw = _rh_cfg.get("rh_year", None)
 RH_YEAR    = int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else YEAR
 
@@ -92,6 +95,21 @@ if RH_ENABLED:
 
 if RH_ENABLED and RH_YEAR != YEAR:
     PREPROCESS_YEARS = sorted(set(list(PREPROCESS_YEARS) + [str(RH_YEAR)]))
+
+# ---------------------------------------------------------------------------
+# Near-optimal (MGA) target resolution.
+#   mga.network_path == ''  -> explore the current-config network (coupled to
+#                              solve_network); outputs under {OUTDIR}/{NETWORK}/nos.
+#   mga.network_path == path-> explore that pre-solved *_OPT.nc (no re-solve);
+#                              outputs in a `nos/` folder next to it.
+# ---------------------------------------------------------------------------
+MGA_NETWORK_PATH = (_mga_cfg.get("network_path") or "").strip()
+if MGA_NETWORK_PATH:
+    NOS_NET_IN  = MGA_NETWORK_PATH
+    NOS_OUT_DIR = str(Path(MGA_NETWORK_PATH).parent.parent / "nos")
+else:
+    NOS_NET_IN  = f"{OUTDIR}/{RUN_DIR}/networks/{NETWORK}_OPT.nc"
+    NOS_OUT_DIR = f"{OUTDIR}/{RUN_DIR}/nos"
 
 onstart:
     # Check whether any technology-data CSV has changed since the last download.
@@ -132,7 +150,13 @@ include: "rules/rolling_horizon.smk"
 
 rule all:
     input:
-        f"{OUTDIR}/{RUN_DIR}/plots_rh/{NETWORK}.done"
-        if RH_ENABLED else
-        f"{OUTDIR}/{RUN_DIR}/plots/{NETWORK}.done",
+        [
+            f"{OUTDIR}/{RUN_DIR}/plots_rh/{NETWORK}.done"
+            if RH_ENABLED else
+            f"{OUTDIR}/{RUN_DIR}/plots/{NETWORK}.done"
+        ]
+        + (
+            [f"{NOS_OUT_DIR}/.done"]
+            if MGA_ENABLED and not RH_ENABLED else []
+        ),
     default_target: True
