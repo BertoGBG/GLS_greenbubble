@@ -43,6 +43,7 @@ multi-energy systems.
 
    tutorial_1_greenfield
    tutorial_2_brownfield
+   tutorial_2b_brownfield_heat
    tutorial_3_rolling_horizon
    tutorial_4_stochastic
 

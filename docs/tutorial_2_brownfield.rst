@@ -79,11 +79,13 @@ Existing assets (:download:`n_config.yaml <../tutorials/2_brownfield/n_config.ya
    onwind:   {initial capacity: 52, expansion: false, construction_year: 2020, remaining_investment_fraction: 0.5}
    solar:    {initial capacity: 30, expansion: false, construction_year: 2020, remaining_investment_fraction: 0.5}
    options:
-     DH: {enable: true, price: 30}   # district heating off-take
+     DH: {enable: true, price: 30}   # district heating off-take at 30 €/MWh
 
 The biogas plant (30 MW CH₄), wind (52 MW) and solar (30 MW) are now **fixed**;
 the optimiser sizes only the remaining expandable technologies (electrolyser,
-biomethanation, storage, …) around them.
+biomethanation, storage, …) around them. Each existing asset carries a different
+residual fraction: the biogas plant recovers 30 % of its original investment,
+wind and solar 50 %.
 
 ---
 
@@ -105,36 +107,46 @@ The common result figures (capacities, operation, shadow prices, system cost)
 are described once in :ref:`guide-outputs` and read as in
 :ref:`tutorial-1-greenfield`; below we focus only on **what brownfield changes**.
 
+---
+
+4 · Interpret the results
+-------------------------
+
 .. figure:: /_static/tutorials/tut2_Opt_capacities_SP_vs_WS.png
    :width: 95%
 
-   Optimal capacities. The ``EXI_`` assets (biogas 30 MW CH₄, wind 52 MW, solar
-   30 MW) are fixed; everything else is sized around them.
+   Optimal capacities. The ``EXI_`` assets (biogas 62.85 t/h DM ≈ 30 MW CH₄,
+   wind 52 MW, solar 30 MW) are fixed; everything else is sized around them.
 
-.. admonition:: The key change — biomethanation now competes [REVIEW]
+.. admonition:: The key change — biomethanation now competes
    :class: important
 
-   *Draft reading — verify before publishing.*
-
-   - **Both biomethane routes are built**: biogas upgrading **22 MW** *and*
-     biomethanation **11.3 MW** (vs Tutorial 1, where biomethanation never built).
+   - **Both biomethane routes are built**: biogas upgrading **22.9 MW** *and*
+     biomethanation **11.1 MW** (vs Tutorial 1, where biomethanation never built).
      The reason is the **fixed, cheap existing renewables**: 52 MW wind + 30 MW
-     solar power a 25 MW electrolyser whose H₂ makes the extra biomethanation CH₄
-     worthwhile at ``price_bioCH4 = 200``. So the brownfield context is exactly
+     solar power a 24.5 MW new electrolyser whose H₂ makes extra biomethanation CH₄
+     worthwhile at ``price_bioCH4 = 200 €/MWh``. The brownfield context is exactly
      where the upgrading-vs-biomethanation *competition* turns into a *mix*.
-   - **District heating** adds value to waste heat: the DH bus clears at
-     ≈ 20 €/MWh and methanolisation/biomethanation export heat to it.
-   - Profit ≈ **€61.8M/y** (higher than the greenfield price case — the existing
-     assets are largely sunk, so only their residual cost is charged).
-   - ``rif`` (here 0.3 for all existing assets) only changes the *annual capital
-     charge* on those assets — it shifts the LCOP/profit, not the dispatch.
+   - **District heating** adds value to waste heat: the DH bus shadow price clears
+     at ≈ 25 €/MWh and biomethanation/heat-exchanger links export heat to it.
+   - Net profit ≈ **€48.7 M/y** — the existing assets are largely sunk, so only
+     their residual CAPEX is charged rather than a full greenfield investment.
+   - Electrolyser CF ≈ 0.68, biomethanation CF ≈ 0.92 (running near-constantly
+     wherever H₂ is available), upgrading CF ≈ 0.80.
 
-The process constraints above shape *how* these units run: inspect the
-electrolyser dispatch (``CF_operation_by_scenario.png``) to see ramping and
-minimum-load behaviour against the wind/solar profile.
+The process constraints shape *how* units run: the electrolyser ramps with cheap
+renewable hours (visible in the operation LDCs below), while upgrading acts as
+baseload because CO₂ supply is continuous.
 
 .. figure:: /_static/tutorials/tut2_CF_operation_by_scenario.png
    :width: 95%
+
+.. figure:: /_static/tutorials/tut2_shd_prices_mean_bar.png
+   :width: 80%
+
+   Energy-weighted mean shadow prices at internal carrier buses. Biomethane
+   collection sits at ≈ 200 €/MWh (at its price target), H₂ collection
+   ≈ 134 €/MWh, and heat buses at 23–25 €/MWh.
 
 ---
 
@@ -144,9 +156,11 @@ What you learned
 - Greenfield vs brownfield vs mixed, and independent **residual cost** per asset.
 - The **committable / ramping / min-load** process constraints and when each applies.
 - Adding a heat off-take (district heating) as a revenue stream.
+- Why brownfield context changes the biomethanation break-even.
 
 Next: :ref:`tutorial-3-rolling-horizon` re-dispatches this fixed plant hour-by-hour
-over the full year.
+over the full year using rolling horizon, and :ref:`tutorial-2b-brownfield-heat`
+extends the brownfield plant with a larger electrolysis and heat-network integration.
 
 .. seealso::
 

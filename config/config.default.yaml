@@ -93,23 +93,23 @@ optimization:
 stochastic:
   stochastic: false
   scenarios:
-    '2023': 0.30
-    '2024': 0.35
-    '2025': 0.35
+    '2022': 0.10
+    '2023': 0.40
+    '2024': 0.50
   CO2_cost_s:
+    '2022': 100
     '2023': 100
     '2024': 100
-    '2025': 100
   CO2_cost_ref_year_s:
+    '2022': 0
     '2023': 0
     '2024': 0
-    '2025': 0
   EVPI: true
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-clustering
 clustering:
   temporal:
-    resolution: false   # false | "4h" | "8h" | "24h"
+    resolution: 6h   # false | "4h" | "8h" | "24h"
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rolling-horizon
 rolling_horizon:

@@ -100,8 +100,15 @@ marginal value of that energy/material inside the plant.
   per internal bus (the headline "what is H₂/CO₂/heat worth here" number).
 - **CSV** ``shadow_prices_mean.csv`` — columns ``bus``,
   ``energy weighted mean (EUR/MWh)`` (the data behind that bar chart).
-- **Plot** ``shd_prices_ldc.png`` / ``shd_prices_violin.png`` — the full
-  *distribution* of each shadow price over time (duration curve and violin).
+- **Plot** ``shd_prices_ldc.png`` — duration curve of each shadow price (how
+  often it is high or low).
+- **Plot** ``shd_prices_violin.png`` — violin showing the full snapshot
+  distribution. The **crimson line** is the *snapshot-weighted* mean (the plain
+  arithmetic average over all hours); the **blue diamond** is the
+  *energy-weighted* mean (same value as ``shadow_prices_mean.csv``/ the bar
+  chart, weighted by the energy flowing through the bus). The gap between the two
+  is informative: if the energy-weighted mean sits above the snapshot mean, the
+  carrier is worth most precisely when it flows most.
 
 ---
 
