@@ -23,10 +23,14 @@ Clone the repository::
 Create the environment
 ----------------------
 
-The recommended way to install all dependencies is via **conda-lock**, which provides
-fully reproducible environments across platforms.
+Two installation paths are available.
 
-**1. Add conda-forge and enable strict priority** (once per machine)::
+**Option A — Locked environment (recommended)**
+
+Locked environments pin every package to an exact version, guaranteeing
+reproducibility across machines.
+
+**1. Add conda-forge and enable strict channel priority** (once per machine)::
 
    conda config --add channels conda-forge
    conda config --set channel_priority strict
@@ -34,8 +38,9 @@ fully reproducible environments across platforms.
 **2. Install conda-lock** (once)::
 
    conda install -n base -c conda-forge conda-lock
+   conda update conda
 
-**3. Create the environment for your platform**::
+**3. Create the environment from the lock file for your platform**::
 
    # macOS Apple Silicon
    conda-lock install -n greenbubble-pypsa107 --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
@@ -53,6 +58,19 @@ fully reproducible environments across platforms.
 
    conda activate greenbubble-pypsa107
 
+
+**Option B — Unlocked environment (fallback)**
+
+Use this if the lock files are unavailable or the locked install fails on your
+platform. The unlocked file specifies minimum versions and lets conda resolve
+the exact packages itself, so results may vary slightly between machines.
+
+::
+
+   conda config --add channels conda-forge
+   conda config --set channel_priority strict
+   conda env create -f envs/environment-pypsa-1.0.7.yaml
+   conda activate greenbubble-pypsa107
 
 Solver setup
 ------------

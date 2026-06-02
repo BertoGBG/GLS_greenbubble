@@ -1,0 +1,34 @@
+# =====================================================================
+# Tutorial 1.1 — Greenfield, DEMAND-driven
+# =====================================================================
+# Copy BOTH files in this folder into config/ before running:
+#   cp tutorials/1_greenfield_demand/config.yaml   config/config.yaml
+#   cp tutorials/1_greenfield_demand/n_config.yaml config/n_config.yaml
+# then:  snakemake --cores 4
+#
+# Only the keys that differ from config/config.default.yaml are listed here
+# (they are deep-merged on top of the defaults at runtime).
+# ---------------------------------------------------------------------
+
+run_name: tut1_demand
+
+# Economics: require every investment to pay back within 10 years
+# (annuity computed over 10 y instead of each technology's technical lifetime).
+amortization_period: 10
+
+# Demand-driven: annual production targets are hard constraints.
+targets:
+  driver: demand
+  demand_H2:   200000      # MWh_H2/y  delivered to the grid (default product)
+  demand_CH4:  350000      # MWh_CH4/y biomethane
+  demand_meoh:   9000      # MWh_MeOH/y methanol
+  # Demonstrate two demand SHAPES (not all four):
+  CH4_demand_mode:  flat       # constant hourly demand
+  H2_demand_mode:   flat
+  MeOH_demand_mode: bins_flat  # a few constant steps (bins) over the year
+  MeOH_bins:        4
+
+# Coarse temporal resolution so the tutorial solves quickly with HiGHS.
+clustering:
+  temporal:
+    resolution: 3h

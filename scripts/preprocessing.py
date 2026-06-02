@@ -786,7 +786,7 @@ def retrive_entsoe_el_demand(API_KEY, start_day, end_day, country_code):
     return ts
 
 
-def pre_processing_energy_data(year: int = None) -> None:
+def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None) -> None:
     """Download and preprocess all energy-market inputs for one price year.
 
     Fetches data from the Energi Data Service API (electricity spot prices,
@@ -804,6 +804,11 @@ def pre_processing_energy_data(year: int = None) -> None:
     year : int, optional
         Energy-price year to preprocess (e.g. ``2023``).  Defaults to
         ``En_price_year`` from ``config.yaml`` when *None*.
+    dh_peak_capacity : float, optional
+        Reference peak DH demand (MW) used to scale the temperature-based
+        capacity-factor profile.  Overrides ``parameters.DH_Skive_Capacity``
+        when provided; read from ``n_config.default.yaml → options.DH.peak
+        capacity`` by the Snakemake wrapper.
 
     Returns
     -------
@@ -1030,7 +1035,7 @@ def pre_processing_energy_data(year: int = None) -> None:
         hours_in_2019 = hours_in_2019.drop(hours_in_2019[-1])
         DH_Skive = DH_Skive.set_index("DateTime").reindex(hours_in_2019)
 
-        DH_max_capacity = p.DH_Skive_Capacity  # MW
+        DH_max_capacity = dh_peak_capacity if dh_peak_capacity is not None else p.DH_Skive_Capacity  # MW
         # source: https://ens.dk/sites/ens.dk/files/Statistik/denmarks_heat_supply_2020_eng.pdf
         DH_Tamb_min = p.DH_Tamb_min  # minimum outdoor temp --> maximum Capacity Factor
         DH_Tamb_max = p.DH_Tamb_max  # maximum outdoor temp--> capacity Factor = 0

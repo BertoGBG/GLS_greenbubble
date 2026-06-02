@@ -30,18 +30,18 @@ dependencies:
 
   # GIS stack (atlite dependencies)
   - atlite>=0.4
-  - geopandas
-  - rasterio
-  - shapely
-  - pyproj
-  - cartopy
+  - geopandas>=0.14
+  - rasterio>=1.3
+  - shapely>=2
+  - pyproj>=3.6
+  - cartopy>=0.22
   - proj-data
   - rtree
 
   # performance / plotting
   - numexpr
   - bottleneck
-  - dask
+  - dask>=2025.10
   - matplotlib>=3.10
   - seaborn>=0.13
   - graphviz
@@ -59,3 +59,4 @@ dependencies:
   - pip:
       - entsoe-py
       - pypsatopo
+      - snakemake>=9

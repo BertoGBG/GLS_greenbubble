@@ -182,7 +182,7 @@ solar:
 
 TES concrete: # capacity in MW of output power. Energy capacity as capacity * max hours
   <<: *base
-  max hours : 10
+  max hours : 8
   efficiency store : 0.95
   efficiency dispatch : 0.95
   standing loss: 0.02 # % of total energy  per hour
@@ -210,18 +210,18 @@ options:
 
   DH:
     enable: false
-    price : 30 # €/MWh
-    load multiplier : 1 # keeps the load profile but multiplies the demand to represent new locations
+    price : 70 # €/MWh
+    peak capacity : 60  # MW — reference peak demand used to scale the DH profile in preprocessing
 
   moist biomass market:
     enable: false
     max capacity: 20000 # (MWh/y) max limit  if biochar credits['expansion'] : true
-    price : 43 # €/MWh
+    price : 40 # €/MWh
 
   pellets market:
     enable: true
     max capacity: .inf # (MWh/y) max limit if biochar credits['expansion'] : true
-    price : 45 # €/MWh
+    price : 60 # €/MWh
 
   symbiosis El transformer:
     expansion: true

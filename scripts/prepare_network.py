@@ -921,7 +921,7 @@ def add_external_grids(network, inputs_dict, n_options):
 
         if "DH load" not in network.loads.index:
             network.add("Load", "DH load", bus="DH grid")
-            network.loads_t.p_set["DH load"] = dh * n_options.at['DH','load multiplier']
+            network.loads_t.p_set["DH load"] = dh
 
         if "DH gen" not in network.generators.index:
             network.add("Generator",
@@ -1792,9 +1792,9 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
         """
         heat_bus = "Heat DH"
         bus_dict = {
-            "bus_list": ["Heat DH storage", heat_bus],
-            "carrier_list": ["Heat", "Heat"],
-            "unit_list": ["MW", "MW"],
+            "bus_list": [ heat_bus],
+            "carrier_list": ["Heat"],
+            "unit_list": [ "MW"],
 
         }
         n = add_requirements_buses(n, bus_dict, symbiosis_n)
@@ -1802,9 +1802,9 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
         # --- Storage tank ---
         n.add("StorageUnit",
               prefix + "TES DH storage",
-              bus="Heat DH storage",
+              bus=heat_bus,
               carrier=carrier,
-              max_hours=tech_costs.at["decentral water tank storage", "energy to power ratio"],
+              max_hours=n_config.at["TES DH", "max hours"],
               efficiency_store=tech_costs.at["water tank charger", "efficiency"],
               efficiency_dispatch=tech_costs.at["water tank discharger", "efficiency"],
               standing_loss=n_config.at["TES DH", "standing loss"],
