@@ -49,6 +49,26 @@ fully reproducible environments across platforms.
    # Windows
    conda-lock install -n greenbubble-pypsa107 --platform win-64 envs/locks/conda-lock-win-64.yml
 
+.. warning:: **For Windows users: enable long path support**
+
+   Snakemake encodes output file paths as long filenames in its metadata directory. Windows
+   enforces a 260-character path limit by default, which can cause ``[WinError 3]`` errors
+   during workflow execution. In that case you must enable long path support before running.
+
+   **Option A — PowerShell (run as Administrator):**
+
+   .. code-block:: powershell
+
+      Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+          -Name "LongPathsEnabled" -Value 1
+
+   **Option B — Registry editor:**
+
+   Navigate to ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem``
+   and set ``LongPathsEnabled`` to ``1``.
+
+   Restart your machine after applying either option.
+
 **4. Activate**::
 
    conda activate greenbubble-pypsa107
