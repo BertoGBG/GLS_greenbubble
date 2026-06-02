@@ -19,7 +19,7 @@ targets:
   demand_H2:   200000       # MWh/y
   demand_CH4:  350000       # MWh/y
   demand_meoh:   9000       # MWh/y
-  price_H2:      100        # €/MWh  (price mode only)
+  price_H2:      120        # €/MWh  (price mode only)
   price_bioCH4:  200        # €/MWh  (price mode only; or 'NG_based')
   price_meoh:    200        # €/MWh  (price mode only)
   CH4_demand_mode:    flat  # flat | profile | bins_flat | bins_profile
