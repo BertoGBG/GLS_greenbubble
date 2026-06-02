@@ -9,8 +9,8 @@ The project uses a conda-lock environment. Install once:
 ```bash
 conda config --add channels conda-forge && conda config --set channel_priority strict
 conda install -n base -c conda-forge conda-lock
-conda-lock install -n greenbubble_gls --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
-conda activate greenbubble_gls
+conda-lock install -n greenbubble-pypsa107 --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+conda activate greenbubble-pypsa107
 ```
 
 API tokens for data retrieval are loaded from `.env` (gitignored). Copy `.env.example` → `.env` and fill in your tokens before running the preprocessing steps.

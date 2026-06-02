@@ -786,6 +786,25 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
         c = str(carrier).lower()
         return any(k in c for k in ("wind", "solar", "pv"))
 
+    def _effectively_expandable(name, row, ext_col, min_col, max_col):
+        """Return False for EXI_ components pinned at p_nom_min=p_nom_max.
+
+        _force_exi_capex_into_objective sets p_nom_extendable=True on EXI_
+        components that carry a residual capital cost, so the cost enters
+        the PyPSA objective.  Those components are effectively fixed (the
+        optimizer has no capacity choice).  Exposing them as Expandable=True
+        in the CSV confuses users, so we report them as non-expandable.
+        """
+        if not bool(row.get(ext_col, False)):
+            return False
+        if not str(name).startswith("EXI_"):
+            return True
+        lo = float(row.get(min_col, 0.0))
+        hi = float(row.get(max_col, np.inf))
+        if np.isfinite(hi) and abs(lo - hi) < 1e-6:
+            return False
+        return True
+
     # ---- static slices ----
     gens_s   = _slice_static(n.generators)
     links_s  = _slice_static(n.links)
@@ -815,7 +834,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Carrier":                        carrier,
             "Reference inlet":                bus,
             "Unit":                           _unit_of_bus(bus),
-            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Expandable":                     _effectively_expandable(name, row, "p_nom_extendable", "p_nom_min", "p_nom_max"),
             "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
             "Optimal capacity":               round(cap, 3),
             "Optimal energy capacity":        np.nan,
@@ -849,7 +868,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Carrier":                        row.get("carrier", ""),
             "Reference inlet":                bus0,
             "Unit":                           _unit_of_bus(bus0),
-            "Expandable":                     bool(row.get("p_nom_extendable", False)),
+            "Expandable":                     _effectively_expandable(name, row, "p_nom_extendable", "p_nom_min", "p_nom_max"),
             "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
             "Optimal capacity":               round(cap, 3),
             "Optimal energy capacity":        np.nan,
@@ -883,7 +902,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Carrier":                        row.get("carrier", ""),
             "Reference inlet":                bus,
             "Unit":                           _unit_of_bus(bus),
-            "Expandable":                     bool(row.get("e_nom_extendable", False)),
+            "Expandable":                     _effectively_expandable(name, row, "e_nom_extendable", "e_nom_min", "e_nom_max"),
             "Initial capacity":               round(float(row.get("e_nom", 0.0)), 3),
             "Optimal capacity":               round(cap, 3),
             "Optimal energy capacity":        np.nan,
@@ -920,7 +939,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
                 "Carrier":                        row.get("carrier", ""),
                 "Reference inlet":                bus,
                 "Unit":                           _unit_of_bus(bus),
-                "Expandable":                     bool(row.get("p_nom_extendable", False)),
+                "Expandable":                     _effectively_expandable(name, row, "p_nom_extendable", "p_nom_min", "p_nom_max"),
                 "Initial capacity":               round(float(row.get("p_nom", 0.0)), 3),
                 "Optimal capacity":               round(cap, 3),
                 "Optimal energy capacity":        e_cap,
@@ -1200,7 +1219,7 @@ def _bus_net_injection(n, bus):
 
 
 def _energy_weighted_mean(n, bus_list):
-    """Return {bus: energy-weighted mean marginal price} for each bus.
+    """Return ({bus: energy-weighted mean price}, {bus: annual throughput MWh/y}).
 
     Weight = energy throughput at the bus each snapshot (q_t × snap_w_t), where
     q_t is the bus net injection. By the bus energy balance the total entering a
@@ -1208,11 +1227,15 @@ def _energy_weighted_mean(n, bus_list):
     exiting flow gives the same mean. Falls back to duration-weighted mean when a
     bus has no measurable flow. (Single source of truth for the energy-weighted
     mean used by both the CSV/bar chart and the violin overlay.)
+
+    The second return value is the annual throughput (denominator) in MWh/y,
+    useful as a second panel in the bar chart.
     """
     mp = n.buses_t.marginal_price
     snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
 
     means = {}
+    throughputs = {}
     for bus in bus_list:
         if isinstance(mp.columns, pd.MultiIndex):
             bus_cols = mp.loc[:, mp.columns.get_level_values("name") == bus]
@@ -1229,33 +1252,42 @@ def _energy_weighted_mean(n, bus_list):
         q    = _bus_net_injection(n, bus)
         e_w  = (q * snap_w).reindex(n.snapshots, fill_value=0.0)
         denom = float(e_w.sum())
+        throughputs[bus] = denom
 
         if denom > 1e-6:
             means[bus] = float((λ * e_w).sum() / denom)
         else:
             means[bus] = float((λ * snap_w).sum() / snap_w.sum())
 
-    return means
+    return means, throughputs
 
 
 def export_shadow_prices_mean_csv(n, bus_list, out_path):
-    """Save energy-weighted mean marginal price for each bus; returns {bus: mean} dict.
+    """Save energy-weighted mean marginal price and annual throughput for each bus.
 
+    Returns (means, throughputs) dicts — both keyed by bus name.
     Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
     Falls back to duration-weighted mean when a bus receives no measurable flow.
     """
-    means = _energy_weighted_mean(n, bus_list)
-    rows = [{"bus": b, "energy weighted mean (EUR/MWh)": round(v, 4)} for b, v in means.items()]
+    means, throughputs = _energy_weighted_mean(n, bus_list)
+    rows = [
+        {
+            "bus": b,
+            "energy weighted mean (EUR/MWh)": round(v, 4),
+            "annual throughput (MWh/y)": round(throughputs.get(b, 0.0), 1),
+        }
+        for b, v in means.items()
+    ]
 
     if rows:
         pd.DataFrame(rows).set_index("bus").to_csv(out_path)
         print(f"[shadow prices] energy-weighted mean prices saved → {out_path}")
 
-    return means
+    return means, throughputs
 
 
 def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (energy-weighted)",
-                                bus_filter=None):
+                                bus_filter=None, throughput=None):
     """Bar chart of energy-weighted mean marginal prices by bus.
 
     Parameters
@@ -1264,6 +1296,9 @@ def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (ener
     out_path : str or Path
     bus_filter : list[str] or None
         If given, only buses in this list are plotted (preserves order of bus_filter).
+    throughput : dict {bus: float} or None
+        Annual energy throughput at each bus (MWh/y), used for a second panel
+        below the shadow-price bars.  When provided, figure has two rows.
     """
     if not means:
         return
@@ -1274,26 +1309,67 @@ def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (ener
         buses = list(means.keys())
     values = [means[b] for b in buses]
 
-    fig, ax = plt.subplots(figsize=(max(6, 0.55 * len(buses)), 4.2))
+    has_throughput = throughput is not None and any(throughput.get(b, 0) > 0 for b in buses)
+    n_rows = 2 if has_throughput else 1
+    fig_h = 4.2 * n_rows
+    fig_w = max(6, 0.55 * len(buses))
+
+    fig, axes = plt.subplots(
+        n_rows, 1,
+        figsize=(fig_w, fig_h),
+        sharex=True,
+        constrained_layout=True,
+    )
+    if n_rows == 1:
+        axes = [axes]
+    ax = axes[0]
+
     bars = ax.bar(range(len(buses)), values, color="#2196f3", edgecolor="white", linewidth=0.5)
 
     # value labels on top of bars
+    span = max(abs(v) for v in values) if values else 1.0
     for bar, val in zip(bars, values):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + max(abs(v) for v in values) * 0.01,
+            bar.get_height() + span * 0.01,
             f"{val:.1f}",
             ha="center", va="bottom", fontsize=8,
         )
 
-    ax.set_xticks(range(len(buses)))
-    ax.set_xticklabels(buses, rotation=60, ha="right", fontsize=9)
     ax.set_ylabel("€/MWh")
     ax.set_title(title)
     ax.grid(axis="y", alpha=0.3)
     ax.axhline(0, color="black", linewidth=0.6)
 
-    plt.tight_layout()
+    if has_throughput:
+        ax2 = axes[1]
+        q_vals = [throughput.get(b, 0.0) for b in buses]
+        max_q = max(q_vals) if q_vals else 1.0
+        if max_q >= 1_000_000:
+            scale, unit = 1e-6, "TWh/y"
+        elif max_q >= 1_000:
+            scale, unit = 1e-3, "GWh/y"
+        else:
+            scale, unit = 1.0, "MWh/y"
+        q_scaled = [v * scale for v in q_vals]
+
+        bars2 = ax2.bar(range(len(buses)), q_scaled, color="#78909c", edgecolor="white", linewidth=0.5)
+        for bar, val in zip(bars2, q_scaled):
+            ax2.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + max(q_scaled) * 0.01,
+                f"{val:.1f}",
+                ha="center", va="bottom", fontsize=8,
+            )
+        ax2.set_xticks(range(len(buses)))
+        ax2.set_xticklabels(buses, rotation=60, ha="right", fontsize=9)
+        ax2.set_ylabel(f"Annual throughput\n({unit})")
+        ax2.grid(axis="y", alpha=0.3)
+        ax2.axhline(0, color="black", linewidth=0.6)
+    else:
+        ax.set_xticks(range(len(buses)))
+        ax.set_xticklabels(buses, rotation=60, ha="right", fontsize=9)
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
@@ -2002,12 +2078,16 @@ def build_capacity_compare_from_items(
                 rows.append(key)
                 meta[key] = {"label": label, "th": th}
 
-            # Auto-add energy capacity row for every StorageUnit power row
+            # Auto-add energy capacity row for every StorageUnit power row.
+            # Use a small fixed energy threshold (1e-3 MWh) rather than the
+            # power threshold: max_hours varies widely (e.g. 0.15h for TES DH
+            # vs 2h for battery), so a power-derived threshold would filter out
+            # short-duration stores whose power capacity already passed.
             if kind == "StorageUnit":
                 e_key = ("StorageUnit_E", nm)
                 if e_key not in meta:
                     rows.append(e_key)
-                    meta[e_key] = {"label": label + " [Energy]", "th": th}
+                    meta[e_key] = {"label": label + " [Energy]", "th": 1e-3}
 
     idx = pd.MultiIndex.from_tuples(rows, names=["kind", "name"])
     out = pd.DataFrame(index=idx)
@@ -2422,7 +2502,7 @@ def shadow_prices_violinplot_stoch(
     # by when energy flows" is visible. Computed from the unclipped data, so for
     # spiky carriers the marker may sit above the clipped violin body.
     ew_bus_labels = [lab for lab, isb in zip(labels, bus_flags) if isb]
-    ew_means = _energy_weighted_mean(n, ew_bus_labels) if ew_bus_labels else {}
+    ew_means, _ = _energy_weighted_mean(n, ew_bus_labels) if ew_bus_labels else ({}, {})
     ew_x, ew_y = [], []
     for i, (lab, isb) in enumerate(zip(labels, bus_flags), start=1):
         if isb and lab in ew_means:
@@ -3598,15 +3678,13 @@ def figure_heatmaps_compare_scenarios(
     # compute stochastic "expected pattern" series as weighted day×hour matrix
     def _heatmap_day_hour_weighted(values, weights, ax, vmin=0, vmax=1, title="", cmap="viridis", show_months=True):
         """
-        values, weights: pd.Series with DatetimeIndex aligned (any resolution).
+        values, weights: pd.Series with DatetimeIndex aligned (already upsampled per-scenario).
         Produces day×hour heatmap using weighted mean per (doy,hour).
-        Coarser-than-hourly data is upsampled to 1 h for display.
         """
         v = pd.to_numeric(values, errors="coerce")
         w = pd.to_numeric(weights, errors="coerce")
-        # upsample both series together before filtering
-        v = _upsample_to_hourly(v.dropna())
-        w = _upsample_to_hourly(w.dropna())
+        v = v.dropna()
+        w = w.dropna()
         m = np.isfinite(v) & np.isfinite(w) & (w > 0)
         v = v[m]
         w = w[m]
@@ -3705,6 +3783,10 @@ def figure_heatmaps_compare_scenarios(
                             continue
                         # Align snapshot weights to this series' index (should match n.snapshots)
                         w = snap_w.reindex(s.index).fillna(0.0) * prob
+                        # Upsample per-scenario before concat; concat would produce duplicate
+                        # timestamps which break resample() inside the heatmap helper.
+                        s = _upsample_to_hourly(s)
+                        w = _upsample_to_hourly(w)
                         all_v.append(s)
                         all_w.append(w)
 
@@ -4110,8 +4192,8 @@ def figure_heatmaps_compare_scenarios_actual(
     def _heatmap_day_hour_weighted_actual(values, weights, ax, norm, title="", cmap="viridis", show_months=True):
         v = pd.to_numeric(values, errors="coerce")
         w = pd.to_numeric(weights, errors="coerce")
-        v = _upsample_to_hourly(v.dropna())
-        w = _upsample_to_hourly(w.dropna())
+        v = v.dropna()
+        w = w.dropna()
         m = np.isfinite(v) & np.isfinite(w) & (w > 0)
         v = v[m]
         w = w[m]
@@ -4224,6 +4306,10 @@ def figure_heatmaps_compare_scenarios_actual(
                         if s is None or s.empty:
                             continue
                         w = snap_w.reindex(s.index).fillna(0.0) * prob
+                        # Upsample per-scenario before concat; concat produces duplicate
+                        # timestamps which break resample() inside the heatmap helper.
+                        s = _upsample_to_hourly(s)
+                        w = _upsample_to_hourly(w)
                         all_v.append(s)
                         all_w.append(w)
 
@@ -5335,9 +5421,12 @@ def run_plot_and_export(
             bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
 
         # CSV and bar chart use the same bus list
-        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
-        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
-                                    bus_filter=bus_list_bar)
+        e_means, e_throughputs = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(
+            e_means, plot_folder / "shd_prices_mean_bar.png",
+            bus_filter=bus_list_bar,
+            throughput=e_throughputs if driver == "price" else None,
+        )
 
         # Violin + LDC: same list, further filtered by capacity threshold
         bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)
@@ -5548,9 +5637,12 @@ def run_plot_operational(
             bus_list_bar = [b for b in bus_list_mp if "collection" not in b]
 
         # CSV and bar chart use the same bus list
-        e_means = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
-        plot_shadow_prices_mean_bar(e_means, plot_folder / "shd_prices_mean_bar.png",
-                                    bus_filter=bus_list_bar)
+        e_means, e_throughputs = export_shadow_prices_mean_csv(n, bus_list_bar, csv_folder / "shadow_prices_mean.csv")
+        plot_shadow_prices_mean_bar(
+            e_means, plot_folder / "shd_prices_mean_bar.png",
+            bus_filter=bus_list_bar,
+            throughput=e_throughputs if driver == "price" else None,
+        )
 
         # Violin + LDC: same list, further filtered by capacity threshold
         bus_list_f = filter_bus_list_mp(n, bus_list_bar, link_th=1e-3)

@@ -56,3 +56,4 @@ dependencies:
   - pip:
       - entsoe-py
       - pypsatopo
+      - snakemake>=9

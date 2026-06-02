@@ -26,7 +26,7 @@ targets:
   CH4_demand_mode:  flat
   MeOH_demand_mode: flat
 
-# Standard 3-scenario setup (years inherited from config.default.yaml: 2023/24/25).
+# Standard 3-scenario setup (years 2022/2023/2024, weights 10%/40%/50%, inherited from config.default.yaml).
 stochastic:
   stochastic: true
   EVPI: false

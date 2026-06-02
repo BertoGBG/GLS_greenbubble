@@ -13,7 +13,7 @@ stochastic optimisation** finds *one* set of investment decisions
 while **dispatch adapts per scenario** (*wait-and-see*).
 
 We reuse the **brownfield** plant from :ref:`tutorial-2-brownfield` and optimise
-it across three weather/CO₂ scenario years at once.
+it across three weather/market scenario years (2022 / 2023 / 2024) at once.
 
 .. contents:: On this page
    :local:
@@ -50,7 +50,7 @@ on its own prices and renewable profiles). Scenarios carry a probability
    stochastic:
      stochastic: true
      EVPI: false
-     # scenarios 2023/2024/2025 inherited from config.default.yaml
+     # scenarios 2022/2023/2024 and their weights are set in config.default.yaml
 
 .. admonition:: Stochastic needs a pure LP — two required changes
    :class: caution
@@ -67,42 +67,85 @@ on its own prices and renewable profiles). Scenarios carry a probability
       :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
+Temporal resolution is set to ``3h`` to keep solve time manageable.
 
 ---
 
 3 · Interpret the results
 -------------------------
 
+The three scenarios span very different market conditions (2022 = energy-crisis
+year; 2023/2024 = post-crisis normalization), with weights 10 % / 40 % / 50 %:
+
+.. figure:: /_static/tutorials/tut4_inputs_LDC_by_scenario.png
+   :width: 95%
+
+   Input duration curves for all three scenarios. **2022** was the European
+   energy-crisis year — elevated NG and biomethane prices made this by far the
+   most profitable scenario (€30.0 M/y net). **2023** and **2024** show post-crisis
+   normalization (€5.4 M/y and €3.5 M/y). The 90 % combined weight on 2023/2024
+   governs the final design.
+
+The optimizer finds **one** investment that is robust across all three years:
+
 .. figure:: /_static/tutorials/tut4_Opt_capacities_SP_vs_WS.png
    :width: 95%
 
-   The single shared (stochastic-program) investment, sized for all three years.
+   Stochastic-programme (SP) optimal investments: **electrolyser 4.7 MW**,
+   **biogas upgrading 27.9 MW**, **biomethanation 1.8 MW**, battery 0.9 MWh.
+   Existing brownfield assets (52 MW wind, 30 MW solar, 62.85 t/h DM biogas
+   digester) carry over from Tutorial 2.
 
-.. admonition:: Interpretation [REVIEW]
-   :class: important
+The expected cost breakdown reveals which revenue streams justify the design:
 
-   *Draft reading — verify before publishing.*
+.. figure:: /_static/tutorials/tut4_TSC_by_carrier.png
+   :width: 95%
 
-   - **Expected profit ≈ €17.7M/y** across 2023/2024/2025 — far below the
-     single-year **2024** brownfield result (≈ €61.8M/y in :ref:`tutorial-2-brownfield`).
-     2024 is an unusually profitable year; averaging in the leaner 2023/2025
-     scenarios pulls the expectation down. This is exactly why optimising on one
-     good year is misleading.
-   - The stochastic design is a **hedge**: it keeps the cheap, always-useful
-     **biogas upgrading (28 MW)** but under-builds the electricity-dependent
-     capacity whose value swings between years — **electrolyser 4.3 MW and
-     biomethanation 1.6 MW**, versus 25 MW and 11.3 MW in the (rosy) single-year
-     2024 design. It invests boldly only where the payoff is robust across
-     scenarios.
-   - Inspect the **per-scenario dispatch** (``CF_operation_by_scenario.png``): the
-     same plant runs differently each year, revealing which assets are stressed in
-     which conditions.
-   - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with perfect
-     foresight and quantify the **Expected Value of Perfect Information** — the
-     annual value of knowing next year's prices in advance.
+   Expected total system cost (probability-weighted) by carrier/agent.
+   **Biomethane export (bioCH4)** dominates revenues at ≈ €18.1 M/y, followed
+   by district heating (€5.1 M/y) and methanol (€1.8 M/y). Fixed CAPEX
+   (€16.0 M/y, identical across scenarios) is largely the brownfield wind,
+   solar and biogas-digester assets. **Expected net profit: €6.9 M/y.**
+
+Shadow prices show the internal marginal value of each carrier:
+
+.. figure:: /_static/tutorials/tut4_shd_prices_mean_bar.png
+   :width: 95%
+
+   Energy-weighted mean shadow prices and annual throughput. Biomethane
+   collection (€14.3/MWh) is the marginal cost of routing additional biogas
+   to upgrading. The negative H₂ delivery price (−€12.1/MWh) reflects
+   hydrogen's role as a consumed intermediate in biomethanation rather than
+   a delivered product.
+
+The same fixed-capacity plant dispatches differently in each scenario:
 
 .. figure:: /_static/tutorials/tut4_CF_operation_by_scenario.png
    :width: 95%
+
+   Per-scenario utilization duration curves. Biogas upgrading runs near full
+   capacity year-round in all three scenarios. The small electrolyser (4.7 MW)
+   operates more intensively in 2022 (cheap/negative electricity hours) and
+   more selectively in 2023–2024.
+
+.. admonition:: Key results
+   :class: important
+
+   - **Expected net profit: €6.9 M/y**
+     (0.10 × €30.0 M + 0.40 × €5.4 M + 0.50 × €3.5 M). The 2022 energy-crisis
+     scenario is far more profitable but carries only 10 % weight; the design
+     is governed by 2023–2024 conditions.
+   - The stochastic design is a **hedge**: biogas upgrading (27.9 MW) is
+     built fully because it earns robust revenue in all three years. The
+     electricity-sensitive electrolyser (4.7 MW) is small — sized to exploit
+     cheap-electricity hours without over-betting on any single price environment.
+     Biomethanation is minimal (1.8 MW) for the same reason.
+   - The **same capacity** runs very differently across years: the electrolyser
+     is used more aggressively in 2022, more selectively in 2023–2024. This
+     wait-and-see dispatch flexibility is what makes the stochastic design viable.
+   - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with
+     perfect foresight and quantify the **Expected Value of Perfect
+     Information** — the annual value of knowing next year's market in advance.
 
 ---
 
@@ -112,7 +155,8 @@ What you learned
 - The **here-and-now vs wait-and-see** two-stage structure and expected-cost objective.
 - How to enable stochastic mode and the **pure-LP requirements** (no committable,
   null ramp limits).
-- Reading a stochastic design as a **robust hedge** across scenarios.
+- Reading a stochastic design as a **robust hedge** across scenarios, and
+  interpreting scenario-level profitability spreads.
 
 This is the final tutorial in the core sequence. For exploring *near-optimal*
 alternatives to a single design, see the near-optimal (MGA) guide.
