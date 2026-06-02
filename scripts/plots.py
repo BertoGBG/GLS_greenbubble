@@ -1179,21 +1179,40 @@ def _bus_net_injection(n, bus):
                         fill_value=0.0,
                     )
 
+    # Stores discharging (Store.p > 0 injects into its bus)
+    if not n.stores.empty and "bus" in n.stores.columns:
+        p_st_raw = getattr(n.stores_t, "p", None)
+        if p_st_raw is not None and not p_st_raw.empty:
+            if isinstance(p_st_raw.columns, pd.MultiIndex):
+                first_scen = p_st_raw.columns.get_level_values(0)[0]
+                p_st = p_st_raw[first_scen]
+            else:
+                p_st = p_st_raw
+            stores = _slice_df_first_scenario(n.stores)
+            for st in stores.index[stores["bus"] == bus]:
+                if st in p_st.columns:
+                    result = result.add(
+                        p_st[st].reindex(n.snapshots, fill_value=0.0).clip(lower=0),
+                        fill_value=0.0,
+                    )
+
     return result.clip(lower=0)
 
 
-def export_shadow_prices_mean_csv(n, bus_list, out_path):
-    """Save energy-weighted mean marginal price for each bus; returns {bus: mean} dict.
+def _energy_weighted_mean(n, bus_list):
+    """Return {bus: energy-weighted mean marginal price} for each bus.
 
-    Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
-    Falls back to duration-weighted mean when a bus receives no measurable flow.
+    Weight = energy throughput at the bus each snapshot (q_t × snap_w_t), where
+    q_t is the bus net injection. By the bus energy balance the total entering a
+    bus equals the total leaving it each snapshot, so weighting by injection or by
+    exiting flow gives the same mean. Falls back to duration-weighted mean when a
+    bus has no measurable flow. (Single source of truth for the energy-weighted
+    mean used by both the CSV/bar chart and the violin overlay.)
     """
     mp = n.buses_t.marginal_price
     snap_w = n.snapshot_weightings.get("objective", n.snapshot_weightings.iloc[:, 0])
 
-    rows = []
     means = {}
-
     for bus in bus_list:
         if isinstance(mp.columns, pd.MultiIndex):
             bus_cols = mp.loc[:, mp.columns.get_level_values("name") == bus]
@@ -1212,12 +1231,21 @@ def export_shadow_prices_mean_csv(n, bus_list, out_path):
         denom = float(e_w.sum())
 
         if denom > 1e-6:
-            wmean = float((λ * e_w).sum() / denom)
+            means[bus] = float((λ * e_w).sum() / denom)
         else:
-            wmean = float((λ * snap_w).sum() / snap_w.sum())
+            means[bus] = float((λ * snap_w).sum() / snap_w.sum())
 
-        means[bus] = wmean
-        rows.append({"bus": bus, "energy weighted mean (EUR/MWh)": round(wmean, 4)})
+    return means
+
+
+def export_shadow_prices_mean_csv(n, bus_list, out_path):
+    """Save energy-weighted mean marginal price for each bus; returns {bus: mean} dict.
+
+    Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
+    Falls back to duration-weighted mean when a bus receives no measurable flow.
+    """
+    means = _energy_weighted_mean(n, bus_list)
+    rows = [{"bus": b, "energy weighted mean (EUR/MWh)": round(v, 4)} for b, v in means.items()]
 
     if rows:
         pd.DataFrame(rows).set_index("bus").to_csv(out_path)
@@ -2299,7 +2327,8 @@ def shadow_prices_violinplot_stoch(
             return list(mc_links.xs(scen, level="scenario", axis=1).columns)
         return list(mc_links.columns)
 
-    items = []  # list of (label, sample_array)
+    items = []      # list of (label, sample_array)
+    bus_flags = []  # parallel: True if the item is a bus (gets energy-weighted marker)
 
     # ---- buses
     for bus in bus_list:
@@ -2325,6 +2354,7 @@ def shadow_prices_violinplot_stoch(
 
         if sample.size:
             items.append((bus, sample))
+            bus_flags.append(True)
 
 
     # ---- optional link marginal costs (selectors)
@@ -2358,6 +2388,7 @@ def shadow_prices_violinplot_stoch(
 
         if sample.size:
             items.append((label, sample))
+            bus_flags.append(False)
 
     if not items:
         raise ValueError("No data to plot: all requested buses/links were missing or empty.")
@@ -2383,6 +2414,31 @@ def shadow_prices_violinplot_stoch(
         ax.text(0.98, 0.98, scope_note, transform=ax.transAxes,
                 ha="right", va="top", fontsize=9,
                 bbox=dict(facecolor="white", alpha=0.6, edgecolor="none"))
+
+    # ---- overlay the energy-weighted mean (buses only) -----------------------
+    # The crimson violin mean is snapshot/scenario-weighted (the distribution
+    # mean). Add the energy-weighted mean (same value as shadow_prices_mean.csv /
+    # the bar chart) so the gap between "average over time" and "average weighted
+    # by when energy flows" is visible. Computed from the unclipped data, so for
+    # spiky carriers the marker may sit above the clipped violin body.
+    ew_bus_labels = [lab for lab, isb in zip(labels, bus_flags) if isb]
+    ew_means = _energy_weighted_mean(n, ew_bus_labels) if ew_bus_labels else {}
+    ew_x, ew_y = [], []
+    for i, (lab, isb) in enumerate(zip(labels, bus_flags), start=1):
+        if isb and lab in ew_means:
+            ew_x.append(i)
+            ew_y.append(ew_means[lab])
+    if ew_x:
+        ax.scatter(ew_x, ew_y, marker="D", s=34, color="royalblue",
+                   edgecolor="white", linewidth=0.6, zorder=6)
+
+    handles = [Line2D([0], [0], color=mean_color, lw=mean_linewidth,
+                      label="snapshot-weighted mean")]
+    if ew_x:
+        handles.append(Line2D([0], [0], marker="D", color="royalblue", lw=0,
+                              markeredgecolor="white",
+                              label="energy-weighted mean (buses)"))
+    ax.legend(handles=handles, loc="upper center", fontsize=8, framealpha=0.6)
 
     plt.tight_layout()
 
