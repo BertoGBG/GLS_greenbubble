@@ -875,16 +875,30 @@ def pre_processing_energy_data(year: int = None) -> None:
             dataset_name='DeclarationGridEmission',
             start_date=start_date,
             end_date=end_date,
-            sort_val="HourDK asc",
+            sort_val="HourUTC asc",
             price_area=p.price_area,
             limit=0
         )
-        CO2_emiss_El = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourDK', 'CO2PerkWh']].copy()
-
-        CO2_emiss_El['CO2PerkWh'] = CO2_emiss_El['CO2PerkWh'] / 1000  # t/MWh
-        CO2_emiss_El.rename(columns={'CO2PerkWh': 'CO2PerMWh'}, inplace=True)
-        CO2_emiss_El['HourDK'] = pd.to_datetime(CO2_emiss_El['HourDK'])
-        CO2_emiss_El.set_index('HourDK', inplace=True)
+        # Grid the series on a continuous UTC hourly axis — the SAME convention used
+        # by the electricity-price downloader — so CO2 stays row-aligned with prices
+        # (load_input_data pairs the two by position via set_axis). Any genuinely
+        # missing hour becomes NaN on the UTC grid and is filled by time
+        # interpolation (≈ mean of the neighbouring hours); the series is never
+        # shifted. The DST spring-forward skip / fall-back duplicate then appear only
+        # in the local-time (TimeDK) labels, exactly as for prices.
+        co = CO2emis_data.query("FuelAllocationMethod == '125%'")[['HourUTC', 'CO2PerkWh']].copy()
+        co['HourUTC'] = pd.to_datetime(co['HourUTC'])
+        co = (co.sort_values('HourUTC')
+                .drop_duplicates('HourUTC', keep='first')
+                .set_index('HourUTC')['CO2PerkWh'])
+        co = co.resample('1h').mean().interpolate('time').ffill().bfill()
+        co = co / 1000.0  # t/MWh
+        # DST-safe local time, identical convention to download_dk_day_ahead_prices
+        tdk = (co.index.tz_localize('UTC')
+                       .tz_convert('Europe/Copenhagen')
+                       .tz_localize(None))
+        CO2_emiss_El = pd.DataFrame({'CO2PerMWh': co.values}, index=tdk)
+        CO2_emiss_El.index.name = None
         CO2_emiss_El = remove_feb_29(CO2_emiss_El)
         CO2_emiss_El.to_csv(CO2emis_input_file, sep=';')
     else:
