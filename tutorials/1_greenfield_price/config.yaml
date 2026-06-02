@@ -1,0 +1,35 @@
+# =====================================================================
+# Tutorial 1.2 — Greenfield, PRICE-driven
+# =====================================================================
+#   cp tutorials/1_greenfield_price/config.yaml   config/config.yaml
+#   cp tutorials/1_greenfield_price/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Price mode: the demand_* values become UPPER BOUNDS on production, and the
+# model maximises profit = revenue (price x product sold) minus system cost.
+# A product is only produced when its price covers its marginal + annualised
+# capital cost — so price mode reveals the break-even economics directly.
+# ---------------------------------------------------------------------
+
+run_name: tut1_price
+
+amortization_period: 10
+
+targets:
+  driver: price
+  # production caps (upper bounds in price mode)
+  demand_H2:   200000
+  demand_CH4:  350000
+  demand_meoh:   9000
+  # sale prices for ALL THREE products
+  price_H2:      120        # EUR/MWh
+  price_bioCH4:  200        # EUR/MWh
+  price_meoh:    200        # EUR/MWh
+  # demand shapes still control the temporal profile of the cap
+  CH4_demand_mode:  flat
+  H2_demand_mode:   flat
+  MeOH_demand_mode: flat
+
+clustering:
+  temporal:
+    resolution: 3h

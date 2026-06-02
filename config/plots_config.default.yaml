@@ -165,26 +165,26 @@ plotting:
     - label: TES DH Power
       kind: StorageUnit
       field: p
-      selector: TES DH
+      selector: TES DH storage
 
     - label: TES DH SOC
       kind: StorageUnit
       field: state_of_charge
-      selector: TES DH
+      selector: TES DH storage
 
     - label: TES concrete Power
       kind: StorageUnit
       field: p
-      selector: TES concrete
+      selector: TES concrete storage
 
     - label: TES concrete SOC
       kind: StorageUnit
       field: state_of_charge
-      selector: TES concrete
+      selector: TES concrete storage
 
 # list of internal buses for plotting shadow prices
   bus_list_mp:
-    - El3 bus
+    - El3
     - H2 collection
     - H2 delivery
     - H2 distribution

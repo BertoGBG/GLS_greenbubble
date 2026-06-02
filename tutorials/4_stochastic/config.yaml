@@ -1,0 +1,36 @@
+# =====================================================================
+# Tutorial 4 — Two-stage stochastic (capacity here-and-now, dispatch wait-and-see)
+# =====================================================================
+#   cp tutorials/4_stochastic/config.yaml   config/config.yaml
+#   cp tutorials/4_stochastic/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Same brownfield plant as Tutorial 2, now optimised across several weather/CO2
+# scenarios at once: ONE set of investment decisions must work for ALL scenarios,
+# while dispatch adapts per scenario. The objective is the probability-weighted
+# expected cost.
+# ---------------------------------------------------------------------
+
+run_name: tut4_stoch
+
+amortization_period: 10
+
+targets:
+  driver: price
+  demand_H2:   0
+  demand_CH4:  350000
+  demand_meoh:   9000
+  price_H2:      120
+  price_bioCH4:  200
+  price_meoh:    200
+  CH4_demand_mode:  flat
+  MeOH_demand_mode: flat
+
+# Standard 3-scenario setup (years 2022/2023/2024, weights 10%/40%/50%, inherited from config.default.yaml).
+stochastic:
+  stochastic: true
+  EVPI: false
+
+clustering:
+  temporal:
+    resolution: 3h

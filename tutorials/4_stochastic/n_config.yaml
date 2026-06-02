@@ -1,0 +1,43 @@
+# =====================================================================
+# Tutorial 4 — brownfield + stochastic-compatibility settings
+# =====================================================================
+# Same brownfield assets as Tutorial 2, BUT stochastic mode requires a pure LP:
+#   * committable: false everywhere (no binary unit-commitment) — already the
+#     default for every technology here.
+#   * ramp limits set to null — PyPSA (<=1.2.2) cannot build ramp-limit
+#     constraints on a scenario network (see guide_stochastic -> Limitations).
+#     A value such as 1 STILL builds the constraint; only null disables it.
+# ---------------------------------------------------------------------
+
+# --- biomethanation only (catalytic methanation off) ---
+methanation biogas:  {expansion: false}
+methanation CO2:     {expansion: false}
+
+# --- brownfield existing assets with residual CAPEX ---
+biogas:
+  initial capacity: 30
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.3
+onwind:
+  initial capacity: 52
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.3
+solar:
+  initial capacity: 30
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.3
+
+# --- district heating off-take option ---
+options:
+  DH:
+    enable: true
+    price: 30
+
+# --- REQUIRED for stochastic: disable ramp limits (null, not a number) ---
+electrolysis:          {ramp limit up: null, ramp limit down: null}
+methanolisation:       {ramp limit up: null, ramp limit down: null}
+biomethanation biogas: {ramp limit up: null, ramp limit down: null}
+biomethanation CO2:    {ramp limit up: null, ramp limit down: null}

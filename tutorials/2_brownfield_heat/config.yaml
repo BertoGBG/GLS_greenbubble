@@ -1,0 +1,33 @@
+# =====================================================================
+# Tutorial 2 — Brownfield, DEMAND-driven with heat production, storage
+# heat pump and DH connection
+# =====================================================================
+#   cp tutorials/2_brownfield/config.yaml   config/config.yaml
+#   cp tutorials/2_brownfield/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Brownfield = some assets already exist (their CAPEX is partly sunk) and are
+# NOT re-sized by the optimiser. New capacity can still be built for the
+# technologies left expandable. Existing assets are configured in n_config.yaml.
+# ---------------------------------------------------------------------
+
+run_name: tut2_brownfield_heat
+
+amortization_period: 10
+
+targets:
+  driver: demand
+  demand_H2:   580000            # hydrogen sold to the grid in this tutorial producing waste heat
+  demand_CH4:  262000
+  demand_meoh:   0
+  H2_demand_mode: flat          # constant demand
+  CH4_demand_mode:  flat        # constant demand
+  MeOH_demand_mode: flat
+
+n_flags:
+  meoh: false
+
+clustering:
+  temporal:
+    resolution: 3h
+

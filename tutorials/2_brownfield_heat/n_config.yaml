@@ -1,0 +1,58 @@
+# =====================================================================
+# Tutorial 2 — brownfield assets + biomethanation-only + district heating
+# + electrolysis + heat storage
+# =====================================================================
+# Brownfield mode per technology (see header of n_config.default.yaml):
+#   initial capacity > 0, expansion: false               -> fixed existing asset
+#   remaining_investment_fraction (rif) in [0,1]         -> how much of the
+#       original investment is still being paid off. The annual charge is
+#       rif x investment(construction_year) x annuity(discount_rate, amort).
+#       rif = 0 -> fully sunk (no annual charge); rif = 1 -> full remaining cost.
+# Each existing asset's residual cost is set INDEPENDENTLY below.
+# ---------------------------------------------------------------------
+
+# --- biomethanation only (catalytic methanation off) ---
+methanation biogas:  {expansion: false}
+methanation CO2:     {expansion: false}
+
+# --- Heat storage and heat pumps) ---
+TES DH:
+  expansion: true
+  max hours: 15  # adding heat storage as water pit for DH
+heat pump: {expansion: true} # adding heat pump up to DH temperature
+
+# --- existing assets (brownfield, fixed size, with residual CAPEX) ---
+biogas:                       # 30 MW CH4 biogas plant already built
+  initial capacity: 30
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.3   # 30% of CAPEX still to recover
+
+onwind:                       # 52 MW existing onshore wind
+  initial capacity: 52
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.1
+
+solar:                        # 30 MW existing solar PV
+  initial capacity: 30
+  expansion: false
+  construction_year: 2020
+  remaining_investment_fraction: 0.1
+
+electrolysis: # (bus0 unit: MW el ) # no cost allocated to the electrolysis plant
+  initial capacity: 100
+  expansion: false
+
+NG boiler:
+  expansion: false
+
+biomass boiler:
+  expansion: false
+
+# --- district heating made available as a heat off-take option ---
+options:
+  DH:
+    enable: true
+    price: 100                 # EUR/MWh paid for heat delivered to DH
+    peak capacity : 80         # MW
