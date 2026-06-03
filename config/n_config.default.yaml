@@ -210,8 +210,12 @@ options:
 
   DH:
     enable: false
-    price : 70 # €/MWh
+    price : 70          # €/MWh — flat price used when price profile is null
+    price profile: null # path to CSV with hourly DH sale price (€/MWh);
+                        # null → flat price. CSV needs a datetime index + one value
+                        # column; resampled to network snapshot resolution automatically.
     peak capacity : 60  # MW — reference peak demand used to scale the DH profile in preprocessing
+    load multiplier : 1 # additional multiplier applied at build time (no preprocessing re-run needed)
 
   moist biomass market:
     enable: false

@@ -3743,6 +3743,26 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
         c = 'DH'
         ensure_carrier(n, c)
 
+        dh_price_path = (
+            n_options.at["DH", "price profile"]
+            if "price profile" in n_options.columns
+            else None
+        )
+        use_ts_price = (
+            dh_price_path is not None
+            and not (isinstance(dh_price_path, float) and pd.isna(dh_price_path))
+            and str(dh_price_path).strip() not in ("", "null", "None")
+        )
+
+        if use_ts_price:
+            # Load the CSV, resample to network snapshots and apply as a
+            # time-varying marginal cost (negative = revenue for selling heat).
+            dh_ts = pd.read_csv(str(dh_price_path), index_col=0, parse_dates=True).squeeze()
+            dh_ts = dh_ts.reindex(n.snapshots).ffill().bfill()
+            flat_price = 0.0   # scalar placeholder; time series takes precedence
+        else:
+            flat_price = float(n_options.at["DH", "price"])
+
         n.add(
             "Link",
             "DH_to_DH_grid",
@@ -3751,8 +3771,11 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
             bus1="DH grid",
             efficiency=1,
             p_nom_extendable=True,
-            marginal_cost=-n_options.at["DH", "price"],
+            marginal_cost=-flat_price,
         )
+
+        if use_ts_price:
+            n.links_t.marginal_cost["DH_to_DH_grid"] = -dh_ts.values
 
     # ---------------------------------------------------------
     # Hydrogen distribution
