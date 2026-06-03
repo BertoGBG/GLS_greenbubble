@@ -1677,105 +1677,16 @@ def compare_objective(n_stoch, ws_networks, probs):
 
 # ---- SAVE & EXPORT RESULTS
 def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic, resolution=False):
-    """
-    Create a descriptive filename for a PyPSA network based on:
-    - enabled technologies (n_flags)
-    - CO2 price
-    - target type (demand or price)
-    - H2 / MeOH / CH4 targets
-    - year and export cap
-    """
+    """Return the output network name: {run_name}_{year}_{det|stc}_{res}.
 
-    # ------------------
-    # Basic inputs
-    # ------------------
-    CO2_c = int(inputs_dict["CO2 cost"])
+    Mirrors build_network_name() in Snakefile.  The full configuration is
+    stored inside the network .nc file so encoding it in the path is not
+    required, and keeping names short avoids Windows' 260-char path limit.
+    """
     year = int(En_price_year)
-    max_RE_to_grid = inputs_dict["max_RE_to_grid"]
-    if targets_dict["driver"] == 'price':
-        target = 'tP'
-    elif targets_dict["driver"] == 'demand':
-        target = 'tD'
-
-
-    # ------------------
-    # Helper functions
-    # ------------------
-    def annual_gwh(load_name):
-        """Annual energy demand in GWh (approx)."""
-        if load_name not in n.loads.index:
-            return 0
-        return int(n.loads_t.p_set[load_name].sum() // 1000)
-
-    def mean_abs_marginal_cost(link_name):
-        """Mean absolute marginal cost (supports time-varying costs)."""
-        if link_name not in n.links.index:
-            return 0
-
-        if hasattr(n, "links_t") and hasattr(n.links_t, "marginal_cost"):
-            if link_name in n.links_t.marginal_cost.columns:
-                return int(abs(n.links_t.marginal_cost[link_name].mean()))
-
-        return int(abs(n.links.at[link_name, "marginal_cost"]))
-
-    # ------------------
-    # Targets
-    # ------------------
-    if targets_dict["driver"] == 'demand':
-        H2_t   = annual_gwh("H2 grid")
-        MeOH_t = annual_gwh("Methanol")
-        CH4_t  = annual_gwh("bioCH4")
-
-    elif targets_dict["driver"] == 'price':
-        H2_t   = mean_abs_marginal_cost("H2_to_delivery")
-        MeOH_t = mean_abs_marginal_cost("Methanol_to_delivery")
-        CH4_t  = mean_abs_marginal_cost("bioCH4_to_delivery")
-
-    else:
-        H2_t = MeOH_t = CH4_t = 0
-
-    # ------------------
-    # Stochastic
-    # ------------------
-    if stochastic:
-        stch = 'STC'
-    else:
-        stch = 'DET'
-
-    # ------------------
-    # Technology flags
-    # ------------------
-    prefix = (
-            n_flags.get("biogas", False) * "B_" +
-            n_flags.get("central_heat", False) * "H_" +
-            n_flags.get("renewables", False) * "RE_" +
-            n_flags.get("electrolysis", False) * "H2_" +
-            n_flags.get("meoh", False) * "MEOH_" +
-            n_flags.get("methanation", False) * "METH_" +
-            n_flags.get("symbiosis", False) * "SN_" +
-            n_flags.get("storage", False) * "ST_"
-    )
-
-    # ------------------
-    # Filename
-    # ------------------
-    tr = resolution if resolution else "1h"
-
-    file_name = (
-        f"{prefix}"
-        f"CO2_{CO2_c}_"
-        f"{target}_"
-        f"H2_{H2_t}_"
-        f"MeOH_{MeOH_t}_"
-        f"CH4_{CH4_t}_"
-        f"{year}_"
-        f"El_{max_RE_to_grid}_"
-        f"{stch}_"
-        f"{tr}_"
-        f"{run_name}"
-    )
-
-    return file_name
+    stch = "stc" if stochastic else "det"
+    res  = resolution if resolution else "1h"
+    return f"{run_name}_{year}_{stch}_{res}"
 
 
 def save_config (results_folder,c):

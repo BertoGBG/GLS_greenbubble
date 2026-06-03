@@ -12,47 +12,23 @@ if Path("config/config.yaml").exists():
 # ---------------------------------------------------------------------------
 # Network name helper — mirrors file_name_network() in scripts/helpers.py
 # but reads purely from config so the full path is known before any rule runs.
-# file_name_network() is kept in helpers.py for standalone greenbubble_main.py use.
+#
+# Format: {run_name}_{year}_{det|stc}_{res}
+# Examples: tut1_price_2024_det_3h   tut4_stoch_2024_stc_3h
+#
+# Inspired by PyPSA-EUR: run_name carries the semantic label; year/mode/res
+# add minimum disambiguation.  The full configuration is stored inside the
+# network .nc file so nothing is lost.  This keeps folder names short enough
+# to stay within Windows' 260-character path limit.
 # ---------------------------------------------------------------------------
 
 def build_network_name(cfg):
-    nf = cfg["n_flags"]
-    flag_map = [
-        ("biogas",       "B_"),
-        ("central_heat", "H_"),
-        ("renewables",   "RE_"),
-        ("electrolysis", "H2_"),
-        ("meoh",         "MEOH_"),
-        ("methanation",  "METH_"),
-        ("symbiosis",    "SN_"),
-        ("storage",      "ST_"),
-    ]
-    prefix = "".join(sfx for key, sfx in flag_map if nf.get(key, False))
-
-    co2    = int(cfg["CO2_cost"])
-    driver = cfg["targets"]["driver"]
-    target = "tD" if driver == "demand" else "tP"
-
-    if driver == "demand":
-        H2   = int(cfg["targets"]["demand_H2"])   // 1000
-        MeOH = int(cfg["targets"]["demand_meoh"]) // 1000
-        CH4  = int(cfg["targets"]["demand_CH4"])  // 1000
-    else:
-        # price-mode: use configured price targets as name components
-        H2   = int(cfg["targets"]["price_H2"])
-        MeOH = int(cfg["targets"]["price_meoh"])
-        CH4  = cfg["targets"]["price_bioCH4"]
-        CH4  = int(CH4) if isinstance(CH4, (int, float)) else 0
-
-    year = cfg["En_price_year"]
-    el   = cfg["max_RE_to_grid"]
-    stch = "STC" if cfg["stochastic"]["stochastic"] else "DET"
     run  = cfg["run_name"]
-
+    year = cfg["En_price_year"]
+    stch = "stc" if cfg["stochastic"]["stochastic"] else "det"
     resolution = (cfg.get("clustering") or {}).get("temporal", {}).get("resolution", False)
-    tr = resolution if resolution else "1h"
-
-    return f"{prefix}CO2_{co2}_{target}_H2_{H2}_MeOH_{MeOH}_CH4_{CH4}_{year}_El_{el}_{stch}_{tr}_{run}"
+    res  = resolution if resolution else "1h"
+    return f"{run}_{year}_{stch}_{res}"
 
 
 NETWORK          = build_network_name(config)

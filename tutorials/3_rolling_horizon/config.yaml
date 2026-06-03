@@ -33,4 +33,4 @@ rolling_horizon:
   overlap:       72            # overlap between consecutive windows (h)
   rh_year:      2024
   # point this at the *_OPT.nc produced by Tutorial 2:
-  network_path: 'outputs/single_analysis/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_120_MeOH_200_CH4_200_2024_El_0.1_DET_3h_tut2_brownfield/networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tP_H2_120_MeOH_200_CH4_200_2024_El_0.1_DET_3h_tut2_brownfield_OPT.nc'
+  network_path: 'outputs/single_analysis/tut2_brownfield_2024_det_3h/networks/tut2_brownfield_2024_det_3h_OPT.nc'
