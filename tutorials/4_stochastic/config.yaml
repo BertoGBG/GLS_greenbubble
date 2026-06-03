@@ -16,7 +16,7 @@ run_name: tut4_stoch
 amortization_period: 10
 
 targets:
-  driver: price
+  driver: 'price'
   demand_H2:   0
   demand_CH4:  350000
   demand_meoh:   9000
@@ -33,4 +33,4 @@ stochastic:
 
 clustering:
   temporal:
-    resolution: 3h
+    resolution: 8h

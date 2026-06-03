@@ -18,7 +18,7 @@ amortization_period: 10
 
 # Demand-driven: annual production targets are hard constraints.
 targets:
-  driver: demand
+  driver: 'demand'
   demand_H2:   200000      # MWh_H2/y  delivered to the grid (default product)
   demand_CH4:  350000      # MWh_CH4/y biomethane
   demand_meoh:   9000      # MWh_MeOH/y methanol
@@ -31,4 +31,4 @@ targets:
 # Coarse temporal resolution so the tutorial solves quickly with HiGHS.
 clustering:
   temporal:
-    resolution: 3h
+    resolution: 8h
