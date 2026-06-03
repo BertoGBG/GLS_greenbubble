@@ -6,9 +6,11 @@
 Outputs & Results Reference
 ===========================
 
-Every run writes to ``outputs/single_analysis/<network_name>/``, where
-``<network_name>`` encodes the active flags, targets, year and mode (see
-:ref:`wildcards`). This guide is a **map of that folder** — what each file is and
+Every run writes to ``outputs/single_analysis/{run_name}_{year}_{det|stc}_{res}/``
+(e.g. ``tut1_demand_2024_det_3h/``). The folder name is kept short to stay within
+Windows' 260-character path limit; the **full configuration** is preserved in
+``networks/config_run.yaml`` inside that folder. See :ref:`wildcards` for the
+naming rules. This guide is a **map of that folder** — what each file is and
 how the CSVs and plots pair up. For the *theory* behind the economic quantities
 (LCOP, SRMC, shadow prices, KKT) see :ref:`guide-economic-analysis`.
 

@@ -54,7 +54,7 @@ Capacity expansion is **bypassed entirely** — capacities are read from the
      horizon:      168       # window length (h)
      overlap:       72       # overlap (h)
      rh_year:      2024
-     network_path: 'outputs/single_analysis/<brownfield>/networks/<brownfield>_OPT.nc'
+     network_path: 'outputs/single_analysis/tut2_brownfield_2024_det_3h/networks/tut2_brownfield_2024_det_3h_OPT.nc'
 
 .. admonition:: Committable units are supported in rolling horizon
    :class: tip
