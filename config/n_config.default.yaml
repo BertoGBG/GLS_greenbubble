@@ -180,19 +180,32 @@ pyrolysis:
 solar:
   <<: *base
 
-TES concrete: # capacity in MW of output power. Energy capacity as capacity * max hours
+TES concrete: # Store + bidirectional HX Link (Heat MT).
+              # initial capacity: MWh; link p_nom = energy / min_max_hours
   <<: *base
-  max hours : 8
-  efficiency store : 0.95
-  efficiency dispatch : 0.95
-  standing loss: 0.02 # % of total energy  per hour
+  min_max_hours: 8       # p_nom_HX × min_max_hours ≤ e_nom_store
+  standing loss: 0.02
+  # efficiency charge: null  # override bidirectional HX efficiency (default: 1.0)
   expansion: false
 
-TES DH: # capacity in MW of output power. Energy capacity as capacity * max hours
+TES concrete El: # Store + electric charger (El3→heat) + heat discharger (heat→Heat MT).
+                 # initial capacity: MWh; charger p_nom = energy/min_max_hours_charge,
+                 #                        discharger p_nom = energy/min_max_hours_discharge
   <<: *base
-  max hours : 50
-  standing loss: 0.002 # % of total energy  per hour
+  min_max_hours_charge: 4      # min MWh per MW of electric charging power
+  min_max_hours_discharge: 15  # min MWh per MW of heat discharge power
+  standing loss: 0.02
+  # efficiency charge:    null  # override Concrete-charger eff (default: tech-data ≈0.99)
+  # efficiency discharge: null  # override Concrete-discharger eff (default: tech-data ≈0.43)
   expansion: false
+
+TES DH: # Store + bidirectional HX Link (Heat DH).
+        # initial capacity: MWh; link p_nom = energy / min_max_hours
+  <<: *base
+  min_max_hours: 10      # p_nom_HX × min_max_hours ≤ e_nom_store
+  standing loss: 0.002
+  # efficiency charge: null  # override central water tank charger eff (default: 1.0)
+  expansion: true
 
 # -------------------  options config (alphabetical) -------------------
 # (merged from n_options.yaml)

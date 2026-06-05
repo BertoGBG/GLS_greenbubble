@@ -15,7 +15,7 @@ outputs_folder: outputs/single_analysis
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-targets
 targets:
-  driver: 'demand'          # 'demand' | 'price'
+  driver: demand            # demand | price
   demand_H2:   200000       # MWh/y
   demand_CH4:  350000       # MWh/y
   demand_meoh:   9000       # MWh/y
@@ -57,7 +57,7 @@ n_flags_opt:
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rfnbos
 rfnbos_dict:
-  limit:             'unlimited'  # 'emissions' | 'price' | 'unlimited' | 'disconnected'
+  limit:             unlimited    # emissions | price | unlimited | disconnected
   price_threshold:     20         # €/MWh
   emission_threshold:  0.0648     # tCO₂/MWh
 
@@ -82,8 +82,8 @@ tariffs_dict:
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-optimization
 optimization:
-  solver:            'highs'       # 'gurobi' | 'highs'
-  solver_profile:    'highs-fast'  # see scripts/solver_profiles.py
+  solver:            highs          # gurobi | highs
+  solver_profile:    highs-fast    # see scripts/solver_profiles.py
   collect_all_duals:  true
   return_model:       true
   overrides:          null

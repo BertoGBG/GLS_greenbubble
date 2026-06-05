@@ -778,6 +778,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
                 bus1=local_EL_bus,
                 efficiency=1.0,
                 p_nom_extendable=True,
+                marginal_cost=loop_tol,  # tiny cost prevents IPM assigning spurious capacity
             )
 
     return n
@@ -1763,128 +1764,245 @@ def add_battery(n, n_flags, inputs_dict, tech_costs, n_config):
 
 
 def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
-    """
-    Add thermal energy storage systems:
-      - District heating water tank (TES DH)
-      - Medium-temperature concrete storage (TES concrete)
+    """Thermal energy storage — all as Store + Links:
+
+      TES DH         : Store + bidirectional HX Link  (Heat DH ↔ TES DH bus)
+      TES concrete   : Store + bidirectional HX Link  (Heat MT ↔ TES concrete bus)
+      TES concrete El: Store + electric charger Link  (El3 → TES concrete El bus)
+                             + heat discharger Link   (TES concrete El bus → Heat MT)
+
+    Power-to-energy ratios are enforced via min_max_hours constraints added in
+    helpers.add_custom_constraints_stores (called from build_model_solve_network).
+
+    Note: bidirectional links apply efficiency in the forward direction only
+    (PyPSA convention: p1 = -eff * p0).  For DH and concrete HX efficiencies
+    close to 1 the round-trip asymmetry is negligible; standing_loss in the
+    Store captures the dominant thermal losses.
     """
 
-    # --- Allocation and dependencies ---
     allocation = n_flags.get("storage", False)
     dependencies = [n_flags.get("symbiosis", False)]
-
     if not (allocation and all(dependencies)):
         return n
 
-    # --- Snapshot network state ---
     n0_dict = get_network_status(n)
-
-    # --- Determine which techs to add ---
-    techs = ["TES DH", "TES concrete"]
+    techs = ["TES DH", "TES concrete", "TES concrete El"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
+    def _mmh(tech_key, col):
+        """Return min_max_hours value from n_config, or 0 if missing."""
+        if col not in n_config.columns or tech_key not in n_config.index:
+            return 0.0
+        v = n_config.at[tech_key, col]
+        return float(v) if v is not None and not pd.isna(v) else 0.0
+
+    def _eff(tech_key, col, fallback):
+        """Return efficiency from n_config if explicitly set, else fallback to tech_costs value."""
+        if col in n_config.columns and tech_key in n_config.index:
+            v = n_config.at[tech_key, col]
+            if v is not None and not (isinstance(v, float) and pd.isna(v)):
+                return float(v)
+        return float(fallback)
+
+    def _exi_link_cap(energy_mwh, mmh):
+        """EXI link p_nom [MW] = initial store energy / min_max_hours."""
+        return float(energy_mwh) / float(mmh) if mmh and mmh > 0 else 0.0
+
     # ==========================================================
-    # 1. DISTRICT HEATING WATER TANK (TES DH)
+    # 1. TES DH — Store + bidirectional HX Link (Heat DH)
     # ==========================================================
-    def add_TES_storage_DH_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
-        """
-        Add district heating water tank (low-temperature storage).
-        """
+    def add_TES_DH(n, prefix, cap_store, cap_link, cc_store, cc_link, expansion, carrier):
+        tes_bus  = "TES DH bus"
         heat_bus = "Heat DH"
         bus_dict = {
-            "bus_list": [ heat_bus],
-            "carrier_list": ["Heat"],
-            "unit_list": [ "MW"],
-
+            "bus_list":    [heat_bus, tes_bus],
+            "carrier_list": ["Heat",  carrier],
+            "unit_list":    ["MW",    "MW"],
         }
         n = add_requirements_buses(n, bus_dict, symbiosis_n)
 
-        # --- Storage tank ---
-        n.add("StorageUnit",
-              prefix + "TES DH storage",
-              bus=heat_bus,
+        n.add("Link",
+              prefix + "TES DH HX",
               carrier=carrier,
-              max_hours=n_config.at["TES DH", "max hours"],
-              efficiency_store=tech_costs.at["water tank charger", "efficiency"],
-              efficiency_dispatch=tech_costs.at["water tank discharger", "efficiency"],
-              standing_loss=n_config.at["TES DH", "standing loss"],
-              p_nom_max=n_config.at["TES DH", "max capacity"],
-              lifetime=tech_costs.at["decentral water tank storage", "lifetime"],
+              bus0=heat_bus,
+              bus1=tes_bus,
+              p_min_pu=-1,   # bidirectional; efficiency=1 avoids energy creation on reverse flow
+              efficiency=_eff("TES DH", "efficiency charge",
+                              tech_costs.at["central water tank charger", "efficiency"]),
               p_nom_extendable=expansion,
-              p_nom= capacity,
-              cyclic_state_of_charge=True,
-              capital_cost=capital_cost)
+              p_nom=cap_link,
+              p_nom_max=n_config.at["TES DH", "max capacity"],
+              capital_cost=cc_link,
+              lifetime=tech_costs.at["central water tank storage", "lifetime"])
 
+        n.add("Store",
+              prefix + "TES DH storage",
+              carrier=carrier,
+              bus=tes_bus,
+              e_nom_extendable=expansion,
+              e_nom=cap_store,
+              e_cyclic=True,
+              standing_loss=n_config.at["TES DH", "standing loss"],
+              capital_cost=cc_store,
+              lifetime=tech_costs.at["central water tank storage", "lifetime"])
         return n
 
-
     # ==========================================================
-    # 2. MEDIUM-TEMPERATURE CONCRETE STORAGE (TES CONCRETE)
+    # 2. TES concrete — Store + bidirectional HX Link (Heat MT)
     # ==========================================================
-    def add_TES_storage_concrete_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
-        """
-        Add medium-temperature concrete storage (e.g. 120–400°C).
-        """
-        # Add electricity connection
-        local_EL_bus = 'El_TES_concrete'
-        n = add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, n_config, n_options)
-
-        # add heat
+    def add_TES_concrete(n, prefix, cap_store, cap_link, cc_store, cc_link, expansion, carrier):
+        tes_bus  = "TES concrete bus"
         heat_bus = "Heat MT"
-
         bus_dict = {
-            "bus_list": [heat_bus],
-            "carrier_list": ["Heat"],
-            "unit_list": ["MW"],
-
+            "bus_list":    [heat_bus, tes_bus],
+            "carrier_list": ["Heat",  carrier],
+            "unit_list":    ["MW",    "MW"],
         }
         n = add_requirements_buses(n, bus_dict, symbiosis_n)
 
-        # --- Concrete storage block ---
-        n.add("StorageUnit",
-              prefix + "TES concrete storage",
-              bus=heat_bus,
-              carrier = carrier,
+        n.add("Link",
+              prefix + "TES concrete HX",
+              carrier=carrier,
+              bus0=heat_bus,
+              bus1=tes_bus,
+              p_min_pu=-1,   # bidirectional; efficiency=1 avoids energy creation on reverse flow
+              efficiency=_eff("TES concrete", "efficiency charge", 1.0),
               p_nom_extendable=expansion,
-              p_nom=capacity,
+              p_nom=cap_link,
               p_nom_max=n_config.at["TES concrete", "max capacity"],
-              standing_loss=n_config.at["TES concrete", "standing loss"],
-              max_hours = n_config.at["TES concrete", "max hours"],
-              lifetime = tech_costs.at["Concrete-store", 'lifetime'],
-              efficiency_store = n_config.at["TES concrete", "efficiency store"],
-              efficiency_dispatch = n_config.at["TES concrete", "efficiency dispatch"],
-              cyclic_state_of_charge=True,
-              capital_cost=capital_cost)
+              capital_cost=cc_link,
+              lifetime=tech_costs.at["Concrete-discharger", "lifetime"])
 
+        n.add("Store",
+              prefix + "TES concrete storage",
+              carrier=carrier,
+              bus=tes_bus,
+              e_nom_extendable=expansion,
+              e_nom=cap_store,
+              e_cyclic=True,
+              standing_loss=n_config.at["TES concrete", "standing loss"],
+              capital_cost=cc_store,
+              lifetime=tech_costs.at["Concrete-store", "lifetime"])
         return n
 
+    # ==========================================================
+    # 3. TES concrete El — Store + electric charger + heat discharger
+    # ==========================================================
+    def add_TES_concrete_El(n, prefix, cap_store, cap_charger, cap_discharger,
+                             cc_store, cc_charger, cc_discharger, expansion, carrier):
+        tes_bus     = "TES concrete El bus"
+        heat_bus    = "Heat MT"
+        local_el_bus = "El_TES_concrete_El"
+        bus_dict = {
+            "bus_list":    [heat_bus, tes_bus],
+            "carrier_list": ["Heat",  carrier],
+            "unit_list":    ["MW",    "MW"],
+        }
+        n = add_requirements_buses(n, bus_dict, symbiosis_n)
+        n = add_local_el_connections(n, local_el_bus, inputs_dict, n_flags,
+                                     tech_costs, n_config, n_options)
+
+        # Charger: El3 → TES bus  (resistive high-temperature heating)
+        n.add("Link",
+              prefix + "TES concrete El charger",
+              carrier=carrier,
+              bus0=local_el_bus,
+              bus1=tes_bus,
+              efficiency=_eff("TES concrete El", "efficiency charge",
+                              tech_costs.at["Concrete-charger", "efficiency"]),
+              p_nom_extendable=expansion,
+              p_nom=cap_charger,
+              p_nom_max=n_config.at["TES concrete El", "max capacity"],
+              capital_cost=cc_charger,
+              lifetime=tech_costs.at["Concrete-charger", "lifetime"])
+
+        # Discharger: TES bus → Heat MT
+        n.add("Link",
+              prefix + "TES concrete El discharger",
+              carrier=carrier,
+              bus0=tes_bus,
+              bus1=heat_bus,
+              efficiency=_eff("TES concrete El", "efficiency discharge",
+                              tech_costs.at["Concrete-discharger", "efficiency"]),
+              p_nom_extendable=expansion,
+              p_nom=cap_discharger,
+              p_nom_max=n_config.at["TES concrete El", "max capacity"],
+              capital_cost=cc_discharger,
+              lifetime=tech_costs.at["Concrete-discharger", "lifetime"])
+
+        n.add("Store",
+              prefix + "TES concrete El storage",
+              carrier=carrier,
+              bus=tes_bus,
+              e_nom_extendable=expansion,
+              e_nom=cap_store,
+              e_cyclic=True,
+              standing_loss=n_config.at["TES concrete El", "standing loss"],
+              capital_cost=cc_store,
+              lifetime=tech_costs.at["Concrete-store", "lifetime"])
+        return n
 
     # ==========================================================
-    # 3. BUILD COMPONENTS
+    # 4. BUILD COMPONENTS
     # ==========================================================
+    cf = lambda t: n_config.at[t, "cost factor"]
+
     # --- TES DH ---
     t = "TES DH"
     ensure_carrier(n, t)
-
     if t in cap_to_add:
-        capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = _exi_capital_cost("central water tank storage", t, tech_costs)
-        n = add_TES_storage_DH_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier = t)
+        e0  = n_config.at[t, "initial capacity"]          # MWh (store energy)
+        mmh = _mmh(t, "min_max_hours")
+        n = add_TES_DH(n, "EXI_",
+                       cap_store=e0, cap_link=_exi_link_cap(e0, mmh),
+                       cc_store=_exi_capital_cost("central water tank storage", t, tech_costs),
+                       cc_link=0.0, expansion=False, carrier=t)
     if t in exp_to_add:
-        capital_cost = tech_costs.at["central water tank storage", "fixed"] * n_config.at[t, "cost factor"]
-        n = add_TES_storage_DH_cap_exp(n, prefix="", capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
+        n = add_TES_DH(n, "",
+                       cap_store=0, cap_link=0,
+                       cc_store=tech_costs.at["central water tank storage", "fixed"] * cf(t),
+                       cc_link=0.0, expansion=True, carrier=t)
 
-    # --- TES CONCRETE ---
+    # --- TES concrete ---
     t = "TES concrete"
     ensure_carrier(n, t)
-
     if t in cap_to_add:
-        capacity = n_config.at[t, "initial capacity"]
-        _exi_cc = _exi_capital_cost("Concrete-store", t, tech_costs)
-        n = add_TES_storage_concrete_cap_exp(n, prefix="EXI_", capital_cost=_exi_cc, capacity=capacity, expansion=False, carrier = t)
+        e0  = n_config.at[t, "initial capacity"]          # MWh (store energy)
+        mmh = _mmh(t, "min_max_hours")
+        n = add_TES_concrete(n, "EXI_",
+                             cap_store=e0, cap_link=_exi_link_cap(e0, mmh),
+                             cc_store=_exi_capital_cost("Concrete-store", t, tech_costs),
+                             cc_link=_exi_capital_cost("Concrete-discharger", t, tech_costs),
+                             expansion=False, carrier=t)
     if t in exp_to_add:
-        capital_cost = tech_costs.at["Concrete-store", "fixed"] * n_config.at[t, "cost factor"]
-        n = add_TES_storage_concrete_cap_exp(n, prefix="", capital_cost=capital_cost, capacity=0, expansion=True, carrier = t)
+        n = add_TES_concrete(n, "",
+                             cap_store=0, cap_link=0,
+                             cc_store=tech_costs.at["Concrete-store", "fixed"] * cf(t),
+                             cc_link=tech_costs.at["Concrete-discharger", "fixed"] * cf(t),
+                             expansion=True, carrier=t)
+
+    # --- TES concrete El ---
+    t = "TES concrete El"
+    ensure_carrier(n, t)
+    if t in cap_to_add:
+        e0      = n_config.at[t, "initial capacity"]      # MWh (store energy)
+        mmh_c   = _mmh(t, "min_max_hours_charge")
+        mmh_d   = _mmh(t, "min_max_hours_discharge")
+        n = add_TES_concrete_El(n, "EXI_",
+                                cap_store=e0,
+                                cap_charger=_exi_link_cap(e0, mmh_c),
+                                cap_discharger=_exi_link_cap(e0, mmh_d),
+                                cc_store=_exi_capital_cost("Concrete-store", t, tech_costs),
+                                cc_charger=_exi_capital_cost("Concrete-charger", t, tech_costs),
+                                cc_discharger=_exi_capital_cost("Concrete-discharger", t, tech_costs),
+                                expansion=False, carrier=t)
+    if t in exp_to_add:
+        n = add_TES_concrete_El(n, "",
+                                cap_store=0, cap_charger=0, cap_discharger=0,
+                                cc_store=tech_costs.at["Concrete-store", "fixed"] * cf(t),
+                                cc_charger=tech_costs.at["Concrete-charger", "fixed"] * cf(t),
+                                cc_discharger=tech_costs.at["Concrete-discharger", "fixed"] * cf(t),
+                                expansion=True, carrier=t)
 
     return n
 

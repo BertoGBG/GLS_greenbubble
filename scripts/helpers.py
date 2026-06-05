@@ -927,16 +927,31 @@ def add_custom_constraints_stores(n, m, n_config=None, case_insensitive=True):
     # -----------------------
     # constraints
     # -----------------------
-    _add_bound("TES concrete charger", "TES Concrete storage",
-               _cfg("TES concrete", "ramp limit up"), "TES_concrete_charger_limit")
-    _add_bound("TES concrete discharger", "TES Concrete storage",
-               _cfg("TES concrete", "ramp limit down"), "TES_concrete_discharger_limit")
 
-    _add_bound("TES DH charger", "TES DH storage",
-               _cfg("TES DH", "ramp limit up"), "Water_tank_DH_charger_limit")
-    _add_bound("TES DH discharger", "TES DH storage",
-               _cfg("TES DH", "ramp limit down"), "Water_tank_DH_discharger_limit")
+    # --- TES min_max_hours: p_nom × min_max_hours ≤ e_nom  →  factor = 1/min_max_hours ---
+    def _tes_min_hours(link_name, store_name, cfg_key, col):
+        mmh = _cfg(cfg_key, col)
+        if mmh is None or pd.isna(mmh) or float(mmh) <= 0:
+            return
+        _add_bound(link_name, store_name, 1.0 / float(mmh),
+                   f"tes_min_hours__{link_name.replace(' ', '_')}")
 
+    # TES DH / TES concrete: single bidirectional link → one p_nom → one constraint
+    _tes_min_hours("TES DH HX",       "TES DH storage",       "TES DH",       "min_max_hours")
+    _tes_min_hours("TES concrete HX", "TES concrete storage", "TES concrete", "min_max_hours")
+    # TES concrete El: separate charger/discharger links → independent p_nom → two constraints
+    _tes_min_hours("TES concrete El charger",    "TES concrete El storage", "TES concrete El", "min_max_hours_charge")
+    _tes_min_hours("TES concrete El discharger", "TES concrete El storage", "TES concrete El", "min_max_hours_discharge")
+
+    # --- TES ramp limits (applies to HX / charger / discharger links) ---
+    _add_bound("TES DH HX",                 "TES DH storage",         _cfg("TES DH", "ramp limit up"),       "TES_DH_ramp_up")
+    _add_bound("TES DH HX",                 "TES DH storage",         _cfg("TES DH", "ramp limit down"),     "TES_DH_ramp_down")
+    _add_bound("TES concrete HX",           "TES concrete storage",   _cfg("TES concrete", "ramp limit up"),   "TES_concrete_ramp_up")
+    _add_bound("TES concrete HX",           "TES concrete storage",   _cfg("TES concrete", "ramp limit down"), "TES_concrete_ramp_down")
+    _add_bound("TES concrete El charger",   "TES concrete El storage", _cfg("TES concrete El", "ramp limit up"),   "TES_concrete_El_charger_ramp")
+    _add_bound("TES concrete El discharger","TES concrete El storage", _cfg("TES concrete El", "ramp limit down"), "TES_concrete_El_discharger_ramp")
+
+    # --- Battery ramp limits ---
     _add_bound("battery charger", "battery",
                _cfg("battery", "ramp limit up"), "battery_charger_limit")
     _add_bound("battery discharger", "battery",
@@ -1473,7 +1488,7 @@ def build_model_solve_network(
         include_agents=["biogas", "electrolysis", "methanation", "meoh"],  # NOTE DO NOT INCLUDE CENTRAL HEAT
     )
 
-    #add_custom_constraints_stores(n, m, n_config=n_config)
+    add_custom_constraints_stores(n, m, n_config=n_config)
 
     assert_unique_component_names(n)
 

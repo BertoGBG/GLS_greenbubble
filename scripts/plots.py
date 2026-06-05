@@ -3081,12 +3081,15 @@ def plot_utilization_ldc_by_scenario(
             else:
                 ls = ":" if kind == "Store" else "-"
                 leg = f"{base_label}{suffix}"
+                # signed bidirectional links: LDC shows |p0|/p_nom (utilisation magnitude)
+                leg_ldc = f"{leg} |net|" if (kind == "Link" and it.get("signed", False)) else leg
                 curve_specs.append({
                     "kind": kind,
                     "field": field,
                     "base_label": base_label,
                     "name": name,
-                    "legend_label": leg,
+                    "legend_label": leg_ldc,
+                    "signed": it.get("signed", False),
                     "linestyle": ls,
                     "lw": lw0,
                 })
@@ -3152,7 +3155,9 @@ def plot_utilization_ldc_by_scenario(
                         n.links, scen, name, ["p_nom_opt", "p_nom"]
                     )
                     s = _series_from_mi_cols(ts, scen, name) if ts is not None else None
-                    if s is not None and abs_links:
+                    # LDC always shows utilisation magnitude (abs); signed flag only
+                    # affects heatmap coloring, not the capacity-factor curve
+                    if s is not None and (abs_links or spec.get("signed", False)):
                         s = pd.Series(s, copy=False).abs()
 
                 elif kind == "Store":
@@ -3206,7 +3211,7 @@ def plot_utilization_ldc_by_scenario(
                             n.links, scen, name, ["p_nom_opt", "p_nom"]
                         )
                         s = _series_from_mi_cols(ts, scen, name) if ts is not None else None
-                        if s is not None and abs_links:
+                        if s is not None and (abs_links or spec.get("signed", False)):
                             s = pd.Series(s, copy=False).abs()
 
                     elif kind == "Store":
@@ -3616,6 +3621,7 @@ def figure_heatmaps_compare_scenarios(
                 "kind": kind,
                 "field": field,
                 "name": name,
+                "signed": it.get("signed", False),  # bidirectional links: signed net flow
             })
 
     if not expanded:
@@ -3626,6 +3632,7 @@ def figure_heatmaps_compare_scenarios(
         kind = row["kind"]
         name = row["name"]
         field = row["field"]
+        is_signed = row.get("signed", False)
 
         comp_df, _, _ = kind_map[kind]
 
@@ -3639,7 +3646,8 @@ def figure_heatmaps_compare_scenarios(
             ts_df = getattr(n.links_t, field, None) if field else getattr(n.links_t, "p0", None)
             s = _series_from_mi_cols(ts_df, scen, name) if ts_df is not None else None
             cap = _cap_from_component_table(comp_df, scen, name, ["p_nom_opt", "p_nom"])
-            if s is not None and abs_links:
+            # signed=True: keep sign (bidirectional net flow); otherwise take abs
+            if s is not None and abs_links and not is_signed:
                 s = pd.Series(s, copy=False).abs()
 
         elif kind == "Store":
@@ -3672,7 +3680,14 @@ def figure_heatmaps_compare_scenarios(
             return None
 
         s = pd.Series(s, copy=False)
-        cf = (pd.to_numeric(s, errors="coerce") / cap).clip(lower=0.0, upper=1.0)
+        if is_signed:
+            # Signed net flow: normalise to [-1, 1] then shift to [0, 1] so the
+            # standard viridis-range colorbar still works; use RdBu_r cmap per-row.
+            # 0 = max discharge, 0.5 = idle, 1 = max charge.
+            cf = ((pd.to_numeric(s, errors="coerce") / cap) + 1.0) / 2.0
+            cf = cf.clip(lower=0.0, upper=1.0)
+        else:
+            cf = (pd.to_numeric(s, errors="coerce") / cap).clip(lower=0.0, upper=1.0)
         return cf
 
     # compute stochastic "expected pattern" series as weighted day×hour matrix
@@ -3762,12 +3777,14 @@ def figure_heatmaps_compare_scenarios(
 
                     scen_lab = "deterministic" if scen is None else str(scen)
                     col_title = scen_lab if r == 0 else ""
+                    # per-row colormap: RdBu_r (0=discharge, 0.5=idle, 1=charge) for signed
+                    row_cmap = "RdBu_r" if row.get("signed") else cmap
                     im = heatmap_day_hour(
                         s if s is not None else pd.Series(dtype=float),
                         ax=ax,
                         vmin=vmin, vmax=vmax,
                         title=col_title,
-                        cmap=cmap,
+                        cmap=row_cmap,
                         show_months=show_months
                     )
                 else:
@@ -3798,12 +3815,13 @@ def figure_heatmaps_compare_scenarios(
                         w_cat = pd.Series(dtype=float)
 
                     col_title = stochastic_col_label if r == 0 else ""
+                    row_cmap = "RdBu_r" if row.get("signed") else cmap
                     im = _heatmap_day_hour_weighted(
                         v_cat, w_cat,
                         ax=ax,
                         vmin=vmin, vmax=vmax,
                         title=col_title,
-                        cmap=cmap,
+                        cmap=row_cmap,
                         show_months=show_months
                     )
 
@@ -3837,12 +3855,13 @@ def figure_heatmaps_compare_scenarios(
             ax = axes[i]
             s = _get_norm_series(None, row)
             show_months = (i // n_cols == n_rows - 1)
+            row_cmap = "RdBu_r" if row.get("signed") else cmap
             im = heatmap_day_hour(
                 s if s is not None else pd.Series(dtype=float),
                 ax=ax,
                 vmin=vmin, vmax=vmax,
                 title=row["row_label"],
-                cmap=cmap,
+                cmap=row_cmap,
                 show_months=show_months
             )
             if im is not None:
@@ -4094,6 +4113,7 @@ def figure_heatmaps_compare_scenarios_actual(
                 "field": field,
                 "name": name,
                 "th": th,
+                "signed": it.get("signed", False),  # bidirectional net flow
             })
 
     if not expanded:
@@ -4143,9 +4163,13 @@ def figure_heatmaps_compare_scenarios_actual(
             if s is None or cap is None or float(cap) < row["th"]:
                 return NONE5
             s = pd.Series(s, copy=False)
+            cap = float(cap)
+            if row.get("signed", False):
+                # bidirectional net flow: keep sign, use diverging colormap
+                norm = TwoSlopeNorm(vmin=-cap, vcenter=0.0, vmax=cap)
+                return s, norm, cmap_div, "Power (net)", cap
             if abs_links:
                 s = s.abs()
-            cap = float(cap)
             norm = Normalize(vmin=0.0, vmax=cap)
             return s, norm, cmap_pos, "Power", cap
 

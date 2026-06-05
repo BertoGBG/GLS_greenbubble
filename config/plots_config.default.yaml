@@ -162,25 +162,47 @@ plotting:
       field: e
       selector: CO2 Liq sequestration
 
-    - label: TES DH Power
-      kind: StorageUnit
-      field: p
+    # TES DH: Store + bidirectional HX Link
+    # signed: true → heatmap shows net flow (+ charging, − discharging) in RdBu_r;
+    #                 LDC shows |p0|/p_nom (magnitude of utilisation).
+    - label: TES DH HX
+      kind: Link
+      field: p0
+      selector: TES DH HX
+      signed: true
+
+    - label: TES DH Store
+      kind: Store
+      field: e
       selector: TES DH storage
 
-    - label: TES DH SOC
-      kind: StorageUnit
-      field: state_of_charge
-      selector: TES DH storage
+    # TES concrete: Store + bidirectional HX Link
+    - label: TES concrete HX
+      kind: Link
+      field: p0
+      selector: TES concrete HX
+      signed: true
 
-    - label: TES concrete Power
-      kind: StorageUnit
-      field: p
+    - label: TES concrete Store
+      kind: Store
+      field: e
       selector: TES concrete storage
 
-    - label: TES concrete SOC
-      kind: StorageUnit
-      field: state_of_charge
-      selector: TES concrete storage
+    # TES concrete El: separate electric charger + heat discharger + Store
+    - label: TES concrete El charger
+      kind: Link
+      field: p0
+      selector: TES concrete El charger
+
+    - label: TES concrete El discharger
+      kind: Link
+      field: p0
+      selector: TES concrete El discharger
+
+    - label: TES concrete El Store
+      kind: Store
+      field: e
+      selector: TES concrete El storage
 
 # list of internal buses for plotting shadow prices
   bus_list_mp:
