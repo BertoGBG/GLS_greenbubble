@@ -123,10 +123,10 @@ annualised capital cost, so price mode reads out the **break-even** of each rout
 
    Both runs use ``clustering.temporal.resolution: 3h`` and the default HiGHS
    solver so they finish in a few minutes on a laptop. Outputs land in
-   ``outputs/single_analysis/{run_name}_{year}_{det|stc}_{res}/``
-   (e.g. ``tut1_demand_2024_det_3h/``). The full configuration — flags, CO2
-   cost, product targets — is saved to ``networks/config_run.yaml`` inside
-   that folder.
+   ``outputs/single_analysis/{run_name}/`` (e.g. ``tut1_demand/``). File names
+   inside encode the full configuration (see :ref:`wildcards`). The full
+   configuration is also saved to ``networks/config_run.yaml`` inside that
+   folder.
 
 ---
 

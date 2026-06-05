@@ -27,37 +27,38 @@ In stochastic mode, it resolves to each key in ``stochastic.scenarios``.
 
 **Used in:** ``build_network``, ``solve_network``, ``plot_results``
 
-A short string that uniquely identifies a model run. It is constructed by
-``build_network_name()`` in ``Snakefile`` before any rule executes, inspired by
-the PyPSA-EUR convention of keeping output paths short to avoid Windows'
-260-character path limit.
+A descriptive string used as the **file-name prefix** for all outputs of a
+model run (``_OPT.nc``, ``_PRE.svg``, duals, etc.). It is constructed by
+``build_network_name()`` in ``Snakefile`` before any rule executes.
 
 **Format:**
 
 .. code-block:: text
 
-   {run_name}_{year}_{det|stc}_{res}
+   {flag_prefix}CO2_{co2}_{tD|tP}_H2_{h2}_MeOH_{meoh}_CH4_{ch4}_{year}_El_{el}_{DET|STC}_{res}_{run_name}
 
-Rolling-horizon runs append ``_RH``: ``{run_name}_{year}_{det}_{res}_RH``
+Rolling-horizon runs append ``_RH``.
 
-**Examples:**
+**Example** (all flags on, demand driver, 3 h resolution):
 
 .. code-block:: text
 
-   tut1_demand_2024_det_3h
-   tut4_stoch_2024_stc_3h
-   high_co2_demand_2024_det_1h
-   my_scenario_2025_det_3h_RH
+   B_H_RE_H2_MEOH_METH_SN_ST_CO2_100_tD_H2_200_MeOH_9_CH4_350_2024_El_0.1_DET_3h_my_scenario
 
-The segments encode: ``run_name`` from ``config.yaml``, the energy price year
-(``En_price_year``), deterministic/stochastic mode, and temporal resolution
-(``1h`` when ``clustering.temporal.resolution`` is not set).
+Flag abbreviations: ``B`` biogas · ``H`` central heat · ``RE`` renewables ·
+``H2`` electrolysis · ``MEOH`` methanol · ``METH`` methanation · ``SN``
+symbiosis · ``ST`` storage.
 
-The **full configuration** — flags, CO₂ cost, product targets, and all other
-parameters — is saved to ``outputs/.../{network}/networks/config_run.yaml``
-after every solve, providing the complete reproducibility record.
+The ``{network}`` name is used only for files *inside* the run folder, keeping
+individual file names informative. The **output folder** is just
+``outputs/single_analysis/{run_name}/`` so the path stays short enough for
+Windows' 260-character limit.
+
+The **full configuration** is also saved to
+``outputs/{run_name}/networks/config_run.yaml`` after every solve.
 
 **Constraint:** literal match against the pre-computed ``NETWORK`` string
 (via ``wildcard_constraints: network = NETWORK_PATTERN``).
 
-**Outputs:** ``resources/{network}_PRE.nc``, ``outputs/.../{network}/``
+**Outputs:** ``resources/{network}/{network}_PRE.nc``,
+``outputs/single_analysis/{run_name}/networks/{network}_OPT.nc``

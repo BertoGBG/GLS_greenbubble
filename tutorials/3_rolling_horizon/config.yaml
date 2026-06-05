@@ -14,7 +14,7 @@
 
 run_name: tut2_brownfield      # keep same base name; RH appends "_RH"
 
-amortization_period: 10
+amortization_period: 8
 
 targets:
   driver: price
@@ -33,4 +33,8 @@ rolling_horizon:
   overlap:       72            # overlap between consecutive windows (h)
   rh_year:      2024
   # point this at the *_OPT.nc produced by Tutorial 2:
-  network_path: 'outputs/single_analysis/tut2_brownfield_2024_det_3h/networks/tut2_brownfield_2024_det_3h_OPT.nc'
+  network_path: 'outputs/single_analysis/tut2_brownfield_heat/networks/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_580_MeOH_0_CH4_262_2024_El_0.1_DET_3h_tut2_brownfield_heat_OPT.nc'
+
+optimization:
+  solver:            'gurobi'       # 'gurobi' | 'highs'
+  solver_profile:    'gurobi-fast-barrier'  # see scripts/solver_profiles.py

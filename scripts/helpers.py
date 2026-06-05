@@ -1689,11 +1689,77 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
     return f"{run_name}_{year}_{stch}_{res}"
 
 
-def save_config (results_folder,c):
-    # export configuration from config.py
-    networks_folder = create_folder_if_not_exists(results_folder, 'networks')
-    dump_params_module(c, dst_folder=networks_folder, filename="config_run.yaml",
-                       dataframes_as="records")
+def save_config(results_folder, c):
+    """Write a structured config_run.yaml fingerprint of the current run.
+
+    Sections follow the source-file hierarchy:
+      config      — merged config.default.yaml + config.yaml
+      n_config    — merged n_config.default.yaml + n_config.yaml (keyed by component)
+      n_options   — options: section of n_config (keyed by option name)
+      plots_config — merged plots_config.default.yaml
+
+    NaN values within n_config / n_options rows are omitted so only
+    parameters that are actually set appear.
+    """
+    import math
+
+    networks_folder = create_folder_if_not_exists(results_folder, "networks")
+
+    def _drop_nan(d):
+        return {k: v for k, v in d.items()
+                if not (v is None or (isinstance(v, float) and math.isnan(v)))}
+
+    # ── config ────────────────────────────────────────────────────────────────
+    config_section = _to_basic({
+        "run_name":              c.run_name,
+        "CO2_cost":              c.CO2_cost,
+        "CO2_cost_ref_year":     c.CO2_cost_ref_year,
+        "En_price_year":         c.En_price_year,
+        "year_investment":       c.year_investment,
+        "amortization_period":   c.amortization_period,
+        "max_RE_to_grid":        c.max_RE_to_grid,
+        "latitude":              c.latitude,
+        "longitude":             c.longitude,
+        "outputs_folder":        c.outputs_folder,
+        "targets":               c.targets_dict,
+        "n_flags":               c.n_flags,
+        "n_flags_opt":           c.n_flags_opt,
+        "rfnbos_dict":           c.rfnbos_dict,
+        "USD_to_EUR":            c.USD_to_EUR,
+        "EUR_to_DKK":            c.EUR_to_DKK,
+        "discount_rate":         c.discount_rate,
+        "stochastic":            c.stochastic,
+        "tariffs_dict":          c.tariffs_dict,
+        "optimization":          c.optimization,
+        "clustering":            c.clustering,
+        "rolling_horizon":       c.rolling_horizon,
+    })
+
+    # ── n_config (component name → params, NaN dropped) ───────────────────────
+    n_config_section = {
+        comp: _drop_nan(_to_basic(row.to_dict()))
+        for comp, row in c.n_config.iterrows()
+    }
+
+    # ── n_options (option name → params, NaN dropped) ─────────────────────────
+    n_options_section = {
+        opt: _drop_nan(_to_basic(row.to_dict()))
+        for opt, row in c.n_options.iterrows()
+    }
+
+    # ── plots_config ──────────────────────────────────────────────────────────
+    plots_section = _to_basic(c.plt_config)
+
+    output = {
+        "config":       config_section,
+        "n_config":     n_config_section,
+        "n_options":    n_options_section,
+        "plots_config": plots_section,
+    }
+
+    path = Path(networks_folder) / "config_run.yaml"
+    with path.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(output, f, sort_keys=False, allow_unicode=True)
 
 
 def create_folder_if_not_exists(path, folder_name):

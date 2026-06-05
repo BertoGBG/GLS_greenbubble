@@ -5,10 +5,10 @@
 rule plot_results:
     """Run run_plot_and_export on the solved network; touch .done marker on completion."""
     input:
-        network    = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
-        comp_alloc = "resources/{network}/{network}_comp_alloc.pkl",
+        network    = f"{OUTDIR}/{RUN_DIR}/networks/{{network}}_OPT.nc",
+        comp_alloc = f"resources/{RUN_DIR}/{{network}}_comp_alloc.pkl",
     output:
-        done = f"{OUTDIR}/{{network}}/plots/.done",
+        done = f"{OUTDIR}/{RUN_DIR}/plots/{{network}}.done",
     log:
         f"logs/plot_{{network}}.log",
     wildcard_constraints:

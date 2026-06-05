@@ -29,7 +29,7 @@ if _rh.get("enabled", False):
             costs_eu     = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
             extra_inputs = _rh_extra_inputs,
         output:
-            network = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
+            network = f"{OUTDIR}/{RUN_DIR}/networks/{{network}}_OPT.nc",
         log:
             f"logs/rolling_horizon_{{network}}.log",
         wildcard_constraints:
@@ -41,10 +41,10 @@ if _rh.get("enabled", False):
     rule plot_rolling_horizon:
         """Generate full plots and PF vs RH comparison for a rolling horizon result."""
         input:
-            network    = f"{OUTDIR}/{{network}}/networks/{{network}}_OPT.nc",
+            network    = f"{OUTDIR}/{RUN_DIR}/networks/{{network}}_OPT.nc",
             network_pf = _rh["network_path"],
         output:
-            done = f"{OUTDIR}/{{network}}/plots_rh/.done",
+            done = f"{OUTDIR}/{RUN_DIR}/plots_rh/{{network}}.done",
         log:
             f"logs/plot_rolling_horizon_{{network}}.log",
         wildcard_constraints:

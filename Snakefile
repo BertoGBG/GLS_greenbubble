@@ -10,25 +10,58 @@ if Path("config/config.yaml").exists():
 
 
 # ---------------------------------------------------------------------------
-# Network name helper — mirrors file_name_network() in scripts/helpers.py
+# Hybrid naming:
+#   RUN_DIR  = {run_name}                          — top-level output folder
+#   NETWORK  = {prefix}CO2_{co2}_{target}_..._{run_name}  — file names inside
+#
+# The folder is kept short (just the run_name) to stay within Windows'
+# 260-character path limit.  File names inside carry the full configuration
+# detail so different years / modes / targets are distinguishable at a glance.
+# The full configuration is also preserved in networks/config_run.yaml.
+#
+# build_network_name() mirrors file_name_network() in scripts/helpers.py
 # but reads purely from config so the full path is known before any rule runs.
-#
-# Format: {run_name}_{year}_{det|stc}_{res}
-# Examples: tut1_price_2024_det_3h   tut4_stoch_2024_stc_3h
-#
-# Inspired by PyPSA-EUR: run_name carries the semantic label; year/mode/res
-# add minimum disambiguation.  The full configuration is stored inside the
-# network .nc file so nothing is lost.  This keeps folder names short enough
-# to stay within Windows' 260-character path limit.
 # ---------------------------------------------------------------------------
 
+RUN_DIR = config["run_name"]   # output folder: outputs/single_analysis/{run_name}/
+
 def build_network_name(cfg):
-    run  = cfg["run_name"]
+    nf = cfg["n_flags"]
+    flag_map = [
+        ("biogas",       "B_"),
+        ("central_heat", "H_"),
+        ("renewables",   "RE_"),
+        ("electrolysis", "H2_"),
+        ("meoh",         "MEOH_"),
+        ("methanation",  "METH_"),
+        ("symbiosis",    "SN_"),
+        ("storage",      "ST_"),
+    ]
+    prefix = "".join(sfx for key, sfx in flag_map if nf.get(key, False))
+
+    co2    = int(cfg["CO2_cost"])
+    driver = cfg["targets"]["driver"]
+    target = "tD" if driver == "demand" else "tP"
+
+    if driver == "demand":
+        H2   = int(cfg["targets"]["demand_H2"])   // 1000
+        MeOH = int(cfg["targets"]["demand_meoh"]) // 1000
+        CH4  = int(cfg["targets"]["demand_CH4"])  // 1000
+    else:
+        H2   = int(cfg["targets"]["price_H2"])
+        MeOH = int(cfg["targets"]["price_meoh"])
+        CH4  = cfg["targets"]["price_bioCH4"]
+        CH4  = int(CH4) if isinstance(CH4, (int, float)) else 0
+
     year = cfg["En_price_year"]
-    stch = "stc" if cfg["stochastic"]["stochastic"] else "det"
+    el   = cfg["max_RE_to_grid"]
+    stch = "STC" if cfg["stochastic"]["stochastic"] else "DET"
+    run  = cfg["run_name"]
+
     resolution = (cfg.get("clustering") or {}).get("temporal", {}).get("resolution", False)
-    res  = resolution if resolution else "1h"
-    return f"{run}_{year}_{stch}_{res}"
+    tr = resolution if resolution else "1h"
+
+    return f"{prefix}CO2_{co2}_{target}_H2_{H2}_MeOH_{MeOH}_CH4_{CH4}_{year}_El_{el}_{stch}_{tr}_{run}"
 
 
 NETWORK          = build_network_name(config)
@@ -99,9 +132,7 @@ include: "rules/rolling_horizon.smk"
 
 rule all:
     input:
-        expand(
-            "{outdir}/{network}/plots_rh/.done",
-            outdir=OUTDIR, network=NETWORK,
-        ) if RH_ENABLED else
-        expand("{outdir}/{network}/plots/.done", outdir=OUTDIR, network=NETWORK),
+        f"{OUTDIR}/{RUN_DIR}/plots_rh/{NETWORK}.done"
+        if RH_ENABLED else
+        f"{OUTDIR}/{RUN_DIR}/plots/{NETWORK}.done",
     default_target: True

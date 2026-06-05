@@ -70,10 +70,10 @@ If no ``config/config.yaml`` exists, the model runs with the committed defaults.
 
    snakemake -j1
 
-Outputs land in ``outputs/single_analysis/{run_name}_{year}_{det|stc}_{res}/``
-(e.g. ``my_scenario_2024_det_3h/``). See :ref:`wildcards` for the naming rules.
-The full configuration is preserved in ``networks/config_run.yaml`` inside
-that folder.
+Outputs land in ``outputs/single_analysis/{run_name}/``
+(e.g. ``my_scenario/``). Files inside carry the full configuration detail in
+their names — see :ref:`wildcards` for the format. The full configuration is
+also preserved in ``networks/config_run.yaml`` inside that folder.
 
 ---
 
@@ -119,10 +119,14 @@ Snakemake prints the planned jobs and the output path.
 
 Results are written to::
 
-   outputs/single_analysis/high_co2_demand_2024_det_1h/
+   outputs/single_analysis/high_co2_demand/
 
-The full configuration used (flags, CO₂ cost, targets, …) is saved to
-``outputs/single_analysis/high_co2_demand_2024_det_1h/networks/config_run.yaml``
+The file-name prefix inside (e.g. for the solved network) encodes all
+configuration detail::
+
+   networks/B_H_RE_H2_MEOH_METH_SN_ST_CO2_150_tD_H2_50_MeOH_0_CH4_400_2024_El_0.1_DET_1h_high_co2_demand_OPT.nc
+
+The full configuration is also saved to ``networks/config_run.yaml``
 for reproducibility.
 
 ---

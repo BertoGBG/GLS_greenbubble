@@ -27,10 +27,10 @@ rule build_network:
         costs_all  = expand("data/technology-data/outputs/costs_{year}.csv", year=TECH_DATA_YEARS),
         inputs     = f"resources/inputs_{YEAR}.pkl",
     output:
-        network    = "resources/{network}/{network}_PRE.nc",
-        comp_alloc = "resources/{network}/{network}_comp_alloc.pkl",
+        network    = f"resources/{RUN_DIR}/{{network}}_PRE.nc",
+        comp_alloc = f"resources/{RUN_DIR}/{{network}}_comp_alloc.pkl",
     params:
-        plot_folder = f"{OUTDIR}/{{network}}/plots",
+        plot_folder = f"{OUTDIR}/{RUN_DIR}/plots",
     log:
         "logs/build_network_{network}.log",
     wildcard_constraints:

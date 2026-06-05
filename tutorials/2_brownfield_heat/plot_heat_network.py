@@ -15,9 +15,9 @@ import pypsatopo
 
 NETWORK_NC = pathlib.Path(
     "outputs/single_analysis/"
-    "tut2_brownfield_heat_2024_det_3h/"
+    "tut2_brownfield_heat/"
     "networks/"
-    "tut2_brownfield_heat_2024_det_3h_OPT.nc"
+    "B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_580_MeOH_0_CH4_262_2024_El_0.1_DET_3h_tut2_brownfield_heat_OPT.nc"
 )
 
 n = pypsa.Network(str(NETWORK_NC))

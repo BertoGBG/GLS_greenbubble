@@ -54,7 +54,7 @@ Capacity expansion is **bypassed entirely** — capacities are read from the
      horizon:      168       # window length (h)
      overlap:       72       # overlap (h)
      rh_year:      2024
-     network_path: 'outputs/single_analysis/tut2_brownfield_2024_det_3h/networks/tut2_brownfield_2024_det_3h_OPT.nc'
+     network_path: 'outputs/single_analysis/tut2_brownfield_heat/networks/B_H_RE_H2_METH_SN_ST_CO2_100_tD_H2_580_MeOH_0_CH4_262_2024_El_0.1_DET_3h_tut2_brownfield_heat_OPT.nc'
 
 .. admonition:: Committable units are supported in rolling horizon
    :class: tip
@@ -67,7 +67,7 @@ Capacity expansion is **bypassed entirely** — capacities are read from the
    a fixed (``expansion: false``) asset to see on/off cycling in the dispatch.
 
 The output network name gets an ``_RH`` suffix, and plots land in
-``outputs/single_analysis/<…_RH>/plots_rh/``.
+``outputs/single_analysis/<run_name>/plots_rh/``.
 
 ---
 

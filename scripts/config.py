@@ -73,10 +73,10 @@ _n_raw = _load_with_override(
     _CFG_DIR / "n_config.yaml",
 )
 _n_raw.pop("base", None)
-n_opt = _n_raw.pop("options", {})
-n_opt.pop("base", None)
+_n_opt = _n_raw.pop("options", {})
+_n_opt.pop("base", None)
 n_config = pd.DataFrame.from_dict(_n_raw, orient="index").sort_index()
-n_options = pd.DataFrame.from_dict(n_opt, orient="index").sort_index()
+n_options = pd.DataFrame.from_dict(_n_opt, orient="index").sort_index()
 
 # --- plots ---
 plt_config = _load_with_override(
