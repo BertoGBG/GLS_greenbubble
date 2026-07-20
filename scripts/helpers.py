@@ -647,19 +647,27 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
     mk_el_grid_price = el_grid_price + CO2_emiss_El * (CO2_cost - CO2_cost_ref_year)
     mk_el_grid_sell_price = el_grid_sell_price.copy()
 
-    # --- 4. Natural gas price (consumer pays CO₂ cost locally) ---
+    # --- 4. Natural gas price ---
+    # The historical commodity price carries no combustion-carbon tax: under
+    # ETS/carbon-tax rules that liability sits with the combusting plant
+    # (the boiler), not baked into the gas price like it is for electricity
+    # spot prices. So the full CO2_cost applies here, not net of a reference
+    # year — there is nothing already embedded to net out.
     co2_intensity_ng = tech_costs.at["gas", "CO2 intensity"]  # tCO₂/MWh_th
 
     NG_grid_price, NG_sell_price = build_NG_grid_price_w_tariff(NG_price_year)
 
     if isinstance(NG_grid_price, pd.DataFrame):
         NG_grid_price = NG_grid_price.iloc[:, 0]
-    mk_NG_grid_price = NG_grid_price + co2_intensity_ng * (CO2_cost - CO2_cost_ref_year)
+    mk_NG_grid_price = NG_grid_price + co2_intensity_ng * CO2_cost
     mk_NG_grid_price = pd.Series(mk_NG_grid_price, index=el_grid_price.index)
 
+    # bioCH4 market value = NG spot price + the CO2 tax a buyer avoids by
+    # burning biomethane instead of fossil gas — same full-tax logic as the
+    # boiler purchase price above, no reference-year netting.
     if isinstance(NG_sell_price, pd.DataFrame):
         NG_sell_price = NG_sell_price.iloc[:, 0]
-    mk_NG_grid_sell_price = -1 * (NG_sell_price + co2_intensity_ng * (CO2_cost - CO2_cost_ref_year))
+    mk_NG_grid_sell_price = -1 * (NG_sell_price + co2_intensity_ng * CO2_cost)
     mk_NG_grid_sell_price = pd.Series(mk_NG_grid_sell_price, index=el_grid_price.index)
 
 

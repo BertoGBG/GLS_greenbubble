@@ -35,7 +35,8 @@ Enable stochastic mode in ``config/config.yaml``:
        '2023': 100
        '2024': 100
        '2025': 120
-     CO2_cost_ref_year_s:  # CO₂ cost already embedded in energy prices
+     CO2_cost_ref_year_s:  # CO₂ cost already embedded in the historical
+                            # electricity price — see :ref:`config-co2-pricing`
        '2022': 0
        '2023': 0
        '2024': 0

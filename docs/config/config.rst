@@ -23,10 +23,16 @@ General
      - Short label appended to the output folder name.
    * - ``CO2_cost``
      - ``100``
-     - CO₂ tax applied to fossil emissions (€/t).
+     - CO₂ price assumed for the scenario (€/t). Applied as the full price to
+       natural gas (boiler combustion, bioCH4 sale price), and as the delta
+       over ``CO2_cost_ref_year`` to electricity, since historical spot
+       prices already embed a reference-year carbon price but historical NG
+       commodity prices do not (that liability sits with the combusting
+       plant, not the gas supplier).
    * - ``CO2_cost_ref_year``
      - ``0``
-     - CO₂ cost already embedded in energy prices for the reference year (€/t).
+     - CO₂ price already embedded in the historical electricity price for
+       the reference year (€/t). Not used for natural gas.
    * - ``En_price_year``
      - ``2023``
      - Year used to download electricity prices, CO₂ intensities, and NG prices.

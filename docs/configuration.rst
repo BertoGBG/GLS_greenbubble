@@ -40,8 +40,27 @@ Short label appended to the output folder name. Keep it concise.
 
 .. code-block:: yaml
 
-   CO2_cost: 100         # €/t — CO₂ tax on fossil emissions
-   CO2_cost_ref_year: 0  # €/t — CO₂ cost already embedded in energy prices
+   CO2_cost: 100         # €/t — CO₂ price assumed for the scenario
+   CO2_cost_ref_year: 0  # €/t — CO₂ price already embedded in the historical electricity price
+
+.. _config-co2-pricing:
+
+CO₂ pricing is applied differently per energy carrier, reflecting who is
+legally liable for the tax:
+
+- **Electricity** — the historical spot price already reflects whatever
+  carbon price was prevailing in the market at the time (passed through by
+  the price-setting fossil generator). Only the *delta*
+  ``CO2_cost - CO2_cost_ref_year`` is added, scaled by the grid's hourly
+  emission intensity — i.e. only the extra cost of the scenario's CO₂ price
+  relative to the reference year.
+- **Natural gas** — the historical commodity price carries no combustion
+  tax: under ETS/carbon-tax rules that liability sits with the combusting
+  plant (the boiler), not the gas supplier. The **full** ``CO2_cost`` is
+  therefore added to the NG purchase price (boilers) and to the bioCH4 sale
+  price (see ``price_bioCH4: 'NG_based'`` below, modelled as the NG spot
+  price plus the CO₂ tax a buyer avoids by using biomethane) —
+  ``CO2_cost_ref_year`` is not netted out for gas.
 
 .. code-block:: yaml
 
@@ -75,7 +94,7 @@ Controls whether the model is **demand-driven** or **price-driven**.
      demand_CH4:  300000    # MWh_CH4/y — annual biomethane demand
      demand_meoh: 4000      # MWh_MeOH/y — annual methanol demand
      price_H2:    90        # €/MWh — H₂ price target (price mode)
-     price_bioCH4: 95       # €/MWh — 'NG_based' derives from NG price + CO₂ tax
+     price_bioCH4: 95       # €/MWh — 'NG_based' derives from NG price + full CO₂ tax (see :ref:`config-co2-pricing`)
      price_meoh:  110       # €/MWh — methanol price target
 
 In **demand mode** (``driver: 'demand'``), annual production targets are fixed constraints.
@@ -163,7 +182,8 @@ Enables multi-scenario stochastic optimisation.
      CO2_cost_s:          # per-scenario CO₂ cost (€/t)
        '2022': 100
        ...
-     CO2_cost_ref_year_s: # per-scenario reference-year CO₂ cost
+     CO2_cost_ref_year_s: # per-scenario CO₂ cost already embedded in the
+                           # historical electricity price — see :ref:`config-co2-pricing`
        '2022': 0
        ...
      EVPI: true           # compute Expected Value of Perfect Information
