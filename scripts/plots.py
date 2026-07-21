@@ -1553,9 +1553,12 @@ def compute_lcop_kkt_by_technology(n, out_csv):
 
     where π_{bus1,t} is the nodal shadow price (marginal_price) at bus1.
 
-    The theory (see docs/economics.rst and KKTs_interpretation_v2.tex) proves
-    that at optimum this equals the cost-based LCOP from compute_lcop_by_technology.
-    This function lets you verify that equality numerically.
+    The theory (see docs/economics.rst, section "Levelized Cost of Product
+    (LCOP) and shadow prices") shows that at optimum this equals the
+    cost-based LCOP from compute_lcop_by_technology for the marginal
+    (price-setting) technology; infra-marginal technologies show LCOP_cost <
+    LCOP_kkt, the gap being their profit margin. This function lets you
+    verify that relationship numerically.
 
     Returns a DataFrame indexed by link name with columns:
         carrier, product, annual_production_MWh, LCOP_cost (EUR/MWh),
