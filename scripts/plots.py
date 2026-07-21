@@ -1379,6 +1379,38 @@ def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (ener
 
 # ---- LCOP BY TECHNOLOGY ----
 
+# Bus slots (in scan order) that can carry a link's main product, paired with
+# the efficiency attribute name PyPSA uses for that slot (bus1's is bare
+# "efficiency"; bus2+ are "efficiency2", "efficiency3", ...). bus0 is never
+# scanned here — by this project's Link convention it is always the primary
+# input (the reference flow p0), never an output.
+_PRODUCT_BUS_SLOTS = [
+    ("bus1", "efficiency"), ("bus2", "efficiency2"),
+    ("bus3", "efficiency3"), ("bus4", "efficiency4"),
+    ("bus5", "efficiency5"),
+]
+
+
+def _find_product_slot(links, lk, collection_buses):
+    """Return (bus_col, eff_col) for whichever bus slot on link `lk` connects
+    to a tagged product collection bus (``n.buses['is_product_bus']``), or
+    None if none does.
+
+    The main product is not always on bus1 — e.g. biomethanation and
+    biomethanation CO2 output their main product via bus2 (bus1 is their
+    carbon-source input). Detecting the slot by which bus is actually tagged,
+    rather than assuming a fixed bus number, makes this correct for bioCH4,
+    H2 and Methanol alike, and for any future product/bus layout.
+    """
+    for bus_col, eff_col in _PRODUCT_BUS_SLOTS:
+        if bus_col not in links.columns:
+            continue
+        bus = links.at[lk, bus_col]
+        if pd.notna(bus) and str(bus) in collection_buses:
+            return bus_col, eff_col
+    return None
+
+
 def compute_lcop_by_technology(n, out_csv, out_plot):
     """Compute LCOP, revenue, and annual profit for each technology injecting
     into a product collection bus (tagged is_product_bus=True).
@@ -1423,7 +1455,12 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
         print("[LCOP] no links — skipping")
         return pd.DataFrame()
 
-    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    product_slots = {}
+    for lk in links.index:
+        slot = _find_product_slot(links, lk, collection_buses)
+        if slot is not None:
+            product_slots[lk] = slot
+    product_links = list(product_slots.keys())
     if not product_links:
         print("[LCOP] no links inject into collection buses — skipping")
         return pd.DataFrame()
@@ -1477,7 +1514,8 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
         capex = _get_stat(capex_s, lk)
         opex  = _get_stat(opex_s,  lk)
 
-        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        main_bus_col, main_eff_col = product_slots[lk]
+        eff1 = float(links.at[lk, main_eff_col]) if main_eff_col in links.columns else 1.0
         p0 = (
             p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
             if lk in p0_df.columns
@@ -1491,9 +1529,12 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
         bus0 = links.at[lk, "bus0"] if "bus0" in links.columns else ""
         net_kkt_non_main = _kkt_term(bus0, -1.0, p0)
 
-        # ── KKT at bus2..bus5 (additional inputs eff<0 and by-products eff>0)
-        for bus_col, eff_col in [("bus2", "efficiency2"), ("bus3", "efficiency3"),
-                                  ("bus4", "efficiency4"), ("bus5", "efficiency5")]:
+        # ── KKT at every other bus slot (additional inputs eff<0 and
+        # by-products eff>0) — i.e. every slot except bus0 and whichever
+        # slot is this link's main product (found above, not always bus1).
+        for bus_col, eff_col in _PRODUCT_BUS_SLOTS:
+            if bus_col == main_bus_col:
+                continue
             if bus_col not in links.columns or eff_col not in links.columns:
                 continue
             eff_k = links.at[lk, eff_col]
@@ -1504,8 +1545,8 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
         # indirect OPEX = feedstock costs − by-product credits (positive = net cost)
         indirect_opex = -net_kkt_non_main
 
-        # ── KKT at bus1 (main product at collection bus) ───────────────────
-        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
+        # ── KKT at the main product bus (at the collection bus) ─────────────
+        bus1 = links.at[lk, main_bus_col]
         revenue_main = _kkt_term(bus1, eff1, p0)
 
         net_market_value = revenue_main - indirect_opex
@@ -1580,7 +1621,12 @@ def compute_lcop_kkt_by_technology(n, out_csv):
         print("[LCOP-KKT] no links — skipping")
         return pd.DataFrame()
 
-    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    product_slots = {}
+    for lk in links.index:
+        slot = _find_product_slot(links, lk, collection_buses)
+        if slot is not None:
+            product_slots[lk] = slot
+    product_links = list(product_slots.keys())
     if not product_links:
         print("[LCOP-KKT] no links inject into collection buses — skipping")
         return pd.DataFrame()
@@ -1615,8 +1661,9 @@ def compute_lcop_kkt_by_technology(n, out_csv):
     rows = []
     link_names = []
     for lk in product_links:
-        bus1 = links.at[lk, "bus1"] if "bus1" in links.columns else ""
-        eff1 = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        main_bus_col, main_eff_col = product_slots[lk]
+        bus1 = links.at[lk, main_bus_col]
+        eff1 = float(links.at[lk, main_eff_col]) if main_eff_col in links.columns else 1.0
 
         p0 = (
             p0_df[lk].reindex(n.snapshots, fill_value=0.0).clip(lower=0)
@@ -1714,9 +1761,11 @@ def _plot_lcop_bar(df, out_path):
 def compute_srmc_by_technology(n, out_csv, out_plot):
     """Short-run marginal cost (SRMC) for each product-bus technology at every snapshot.
 
-    For technology s at snapshot t:
+    For technology s at snapshot t, with main product on whichever bus slot
+    is tagged as a product collection bus (not always bus1 — see
+    _find_product_slot):
 
-        SRMC_{s,t} = [ λ_{bus0,t}  −  Σ_{k≥2} η_k · λ_{bus_k,t}  +  VOM_{s,t} ]  /  η_1
+        SRMC_{s,t} = [ λ_{bus0,t}  −  Σ_{k≠main} η_k · λ_{bus_k,t}  +  VOM_{s,t} ]  /  η_main
 
     This is the instantaneous production cost per MWh of primary output — the cost of
     producing one more MWh right now given current input market prices. It drives the
@@ -1745,7 +1794,12 @@ def compute_srmc_by_technology(n, out_csv, out_plot):
         print("[SRMC] no links — skipping")
         return pd.DataFrame()
 
-    product_links = links.index[links["bus1"].isin(collection_buses)].tolist()
+    product_slots = {}
+    for lk in links.index:
+        slot = _find_product_slot(links, lk, collection_buses)
+        if slot is not None:
+            product_slots[lk] = slot
+    product_links = list(product_slots.keys())
     if not product_links:
         print("[SRMC] no links inject into collection buses — skipping")
         return pd.DataFrame()
@@ -1777,8 +1831,9 @@ def compute_srmc_by_technology(n, out_csv, out_plot):
 
     rows = []
     for lk in product_links:
-        bus1  = links.at[lk, "bus1"]
-        eff1  = float(links.at[lk, "efficiency"]) if "efficiency" in links.columns else 1.0
+        main_bus_col, main_eff_col = product_slots[lk]
+        bus1  = links.at[lk, main_bus_col]
+        eff1  = float(links.at[lk, main_eff_col]) if main_eff_col in links.columns else 1.0
         if eff1 == 0:
             continue
 
@@ -1786,10 +1841,12 @@ def compute_srmc_by_technology(n, out_csv, out_plot):
         bus0  = links.at[lk, "bus0"] if "bus0" in links.columns else ""
         net_input_cost = _price(bus0)   # λ_{bus0,t}: cost of consuming bus0
 
-        # secondary buses: subtract by-product credits (eff>0) and add extra input costs (eff<0)
-        # unified formula: net_input_cost -= eff_k * λ_{bus_k,t} for all k≥2
-        for bus_col, eff_col in [("bus2","efficiency2"),("bus3","efficiency3"),
-                                  ("bus4","efficiency4"),("bus5","efficiency5")]:
+        # every other bus slot: subtract by-product credits (eff>0) and add extra
+        # input costs (eff<0) — i.e. every slot except bus0 and whichever slot is
+        # this link's main product (found above, not always bus1).
+        for bus_col, eff_col in _PRODUCT_BUS_SLOTS:
+            if bus_col == main_bus_col:
+                continue
             if bus_col not in links.columns or eff_col not in links.columns:
                 continue
             eff_k = links.at[lk, eff_col]
