@@ -7,7 +7,7 @@
 run_name: default
 CO2_cost:          100   # €/t  (applied to fossil emissions from the model, and the diff with ref_year is applied to purchase of energy with emission from external grids)
 CO2_cost_ref_year: 100   # €/t  (set if energy prices already embed a CO₂ tax)
-max_RE_to_grid:    0.1
+max_RE_to_grid:    0.3
 En_price_year:    2024
 latitude:        56.566
 longitude:        9.033
@@ -71,14 +71,14 @@ discount_rate:         0.07
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-tariffs
 tariffs_dict:
   el_transmission_tariff:  9.92
-  el_system_tariff:         6.84
+  el_system_tariff:        6.84
   el_afgift:               0
-  el_net_tariff_low:        2
-  el_net_tariff_high:       6
+  el_net_tariff_low:       2
+  el_net_tariff_high:      6
   el_net_tariff_peak:      12
-  el_tariff_sell:           1.4
-  NG_dso_tariff:            1.8
-  NG_tso_tariff:            0.01
+  el_tariff_sell:          1.4
+  NG_dso_tariff:           1.8
+  NG_tso_tariff:           0.01
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-optimization
 optimization:
@@ -115,7 +115,7 @@ stochastic:
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-clustering
 clustering:
   temporal:
-    resolution: 6h   # false | "4h" | "8h" | "24h"
+    resolution: 4h   # false | "4h" | "8h" | "24h"
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rolling-horizon
 rolling_horizon:
