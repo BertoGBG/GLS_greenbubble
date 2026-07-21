@@ -44,7 +44,7 @@ carrier_colors:
   El boiler:            "#0288d1"   # dark blue
 
   # Methanation routes (greens — making CH4)
-  biomethanation biogas: "#74c476"  # light green
+  biomethanation:        "#74c476"  # light green
   biomethanation CO2:    "#43a047"  # medium green
   methanation biogas:    "#2e7d32"  # forest green
   methanation CO2:       "#1b5e20"  # dark forest green
@@ -107,10 +107,10 @@ plotting:
       field: p0
       selector: biomethanation CO2
 
-    - label: biomethanation biogas
+    - label: biomethanation
       kind: Link
       field: p0
-      selector: biomethanation biogas
+      selector: biomethanation
 
     - label: methanation CO2
       kind: Link

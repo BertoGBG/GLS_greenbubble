@@ -71,7 +71,7 @@ biogas engine:
   expansion : true
   committable : false # -> only for expansion false or RH
 
-biomethanation biogas: # (bus0 unit: MW H2)
+biomethanation: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 1 # % of total power capacity per hour
   ramp limit down: 1 # % of total power capacity per hour

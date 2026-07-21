@@ -5,8 +5,8 @@
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-general
 run_name: default
-CO2_cost:          100   # €/t
-CO2_cost_ref_year:   0   # €/t  (set if energy prices already embed a CO₂ tax)
+CO2_cost:          100   # €/t  (applied to fossil emissions from the model, and the diff with ref_year is applied to purchase of energy with emission from external grids)
+CO2_cost_ref_year: 100   # €/t  (set if energy prices already embed a CO₂ tax)
 max_RE_to_grid:    0.1
 En_price_year:    2024
 latitude:        56.566
@@ -72,7 +72,7 @@ discount_rate:         0.07
 tariffs_dict:
   el_transmission_tariff:  9.92
   el_system_tariff:         6.84
-  el_afgift:               45
+  el_afgift:               0
   el_net_tariff_low:        2
   el_net_tariff_high:       6
   el_net_tariff_peak:      12

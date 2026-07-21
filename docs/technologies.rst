@@ -84,7 +84,7 @@ biogas) into synthetic methane:
   — Sabatier reaction.  Strict ramp limits (8 %/h) and minimum load (40 %)
   reflect the thermal inertia of the catalyst bed.
 
-**Biomethanation** (``biomethanation CO2``, ``biomethanation biogas``)
+**Biomethanation** (``biomethanation CO2``, ``biomethanation``)
   — Biological hydrogenotrophic process (trickle-bed reactor).
   Faster ramp response than catalytic (ramp limit 100 %/h); no minimum load
   constraint in the default configuration.

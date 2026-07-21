@@ -3071,19 +3071,19 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # BIOLOGICAL METHANATION (biogas)
     # ----------------------------------------------------------------------
-    def add_biomethanation_biogas_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
+    def add_biomethanation_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
         # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here —
         # add_targets() sets it correctly per-tech before this function runs (price mode needs the intermediate bus).
-        methanation_buses.at['H2 in bus', 'biomethanation biogas'] = methanation_buses.at['H2 in bus', 'methanation']
-        methanation_buses.at['biogas in bus', 'biomethanation biogas'] = methanation_buses.at['biogas in bus', 'methanation']
-        methanation_buses.at['local EL bus', 'biomethanation biogas'] = methanation_buses.at['local EL bus', 'methanation']
-        methanation_buses.at['H2 storage bus', 'biomethanation biogas'] = methanation_buses.at['H2 storage bus', 'methanation']
+        methanation_buses.at['H2 in bus', 'biomethanation'] = methanation_buses.at['H2 in bus', 'methanation']
+        methanation_buses.at['biogas in bus', 'biomethanation'] = methanation_buses.at['biogas in bus', 'methanation']
+        methanation_buses.at['local EL bus', 'biomethanation'] = methanation_buses.at['local EL bus', 'methanation']
+        methanation_buses.at['H2 storage bus', 'biomethanation'] = methanation_buses.at['H2 storage bus', 'methanation']
 
 
         # check that the buses are actually existing
-        n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation biogas', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
+        n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
         # add Heat  bus
         meth_heat_directions = {'Heat DH': 1,  # for compressor
@@ -3093,37 +3093,39 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                                                        tech_costs, n_config)
         # update methanation_buses
         methanation_buses.at['Heat DH', 'methanation'] = new_heat_buses[0]
-        methanation_buses.at['Heat DH', 'biomethanation biogas'] = new_heat_buses[0]
+        methanation_buses.at['Heat DH', 'biomethanation'] = new_heat_buses[0]
         methanation_buses.at['Heat LT', 'methanation'] = new_heat_buses[1]
-        methanation_buses.at['Heat LT', 'biomethanation biogas'] = new_heat_buses[1]
+        methanation_buses.at['Heat LT', 'biomethanation'] = new_heat_buses[1]
 
-        name = f"{prefix}biomethanation biogas"
+        name = f"{prefix}biomethanation"
+        # bus order matches biomethanation CO2 / pypsa-eur convention: H2, carbon
+        # source (consumed), product (produced), electricity (consumed).
         n.add(
             "Link",
             name,
             carrier = carrier,
-            bus0=methanation_buses.at['H2 in bus', 'biomethanation biogas'],
-            bus1=methanation_buses.at['product bus', 'biomethanation biogas'],
-            bus2=methanation_buses.at['biogas in bus', 'biomethanation biogas'],
-            bus3=methanation_buses.at['local EL bus', 'biomethanation biogas'],
-            efficiency=tech_costs.at["biomethanation biogas", "methane-output"],
-            efficiency2=-tech_costs.at["biomethanation biogas", "biogas-input"],
-            efficiency3=-tech_costs.at["biomethanation biogas", "electricity-input"],
+            bus0=methanation_buses.at['H2 in bus', 'biomethanation'],
+            bus1=methanation_buses.at['biogas in bus', 'biomethanation'],
+            bus2=methanation_buses.at['product bus', 'biomethanation'],
+            bus3=methanation_buses.at['local EL bus', 'biomethanation'],
+            efficiency=-tech_costs.at["biomethanation", "biogas-input"],
+            efficiency2=tech_costs.at["biomethanation", "methane-output"],
+            efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
             p_nom=capacity,
             p_nom_extendable=expansion,
-            p_nom_max=n_config.at["biomethanation biogas", "max capacity"],
+            p_nom_max=n_config.at["biomethanation", "max capacity"],
             capital_cost=capital_cost,
-            marginal_cost=tech_costs.at["biomethanation biogas", "VOM"],
-            ramp_limit_up=n_config.at['biomethanation biogas', 'ramp limit up'],
-            ramp_limit_down=n_config.at['biomethanation biogas', 'ramp limit down'],
+            marginal_cost=tech_costs.at["biomethanation", "VOM"],
+            ramp_limit_up=n_config.at['biomethanation', 'ramp limit up'],
+            ramp_limit_down=n_config.at['biomethanation', 'ramp limit down'],
             )
 
 
         # Call storage for H2
         bio_meth_comp_H2 = {'plant' : 'methanation', # ----> '' for centralized compressor
-                   'local EL bus': methanation_buses.at['local EL bus', 'biomethanation biogas'],
-                   'Heat DH bus' :methanation_buses.at['Heat DH', 'biomethanation biogas'],
-                   'Heat LT bus' :methanation_buses.at['Heat LT', 'biomethanation biogas'],
+                   'local EL bus': methanation_buses.at['local EL bus', 'biomethanation'],
+                   'Heat DH bus' :methanation_buses.at['Heat DH', 'biomethanation'],
+                   'Heat LT bus' :methanation_buses.at['Heat LT', 'biomethanation'],
                    'IN bus' : methanation_buses.at['H2 in bus', 'methanation'],
                    'OUT bus' : methanation_buses.at['H2 in bus', 'methanation'],
                    'ST bus' : methanation_buses.at['H2 storage bus', 'methanation'],
@@ -3176,11 +3178,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             name,
             carrier=carrier,
             bus0=methanation_buses.at['H2 in bus', 'biomethanation CO2'],
-            bus1=methanation_buses.at['product bus', 'biomethanation CO2'],
-            bus2=methanation_buses.at['CO2 in bus', 'biomethanation CO2'],
+            bus1=methanation_buses.at['CO2 in bus', 'biomethanation CO2'],
+            bus2=methanation_buses.at['product bus', 'biomethanation CO2'],
             bus3=methanation_buses.at['local EL bus', 'biomethanation CO2'],
-            efficiency=tech_costs.at["biomethanation CO2", "methane-output"],
-            efficiency2=-tech_costs.at["biomethanation CO2", "CO2-input"],
+            efficiency=-tech_costs.at["biomethanation CO2", "CO2-input"],
+            efficiency2=tech_costs.at["biomethanation CO2", "methane-output"],
             efficiency3=-tech_costs.at["biomethanation CO2", "electricity-input"],
             p_nom_extendable=expansion,
             p_nom=capacity,
@@ -3430,7 +3432,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
 
     # check what technologies to add
     techs = [
-        "biomethanation biogas",
+        "biomethanation",
         "biomethanation CO2",
         "methanation biogas",
         "methanation CO2",
@@ -3475,7 +3477,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
 
     # add each technology with initial capacity or expansion
     for t, add_fn in [
-        ("biomethanation biogas", add_biomethanation_biogas_cap_exp),
+        ("biomethanation", add_biomethanation_cap_exp),
         ("biomethanation CO2", add_biomethanation_CO2_cap_exp),
         ("methanation biogas", add_cat_methanation_biogas_cap_exp),
         ("methanation CO2", add_cat_methanation_CO2_cap_exp),
@@ -3490,11 +3492,13 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
 
         if t in cap_to_add:
             cap = n_config.at[t, "initial capacity"]
-            if "methanation biogas" in t or "methanation CO2" in t:
+            # NOTE: use exact equality, not substring matching — "biomethanation" is
+            # a substring of "biomethanation CO2" and would otherwise mismatch it.
+            if t in ("methanation biogas", "methanation CO2"):
                 _tech_nm = "methanation biogas"
-            elif "biomethanation biogas" in t:
-                _tech_nm = "biomethanation biogas"
-            elif "biomethanation CO2" in t:
+            elif t == "biomethanation":
+                _tech_nm = "biomethanation"
+            elif t == "biomethanation CO2":
                 _tech_nm = "biomethanation CO2"
             else:
                 _tech_nm = None
@@ -3502,13 +3506,14 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             n, methanation_buses = add_fn(n, "EXI_", _exi_cc, cap, False, carrier=t, methanation_buses=methanation_buses)
 
         if t in exp_to_add:
-            if "methanation biogas" in t:
+            # NOTE: exact equality (see above) — the previous substring checks
+            # ("methanation CO2" in t) also matched "biomethanation CO2", silently
+            # costing its expansion capacity as catalytic "methanation biogas".
+            if t in ("methanation biogas", "methanation CO2"):
                 cost = tech_costs.at["methanation biogas","fixed"] * n_config.at[t, "cost factor"]
-            if "methanation CO2" in t:
-                cost = tech_costs.at["methanation biogas","fixed"] * n_config.at[t, "cost factor"]
-            elif "biomethanation biogas" in t:
-                cost = tech_costs.at["biomethanation biogas", "fixed"] * n_config.at[t, "cost factor"]
-            elif "biomethanation CO2" in t:
+            elif t == "biomethanation":
+                cost = tech_costs.at["biomethanation", "fixed"] * n_config.at[t, "cost factor"]
+            elif t == "biomethanation CO2":
                 cost = tech_costs.at["biomethanation CO2", "fixed"] * n_config.at[t, "cost factor"]
 
             n, methanation_buses = add_fn(n, "", cost, 0, True, carrier=t, methanation_buses=methanation_buses)
