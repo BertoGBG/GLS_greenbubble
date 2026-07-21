@@ -90,6 +90,12 @@ optimization:
   zero_threshold_MW:  0.01         # MW — components below this are treated as not built
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-stochastic
+# NOTE: scenarios / CO2_cost_s / CO2_cost_ref_year_s are replaced wholesale
+# (not deep-merged key-by-key) when overridden in config.yaml — see
+# _REPLACE_WHOLESALE_KEYS in scripts/config.py. If you override any of them,
+# you must give the COMPLETE dict (all years you want, probabilities summing
+# to 1) — leftover years from this default will NOT be merged in, and none
+# of these three will silently keep entries from here.
 stochastic:
   stochastic: false
   scenarios:

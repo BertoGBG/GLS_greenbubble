@@ -193,6 +193,18 @@ in parallel (one Snakemake job per year) before building the coupled network.
 ``EVPI: true`` adds one deterministic solve per scenario to compute the EVPI;
 automatically disabled when ``stochastic: false``.
 
+.. important::
+   ``scenarios``, ``CO2_cost_s`` and ``CO2_cost_ref_year_s`` are replaced
+   **wholesale** when overridden in ``config.yaml`` — not deep-merged
+   key-by-key like the rest of the config (see ``_REPLACE_WHOLESALE_KEYS``
+   in ``scripts/config.py``). If you override any of them, give the
+   **complete** set of years you want (probabilities summing to 1); leftover
+   years from ``config.default.yaml`` will not be merged in. All three dicts
+   must share the same year keys.
+
+See also :ref:`guide-stochastic` for required n_config settings (ramp limits,
+unit commitment) and limitations.
+
 .. _config-clustering:
 
 clustering

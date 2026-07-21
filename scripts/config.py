@@ -41,10 +41,21 @@ from pathlib import Path
 _CFG_DIR = Path(__file__).resolve().parent.parent / "config"
 
 
+
+# Keys replaced wholesale on override rather than merged key-by-key: these
+# represent a coherent, internally-consistent set keyed by scenario year
+# (probabilities must sum to 1, and years must match across all three dicts).
+# Deep-merging them would silently mix leftover default years into the
+# user's override.
+_REPLACE_WHOLESALE_KEYS = {"scenarios", "CO2_cost_s", "CO2_cost_ref_year_s"}
+
+
 def _deep_merge(base: dict, override: dict) -> dict:
     """Recursively merge override into base in-place and return base."""
     for k, v in override.items():
-        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
+        if k in _REPLACE_WHOLESALE_KEYS:
+            base[k] = v
+        elif k in base and isinstance(base[k], dict) and isinstance(v, dict):
             _deep_merge(base[k], v)
         else:
             base[k] = v
