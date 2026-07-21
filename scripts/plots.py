@@ -4560,6 +4560,32 @@ def make_global_summary_costs(
     costs_long = df.groupby(["scenario", "group"], as_index=True)[["capex", "opex", "total"]].sum()
     total_by_scenario = costs_long["total"].groupby(level="scenario").sum()
 
+    # ── LCOP recovery / market revenue split (generic, any revenue-bearing link) ──
+    scenarios_for_split = list(df["scenario"].astype(str).unique()) or ["deterministic"]
+    split_long = component_revenue_split_long_per_scenario(n, scenarios_for_split)
+    if not split_long.empty:
+        link_carrier = n.links["carrier"] if "carrier" in n.links.columns else pd.Series(dtype=object)
+        split_long["carrier"] = split_long["name"].map(link_carrier).fillna("unknown")
+        split_long["group"] = (
+            split_long["carrier"].map(carrier_map).fillna(split_long["carrier"])
+            if carrier_map is not None else split_long["carrier"]
+        )
+        split_agg = split_long.groupby(["scenario", "group"], as_index=True)[
+            ["lcop_recovery", "market_revenue"]
+        ].sum()
+    else:
+        split_agg = pd.DataFrame(columns=["lcop_recovery", "market_revenue"])
+
+    costs_long = costs_long.join(split_agg, how="left").fillna(
+        {"lcop_recovery": 0.0, "market_revenue": 0.0}
+    )
+    # Reconcile: the split only covers Links with an identifiable bus0 price;
+    # anything opex captures beyond that (Stores, Generators, ...) is folded
+    # into lcop_recovery so lcop_recovery + market_revenue == opex exactly,
+    # by construction, for every (scenario, group).
+    unexplained = costs_long["opex"] - (costs_long["lcop_recovery"] + costs_long["market_revenue"])
+    costs_long["lcop_recovery"] = costs_long["lcop_recovery"] + unexplained
+
     # scenario weights
     scenario_weights = None
     if hasattr(n, "scenario_weightings") and n.scenario_weightings is not None:
@@ -4579,10 +4605,12 @@ def make_global_summary_costs(
         tmp["scenario"] = tmp["scenario"].astype(str)
         tmp["w"] = tmp["scenario"].map(w).fillna(0.0).astype(float)
 
-        for c in ["capex", "opex", "total"]:
+        for c in ["capex", "opex", "total", "lcop_recovery", "market_revenue"]:
             tmp[c] = tmp[c] * tmp["w"]
 
-        expected_long = tmp.groupby(["group"], as_index=True)[["capex", "opex", "total"]].sum()
+        expected_long = tmp.groupby(["group"], as_index=True)[
+            ["capex", "opex", "total", "lcop_recovery", "market_revenue"]
+        ].sum()
         total_expected = float(expected_long["total"].sum())
 
     summary = {
@@ -4618,7 +4646,9 @@ def make_global_summary_costs(
 
     # totals row per scenario (including stochastic)
     totals = (
-        out.groupby("scenario", as_index=False)[["capex", "opex", "total"]]
+        out.groupby("scenario", as_index=False)[
+            ["capex", "opex", "total", "lcop_recovery", "market_revenue"]
+        ]
         .sum()
         .assign(group="total", unit="€/y")
     )
@@ -4631,7 +4661,8 @@ def make_global_summary_costs(
 
     out = pd.concat([out, totals], ignore_index=True, sort=False)
 
-    out = out[["scenario", "group", "capex", "opex", "total", "unit", "probability"]]
+    out = out[["scenario", "group", "capex", "opex", "total",
+               "lcop_recovery", "market_revenue", "unit", "probability"]]
 
     out["__is_total"] = (out["group"] == "total").astype(int)
     out = out.sort_values(["scenario", "__is_total", "group"], ascending=[True, True, True]).drop(columns="__is_total")
@@ -4665,29 +4696,48 @@ def plot_total_system_cost_stacked(
     if costs_long is None or costs_long.empty:
         raise ValueError("No costs to plot (costs_long is empty).")
 
-    # Pivot to wide: rows=scenario, cols=group, values=which
-    df = costs_long[which].reset_index().pivot_table(
-        index="scenario", columns="group", values=which, aggfunc="sum"
-    ).fillna(0.0)
+    def _pivot(col):
+        """Pivot one costs_long column to wide (rows=scenario, cols=group),
+        append the probability-weighted 'stochastic' row the same way `which`
+        is handled, and drop the 'total' pseudo-group."""
+        wide = costs_long[col].reset_index().pivot_table(
+            index="scenario", columns="group", values=col, aggfunc="sum"
+        ).fillna(0.0)
+        if "total" in wide.columns:
+            wide = wide.drop(columns=["total"])
+        if add_expected and expected_long is not None and not expected_long.empty and col in expected_long.columns:
+            exp = expected_long[col].copy()
+            for g in wide.columns:
+                if g not in exp.index:
+                    exp.loc[g] = 0.0
+            exp = exp.reindex(wide.columns).fillna(0.0)
+            wide.loc["stochastic"] = exp.values
+        return wide
 
-    if "total" in df.columns:
-        df = df.drop(columns=["total"])
+    df = _pivot(which)
 
-    # Add expected as an extra row (optional)
-    if add_expected and expected_long is not None and not expected_long.empty:
-        exp = expected_long[which].copy()
-        # ensure all columns exist
-        for g in df.columns:
-            if g not in exp.index:
-                exp.loc[g] = 0.0
-        exp = exp.reindex(df.columns).fillna(0.0)
-
-        # keep consistent with make_global_summary_costs() csv "stochastic"
-        df.loc["stochastic"] = exp.values
+    # LCOP recovery / market revenue split of the negative (revenue) portion —
+    # only meaningful for "opex"/"total" (capex is never split; it's always cost).
+    has_split = (
+        which in ("opex", "total")
+        and "lcop_recovery" in costs_long.columns
+        and "market_revenue" in costs_long.columns
+    )
+    if has_split:
+        df_lcop = _pivot("lcop_recovery").reindex(index=df.index, columns=df.columns, fill_value=0.0)
+        df_mkt  = _pivot("market_revenue").reindex(index=df.index, columns=df.columns, fill_value=0.0)
 
     # Sort groups by total contribution (so legend/order is stable)
     group_order = df.sum(axis=0).sort_values(ascending=False).index
     df = df[group_order]
+    if has_split:
+        df_lcop = df_lcop[group_order]
+        df_mkt = df_mkt[group_order]
+        # Reconcile against `which`: this is 0 when which="opex", and equals
+        # capex when which="total" (capex is real cost, folded into LCOP
+        # recovery rather than treated as "market revenue").
+        leftover = df - (df_lcop + df_mkt)
+        df_lcop = df_lcop + leftover
 
     # Plot
     fig, ax = plt.subplots(figsize=figsize)
@@ -4723,17 +4773,46 @@ def plot_total_system_cost_stacked(
 
         # Negative (give label ONLY if we didn't label via positive)
         if np.any(neg):
-            ax.bar(
-                x, neg,
-                bottom=neg_bottoms,
-                label=(str(g) if not labeled else None),
-                color=col,
-                alpha=0.35,
-                hatch="///",
-                edgecolor="black",
-                linewidth=0.25,
-            )
-            neg_bottoms += neg
+            if has_split:
+                neg_lcop = np.where(vals < 0, df_lcop[g].to_numpy(dtype=float), 0.0)
+                neg_mkt  = np.where(vals < 0, df_mkt[g].to_numpy(dtype=float), 0.0)
+                if np.any(neg_lcop):
+                    ax.bar(
+                        x, neg_lcop,
+                        bottom=neg_bottoms,
+                        label=(str(g) if not labeled else None),
+                        color=col,
+                        alpha=0.35,
+                        hatch="///",
+                        edgecolor="black",
+                        linewidth=0.25,
+                    )
+                    neg_bottoms += neg_lcop
+                    labeled = True
+                if np.any(neg_mkt):
+                    ax.bar(
+                        x, neg_mkt,
+                        bottom=neg_bottoms,
+                        label=(str(g) if not labeled else None),
+                        color=col,
+                        alpha=0.55,
+                        hatch="\\\\\\",
+                        edgecolor="black",
+                        linewidth=0.25,
+                    )
+                    neg_bottoms += neg_mkt
+            else:
+                ax.bar(
+                    x, neg,
+                    bottom=neg_bottoms,
+                    label=(str(g) if not labeled else None),
+                    color=col,
+                    alpha=0.35,
+                    hatch="///",
+                    edgecolor="black",
+                    linewidth=0.25,
+                )
+                neg_bottoms += neg
 
     # zero line helps interpretation
     ax.axhline(0, linewidth=1.0, color="black", alpha=0.6)
@@ -4783,10 +4862,17 @@ def plot_total_system_cost_stacked(
 
     ax.set_ylim(ymin - padding_bottom, ymax + padding_top)
 
-    sign_handles = [
-        Patch(facecolor="white", edgecolor="black", label="Cost (+)"),
-        Patch(facecolor="white", edgecolor="black", hatch="///", alpha=0.35, label="Revenue (−)"),
-    ]
+    if has_split:
+        sign_handles = [
+            Patch(facecolor="white", edgecolor="black", label="Cost (+)"),
+            Patch(facecolor="white", edgecolor="black", hatch="///", alpha=0.35, label="LCOP recovery (−)"),
+            Patch(facecolor="white", edgecolor="black", hatch="\\\\\\", alpha=0.55, label="Market revenue (−)"),
+        ]
+    else:
+        sign_handles = [
+            Patch(facecolor="white", edgecolor="black", label="Cost (+)"),
+            Patch(facecolor="white", edgecolor="black", hatch="///", alpha=0.35, label="Revenue (−)"),
+        ]
 
     handles, labels = ax.get_legend_handles_labels()
     handles = handles + sign_handles
@@ -5216,6 +5302,141 @@ def component_opex_long_per_scenario(
     return pd.DataFrame(rows, columns=["kind", "name", "scenario", "opex"])
 
 
+def component_revenue_split_long_per_scenario(
+    n,
+    scenarios,
+    snapshot_weight_col="objective",
+):
+    """
+    Split each Link's opex into "LCOP recovery" and "market revenue":
+
+        LCOP recovery  = -sum_t( p0_t * lambda_bus0_t * w_t )
+        Market revenue = opex - LCOP recovery
+
+    lambda_bus0 is the link's own bus0 marginal_price (n.buses_t.marginal_price)
+    — the value internal production economics actually attributes to this
+    flow. LCOP recovery is what a cost-based accounting would credit the
+    system for; market revenue is everything beyond that — e.g. an exogenous
+    flat sale price exceeding the internal shadow price because of a binding
+    annual quota, a ratio constraint (max_RE_to_grid), etc. It's computed
+    generically for every revenue-bearing link (opex < 0), not just tagged
+    product-collection links, so it applies equally to bioCH4/H2/Methanol
+    sales, electricity/DH exports, and CO2 credits — and correctly comes out
+    as ~0 wherever there's no such decoupling (e.g. demand mode, or a sale
+    link with no separate internal collection bus).
+
+    Links with opex >= 0 (a real cost, not revenue) are not split: LCOP
+    recovery == opex, market revenue == 0.
+
+    Returns a long DataFrame: kind ("Link"), name, scenario, opex,
+    lcop_recovery, market_revenue.
+    """
+    snap_w = (
+        n.snapshot_weightings[snapshot_weight_col]
+        .reindex(n.snapshots)
+        .fillna(0.0)
+        .to_numpy()
+    )
+
+    cols = ["kind", "name", "scenario", "opex", "lcop_recovery", "market_revenue"]
+    if not (hasattr(n, "links_t") and hasattr(n.links_t, "p0")):
+        return pd.DataFrame(columns=cols)
+
+    links_by_s = _scenario_slices_static(n.links, scenarios)
+    mp = getattr(n.buses_t, "marginal_price", None)
+    dfp0 = n.links_t.p0
+    dfmc = getattr(n.links_t, "marginal_cost", None)
+
+    def _bus0_price_series(scen, bus0):
+        if mp is None or pd.isna(bus0) or str(bus0) == "":
+            return None
+        bus0 = str(bus0)
+        if isinstance(mp.columns, pd.MultiIndex) and {"scenario", "name"}.issubset(mp.columns.names):
+            key = (scen, bus0)
+            return mp[key] if key in mp.columns else None
+        return mp[bus0] if bus0 in mp.columns else None
+
+    def _split_one(name, links, scen, p0, opex):
+        if opex >= 0.0:
+            return opex, 0.0
+        bus0 = links.at[name, "bus0"] if "bus0" in links.columns else ""
+        pi0_ts = _bus0_price_series(scen, bus0)
+        if pi0_ts is None:
+            return opex, 0.0
+        pi0 = pd.to_numeric(pd.Series(pi0_ts, copy=False), errors="coerce").fillna(0.0).to_numpy()
+        lcop_recovery = -float(np.sum(p0 * pi0 * snap_w))
+        return lcop_recovery, opex - lcop_recovery
+
+    rows = []
+
+    if isinstance(dfp0.columns, pd.MultiIndex):
+        scen_lvl = _get_cols_level(dfp0, "scenario")
+        if scen_lvl is None:
+            scen_lvl = 0
+
+        for scen in scenarios:
+            try:
+                sub_p0 = dfp0.xs(scen, level=scen_lvl, axis=1)
+            except KeyError:
+                continue
+
+            if isinstance(sub_p0.columns, pd.MultiIndex):
+                nl = _guess_name_level(sub_p0, links_by_s[scen].index)
+                sub_p0 = sub_p0.copy()
+                sub_p0.columns = sub_p0.columns.get_level_values(nl)
+
+            links = links_by_s[scen]
+
+            for name in sub_p0.columns:
+                if name not in links.index:
+                    continue
+
+                p0 = pd.to_numeric(sub_p0[name], errors="coerce").fillna(0.0).to_numpy()
+
+                mc_ts = _get_ts_scen_asset(dfmc, scen, name) if dfmc is not None else None
+                if mc_ts is not None:
+                    mc = pd.to_numeric(pd.Series(mc_ts, copy=False), errors="coerce").fillna(0.0).to_numpy()
+                    opex = float(np.sum(p0 * mc * snap_w))
+                else:
+                    mc0 = float(links.at[name, "marginal_cost"]) if "marginal_cost" in links.columns else 0.0
+                    if mc0 == 0.0:
+                        continue
+                    opex = float(np.sum(p0 * mc0 * snap_w))
+
+                if opex == 0.0:
+                    continue
+
+                lcop_recovery, market_revenue = _split_one(name, links, scen, p0, opex)
+                rows.append(("Link", str(name), str(scen), opex, lcop_recovery, market_revenue))
+
+    else:
+        links = links_by_s[scenarios[0]]
+
+        for name in dfp0.columns:
+            if name not in links.index:
+                continue
+
+            p0 = pd.to_numeric(dfp0[name], errors="coerce").fillna(0.0).to_numpy()
+
+            mc_ts = _get_ts_scen_asset(dfmc, "deterministic", name) if dfmc is not None else None
+            if mc_ts is not None:
+                mc = pd.to_numeric(pd.Series(mc_ts, copy=False), errors="coerce").fillna(0.0).to_numpy()
+                opex = float(np.sum(p0 * mc * snap_w))
+            else:
+                mc0 = float(links.at[name, "marginal_cost"]) if "marginal_cost" in links.columns else 0.0
+                if mc0 == 0.0:
+                    continue
+                opex = float(np.sum(p0 * mc0 * snap_w))
+
+            if opex == 0.0:
+                continue
+
+            lcop_recovery, market_revenue = _split_one(name, links, "deterministic", p0, opex)
+            rows.append(("Link", str(name), "deterministic", opex, lcop_recovery, market_revenue))
+
+    return pd.DataFrame(rows, columns=cols)
+
+
 def make_global_summary_costs_by_agent(
     n,
     network_comp_allocation,
@@ -5240,17 +5461,28 @@ def make_global_summary_costs_by_agent(
 
     capex = component_capex_long_per_scenario(n, scenarios)
     opex  = component_opex_long_per_scenario(n, scenarios, snapshot_weight_col, abs_link_p0)
+    split = component_revenue_split_long_per_scenario(n, scenarios, snapshot_weight_col)
 
     # map to agent
     capex["group"] = capex.apply(lambda r: lookup.get((r["kind"], r["name"]), "Unallocated"), axis=1)
     opex["group"]  = opex.apply(lambda r: lookup.get((r["kind"], r["name"]), "Unallocated"), axis=1) if not opex.empty else "Unallocated"
+    split["group"] = split.apply(lambda r: lookup.get((r["kind"], r["name"]), "Unallocated"), axis=1) if not split.empty else "Unallocated"
 
     # aggregate (scenario, agent)
     capex_sa = capex.groupby(["scenario","group"], as_index=True)[["capex"]].sum()
     opex_sa  = opex.groupby(["scenario","group"],  as_index=True)[["opex"]].sum() if not opex.empty else None
+    split_sa = (
+        split.groupby(["scenario","group"], as_index=True)[["lcop_recovery","market_revenue"]].sum()
+        if not split.empty else None
+    )
 
-    costs_long = capex_sa.join(opex_sa, how="outer").fillna(0.0)
+    costs_long = capex_sa.join(opex_sa, how="outer").join(split_sa, how="outer").fillna(0.0)
     costs_long["total"] = costs_long["capex"] + costs_long["opex"]
+
+    # Reconcile: fold anything the split doesn't cover (Stores, etc.) into
+    # lcop_recovery so lcop_recovery + market_revenue == opex exactly.
+    unexplained = costs_long["opex"] - (costs_long["lcop_recovery"] + costs_long["market_revenue"])
+    costs_long["lcop_recovery"] = costs_long["lcop_recovery"] + unexplained
 
     total_by_scenario = costs_long["total"].groupby(level="scenario").sum()
 
@@ -5260,9 +5492,11 @@ def make_global_summary_costs_by_agent(
     if include_expected and scen_w is not None and len(scen_w) > 0:
         tmp = costs_long.reset_index()
         tmp["w"] = tmp["scenario"].map(scen_w).fillna(0.0).astype(float)
-        for c in ["capex","opex","total"]:
+        for c in ["capex","opex","total","lcop_recovery","market_revenue"]:
             tmp[c] = tmp[c] * tmp["w"]
-        expected_long = tmp.groupby("group", as_index=True)[["capex","opex","total"]].sum()
+        expected_long = tmp.groupby("group", as_index=True)[
+            ["capex","opex","total","lcop_recovery","market_revenue"]
+        ].sum()
         total_expected = float(expected_long["total"].sum())
 
     summary = {
@@ -5293,7 +5527,9 @@ def make_global_summary_costs_by_agent(
 
     # (4) totals row per scenario
     totals = (
-        out.groupby("scenario", as_index=False)[["capex","opex","total"]]
+        out.groupby("scenario", as_index=False)[
+            ["capex","opex","total","lcop_recovery","market_revenue"]
+        ]
            .sum()
            .assign(group="total", unit=unit)
     )
@@ -5303,7 +5539,8 @@ def make_global_summary_costs_by_agent(
         totals.loc[mask, "probability"] = totals.loc[mask, "scenario"].map(scen_w)
 
     out = pd.concat([out, totals], ignore_index=True)
-    out = out[["scenario","group","capex","opex","total","unit","probability"]]
+    out = out[["scenario","group","capex","opex","total",
+               "lcop_recovery","market_revenue","unit","probability"]]
 
     # keep total last within each scenario
     out["__is_total"] = (out["group"] == "total").astype(int)
