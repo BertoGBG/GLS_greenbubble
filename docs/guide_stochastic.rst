@@ -35,7 +35,8 @@ Enable stochastic mode in ``config/config.yaml``:
        '2023': 100
        '2024': 100
        '2025': 120
-     CO2_cost_ref_year_s:  # CO₂ cost already embedded in energy prices
+     CO2_cost_ref_year_s:  # CO₂ cost already embedded in the historical
+                            # electricity price — see :ref:`config-co2-pricing`
        '2022': 0
        '2023': 0
        '2024': 0
@@ -88,6 +89,25 @@ Limitations
   Note: committable + extendable *is* supported in deterministic capacity
   expansion via PyPSA's big-M formulation; see
   `committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_.
+- **Ramp limits** are incompatible with stochastic mode — PyPSA's
+  ``define_ramp_limit_constraints`` does not reliably support the
+  ``(scenario, name)`` multi-index that ``n.set_scenarios()`` introduces.
+  Confirmed empirically (July 2026) against both the project's pinned
+  PyPSA 1.0.7 and the latest release (1.2.4) with minimal repros:
+
+  - any **fixed** (``expansion: false``) component with a ramp limit fails
+    (index-alignment error between the ramp constraint and ``p_nom``);
+  - **two or more** distinct **extendable** components with ramp limits fail
+    too (a different error, from an xarray MultiIndex ``.sel()`` limitation);
+  - only a single extendable ramp-limited component happens to work on
+    1.0.7 — but this is not a realistic case (any real network has several
+    ramp-limited techs), and 1.2.4 breaks even that case.
+
+  Upgrading PyPSA does **not** fix this — 1.2.4 rewrote the constraint code
+  with explicit multi-index handling, but still fails, with different
+  errors, on every case above. Set ``ramp limit up`` / ``ramp limit down``
+  to ``null`` in ``n_config.yaml`` for every ramp-limited technology enabled
+  in a stochastic run (see ``tutorials/4_stochastic/n_config.yaml``).
 - **Temporal resampling** with stochastic mode issues a warning (scenarios are
   resampled independently — see :ref:`guide-temporal-resolution`).
 

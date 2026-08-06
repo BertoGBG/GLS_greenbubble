@@ -4,8 +4,9 @@
 # Same brownfield assets as Tutorial 2, BUT stochastic mode requires a pure LP:
 #   * committable: false everywhere (no binary unit-commitment) — already the
 #     default for every technology here.
-#   * ramp limits set to null — PyPSA (<=1.2.2) cannot build ramp-limit
-#     constraints on a scenario network (see guide_stochastic -> Limitations).
+#   * ramp limits set to null — PyPSA cannot build ramp-limit constraints on
+#     a scenario network, confirmed on both 1.0.7 (pinned) and the latest
+#     release (1.2.4) (see guide_stochastic -> Limitations).
 #     A value such as 1 STILL builds the constraint; only null disables it.
 # ---------------------------------------------------------------------
 
@@ -39,5 +40,5 @@ options:
 # --- REQUIRED for stochastic: disable ramp limits (null, not a number) ---
 electrolysis:          {ramp limit up: null, ramp limit down: null}
 methanolisation:       {ramp limit up: null, ramp limit down: null}
-biomethanation biogas: {ramp limit up: null, ramp limit down: null}
+biomethanation:        {ramp limit up: null, ramp limit down: null}
 biomethanation CO2:    {ramp limit up: null, ramp limit down: null}

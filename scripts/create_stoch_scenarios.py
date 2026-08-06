@@ -44,11 +44,11 @@ def scenarios_check(scenarios: dict, CO2_cost_s: dict, CO2_cost_ref_year_s: dict
 
     if not math.isclose(total_prob, 1.0):
         if a == 'norm':
-            new_probs = [p/sum for p in prob_tot]
+            new_probs = [p/total_prob for p in prob_tot]
             checked_scenarios = dict(zip(scenarios.keys(), new_probs))
             print ('WARNING: sum of scenarios probability not 1. Probability were normalized')
         else:
-            print('sum of scenarios probability' , sum)
+            print('sum of scenarios probability', total_prob)
             raise ValueError('WARNING: sum of scenarios probability not 1')
 
     else:

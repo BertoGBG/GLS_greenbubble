@@ -61,10 +61,11 @@ on its own prices and renewable profiles). Scenarios carry a probability
    #. **No unit commitment** — ``committable: false`` everywhere (stochastic
       cannot use binary variables).
    #. **No ramp limits** — set ``ramp limit up`` / ``ramp limit down`` to
-      ``null`` for electrolysis, methanolisation and biomethanation. PyPSA
-      (≤ 1.2.2) cannot build ramp-limit constraints on a scenario network, and a
-      value such as ``1`` still builds them — only ``null`` disables them. See
-      :ref:`guide-stochastic` → *Limitations*.
+      ``null`` for electrolysis, methanolisation, biomethanation and
+      biomethanation CO2. PyPSA cannot build ramp-limit constraints on a
+      scenario network — confirmed on both 1.0.7 (pinned) and the latest
+      release (1.2.4) — and a value such as ``1`` still builds them — only
+      ``null`` disables them. See :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
 Temporal resolution is set to ``3h`` to keep solve time manageable.

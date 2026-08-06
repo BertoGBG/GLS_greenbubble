@@ -40,8 +40,27 @@ Short label appended to the output folder name. Keep it concise.
 
 .. code-block:: yaml
 
-   CO2_cost: 100         # €/t — CO₂ tax on fossil emissions
-   CO2_cost_ref_year: 0  # €/t — CO₂ cost already embedded in energy prices
+   CO2_cost: 100         # €/t — CO₂ price assumed for the scenario
+   CO2_cost_ref_year: 0  # €/t — CO₂ price already embedded in the historical electricity price
+
+.. _config-co2-pricing:
+
+CO₂ pricing is applied differently per energy carrier, reflecting who is
+legally liable for the tax:
+
+- **Electricity** — the historical spot price already reflects whatever
+  carbon price was prevailing in the market at the time (passed through by
+  the price-setting fossil generator). Only the *delta*
+  ``CO2_cost - CO2_cost_ref_year`` is added, scaled by the grid's hourly
+  emission intensity — i.e. only the extra cost of the scenario's CO₂ price
+  relative to the reference year.
+- **Natural gas** — the historical commodity price carries no combustion
+  tax: under ETS/carbon-tax rules that liability sits with the combusting
+  plant (the boiler), not the gas supplier. The **full** ``CO2_cost`` is
+  therefore added to the NG purchase price (boilers) and to the bioCH4 sale
+  price (see ``price_bioCH4: 'NG_based'`` below, modelled as the NG spot
+  price plus the CO₂ tax a buyer avoids by using biomethane) —
+  ``CO2_cost_ref_year`` is not netted out for gas.
 
 .. code-block:: yaml
 
@@ -75,7 +94,7 @@ Controls whether the model is **demand-driven** or **price-driven**.
      demand_CH4:  300000    # MWh_CH4/y — annual biomethane demand
      demand_meoh: 4000      # MWh_MeOH/y — annual methanol demand
      price_H2:    90        # €/MWh — H₂ price target (price mode)
-     price_bioCH4: 95       # €/MWh — 'NG_based' derives from NG price + CO₂ tax
+     price_bioCH4: 95       # €/MWh — 'NG_based' derives from NG price + full CO₂ tax (see :ref:`config-co2-pricing`)
      price_meoh:  110       # €/MWh — methanol price target
 
 In **demand mode** (``driver: 'demand'``), annual production targets are fixed constraints.
@@ -163,7 +182,8 @@ Enables multi-scenario stochastic optimisation.
      CO2_cost_s:          # per-scenario CO₂ cost (€/t)
        '2022': 100
        ...
-     CO2_cost_ref_year_s: # per-scenario reference-year CO₂ cost
+     CO2_cost_ref_year_s: # per-scenario CO₂ cost already embedded in the
+                           # historical electricity price — see :ref:`config-co2-pricing`
        '2022': 0
        ...
      EVPI: true           # compute Expected Value of Perfect Information
@@ -172,6 +192,18 @@ When ``stochastic: true``, input data is downloaded for **all scenario years**
 in parallel (one Snakemake job per year) before building the coupled network.
 ``EVPI: true`` adds one deterministic solve per scenario to compute the EVPI;
 automatically disabled when ``stochastic: false``.
+
+.. important::
+   ``scenarios``, ``CO2_cost_s`` and ``CO2_cost_ref_year_s`` are replaced
+   **wholesale** when overridden in ``config.yaml`` — not deep-merged
+   key-by-key like the rest of the config (see ``_REPLACE_WHOLESALE_KEYS``
+   in ``scripts/config.py``). If you override any of them, give the
+   **complete** set of years you want (probabilities summing to 1); leftover
+   years from ``config.default.yaml`` will not be merged in. All three dicts
+   must share the same year keys.
+
+See also :ref:`guide-stochastic` for required n_config settings (ramp limits,
+unit commitment) and limitations.
 
 .. _config-clustering:
 
@@ -299,19 +331,22 @@ tariffs_dict
 ^^^^^^^^^^^^
 
 Danish electricity grid tariffs (€/MWh). Applied to all grid imports/exports.
+Source figures are published in DKK; convert to €/MWh using ``EUR_to_DKK``
+before entering them here, since these values are added directly to
+``Elspotprices`` (EUR/MWh).
 
 .. code-block:: yaml
 
    tariffs_dict:
-     el_transmission_tariff: 9.92   # TSO tariff (Energinet)
-     el_system_tariff:        6.84
-     el_afgift:               45    # state electricity tax (øre/kWh)
-     el_net_tariff_low:        2    # DSO tariff — off-peak
-     el_net_tariff_high:       6    # DSO tariff — shoulder
-     el_net_tariff_peak:      12    # DSO tariff — peak
-     el_tariff_sell:          1.4   # tariff on electricity export
-     NG_dso_tariff:           1.8   # natural gas DSO tariff
-     NG_tso_tariff:           0.01  # natural gas TSO tariff
+     el_transmission_tariff: 1.3298   # TSO tariff (Energinet)
+     el_system_tariff:       0.9169
+     el_afgift:               0       # state electricity tax
+     el_net_tariff_low:      0.2681   # DSO tariff — off-peak
+     el_net_tariff_high:     0.8043   # DSO tariff — shoulder
+     el_net_tariff_peak:     1.6086   # DSO tariff — peak
+     el_tariff_sell:         0.1877   # tariff on electricity export
+     NG_dso_tariff:          0.2413   # natural gas DSO tariff
+     NG_tso_tariff:           0.00134 # natural gas TSO tariff
 
 .. _config-rfnbos:
 

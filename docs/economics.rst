@@ -223,3 +223,100 @@ them is financially consistent.
 
 USD-denominated technologies are converted at the ``USD_to_EUR`` exchange
 rate set in ``config.yaml``.
+
+---
+
+.. _economics-lcop:
+
+Levelized Cost of Product (LCOP) and shadow prices
+---------------------------------------------------
+
+GreenBubble computes a per-technology Levelized Cost of Product (LCOP) for
+every plant injecting into a tagged product collection bus (bioCH4, H2,
+Methanol, ...). The method is the same one used for Levelized Cost of CDR
+(LCCDR) in the `pypsa-eur fork's CDR checks
+<https://github.com/BertoGBG/pypsa-eur/blob/pypsa-eur_AA/scripts/check_CDRs_pipeline.py>`_:
+annualised CAPEX, plus snapshot-weighted VOM, plus the snapshot-weighted net
+cost of every other input/output flow (feedstocks costed positive,
+by-products/credits costed negative) priced at each bus's own nodal shadow
+price, all divided by annual main-product output. Only the natural output
+unit differs (EUR/tCO2 there vs. EUR/MWh here).
+
+**Cost-based LCOP** (``compute_lcop_by_technology`` in ``scripts/plots.py``),
+for a link *s* with main product at ``bus1`` (efficiency :math:`\eta_1`) and
+any number of other buses *k* (feedstocks, by-products, electricity, ...):
+
+.. math::
+
+   \text{indirect OPEX}_s = -\sum_{k \neq 1} \eta_k
+       \sum_t \left( p_{0,t} \cdot \lambda_{\text{bus}_k, t} \cdot w_t \right)
+
+.. math::
+
+   \text{LCOP}_s = \frac{\text{CAPEX}_s + \text{OPEX}_s + \text{indirect OPEX}_s}
+                        {\sum_t \left( p_{0,t} \cdot \eta_1 \cdot w_t \right)}
+
+where :math:`\lambda_{\text{bus}_k,t}` is the nodal shadow price
+(``n.buses_t.marginal_price``) at bus *k*, snapshot *t*, and :math:`w_t` is
+the objective snapshot weighting. CAPEX/OPEX come from ``n.statistics``.
+
+**KKT-based cross-check** (``compute_lcop_kkt_by_technology``): the
+production-weighted average shadow price the plant itself receives at its
+own product bus,
+
+.. math::
+
+   \text{LCOP}_s^{\text{kkt}} = \frac{\sum_t \left( w_t \cdot \eta_1 \cdot
+       p_{0,t} \cdot \pi_{\text{bus}_1, t} \right)}
+       {\sum_t \left( w_t \cdot \eta_1 \cdot p_{0,t} \right)}
+
+By LP complementary slackness, at optimum :math:`\text{LCOP}_s =
+\text{LCOP}_s^{\text{kkt}}` **for the marginal (price-setting) technology**
+— it earns zero economic profit. For an infra-marginal technology (e.g. a
+sunk-cost brownfield asset with CAPEX already written off),
+:math:`\text{LCOP}_s < \text{LCOP}_s^{\text{kkt}}`, and the gap is exactly
+its profit margin. Both are saved, alongside the difference, in
+``lcop_kkt_by_technology.csv`` for every run.
+
+**Demand mode vs. price mode (targets.driver)**
+
+- **demand mode**: the product's exogenous demand is a fixed physical
+  target (an equality/lower-bound constraint). Its dual value — read
+  directly from ``n.buses_t.marginal_price`` at the delivery bus — *is*
+  already the LCOx of the marginal technology; no separate calculation is
+  needed.
+- **price mode**: the delivery bus's price is exogenously pinned to the
+  assumed market price (the sale/purchase link's ``marginal_cost``), so it
+  reveals nothing about any individual producer's own cost. The cost-based
+  LCOP above is what's actually informative here — and it is computed the
+  same way regardless of mode, since it never assumes the bus price means
+  anything.
+
+**Worked example** (price mode, from a real run): ``biogas upgrading`` came
+out as the marginal supplier of bioCH4 — LCOP_cost ≈ LCOP_kkt ≈ 164.6
+EUR/MWh (the flat market price), profit ≈ 0. ``EXI_electrolysis`` is a
+sunk-cost brownfield asset (CAPEX = 0) — LCOP_cost (109.5 EUR/MWh) sits well
+below the H2 price it actually receives (LCOP_kkt = 113.1 EUR/MWh), earning
+real profit. Exactly the pattern the theory above predicts.
+
+Short-run marginal cost (SRMC) per technology and snapshot — the
+instantaneous cost of producing one more MWh right now, driving the merit
+order — is computed the same way but without amortised CAPEX
+(``compute_srmc_by_technology``, saved to ``srmc_by_technology.csv``):
+
+.. math::
+
+   \text{SRMC}_{s,t} = \frac{\lambda_{\text{bus}_0,t}
+       - \sum_{k \geq 2} \eta_k \cdot \lambda_{\text{bus}_k,t}
+       + \text{VOM}_{s,t}}{\eta_1}
+
+.. note::
+
+   pypsa-eur's CDR script sums the physical flow (tCO2 sequestered) using
+   ``snapshot_weightings["stores"]`` and cost terms using
+   ``snapshot_weightings["objective"]``, since these can differ under
+   representative-period temporal clustering. GreenBubble uses
+   ``["objective"]`` uniformly for both; this is equivalent today because
+   ``clustering.temporal.resolution`` only does simple uniform downsampling
+   (all weighting columns equal), but would need revisiting if a
+   representative-period clustering method were ever adopted.
