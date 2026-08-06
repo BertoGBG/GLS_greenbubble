@@ -69,16 +69,19 @@ EUR_to_DKK:            7.46
 discount_rate:         0.07
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-tariffs
+# Values converted from DKK/MWh to €/MWh using EUR_to_DKK (7.46) — source
+# figures were originally given in DKK; keep in €/MWh here so they add
+# directly to Elspotprices (EUR/MWh).
 tariffs_dict:
-  el_transmission_tariff:  9.92
-  el_system_tariff:        6.84
+  el_transmission_tariff:  1.3298
+  el_system_tariff:        0.9169
   el_afgift:               0
-  el_net_tariff_low:       2
-  el_net_tariff_high:      6
-  el_net_tariff_peak:      12
-  el_tariff_sell:          1.4
-  NG_dso_tariff:           1.8
-  NG_tso_tariff:           0.01
+  el_net_tariff_low:       0.2681
+  el_net_tariff_high:      0.8043
+  el_net_tariff_peak:      1.6086
+  el_tariff_sell:          0.1877
+  NG_dso_tariff:           0.2413
+  NG_tso_tariff:           0.00134
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-optimization
 optimization:

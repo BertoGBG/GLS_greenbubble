@@ -331,19 +331,22 @@ tariffs_dict
 ^^^^^^^^^^^^
 
 Danish electricity grid tariffs (€/MWh). Applied to all grid imports/exports.
+Source figures are published in DKK; convert to €/MWh using ``EUR_to_DKK``
+before entering them here, since these values are added directly to
+``Elspotprices`` (EUR/MWh).
 
 .. code-block:: yaml
 
    tariffs_dict:
-     el_transmission_tariff: 9.92   # TSO tariff (Energinet)
-     el_system_tariff:        6.84
-     el_afgift:               45    # state electricity tax (øre/kWh)
-     el_net_tariff_low:        2    # DSO tariff — off-peak
-     el_net_tariff_high:       6    # DSO tariff — shoulder
-     el_net_tariff_peak:      12    # DSO tariff — peak
-     el_tariff_sell:          1.4   # tariff on electricity export
-     NG_dso_tariff:           1.8   # natural gas DSO tariff
-     NG_tso_tariff:           0.01  # natural gas TSO tariff
+     el_transmission_tariff: 1.3298   # TSO tariff (Energinet)
+     el_system_tariff:       0.9169
+     el_afgift:               0       # state electricity tax
+     el_net_tariff_low:      0.2681   # DSO tariff — off-peak
+     el_net_tariff_high:     0.8043   # DSO tariff — shoulder
+     el_net_tariff_peak:     1.6086   # DSO tariff — peak
+     el_tariff_sell:         0.1877   # tariff on electricity export
+     NG_dso_tariff:          0.2413   # natural gas DSO tariff
+     NG_tso_tariff:           0.00134 # natural gas TSO tariff
 
 .. _config-rfnbos:
 
