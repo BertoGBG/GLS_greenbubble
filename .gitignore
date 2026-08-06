@@ -18,3 +18,6 @@ memory/
 text_docs/
 # Resources
 resources/
+
+# Claude Code project instructions (local only)
+CLAUDE.md
