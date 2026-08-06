@@ -159,8 +159,8 @@ What you learned
 - Reading a stochastic design as a **robust hedge** across scenarios, and
   interpreting scenario-level profitability spreads.
 
-This is the final tutorial in the core sequence. For exploring *near-optimal*
-alternatives to a single design, see the near-optimal (MGA) guide.
+For exploring *near-optimal* alternatives to a single design instead of just
+the one cost-optimal answer, continue to :ref:`tutorial-5-near-optimal`.
 
 .. seealso::
 

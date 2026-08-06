@@ -28,18 +28,23 @@ The feature runs **after** a network has been solved (it consumes the
 Three tiers
 -----------
 
-================  ==========================================================
-Tier              What it produces
-================  ==========================================================
-**1 — ranges**    Per-technology min/max installed capacity within the cost
-                  budget. ``min > 0`` ⇒ *must-have*; ``max ≈ 0`` ⇒ *must-avoid*.
-**2 — hull**      Many search directions in the selected capacity space →
-                  extreme points → convex hull (the approximated near-optimal
-                  polytope) and 2-D projection plots.
-**3 — robustness**  Intersect the per-year near-optimal hulls and take the
-                  **Chebyshev centre** (deepest interior point) as a robust
-                  design that stays near-optimal across all years.
-================  ==========================================================
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Tier
+     - What it produces
+   * - **1 — ranges**
+     - Per-technology min/max installed capacity within the cost budget.
+       ``min > 0`` ⇒ *must-have*; ``max ≈ 0`` ⇒ *must-avoid*.
+   * - **2 — hull**
+     - Many search directions in the selected capacity space → extreme
+       points → convex hull (the approximated near-optimal polytope) and
+       2-D projection plots.
+   * - **3 — robustness**
+     - Intersect the per-year near-optimal hulls and take the **Chebyshev
+       centre** (deepest interior point) as a robust design that stays
+       near-optimal across all years.
 
 ---
 
@@ -199,20 +204,24 @@ projection along a search direction) subject to the near-optimal cost budget.
 Limitations
 -----------
 
-- **Solver choice matters.** MGA objectives place cost on only one or two capacity
-  variables, so the LP is highly *degenerate* (many equally-optimal vertices). Two
-  consequences:
-
-  - *Accuracy*: an extreme point of the near-optimal space is a **vertex**. A barrier
-    solve **without crossover** (``highs-fast``, ``gurobi-barrier-fast``) can return an
-    interior point, so the reported min/max are slightly *inside* the true range. Use a
-    profile that ends at a vertex — **simplex** (``highs-simplex``, ``highs-default``,
-    ``gurobi-default``) or **barrier with crossover** (``gurobi-barrier``) — for accurate
-    NOS results. Barrier-without-crossover is fine for a quick smoke test (and the cost
-    budget is respected either way).
-  - *Speed*: HiGHS simplex can be slow on the full hourly model; Gurobi
-    (``gurobi-default`` or ``gurobi-barrier``) is much faster. Set it in
-    ``optimization.solver_profile``.
+- **NOS is time-demanding — Gurobi is the preferred solver.** Every tier works by
+  re-solving the *entire* model, once per direction explored: Tier 1 solves twice per
+  dimension, Tier 2 adds one solve per sampled direction (default 40, plus axis
+  corners), and Tier 3 repeats both per robustness year. Even at a coarsened temporal
+  resolution this is dozens to well over a hundred full solves for one NOS run, so
+  solver speed matters far more here than for a single ordinary solve.
+- **Solver choice also affects correctness, not just speed.** MGA objectives place
+  cost on only one or two capacity variables, so the LP is highly *degenerate* (many
+  equally-optimal vertices). In practice this has shown up as more than an accuracy
+  tradeoff: ``highs-fast`` (barrier without crossover) has been observed to return
+  an outright **infeasible** status with a large primal-dual objective error on a
+  real GreenBubble network — silently failing a direction rather than just
+  under-reporting its extent. ``gurobi-barrier-fast`` did **not** show this failure
+  across 100+ direction solves in testing and remained fast, which is why it is
+  **the recommended default for NOS** (used throughout this guide's examples and in
+  :ref:`tutorial-5-near-optimal`). Without a Gurobi licence, fall back to a profile
+  that ends at a vertex — ``highs-simplex`` or ``highs-default`` — which avoids the
+  failure mode at the cost of noticeably slower solves.
 - The hull is **approximated** from a finite set of search directions; more
   ``n_directions`` gives a better approximation at the cost of more solves
   (each direction is a full model solve, run serially).

@@ -1,4 +1,4 @@
-﻿scripts.plots
+scripts.plots
 =============
 
 .. automodule:: scripts.plots
@@ -13,6 +13,7 @@
       build_capacity_compare_from_items
       component_capex_long_per_scenario
       component_opex_long_per_scenario
+      component_revenue_split_long_per_scenario
       compute_lcop_by_technology
       compute_lcop_kkt_by_technology
       compute_srmc_by_technology

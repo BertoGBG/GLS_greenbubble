@@ -1,4 +1,4 @@
-﻿scripts.helpers
+scripts.helpers
 ===============
 
 .. automodule:: scripts.helpers
@@ -14,6 +14,7 @@
       add_max_RE_sales_constraint
       add_technology_cost
       annuity
+      apply_custom_constraints
       assert_stochastic_schema_consistent
       build_NG_grid_price_w_tariff
       build_electricity_grid_price_w_tariff

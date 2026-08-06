@@ -1,0 +1,51 @@
+# =====================================================================
+# Tutorial 5 — Near-Optimal Space Exploration (MGA)
+# =====================================================================
+#   cp tutorials/5_near_optimal/config.yaml   config/config.yaml
+#   cp tutorials/5_near_optimal/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Reuses the Tutorial 1.1 greenfield, demand-driven plant and adds an `mga`
+# block on top: after the cost-optimal network is solved, GreenBubble explores
+# the near-optimal feasible space around it (Tiers 1-3, see the guide).
+# ---------------------------------------------------------------------
+
+run_name: tut5_nos
+
+amortization_period: 10
+
+targets:
+  driver: demand
+  demand_H2:   200000
+  demand_CH4:  350000
+  demand_meoh:   9000
+  CH4_demand_mode:  flat
+  H2_demand_mode:   flat
+  MeOH_demand_mode: bins_flat
+  MeOH_bins:        4
+
+# Coarse temporal resolution: NOS solves the model many times (one per
+# direction explored), so resolution matters even more than in a single solve.
+clustering:
+  temporal:
+    resolution: 3h
+
+# gurobi-barrier-fast is used here (not the highs-fast default) because
+# MGA's degenerate per-direction objective is unreliable under HiGHS'
+# barrier-without-crossover — see the guide's Limitations section.
+optimization:
+  solver:         gurobi
+  solver_profile: gurobi-barrier-fast
+
+mga:
+  enabled:      true
+  network_path: ''            # '' = explore the network built from this config
+  dimensions:   [onwind, solar, electrolysis, methanolisation, battery]
+  slack:        0.05          # near-optimal budget: c·x <= c_opt + slack·|c_opt|
+  n_directions: 20            # Tier 2 hull; set to 0 to run Tier 1 only
+  direction_sampling: halton
+  seed:         42
+  robustness:
+    enabled: true             # Tier 3: robust design across 2023/2024/2025
+    # years/CO2_cost inherited from config.default.yaml's mga.robustness.years
+    cost_bound: max

@@ -72,6 +72,65 @@ carrying forward the storage state from the overlapping portion.
 
 ---
 
+.. _methods-near-optimal:
+
+Near-optimal space exploration (MGA)
+--------------------------------------
+
+A cost-optimal solve returns **one** design. But energy system models are
+built on uncertain costs and forecasts, so many *other* designs — a few
+percent more expensive — are practically just as good, and can differ a lot
+in their technology mix. **Modelling to Generate Alternatives (MGA)** maps
+out this space of "almost as good" designs instead of stopping at the single
+cheapest one.
+
+**Motivation**
+
+Knowing the full near-optimal space answers questions the cost-optimal
+design alone cannot: which technologies are *load-bearing* (still needed
+even in the least favourable near-optimal design) versus *fully
+substitutable* (can shrink to zero for a small cost penalty), how much
+room there is to steer the design toward other goals (e.g. more local
+storage, less land use), and whether one design can stay good across
+several weather/price years at once — as opposed to being the best answer
+to only the one year it was solved for.
+
+**Formulation**
+
+Let :math:`c^\top x \le b` describe the model's optimal cost. GreenBubble
+adds one extra constraint — a cost *budget* — allowing the objective to rise
+by a small relative slack :math:`\varepsilon` above the optimum:
+
+.. math::
+
+   c^\top x \;\le\; c_\mathrm{opt} + \varepsilon\,\lvert c_\mathrm{opt}\rvert
+
+Any design satisfying this, together with all the model's normal
+constraints, is *near-optimal*. GreenBubble then re-solves the model
+repeatedly with the ordinary cost objective swapped out for a technology's
+installed capacity — minimising or maximising it under the budget above —
+to trace the boundary of that space, in three tiers of increasing detail:
+
+#. **Ranges** — the min/max capacity of each technology individually.
+#. **Hull** — many such solves in different combined directions, whose
+   extreme points approximate the full near-optimal region.
+#. **Robustness** — intersecting one such region per weather/price year
+   and taking the most central point of the overlap, i.e. the design
+   least likely to fall outside near-optimality in any single year.
+
+This follows Neumann & Brown (2021) for the near-optimal space itself and
+Grochowicz et al. (2023) for the multi-year robustness extension — see
+:ref:`references`. GreenBubble builds on PyPSA's native MGA machinery
+(`PyPSA MGA docs <https://docs.pypsa.org/latest/user-guide/optimization/modelling-to-generate-alternatives/>`_),
+re-implementing the per-direction solve so the project's own custom
+constraints are respected (PyPSA's built-in MGA solves bypass them).
+
+**Configuration and results** — see the full walkthrough in
+:ref:`guide-near-optimal` and :ref:`tutorial-5-near-optimal`,
+and :ref:`config-mga` for every parameter.
+
+---
+
 .. _methods-rfnbo:
 
 RFNBO compliance

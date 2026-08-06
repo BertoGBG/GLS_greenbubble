@@ -1,4 +1,4 @@
-﻿scripts.parameters
+scripts.parameters
 ==================
 
 .. automodule:: scripts.parameters

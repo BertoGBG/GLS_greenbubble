@@ -46,6 +46,7 @@ multi-energy systems.
    tutorial_2b_brownfield_heat
    tutorial_3_rolling_horizon
    tutorial_4_stochastic
+   tutorial_5_near_optimal
 
 .. toctree::
    :maxdepth: 1
