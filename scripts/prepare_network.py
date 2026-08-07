@@ -569,7 +569,7 @@ def add_store_if_new(n, name_prefix: str, store_kwargs: dict, nd=10):
 # ------- BUILD PYPSA NETWORK AUXILIARY FUNCTIONS-------------
 
 #  -------COMMON FUNCTIONS -----------
-def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carrier, en_market_prices):
+def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carrier, en_market_prices, tech_costs):
     """Reusable grid selling connection from El3 to DK1. Uses add_link_if_new to avoid duplicates.
     Moved out of add_renewables function to allow for biogas_engine electricity output.
     """
@@ -597,6 +597,7 @@ def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carr
         p_nom=capacity,
         p_nom_max=n_config.at['grid connection', 'max capacity'],  # module-level global
         capital_cost=capital_cost,
+        lifetime=tech_costs.at["electricity grid connection", "lifetime"],
         marginal_cost=en_market_prices["el_grid_sell_price"],
     )
 
@@ -748,6 +749,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
             efficiency=1.0,
             capital_cost=float(cap_cost),
             p_nom_extendable=True,
+            lifetime = tech_costs.at["electricity grid connection", "lifetime"],
         )
 
     # --- Assign time-dependent marginal cost  ---
@@ -920,16 +922,20 @@ def add_external_grids(network, inputs_dict, n_options):
             .ffill()
         )
 
-        if "DH load" not in network.loads.index:
-            network.add("Load", "DH load", bus="DH grid")
-            network.loads_t.p_set["DH load"] = dh
-
-        if "DH gen" not in network.generators.index:
-            network.add("Generator",
-                        "DH gen",
+        # No mandatory Load: DH is an optional, price-taking sale opportunity,
+        # not a must-serve obligation — if it isn't profitable to supply at some
+        # hour, the assumption is someone outside this optimization does instead,
+        # at no cost/benefit to this objective function. This Store just caps
+        # the *cumulative* annual quantity sellable at the real total DH demand;
+        # the hourly envelope is enforced separately on "DH_to_DH_grid"'s
+        # p_max_pu (see add_symbiosis).
+        if "DH grid sell" not in network.stores.index:
+            network.add("Store",
+                        "DH grid sell",
                         bus="DH grid",
-                        carrier="Heat",
-                        p_nom_extendable=True)
+                        e_nom_extendable=True,
+                        e_nom_max=float(dh.sum()),
+                        e_cyclic=False)
 
     # --- record newly added components ---
     new_components = log_new_components(network, n0_dict)
@@ -2378,7 +2384,8 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   e_nom = capacity,
                   capital_cost=capital_cost,
                   e_nom_max=n_config.at['biogas storage','max capacity'],
-                  e_cyclic=True)
+                  e_cyclic=True,
+                  lifetime = tech_costs.at["biogas storage", "lifetime"])
             return n
 
         def add_biogas_upgrading_aux (n):
@@ -2611,6 +2618,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                     n, 'EXI_El3_to_DK1', _exi_cc, gc_init, False,
                     carrier='grid connection',
                     en_market_prices=en_market_prices,
+                    tech_costs=tech_costs,
                 )
             if n_config.at['grid connection', 'expansion']:
                 cost = (tech_costs.at['electricity grid connection', 'fixed']
@@ -2619,6 +2627,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                     n, 'El3_to_DK1', cost, 0, True,
                     carrier='grid connection',
                     en_market_prices=en_market_prices,
+                    tech_costs=tech_costs,
             )
         
         # log new components
@@ -2735,10 +2744,10 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
     if 'grid connection' in cap_to_add:
         cap = n_config.at['grid connection', 'initial capacity']
         _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
-        n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', _exi_cc, cap, False, carrier = t, en_market_prices=en_market_prices)
+        n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', _exi_cc, cap, False, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
     if 'grid connection' in exp_to_add:
         cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor']
-        n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t, en_market_prices=en_market_prices)
+        n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
 
     # ----------------------------------------------------------------------
     new_components = log_new_components(n, n0_dict)
@@ -3112,6 +3121,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             efficiency2=tech_costs.at["biomethanation", "methane-output"],
             efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
             p_nom=capacity,
+            lifetime=tech_costs.at["biomethanation", "lifetime"],
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["biomethanation", "max capacity"],
             capital_cost=capital_cost,
@@ -3186,6 +3196,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             efficiency3=-tech_costs.at["biomethanation CO2", "electricity-input"],
             p_nom_extendable=expansion,
             p_nom=capacity,
+            lifetime = tech_costs.at["biomethanation CO2", "lifetime"],
             p_nom_max=n_config.at["biomethanation CO2", "max capacity"],
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["biomethanation CO2", "VOM"],
@@ -3270,6 +3281,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             efficiency2=-tech_costs.at["methanation biogas","biogas-input"],
             efficiency3=-tech_costs.at["methanation biogas","electricity-input"] ,
             efficiency4=tech_costs.at["methanation biogas","heat-output"],
+            lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["methanation biogas", "max capacity"],
@@ -3382,7 +3394,8 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
             efficiency2= - CO2_input,
             efficiency3= - tech_costs.at["methanation biogas","electricity-input"] ,
-            efficiency4= tech_costs.at["methanation biogas","heat-output"] ,
+            efficiency4= tech_costs.at["methanation biogas","heat-output"],
+            lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom_extendable= expansion,
             p_nom= capacity,
             committable=(n_config.at["methanation CO2", "committable"] == True) and not expansion,
@@ -3886,6 +3899,22 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
         else:
             flat_price = float(n_options.at["DH", "price"])
 
+        # Fixed (non-extendable) capacity at the real peak DH draw, with an
+        # hourly p_max_pu envelope tracking the real demand shape — DH is an
+        # optional, price-taking sale opportunity capped at what the external
+        # network could ever physically absorb, not a must-serve Load. The
+        # LP is free to sell less (or nothing) at hours where it isn't
+        # profitable; the cumulative annual cap lives on "DH grid sell"
+        # (see add_external_grids).
+        dh_demand = (
+            inputs_dict["DH_external_demand"]["DH demand MWh"]
+            .astype(float)
+            .interpolate("linear")
+            .reindex(n.snapshots)
+            .ffill()
+        )
+        dh_peak = float(dh_demand.max())
+
         n.add(
             "Link",
             "DH_to_DH_grid",
@@ -3893,9 +3922,11 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
             bus0="Heat DH",
             bus1="DH grid",
             efficiency=1,
-            p_nom_extendable=True,
+            p_nom_extendable=False,
+            p_nom=dh_peak,
             marginal_cost=-flat_price,
         )
+        n.links_t.p_max_pu["DH_to_DH_grid"] = (dh_demand / dh_peak) if dh_peak > 0 else dh_demand * 0.0
 
         if use_ts_price:
             n.links_t.marginal_cost["DH_to_DH_grid"] = -dh_ts.values
@@ -3933,6 +3964,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
             capital_cost=tech_costs.at["H2 pipe", "fixed"]
             * tech_costs.at["H2 pipe", "distance"]
             * n_config.at["H2 pipe", "cost factor"],
+            lifetime=tech_costs.at["H2 pipe", "lifetime"]
         )
 
     # ---------------------------------------------------------
@@ -3960,6 +3992,7 @@ def add_symbiosis(n, n_flags, inputs_dict, tech_costs):
             capital_cost=tech_costs.at["CO2 gas pipe", "fixed"]
             * tech_costs.at["CO2 gas pipe", "distance"]
             * n_config.at["CO2 pipe", "cost factor"],
+            lifetime=tech_costs.at["CO2 gas pipe", "lifetime"]
         )
 
     # ---------------------------------------------------------

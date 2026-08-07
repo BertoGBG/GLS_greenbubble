@@ -1756,6 +1756,589 @@ def _plot_lcop_bar(df, out_path):
     print(f"[LCOP] bar chart saved → {out_path}")
 
 
+# ---- PAYBACK TIME BY TECHNOLOGY (price mode only) ----
+
+def _payback_years(investment: float, cash_flow: float, discount_rate: float) -> tuple[float, float]:
+    """Simple and discounted payback time (years) for one investment.
+
+    Simple payback:      investment / cash_flow
+    Discounted payback:  smallest N solving
+                          investment = cash_flow · [(1 − (1+r)^-N) / r]
+                          i.e. the annuity formula inverted for N:
+                          N = −ln(1 − r·investment/cash_flow) / ln(1+r)
+
+    Returns ``(nan, nan)`` if there is no investment to recover, and
+    ``(inf, inf)`` if the cash flow never recovers it (``cash_flow <= 0``,
+    or — for the discounted case — the perpetuity value ``cash_flow / r``
+    is still short of the investment).
+    """
+    if investment <= 0:
+        return float("nan"), float("nan")
+    if cash_flow <= 0:
+        return float("inf"), float("inf")
+
+    simple = investment / cash_flow
+
+    x = discount_rate * investment / cash_flow
+    if x >= 1:
+        discounted = float("inf")
+    else:
+        discounted = -math.log(1 - x) / math.log(1 + discount_rate)
+
+    return simple, discounted
+
+
+_INVESTMENT_COMP_SPECS = [
+    ("Generator",   "generators",    "p_nom"),
+    ("Link",        "links",         "p_nom"),
+    ("StorageUnit", "storage_units", "p_nom"),
+    ("Store",       "stores",        "e_nom"),
+]
+
+
+def _tech_costs_value(tech_costs, row_tech: str, col: str) -> float | None:
+    """A single ``tech_costs.at[row_tech, col]`` value, or ``None`` if the row/column
+    is missing or non-finite."""
+    if row_tech not in tech_costs.index or col not in tech_costs.columns:
+        return None
+    v = pd.to_numeric(tech_costs.at[row_tech, col], errors="coerce")
+    return float(v) if np.isfinite(v) else None
+
+
+def _tech_annual_fom(tech_costs, row_tech: str) -> float | None:
+    """Annual fixed O&M (EUR/MW/year) for one catalogue row: ``investment × FOM%/100``."""
+    inv = _tech_costs_value(tech_costs, row_tech, "investment")
+    fom_pct = _tech_costs_value(tech_costs, row_tech, "FOM")
+    if inv is None or fom_pct is None:
+        return None
+    return inv * fom_pct / 100.0
+
+
+def _composite_tech_overrides(tech_costs, n_config, value_fn) -> dict[str, float]:
+    """Per-unit-capacity override table (EUR/MW or EUR/MWh) for components whose
+    annualised ``capital_cost`` is built in ``scripts/prepare_network.py`` from
+    technology-data row(s) that do **not** match the component's own name or
+    carrier — so neither ``comp_tech_map`` nor the carrier fallback in
+    :func:`_resolve_per_unit_value` can resolve them directly.
+
+    ``value_fn(row_tech) -> float | None`` supplies the per-row value to combine
+    (raw ``investment`` for :func:`_composite_investment_overrides`, or annual
+    FOM for :func:`_composite_fom_overrides`) — the combination weights
+    (``cost factor``, ``distance``, ``max hours``) are identical either way,
+    since they come straight from the same ``capital_cost=`` construction in
+    ``prepare_network.py`` (only the per-row value being combined differs).
+
+    Keyed by component base name (after stripping an ``EXI_`` prefix), plus
+    ``"__SUFFIX__..."`` keys matched against the end of the base name. Only
+    entries whose underlying tech_costs row(s) actually exist are included, so
+    a missing/renamed catalogue row degrades to "not covered" rather than a
+    crash or a silently wrong number.
+
+    This is necessarily a **best-effort, non-exhaustive** table — GreenBubble
+    has many composite technologies; only the ones verified against the actual
+    ``prepare_network.py`` source are included here. Components not covered
+    still show up (with their annualised capex, for materiality) in the
+    "not resolved" report from :func:`compute_payback_by_agent`.
+    """
+    def cf(tech):
+        try:
+            return float(n_config.at[tech, "cost factor"])
+        except Exception:
+            return 1.0
+
+    overrides: dict[str, float] = {}
+
+    def _set(name, row_tech, cost_factor_key):
+        v = value_fn(row_tech)
+        if v is not None:
+            overrides[name] = v * cf(cost_factor_key)
+
+    _set("heat pump",                    "industrial heat pump medium temperature", "heat pump")
+    _set("El boiler",                    "electric boiler steam",                   "El boiler")
+    _set("TES DH storage",               "central water tank storage",              "TES DH")
+    _set("TES concrete HX",              "Concrete-discharger",                     "TES concrete")
+    _set("TES concrete storage",         "Concrete-store",                          "TES concrete")
+    _set("TES concrete El charger",      "Concrete-charger",                        "TES concrete El")
+    _set("TES concrete El discharger",   "Concrete-discharger",                     "TES concrete El")
+    _set("TES concrete El storage",      "Concrete-store",                          "TES concrete El")
+
+    # H2 pipe / CO2 pipe: fixed = tech.fixed * tech.distance * cost_factor
+    for name, row_tech, cf_key in [("H2_pipe", "H2 pipe", "H2 pipe"), ("CO2_pipe", "CO2 gas pipe", "CO2 pipe")]:
+        v = value_fn(row_tech)
+        dist = _tech_costs_value(tech_costs, row_tech, "distance")
+        if v is not None and dist is not None:
+            overrides[name] = v * dist * cf(cf_key)
+
+    # battery: two catalogue rows combined (storage/max_hours + inverter) — see add_battery()
+    v_store = value_fn("battery storage")
+    v_inv = value_fn("battery inverter")
+    if v_store is not None and v_inv is not None:
+        try:
+            max_hours = float(n_config.at["battery", "max hours"])
+            overrides["battery"] = (v_store / max_hours + v_inv) * cf("battery")
+        except Exception:
+            pass
+
+    # "<plant> H2 storage send comp" — hardcoded to the hydrogen compressor row
+    # regardless of actual fluid in prepare_network.py::add_HP_storage_aux (a
+    # pre-existing quirk, not something this override should "fix").
+    _set("__SUFFIX__storage send comp", "hydrogen storage compressor", "H2 compressor")
+    # "<plant> H2 HP storage" — confirmed formula; other fluids not verified,
+    # deliberately not guessed.
+    _set("__SUFFIX__H2 HP storage", "hydrogen storage tank type 1", "H2 HP storage")
+
+    return overrides
+
+
+def _composite_investment_overrides(tech_costs, n_config) -> dict[str, float]:
+    return _composite_tech_overrides(tech_costs, n_config,
+                                      lambda t: _tech_costs_value(tech_costs, t, "investment"))
+
+
+def _composite_fom_overrides(tech_costs, n_config) -> dict[str, float]:
+    return _composite_tech_overrides(tech_costs, n_config, lambda t: _tech_annual_fom(tech_costs, t))
+
+
+def _resolve_per_unit_value(row, comp_tech_map: dict, name: str, overrides: dict, tech_lookup_fn):
+    """Resolve a per-unit-capacity value for one component: (1) an exact or
+    suffix match in ``overrides`` (composite technologies), (2)
+    ``comp_tech_map`` with the component's own carrier as a last-resort
+    fallback, resolved via ``tech_lookup_fn(tech) -> float | None``.
+    Returns ``None`` if nothing resolves.
+    """
+    base_name = str(name).removeprefix("EXI_")
+    if overrides:
+        if base_name in overrides:
+            return overrides[base_name]
+        for suffix_key, val in overrides.items():
+            if suffix_key.startswith("__SUFFIX__") and base_name.endswith(suffix_key.removeprefix("__SUFFIX__")):
+                return val
+
+    tech = comp_tech_map.get(name) or (str(row.get("carrier", "")) or None)
+    return tech_lookup_fn(tech) if tech else None
+
+
+def _capacity_opt(row, nom_attr: str) -> float | None:
+    """Installed optimal capacity for one component row (``*_opt`` if present, else the static value)."""
+    cap_col = f"{nom_attr}_opt" if f"{nom_attr}_opt" in row.index and pd.notna(row.get(f"{nom_attr}_opt")) else nom_attr
+    cap = pd.to_numeric(row.get(cap_col), errors="coerce")
+    return float(cap) if np.isfinite(cap) and cap > 0 else None
+
+
+# carrier -> n_config index key, for the few cases where they differ (mirrors
+# prepare_network.py's _CARRIER_TO_TECH, but targeting n_config rather than tech_costs).
+_EXI_CARRIER_TO_NCONFIG = {"wind": "onwind"}
+
+
+def _exi_investment_scale(name, carrier, n_config) -> float:
+    """Fraction of an EXI_ (brownfield) component's catalogue investment still
+    owed, i.e. ``remaining_investment_fraction`` from n_config — mirrors the
+    ``rif`` factor in prepare_network.py's ``_exi_capital_cost``, which scales
+    that component's ``capital_cost`` in the LP the same way.
+
+    Without this, a brownfield asset's payback investment is its full
+    as-new catalogue cost even though the model only ever charges (and only
+    ever needs to recover) a residual fraction of it — inflating payback
+    time arbitrarily for agents dominated by aged brownfield capacity.
+    Returns 1.0 (no scaling) for non-EXI_ components or when the technology/
+    fraction can't be resolved in n_config, i.e. falls back to prior behaviour.
+    """
+    if not str(name).startswith("EXI_") or n_config is None:
+        return 1.0
+    config_key = _EXI_CARRIER_TO_NCONFIG.get(carrier, carrier)
+    if config_key not in n_config.index or "remaining_investment_fraction" not in n_config.columns:
+        return 1.0
+    rif = n_config.at[config_key, "remaining_investment_fraction"]
+    return float(rif) if pd.notna(rif) else 1.0
+
+
+def _investment_for(row, nom_attr: str, tech_costs, comp_tech_map: dict, name: str,
+                     composite_overrides: dict | None = None, n_config=None) -> float | None:
+    """Raw upfront investment (EUR) for one component: ``I(tech) × installed capacity``.
+
+    For an ``EXI_`` (brownfield) component, scaled by its ``remaining_investment_fraction``
+    (see :func:`_exi_investment_scale`) — the model only owes the residual book value,
+    not the full as-new cost.
+    """
+    inv_per_unit = _resolve_per_unit_value(
+        row, comp_tech_map, name, composite_overrides or {},
+        lambda tech: _tech_costs_value(tech_costs, tech, "investment"),
+    )
+    if inv_per_unit is None:
+        return None
+    cap = _capacity_opt(row, nom_attr)
+    if cap is None:
+        return None
+    scale = _exi_investment_scale(name, row.get("carrier"), n_config)
+    return float(inv_per_unit) * cap * scale
+
+
+def _annual_fom_for(row, nom_attr: str, tech_costs, comp_tech_map: dict, name: str,
+                     fom_overrides: dict | None = None) -> float | None:
+    """Annual fixed O&M (EUR/year) for one component: ``FOM%(tech) × I(tech) × installed capacity``.
+
+    A real recurring cash outflow (unlike the annualised capital charge, which
+    is a bookkeeping construct) — must be subtracted from cash flow for a
+    correct payback calculation, separately from the raw investment itself.
+    """
+    fom_per_unit = _resolve_per_unit_value(
+        row, comp_tech_map, name, fom_overrides or {},
+        lambda tech: _tech_annual_fom(tech_costs, tech),
+    )
+    if fom_per_unit is None:
+        return None
+    cap = _capacity_opt(row, nom_attr)
+    return None if cap is None else float(fom_per_unit) * cap
+
+
+def _plot_payback_bar(df, out_path, total_label="TOTAL", title=None, log_tag="Payback",
+                       lifetime_col=None, amortization_label=None):
+    """Single-panel bar chart: discounted payback time (years) per row,
+    with the ``total_label`` bar highlighted.
+
+    Rows with zero investment (nothing to recoup) are dropped. Rows *with*
+    investment but a non-finite discounted payback are still plotted — as a
+    capped bar at the chart's visual ceiling, hatched and labelled — instead
+    of being silently dropped, since "never pays back" is itself a real
+    result (either the cash flow is negative, or the discounted r·I/CF ratio
+    is ≥ 1). Dropping them made charts with several such agents look like
+    most agents had no data at all, when the CSV showed otherwise.
+
+    If ``lifetime_col`` is given, overlays a black horizontal tick on each bar
+    at that row's technical lifetime — a bar whose top exceeds its own tick
+    never pays back within its useful life. If ``amortization_label`` is
+    given, annotates it in a text box (the amortization period actually
+    driving the annuity calculation project-wide — either a fixed number of
+    years, or "tech lifetime" when each technology uses its own).
+    """
+    investment = pd.to_numeric(df["investment (EUR)"], errors="coerce")
+    df = df[investment.fillna(0) > 0]
+    if df.empty:
+        return
+    labels = df.index.tolist()
+    discounted = pd.to_numeric(df["discounted payback (years)"], errors="coerce")
+    cash_flow = pd.to_numeric(df.get("annual cash flow (EUR/y)"), errors="coerce")
+    is_finite = np.isfinite(discounted.to_numpy())
+    lifetimes = (
+        pd.to_numeric(df[lifetime_col], errors="coerce").tolist()
+        if lifetime_col is not None and lifetime_col in df.columns
+        else [float("nan")] * len(labels)
+    )
+
+    # -- palette: muted teal for agents, warm amber for TOTAL, and two
+    # distinct treatments for the non-finite cases so the legend can name
+    # each one instead of leaving the reader to guess from hatch alone.
+    COLOR_AGENT = "#2f6f8f"
+    COLOR_TOTAL = "#c1622d"
+    COLOR_LOSS = "#9e9e9e"      # cash flow <= 0: genuinely never pays back
+    COLOR_MARGINAL = "#e3a13f"  # cash flow > 0 but r·I/CF >= 1: priced at its own margin
+    HATCH_LOSS = "xx"
+    HATCH_MARGINAL = "//"
+
+    colors, hatches = [], []
+    for i, lbl in enumerate(labels):
+        if is_finite[i]:
+            colors.append(COLOR_TOTAL if lbl == total_label else COLOR_AGENT)
+            hatches.append(None)
+        else:
+            cf = cash_flow.iloc[i] if cash_flow is not None else float("nan")
+            if np.isfinite(cf) and cf <= 0:
+                colors.append(COLOR_LOSS)
+                hatches.append(HATCH_LOSS)
+            else:
+                colors.append(COLOR_MARGINAL)
+                hatches.append(HATCH_MARGINAL)
+
+    finite_values = discounted[is_finite].tolist()
+    finite_lifetimes = [lt for lt in lifetimes if np.isfinite(lt)]
+    # visual ceiling for capped (non-finite) bars: comfortably above anything finite on the chart
+    cap_height = max(finite_values + finite_lifetimes) * 1.3 if (finite_values or finite_lifetimes) else 1.0
+
+    heights = [discounted.iloc[i] if is_finite[i] else cap_height for i in range(len(labels))]
+
+    fig, ax = plt.subplots(figsize=(max(6, 0.65 * len(labels)), 5))
+    bars = ax.bar(range(len(labels)), heights, color=colors, edgecolor="white", linewidth=0.5, zorder=2)
+    for bar, hatch in zip(bars, hatches):
+        if hatch:
+            bar.set_hatch(hatch)
+            bar.set_edgecolor("black")
+
+    y_top_values = list(heights) + finite_lifetimes
+    has_lifetime_marker = False
+    for bar, lt in zip(bars, lifetimes):
+        if np.isfinite(lt):
+            has_lifetime_marker = True
+            x0, x1 = bar.get_x(), bar.get_x() + bar.get_width()
+            ax.plot([x0, x1], [lt, lt], color="black", linewidth=2.2, zorder=3)
+
+    y_max = max(y_top_values) if y_top_values else 1.0
+    for i, bar in enumerate(bars):
+        if is_finite[i]:
+            label = f"{discounted.iloc[i]:.1f}"
+        else:
+            cf = cash_flow.iloc[i] if cash_flow is not None else float("nan")
+            label = "no payback\n(net loss)" if (np.isfinite(cf) and cf <= 0) else "∞\n(r·I/CF ≥ 1)"
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + y_max * 0.01,
+                label, ha="center", va="bottom", fontsize=8, zorder=4)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=9)
+    ax.set_ylabel("years")
+    ax.set_ylim(top=y_max * 1.18)
+    ax.set_title(title or "Discounted payback time (revenue − opex vs. upfront investment)")
+    ax.grid(axis="y", alpha=0.3)
+
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    legend_handles = [Patch(facecolor=COLOR_AGENT, edgecolor="white", label="Agent")]
+    if (np.array(labels) == total_label).any():
+        legend_handles.append(Patch(facecolor=COLOR_TOTAL, edgecolor="white", label=total_label))
+    if any(h == HATCH_MARGINAL for h in hatches):
+        legend_handles.append(Patch(facecolor=COLOR_MARGINAL, edgecolor="black", hatch=HATCH_MARGINAL,
+                                     label="∞ payback (r·I/CF ≥ 1, priced at its own margin)"))
+    if any(h == HATCH_LOSS for h in hatches):
+        legend_handles.append(Patch(facecolor=COLOR_LOSS, edgecolor="black", hatch=HATCH_LOSS,
+                                     label="No payback (net loss)"))
+    if has_lifetime_marker:
+        legend_handles.append(Line2D([0], [0], color="black", linewidth=2.2, label="inv. weighted tech. lifetime"))
+    ax.legend(handles=legend_handles, loc="upper right", fontsize=8, framealpha=0.9)
+
+    if amortization_label:
+        ax.text(0.02, 0.97, f"Amortization period used: {amortization_label}",
+                 transform=ax.transAxes, ha="left", va="top", fontsize=9,
+                 bbox=dict(boxstyle="round,pad=0.35", facecolor="#fff8e1", edgecolor="#bdbdbd"))
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[{log_tag}] bar chart saved → {out_path}")
+
+
+def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_map, n_config,
+                              discount_rate, out_csv, out_plot, amortization_period=None):
+    """Simple and discounted payback time per **agent** (the same allocation
+    groups used for ``TSC_by_agent`` / :func:`make_global_summary_costs_by_agent`),
+    including shared/upstream infrastructure and the revenue attributed to it.
+
+    This aggregates **every** component's investment and cash flow into
+    whichever agent ``network_comp_allocation`` assigns it to — e.g. the
+    ``biogas`` agent's payback reflects the whole digester + upgrading +
+    storage + engine complex and all revenue booked to it, not just one
+    isolated link.
+
+    **Handles multiple agents producing the same product.** Cash flow is
+    computed per *component* via PyPSA's own shadow-price-based statistics —
+    :meth:`n.statistics.revenue` (net of cost on every port, i.e. output
+    revenue minus input cost, valued at each bus's own marginal price) minus
+    :meth:`n.statistics.opex` (variable dispatch cost) — then summed by agent.
+    This is the same accounting PyPSA duality already uses in
+    :func:`compute_lcop_by_technology` (verified to reproduce its
+    "net market value" exactly), generalised to every component instead of
+    just tagged product-bus links.
+
+    This matters because a shared external sale link (e.g. the single
+    bioCH4-collection-to-delivery link) is created **once**, by whichever
+    producing agent happens to build it first — if a *second* agent later
+    also feeds the same collection bus (e.g. catalytic methanation
+    alongside biogas upgrading, both selling bioCH4), attributing revenue to
+    "whichever component touches the external market" would silently credit
+    all of it to the first agent. Per-component shadow-price revenue avoids
+    this entirely: each producer earns revenue proportional to its **own**
+    throughput at the bus's own price, and the shared sale/delivery link
+    itself nets to ~zero (a pure pass-through) — confirmed empirically
+    (revenue - opex ≈ 0 to floating-point precision for the bioCH4/H2/
+    Methanol collection→delivery links in a real solved network). The same
+    reasoning applies to any future carrier producible by more than one
+    agent (electricity, if a biogas engine is enabled alongside grid export;
+    additional methanol pathways; etc.) with no code changes needed.
+
+    Investment and FOM are capacity-based and scenario-invariant (shared
+    first-stage decisions), so they are computed once per component and
+    summed by agent. Cash flow is dispatch-based and, for a stochastic
+    network, is the probability-weighted **expected** value across scenarios
+    (mirroring how ``TSC_by_agent`` reports an expected total). Computed via
+    :meth:`n.get_scenario` (a genuine per-scenario flat network, not a view)
+    because ``n.statistics.*(groupby=False)`` raises ``TypeError`` outright on
+    any scenario-enabled network in the pinned PyPSA 1.0.7 release (confirmed
+    by reading ``pypsa/statistics/abstract.py`` — an internal
+    ``rename_axis(component_name, axis=0)`` call assumes a flat index).
+    Cross-checked on a real solved stochastic network: the weighted
+    revenue−opex total matched ``n.objective`` exactly, net of capex.
+
+    Also reports, per agent, the **investment-weighted average technical
+    lifetime** — the number a "does this pay back within its useful life?"
+    read of the plot needs — alongside whichever ``amortization_period`` is
+    actually driving the annuity calculation project-wide (``null`` → each
+    technology's own lifetime, shown as "tech lifetime").
+
+    Saves a presentable CSV and a bar chart of discounted payback time
+    (technical lifetime marked per bar), plus a ``TOTAL`` row/bar. Returns
+    the results as a DataFrame.
+    """
+    import warnings as _warn
+
+    if tech_costs is None or comp_tech_map is None or network_comp_allocation is None:
+        print("[Payback-agent] tech_costs/comp_tech_map/network_comp_allocation not available — skipping")
+        return pd.DataFrame()
+
+    lookup = build_allocation_lookup(network_comp_allocation)
+    composite_overrides = _composite_investment_overrides(tech_costs, n_config) if n_config is not None else {}
+    fom_overrides = _composite_fom_overrides(tech_costs, n_config) if n_config is not None else {}
+
+    # ── Investment & FOM per agent (capacity-based, scenario-invariant) ─────
+    investment_by_agent: dict = {}
+    fom_by_agent: dict = {}
+    lifetime_weighted_by_agent: dict = {}   # Σ(investment_i × lifetime_i), finite-lifetime components only
+    lifetime_investment_by_agent: dict = {}  # Σ(investment_i) over that SAME finite-lifetime subset —
+                                              # a separate denominator, since some components (e.g. a
+                                              # missing `lifetime=` kwarg in prepare_network.py leaves
+                                              # PyPSA's inf default attached) have resolved investment
+                                              # but no finite lifetime to average in; mixing that
+                                              # investment into a denominator that excludes it from the
+                                              # numerator would silently understate the average.
+    total_capex_ground_truth = 0.0
+    unresolved = []  # (name, annualised capex)
+    for cls, attr, nom in _INVESTMENT_COMP_SPECS:
+        df = _slice_df_first_scenario(getattr(n, attr, pd.DataFrame()))
+        if df is None or df.empty:
+            continue
+        ext_col = f"{nom}_extendable"
+        if ext_col not in df.columns or "capital_cost" not in df.columns:
+            continue
+        mask = df[ext_col].astype(bool) & (pd.to_numeric(df["capital_cost"], errors="coerce").fillna(0.0) > 0)
+        for name, row in df[mask].iterrows():
+            cap_col = f"{nom}_opt" if f"{nom}_opt" in row.index and pd.notna(row.get(f"{nom}_opt")) else nom
+            cap = pd.to_numeric(row.get(cap_col), errors="coerce")
+            if not np.isfinite(cap) or cap <= 0:
+                continue
+            annualised = float(cap) * float(row["capital_cost"])
+            total_capex_ground_truth += annualised
+            agent = lookup.get((cls, str(name)), "Unallocated")
+
+            inv = _investment_for(row, nom, tech_costs, comp_tech_map, name, composite_overrides, n_config)
+            if inv is None:
+                unresolved.append((name, annualised))
+                continue
+            investment_by_agent[agent] = investment_by_agent.get(agent, 0.0) + inv
+            fom_by_agent[agent] = fom_by_agent.get(agent, 0.0) + (
+                _annual_fom_for(row, nom, tech_costs, comp_tech_map, name, fom_overrides) or 0.0)
+            lifetime = pd.to_numeric(row.get("lifetime"), errors="coerce")
+            if np.isfinite(lifetime) and lifetime > 0:
+                lifetime_weighted_by_agent[agent] = lifetime_weighted_by_agent.get(agent, 0.0) + inv * float(lifetime)
+                lifetime_investment_by_agent[agent] = lifetime_investment_by_agent.get(agent, 0.0) + inv
+
+    coverage_pct = (100.0 * (total_capex_ground_truth - sum(a for _, a in unresolved)) / total_capex_ground_truth
+                    if total_capex_ground_truth > 0 else float("nan"))
+    if unresolved:
+        unresolved.sort(key=lambda x: -x[1])
+        listed = ", ".join(f"{nm} ({ann:,.0f} EUR/y)" for nm, ann in unresolved[:10])
+        more = f", +{len(unresolved) - 10} more" if len(unresolved) > 10 else ""
+        print(f"[Payback-agent] investment coverage {coverage_pct:.1f}% of total annualised capex. "
+              f"{len(unresolved)} component(s) not resolved: {listed}{more}")
+    else:
+        print(f"[Payback-agent] investment coverage 100.0% of total annualised capex.")
+
+    # ── Cash flow per agent: per-component shadow-price net value ───────────
+    # revenue(component) already nets input cost against output revenue at
+    # each port's own marginal price (verified to equal LCOP's "net market
+    # value" exactly); opex(component) is the variable dispatch cost on top.
+    # Grouping this by agent — rather than summing a shared sale link's opex
+    # into whichever agent owns that one link — is what correctly splits
+    # revenue when more than one agent produces the same carrier.
+    #
+    # n.statistics.*(groupby=False) raises TypeError unconditionally on any
+    # scenario-enabled network in the pinned PyPSA 1.0.7 release (an internal
+    # `rename_axis(component_name, axis=0)` call assumes a flat, non-
+    # MultiIndex result — confirmed by reading pypsa/statistics/abstract.py).
+    # Workaround: n.get_scenario(name) returns a genuine flat per-scenario
+    # Network (has_scenarios=False, not a view/mutation of n) on which the
+    # same call works normally; sum each scenario's per-component statistics
+    # weighted by its probability. Cross-checked against n.objective on a
+    # real solved stochastic network (matched exactly, net of capex).
+    if hasattr(n, "scenario_weightings") and n.scenario_weightings is not None and len(n.scenario_weightings) > 0:
+        scen_w = n.scenario_weightings["weight"].copy()
+        scen_w.index = scen_w.index.astype(str)
+        scenario_networks = [(str(s), float(w), n.get_scenario(str(s))) for s, w in scen_w.items()]
+    else:
+        scenario_networks = [(None, 1.0, n)]
+
+    revenue_by_agent: dict = {}
+    opex_by_agent: dict = {}
+    for scen, w, n_s in scenario_networks:
+        try:
+            rev_s = n_s.statistics.revenue(groupby=False, nice_names=False)
+            opx_s = n_s.statistics.opex(groupby=False, nice_names=False)
+        except Exception as e:
+            _warn.warn(f"[Payback-agent] n.statistics.revenue/opex failed"
+                       f"{f' for scenario {scen}' if scen else ''}: {e}")
+            continue
+        for series, target in ((rev_s, revenue_by_agent), (opx_s, opex_by_agent)):
+            if series.empty:
+                continue
+            for (comp_kind, comp_name), val in series.items():
+                agent = lookup.get((comp_kind, str(comp_name)), "Unallocated")
+                target[agent] = target.get(agent, 0.0) + float(val) * w
+
+    def _weighted_lifetime(agent):
+        denom = lifetime_investment_by_agent.get(agent, 0.0)
+        if denom <= 0:
+            return float("nan")
+        return lifetime_weighted_by_agent.get(agent, 0.0) / denom
+
+    # ── Assemble rows ────────────────────────────────────────────────────────
+    all_agents = sorted(set(investment_by_agent) | set(revenue_by_agent) | set(opex_by_agent) | set(fom_by_agent))
+    rows, row_names = [], []
+    for agent in all_agents:
+        investment = investment_by_agent.get(agent, 0.0)
+        fom = fom_by_agent.get(agent, 0.0)
+        cash_flow = revenue_by_agent.get(agent, 0.0) - opex_by_agent.get(agent, 0.0) - fom
+        simple, discounted = _payback_years(investment, cash_flow, discount_rate)
+        row_names.append(agent)
+        rows.append({
+            "investment (EUR)":            round(investment, 0),
+            "annual FOM (EUR/y)":          round(fom, 0),
+            "annual cash flow (EUR/y)":    round(cash_flow, 0),
+            "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
+            "discounted payback (years)":  round(discounted, 2) if np.isfinite(discounted) else discounted,
+            "technical lifetime, investment-weighted (years)":
+                round(_weighted_lifetime(agent), 1),
+        })
+
+    total_investment = sum(investment_by_agent.values())
+    total_fom = sum(fom_by_agent.values())
+    total_cash_flow = sum(revenue_by_agent.values()) - sum(opex_by_agent.values()) - total_fom
+    simple, discounted = _payback_years(total_investment, total_cash_flow, discount_rate)
+    row_names.append("TOTAL")
+    rows.append({
+        "investment (EUR)":            round(total_investment, 0),
+        "investment coverage (%)":     round(coverage_pct, 1) if np.isfinite(coverage_pct) else coverage_pct,
+        "annual FOM (EUR/y)":          round(total_fom, 0),
+        "annual cash flow (EUR/y)":    round(total_cash_flow, 0),
+        "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
+        "discounted payback (years)":  round(discounted, 2) if np.isfinite(discounted) else discounted,
+        "technical lifetime, investment-weighted (years)":
+            round(sum(lifetime_weighted_by_agent.values()) / sum(lifetime_investment_by_agent.values()), 1)
+            if sum(lifetime_investment_by_agent.values()) > 0 else float("nan"),
+    })
+
+    df_out = pd.DataFrame(rows, index=pd.Index(row_names, name="agent"))
+
+    out_csv = Path(out_csv)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df_out.to_csv(out_csv)
+    print(f"[Payback-agent] saved → {out_csv}")
+
+    amortization_label = "tech lifetime" if amortization_period in (None, "", "null") \
+        else f"{float(amortization_period):.0f} years"
+
+    _plot_payback_bar(df_out, Path(out_plot), total_label="TOTAL",
+                       title="Discounted payback time by agent (revenue − opex vs. upfront investment)",
+                       log_tag="Payback-agent",
+                       lifetime_col="technical lifetime, investment-weighted (years)",
+                       amortization_label=amortization_label)
+    return df_out
+
+
 # ---- VARIABLE COST BY TECHNOLOGY ----
 
 def compute_srmc_by_technology(n, out_csv, out_plot):
@@ -5852,6 +6435,42 @@ def run_plot_and_export(
             out_plot=plot_folder / "srmc_by_technology.png",
         )
 
+    tech_costs_full_holder: Dict[str, Any] = {}
+
+    def _tech_costs_full():
+        # tech_costs_used is deliberately a trimmed subset (only technologies
+        # comp_tech_map could already resolve — see save_cost_assumptions_csv);
+        # several composite technologies' underlying catalogue rows (e.g.
+        # "industrial heat pump medium temperature", "Concrete-charger") are
+        # NOT in that subset. Re-derive the full cost table for the payback
+        # override lookups; falls back to the trimmed table (reduced coverage,
+        # reported via the coverage-% diagnostic) if that fails for any reason.
+        if "obj" not in tech_costs_full_holder:
+            try:
+                from scripts.helpers import read_costs
+                from scripts.technology_inputs import tech_inputs as _tech_inputs
+                from scripts import parameters as _p
+                tech_costs_full_holder["obj"] = read_costs(_p.cost_path, _tech_inputs, c.USD_to_EUR, c.discount_rate)
+            except Exception as e:
+                warnings.warn(f"[plot/export] Could not load full tech_costs for payback "
+                               f"(falling back to trimmed subset): {e}", category=RuntimeWarning)
+                tech_costs_full_holder["obj"] = tech_costs_used
+        return tech_costs_full_holder["obj"]
+
+    def step_payback_agent() -> None:
+        alloc = _require_allocation("payback_agent")
+        compute_payback_by_agent(
+            n,
+            network_comp_allocation=alloc,
+            tech_costs=_tech_costs_full(),
+            comp_tech_map=comp_tech_map,
+            n_config=c.n_config,
+            discount_rate=c.discount_rate,
+            out_csv=csv_folder / "payback_by_agent.csv",
+            out_plot=plot_folder / "payback_by_agent.png",
+            amortization_period=c.amortization_period,
+        )
+
     # ---------------- Run in order ----------------
 
     _safe_step("cost_by_carrier", step_cost_by_carrier)
@@ -5869,6 +6488,8 @@ def run_plot_and_export(
     _safe_step("lcop", step_lcop)
     _safe_step("lcop_kkt", step_lcop_kkt)
     _safe_step("srmc", step_srmc)
+    if c.targets_dict.get("driver") == "price":
+        _safe_step("payback_agent", step_payback_agent)
     _safe_step("operation_plots", step_operation_plots)
 
     if failures:
