@@ -1992,24 +1992,30 @@ def _annual_fom_for(row, nom_attr: str, tech_costs, comp_tech_map: dict, name: s
 
 
 def _plot_payback_bar(df, out_path, total_label="TOTAL", title=None, log_tag="Payback",
-                       lifetime_col=None, amortization_label=None):
-    """Single-panel bar chart: discounted payback time (years) per row,
-    with the ``total_label`` bar highlighted.
+                       lifetime_col=None, amortization_label=None, margin_tolerance=0.03):
+    """Two-panel figure with one shared legend: discounted payback time
+    (left) and capital-cost coverage (right) per row, ``total_label``
+    highlighted with a black outline.
 
-    Rows with zero investment (nothing to recoup) are dropped. Rows *with*
-    investment but a non-finite discounted payback are still plotted — as a
-    capped bar at the chart's visual ceiling, hatched and labelled — instead
-    of being silently dropped, since "never pays back" is itself a real
-    result (either the cash flow is negative, or the discounted r·I/CF ratio
-    is ≥ 1). Dropping them made charts with several such agents look like
-    most agents had no data at all, when the CSV showed otherwise.
+    Rows with zero investment (nothing to recoup) are dropped from both
+    panels. The two panels tell the same story two ways:
 
-    If ``lifetime_col`` is given, overlays a black horizontal tick on each bar
-    at that row's technical lifetime — a bar whose top exceeds its own tick
-    never pays back within its useful life. If ``amortization_label`` is
-    given, annotates it in a text box (the amortization period actually
-    driving the annuity calculation project-wide — either a fixed number of
-    years, or "tech lifetime" when each technology uses its own).
+    - **Left (payback, years)**: rows with a non-finite discounted payback
+      are still plotted — as a capped, hatched bar at the chart's visual
+      ceiling — instead of being silently dropped, since "never pays back"
+      is itself a real result. If ``lifetime_col`` is given, a black tick
+      marks each row's own technical lifetime.
+    - **Right (capital cost coverage, %)**: cash_flow ÷ its own pure
+      capital-recovery annuity. Unlike payback, this stays smooth and
+      finite right through the optimizer's marginal-pricing condition
+      (cash_flow == annualised capital cost, i.e. 100% coverage) instead of
+      blowing up to infinity exactly there — the companion view for reading
+      "is this agent pulling its own weight" without chasing infinities.
+
+    Rows flagged ``priced at own margin`` (coverage within
+    ``margin_tolerance`` of 100%) show a finite payback pinned to their own
+    lifetime (marked with a ``*``) rather than the numerically unstable raw
+    value — see :func:`compute_payback_by_agent`.
     """
     investment = pd.to_numeric(df["investment (EUR)"], errors="coerce")
     df = df[investment.fillna(0) > 0]
@@ -2024,94 +2030,134 @@ def _plot_payback_bar(df, out_path, total_label="TOTAL", title=None, log_tag="Pa
         if lifetime_col is not None and lifetime_col in df.columns
         else [float("nan")] * len(labels)
     )
+    coverage = pd.to_numeric(df.get("capital cost coverage (%)"), errors="coerce")
+    tol_pct = margin_tolerance * 100
 
-    # -- palette: muted teal for agents, warm amber for TOTAL, and two
-    # distinct treatments for the non-finite cases so the legend can name
-    # each one instead of leaving the reader to guess from hatch alone.
+    # -- shared palette across both panels: same color means the same idea
+    # ("priced at own margin" and "loss" read identically left and right).
     COLOR_AGENT = "#2f6f8f"
     COLOR_TOTAL = "#c1622d"
-    COLOR_LOSS = "#9e9e9e"      # cash flow <= 0: genuinely never pays back
-    COLOR_MARGINAL = "#e3a13f"  # cash flow > 0 but r·I/CF >= 1: priced at its own margin
+    COLOR_SURPLUS = "#3d8f5b"
+    COLOR_MARGINAL = "#e3a13f"
+    COLOR_SHORTFALL = "#b23b3b"
+    COLOR_LOSS = "#9e9e9e"
     HATCH_LOSS = "xx"
-    HATCH_MARGINAL = "//"
 
-    colors, hatches = [], []
+    at_margin = (
+        df["priced at own margin"].astype(bool).tolist()
+        if "priced at own margin" in df.columns
+        else [False] * len(labels)
+    )
+
+    # -- left panel: payback --
+    colors_pb, hatches_pb = [], []
     for i, lbl in enumerate(labels):
         if is_finite[i]:
-            colors.append(COLOR_TOTAL if lbl == total_label else COLOR_AGENT)
-            hatches.append(None)
-        else:
-            cf = cash_flow.iloc[i] if cash_flow is not None else float("nan")
-            if np.isfinite(cf) and cf <= 0:
-                colors.append(COLOR_LOSS)
-                hatches.append(HATCH_LOSS)
+            if at_margin[i]:
+                colors_pb.append(COLOR_MARGINAL)
             else:
-                colors.append(COLOR_MARGINAL)
-                hatches.append(HATCH_MARGINAL)
+                colors_pb.append(COLOR_TOTAL if lbl == total_label else COLOR_AGENT)
+            hatches_pb.append(None)
+        else:
+            colors_pb.append(COLOR_LOSS)
+            hatches_pb.append(HATCH_LOSS)
 
     finite_values = discounted[is_finite].tolist()
     finite_lifetimes = [lt for lt in lifetimes if np.isfinite(lt)]
-    # visual ceiling for capped (non-finite) bars: comfortably above anything finite on the chart
     cap_height = max(finite_values + finite_lifetimes) * 1.3 if (finite_values or finite_lifetimes) else 1.0
-
     heights = [discounted.iloc[i] if is_finite[i] else cap_height for i in range(len(labels))]
 
-    fig, ax = plt.subplots(figsize=(max(6, 0.65 * len(labels)), 5))
-    bars = ax.bar(range(len(labels)), heights, color=colors, edgecolor="white", linewidth=0.5, zorder=2)
-    for bar, hatch in zip(bars, hatches):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(max(11, 1.1 * len(labels)), 5))
+
+    bars1 = ax1.bar(range(len(labels)), heights, color=colors_pb, edgecolor="white", linewidth=0.5, zorder=2)
+    for bar, hatch in zip(bars1, hatches_pb):
         if hatch:
             bar.set_hatch(hatch)
             bar.set_edgecolor("black")
 
     y_top_values = list(heights) + finite_lifetimes
     has_lifetime_marker = False
-    for bar, lt in zip(bars, lifetimes):
+    for bar, lt in zip(bars1, lifetimes):
         if np.isfinite(lt):
             has_lifetime_marker = True
             x0, x1 = bar.get_x(), bar.get_x() + bar.get_width()
-            ax.plot([x0, x1], [lt, lt], color="black", linewidth=2.2, zorder=3)
+            ax1.plot([x0, x1], [lt, lt], color="black", linewidth=2.2, zorder=3)
 
     y_max = max(y_top_values) if y_top_values else 1.0
-    for i, bar in enumerate(bars):
-        if is_finite[i]:
-            label = f"{discounted.iloc[i]:.1f}"
-        else:
-            cf = cash_flow.iloc[i] if cash_flow is not None else float("nan")
-            label = "no payback\n(net loss)" if (np.isfinite(cf) and cf <= 0) else "∞\n(r·I/CF ≥ 1)"
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + y_max * 0.01,
-                label, ha="center", va="bottom", fontsize=8, zorder=4)
-    ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=9)
-    ax.set_ylabel("years")
-    ax.set_ylim(top=y_max * 1.18)
-    ax.set_title(title or "Discounted payback time (revenue − opex vs. upfront investment)")
-    ax.grid(axis="y", alpha=0.3)
-
-    from matplotlib.patches import Patch
-    from matplotlib.lines import Line2D
-    legend_handles = [Patch(facecolor=COLOR_AGENT, edgecolor="white", label="Agent")]
-    if (np.array(labels) == total_label).any():
-        legend_handles.append(Patch(facecolor=COLOR_TOTAL, edgecolor="white", label=total_label))
-    if any(h == HATCH_MARGINAL for h in hatches):
-        legend_handles.append(Patch(facecolor=COLOR_MARGINAL, edgecolor="black", hatch=HATCH_MARGINAL,
-                                     label="∞ payback (r·I/CF ≥ 1, priced at its own margin)"))
-    if any(h == HATCH_LOSS for h in hatches):
-        legend_handles.append(Patch(facecolor=COLOR_LOSS, edgecolor="black", hatch=HATCH_LOSS,
-                                     label="No payback (net loss)"))
-    if has_lifetime_marker:
-        legend_handles.append(Line2D([0], [0], color="black", linewidth=2.2, label="inv. weighted tech. lifetime"))
-    ax.legend(handles=legend_handles, loc="upper right", fontsize=8, framealpha=0.9)
+    for i, bar in enumerate(bars1):
+        label = (f"{discounted.iloc[i]:.1f}*" if at_margin[i] else f"{discounted.iloc[i]:.1f}") \
+            if is_finite[i] else "∞ (loss)"
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + y_max * 0.01,
+                  label, ha="center", va="bottom", fontsize=8, zorder=4)
+    ax1.set_xticks(range(len(labels)))
+    ax1.set_xticklabels(labels, rotation=60, ha="right", fontsize=9)
+    ax1.set_ylabel("years")
+    ax1.set_ylim(top=y_max * 1.18)
+    ax1.set_title("Discounted payback time")
+    ax1.grid(axis="y", alpha=0.3)
 
     if amortization_label:
-        ax.text(0.02, 0.97, f"Amortization period used: {amortization_label}",
-                 transform=ax.transAxes, ha="left", va="top", fontsize=9,
-                 bbox=dict(boxstyle="round,pad=0.35", facecolor="#fff8e1", edgecolor="#bdbdbd"))
+        ax1.text(0.02, 0.97, f"Amortization: {amortization_label}",
+                  transform=ax1.transAxes, ha="left", va="top", fontsize=8,
+                  bbox=dict(boxstyle="round,pad=0.3", facecolor="#fff8e1", edgecolor="#bdbdbd"))
+
+    # -- right panel: capital cost coverage --
+    def _category_color(cov):
+        if not np.isfinite(cov):
+            return COLOR_LOSS
+        if cov < 0:
+            return COLOR_LOSS
+        if abs(cov - 100) <= tol_pct:
+            return COLOR_MARGINAL
+        if cov > 100:
+            return COLOR_SURPLUS
+        return COLOR_SHORTFALL
+
+    cov_mask = coverage.notna()
+    cov_labels = [lbl for lbl, ok in zip(labels, cov_mask) if ok]
+    cov_values = coverage[cov_mask].tolist()
+    if cov_values:
+        colors_cov = [_category_color(c) for c in cov_values]
+        edge_colors = ["black" if lbl == total_label else "white" for lbl in cov_labels]
+        edge_widths = [1.8 if lbl == total_label else 0.5 for lbl in cov_labels]
+
+        bars2 = ax2.bar(range(len(cov_labels)), cov_values, color=colors_cov, edgecolor=edge_colors,
+                         linewidth=edge_widths, zorder=2)
+        ax2.axhline(100, color="black", linewidth=1.2, linestyle="--", zorder=1)
+
+        y_min2, y_max2 = min(0, min(cov_values)) * 1.1, max(100, max(cov_values)) * 1.15
+        for bar, cov in zip(bars2, cov_values):
+            va = "bottom" if cov >= 0 else "top"
+            offset = (y_max2 - y_min2) * 0.015 * (1 if cov >= 0 else -1)
+            ax2.text(bar.get_x() + bar.get_width() / 2, cov + offset, f"{cov:.0f}%",
+                      ha="center", va=va, fontsize=8, zorder=4)
+        ax2.set_ylim(y_min2, y_max2)
+        ax2.set_xticks(range(len(cov_labels)))
+        ax2.set_xticklabels(cov_labels, rotation=60, ha="right", fontsize=9)
+    ax2.set_ylabel("capital cost coverage (%)")
+    ax2.set_title("Capital cost coverage (cash flow ÷ own capital-recovery annuity)")
+    ax2.grid(axis="y", alpha=0.3)
+
+    fig.suptitle(title or "Payback and capital cost coverage by agent", y=1.02, fontsize=12)
+
+    legend_handles = [
+        Patch(facecolor=COLOR_AGENT, edgecolor="white", label="Agent"),
+        Patch(facecolor=COLOR_TOTAL, edgecolor="white", label=total_label),
+        Patch(facecolor=COLOR_SURPLUS, edgecolor="white", label="Surplus (coverage > 100%)"),
+        Patch(facecolor=COLOR_MARGINAL, edgecolor="white", label=f"Priced at own margin (±{tol_pct:.0f}%)"),
+        Patch(facecolor=COLOR_SHORTFALL, edgecolor="white", label="Shortfall (covers opex/FOM, not capital)"),
+        Patch(facecolor=COLOR_LOSS, edgecolor="black", hatch=HATCH_LOSS, label="∞ payback (loss)"),
+    ]
+    if has_lifetime_marker:
+        legend_handles.append(Line2D([0], [0], color="black", linewidth=2.2, label="inv. weighted tech. lifetime"))
+    fig.legend(handles=legend_handles, loc="lower center", ncol=4, fontsize=8, framealpha=0.9,
+               bbox_to_anchor=(0.5, -0.08))
 
     plt.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    print(f"[{log_tag}] bar chart saved → {out_path}")
+    print(f"[{log_tag}] payback + coverage chart saved → {out_path}")
 
 
 def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_map, n_config,
@@ -2176,6 +2222,7 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     the results as a DataFrame.
     """
     import warnings as _warn
+    from scripts.helpers import annuity
 
     if tech_costs is None or comp_tech_map is None or network_comp_allocation is None:
         print("[Payback-agent] tech_costs/comp_tech_map/network_comp_allocation not available — skipping")
@@ -2196,6 +2243,12 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
                                               # but no finite lifetime to average in; mixing that
                                               # investment into a denominator that excludes it from the
                                               # numerator would silently understate the average.
+    pure_annuity_by_agent: dict = {}         # Σ(investment_i × annuity(lifetime_i, r)) — the PURE capital-
+                                              # recovery annuity (no FOM term), matched to the SAME
+                                              # finite-lifetime subset. This is the correct benchmark for
+                                              # "capital cost coverage": cash_flow here is already net of
+                                              # FOM, so comparing it against a FOM-inclusive capital_cost
+                                              # (as stored on the network) would double-count FOM.
     total_capex_ground_truth = 0.0
     unresolved = []  # (name, annualised capex)
     for cls, attr, nom in _INVESTMENT_COMP_SPECS:
@@ -2226,6 +2279,8 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
             if np.isfinite(lifetime) and lifetime > 0:
                 lifetime_weighted_by_agent[agent] = lifetime_weighted_by_agent.get(agent, 0.0) + inv * float(lifetime)
                 lifetime_investment_by_agent[agent] = lifetime_investment_by_agent.get(agent, 0.0) + inv
+                pure_annuity_by_agent[agent] = (pure_annuity_by_agent.get(agent, 0.0)
+                                                 + inv * annuity(float(lifetime), discount_rate))
 
     coverage_pct = (100.0 * (total_capex_ground_truth - sum(a for _, a in unresolved)) / total_capex_ground_truth
                     if total_capex_ground_truth > 0 else float("nan"))
@@ -2285,6 +2340,36 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
             return float("nan")
         return lifetime_weighted_by_agent.get(agent, 0.0) / denom
 
+    # ── Capital-cost coverage & the "priced at its own margin" snap ─────────
+    # A continuously-sized (extendable) technology gets built by the LP right
+    # up to the point where cash_flow == its own pure capital-recovery annuity
+    # (investment × annuity(lifetime, r)) — that's the optimizer's first-order
+    # condition, not a failure. Mathematically, if cash_flow equals that
+    # annuity *exactly*, discounted payback comes out to exactly the
+    # technology's own lifetime. But the discounted-payback formula is
+    # extremely sensitive right at that point: a coverage shortfall of even a
+    # fraction of a percent (well within dispatch/rounding noise) sends
+    # discounted payback rocketing toward infinity, even though nothing
+    # economically meaningful changed. MARGIN_TOLERANCE treats coverage within
+    # a few percent of 100% as noise around the marginal-pricing condition and
+    # reports it as exactly the technology's own lifetime instead of a
+    # wildly unstable (or literally infinite) number.
+    MARGIN_TOLERANCE = 0.03  # 3% — coverage in [97%, 103%] is treated as "at margin"
+
+    def _capital_coverage(agent, cash_flow):
+        annuity_target = pure_annuity_by_agent.get(agent, 0.0)
+        if annuity_target <= 0:
+            return float("nan")
+        return cash_flow / annuity_target
+
+    def _apply_margin_snap(agent, cash_flow, discounted):
+        coverage = _capital_coverage(agent, cash_flow)
+        if np.isfinite(coverage) and abs(1.0 - coverage) <= MARGIN_TOLERANCE:
+            lt = _weighted_lifetime(agent)
+            if np.isfinite(lt):
+                return lt, True
+        return discounted, False
+
     # ── Assemble rows ────────────────────────────────────────────────────────
     all_agents = sorted(set(investment_by_agent) | set(revenue_by_agent) | set(opex_by_agent) | set(fom_by_agent))
     rows, row_names = [], []
@@ -2293,13 +2378,17 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
         fom = fom_by_agent.get(agent, 0.0)
         cash_flow = revenue_by_agent.get(agent, 0.0) - opex_by_agent.get(agent, 0.0) - fom
         simple, discounted = _payback_years(investment, cash_flow, discount_rate)
+        discounted, at_margin = _apply_margin_snap(agent, cash_flow, discounted)
+        coverage = _capital_coverage(agent, cash_flow)
         row_names.append(agent)
         rows.append({
             "investment (EUR)":            round(investment, 0),
             "annual FOM (EUR/y)":          round(fom, 0),
             "annual cash flow (EUR/y)":    round(cash_flow, 0),
+            "capital cost coverage (%)":   round(coverage * 100, 1) if np.isfinite(coverage) else coverage,
             "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
             "discounted payback (years)":  round(discounted, 2) if np.isfinite(discounted) else discounted,
+            "priced at own margin":        at_margin,
             "technical lifetime, investment-weighted (years)":
                 round(_weighted_lifetime(agent), 1),
         })
@@ -2308,17 +2397,24 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     total_fom = sum(fom_by_agent.values())
     total_cash_flow = sum(revenue_by_agent.values()) - sum(opex_by_agent.values()) - total_fom
     simple, discounted = _payback_years(total_investment, total_cash_flow, discount_rate)
+    total_annuity_target = sum(pure_annuity_by_agent.values())
+    total_coverage = total_cash_flow / total_annuity_target if total_annuity_target > 0 else float("nan")
+    total_lifetime = (sum(lifetime_weighted_by_agent.values()) / sum(lifetime_investment_by_agent.values())
+                       if sum(lifetime_investment_by_agent.values()) > 0 else float("nan"))
+    total_at_margin = False
+    if np.isfinite(total_coverage) and abs(1.0 - total_coverage) <= MARGIN_TOLERANCE and np.isfinite(total_lifetime):
+        discounted, total_at_margin = total_lifetime, True
     row_names.append("TOTAL")
     rows.append({
         "investment (EUR)":            round(total_investment, 0),
         "investment coverage (%)":     round(coverage_pct, 1) if np.isfinite(coverage_pct) else coverage_pct,
         "annual FOM (EUR/y)":          round(total_fom, 0),
         "annual cash flow (EUR/y)":    round(total_cash_flow, 0),
+        "capital cost coverage (%)":   round(total_coverage * 100, 1) if np.isfinite(total_coverage) else total_coverage,
         "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
         "discounted payback (years)":  round(discounted, 2) if np.isfinite(discounted) else discounted,
-        "technical lifetime, investment-weighted (years)":
-            round(sum(lifetime_weighted_by_agent.values()) / sum(lifetime_investment_by_agent.values()), 1)
-            if sum(lifetime_investment_by_agent.values()) > 0 else float("nan"),
+        "priced at own margin":        total_at_margin,
+        "technical lifetime, investment-weighted (years)": round(total_lifetime, 1),
     })
 
     df_out = pd.DataFrame(rows, index=pd.Index(row_names, name="agent"))
@@ -2332,10 +2428,10 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
         else f"{float(amortization_period):.0f} years"
 
     _plot_payback_bar(df_out, Path(out_plot), total_label="TOTAL",
-                       title="Discounted payback time by agent (revenue − opex vs. upfront investment)",
+                       title="Payback and capital cost coverage by agent",
                        log_tag="Payback-agent",
                        lifetime_col="technical lifetime, investment-weighted (years)",
-                       amortization_label=amortization_label)
+                       amortization_label=amortization_label, margin_tolerance=MARGIN_TOLERANCE)
     return df_out
 
 
