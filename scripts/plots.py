@@ -2160,6 +2160,112 @@ def _plot_payback_bar(df, out_path, total_label="TOTAL", title=None, log_tag="Pa
     print(f"[{log_tag}] payback + coverage chart saved → {out_path}")
 
 
+def _agent_capex_fom_lifetime(n, lookup, tech_costs, comp_tech_map, n_config, discount_rate,
+                               amortization_period=None, log_tag="Payback"):
+    """Investment, FOM and lifetime accumulation per agent — capacity-based and
+    scenario-invariant (shared first-stage decisions). Factored out of
+    :func:`compute_payback_by_agent` since this part is unrelated to how
+    cash flow itself is computed.
+
+    Tracks the technology's own true catalogue lifetime *and*, separately,
+    the effective amortization period (``amortization_period`` if set, else
+    the true lifetime) — the latter is what the LP's own ``capital_cost``
+    actually annuitizes over (see ``helpers.read_costs()`` /
+    :ref:`economics-annuity`). These can differ substantially (e.g. a
+    10-year ``amortization_period`` against a 25-year technical lifetime),
+    and the "capital cost coverage" benchmark must use the *effective*
+    period to correctly match the LP's own marginal-pricing condition —
+    using the true lifetime instead would silently compare cash flow
+    against an annuity the LP was never actually charged.
+
+    Returns
+    -------
+    (investment_by_agent, fom_by_agent, lifetime_weighted_by_agent,
+     lifetime_investment_by_agent, eff_period_weighted_by_agent,
+     eff_period_investment_by_agent, pure_annuity_by_agent, coverage_pct)
+    """
+    from scripts.helpers import annuity
+
+    composite_overrides = _composite_investment_overrides(tech_costs, n_config) if n_config is not None else {}
+    fom_overrides = _composite_fom_overrides(tech_costs, n_config) if n_config is not None else {}
+    amort_override = (float(amortization_period)
+                       if amortization_period not in (None, "", "null") else None)
+
+    investment_by_agent: dict = {}
+    fom_by_agent: dict = {}
+    lifetime_weighted_by_agent: dict = {}   # Σ(investment_i × lifetime_i), finite-lifetime components only —
+                                              # the technology's own TRUE catalogue lifetime (informational:
+                                              # "does this pay back within its own useful life").
+    lifetime_investment_by_agent: dict = {}  # Σ(investment_i) over that SAME finite-lifetime subset —
+                                              # a separate denominator, since some components (e.g. a
+                                              # missing `lifetime=` kwarg in prepare_network.py leaves
+                                              # PyPSA's inf default attached) have resolved investment
+                                              # but no finite lifetime to average in; mixing that
+                                              # investment into a denominator that excludes it from the
+                                              # numerator would silently understate the average.
+    eff_period_weighted_by_agent: dict = {}      # Σ(investment_i × eff_period_i) — eff_period = amortization_period
+    eff_period_investment_by_agent: dict = {}    # if set, else the true lifetime. Matches the annuity the LP
+                                                  # actually charges; used for the coverage-ratio benchmark
+                                                  # and the "priced at own margin" snap target.
+    pure_annuity_by_agent: dict = {}         # Σ(investment_i × annuity(eff_period_i, r)) — the PURE capital-
+                                              # recovery annuity (no FOM term), matched to the SAME
+                                              # finite-eff_period subset. This is the correct benchmark for
+                                              # "capital cost coverage": cash_flow here is already net of
+                                              # FOM, so comparing it against a FOM-inclusive capital_cost
+                                              # (as stored on the network) would double-count FOM.
+    total_capex_ground_truth = 0.0
+    unresolved = []  # (name, annualised capex)
+    for cls, attr, nom in _INVESTMENT_COMP_SPECS:
+        df = _slice_df_first_scenario(getattr(n, attr, pd.DataFrame()))
+        if df is None or df.empty:
+            continue
+        ext_col = f"{nom}_extendable"
+        if ext_col not in df.columns or "capital_cost" not in df.columns:
+            continue
+        mask = df[ext_col].astype(bool) & (pd.to_numeric(df["capital_cost"], errors="coerce").fillna(0.0) > 0)
+        for name, row in df[mask].iterrows():
+            cap_col = f"{nom}_opt" if f"{nom}_opt" in row.index and pd.notna(row.get(f"{nom}_opt")) else nom
+            cap = pd.to_numeric(row.get(cap_col), errors="coerce")
+            if not np.isfinite(cap) or cap <= 0:
+                continue
+            annualised = float(cap) * float(row["capital_cost"])
+            total_capex_ground_truth += annualised
+            agent = lookup.get((cls, str(name)), "Unallocated")
+
+            inv = _investment_for(row, nom, tech_costs, comp_tech_map, name, composite_overrides, n_config)
+            if inv is None:
+                unresolved.append((name, annualised))
+                continue
+            investment_by_agent[agent] = investment_by_agent.get(agent, 0.0) + inv
+            fom_by_agent[agent] = fom_by_agent.get(agent, 0.0) + (
+                _annual_fom_for(row, nom, tech_costs, comp_tech_map, name, fom_overrides) or 0.0)
+            lifetime = pd.to_numeric(row.get("lifetime"), errors="coerce")
+            if np.isfinite(lifetime) and lifetime > 0:
+                lifetime_weighted_by_agent[agent] = lifetime_weighted_by_agent.get(agent, 0.0) + inv * float(lifetime)
+                lifetime_investment_by_agent[agent] = lifetime_investment_by_agent.get(agent, 0.0) + inv
+                eff_period = amort_override if amort_override is not None else float(lifetime)
+                eff_period_weighted_by_agent[agent] = (eff_period_weighted_by_agent.get(agent, 0.0)
+                                                        + inv * eff_period)
+                eff_period_investment_by_agent[agent] = eff_period_investment_by_agent.get(agent, 0.0) + inv
+                pure_annuity_by_agent[agent] = (pure_annuity_by_agent.get(agent, 0.0)
+                                                 + inv * annuity(eff_period, discount_rate))
+
+    coverage_pct = (100.0 * (total_capex_ground_truth - sum(a for _, a in unresolved)) / total_capex_ground_truth
+                    if total_capex_ground_truth > 0 else float("nan"))
+    if unresolved:
+        unresolved.sort(key=lambda x: -x[1])
+        listed = ", ".join(f"{nm} ({ann:,.0f} EUR/y)" for nm, ann in unresolved[:10])
+        more = f", +{len(unresolved) - 10} more" if len(unresolved) > 10 else ""
+        print(f"[{log_tag}] investment coverage {coverage_pct:.1f}% of total annualised capex. "
+              f"{len(unresolved)} component(s) not resolved: {listed}{more}")
+    else:
+        print(f"[{log_tag}] investment coverage 100.0% of total annualised capex.")
+
+    return (investment_by_agent, fom_by_agent, lifetime_weighted_by_agent,
+            lifetime_investment_by_agent, eff_period_weighted_by_agent,
+            eff_period_investment_by_agent, pure_annuity_by_agent, coverage_pct)
+
+
 def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_map, n_config,
                               discount_rate, out_csv, out_plot, amortization_period=None):
     """Simple and discounted payback time per **agent** (the same allocation
@@ -2222,76 +2328,17 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     the results as a DataFrame.
     """
     import warnings as _warn
-    from scripts.helpers import annuity
 
     if tech_costs is None or comp_tech_map is None or network_comp_allocation is None:
         print("[Payback-agent] tech_costs/comp_tech_map/network_comp_allocation not available — skipping")
         return pd.DataFrame()
 
     lookup = build_allocation_lookup(network_comp_allocation)
-    composite_overrides = _composite_investment_overrides(tech_costs, n_config) if n_config is not None else {}
-    fom_overrides = _composite_fom_overrides(tech_costs, n_config) if n_config is not None else {}
-
-    # ── Investment & FOM per agent (capacity-based, scenario-invariant) ─────
-    investment_by_agent: dict = {}
-    fom_by_agent: dict = {}
-    lifetime_weighted_by_agent: dict = {}   # Σ(investment_i × lifetime_i), finite-lifetime components only
-    lifetime_investment_by_agent: dict = {}  # Σ(investment_i) over that SAME finite-lifetime subset —
-                                              # a separate denominator, since some components (e.g. a
-                                              # missing `lifetime=` kwarg in prepare_network.py leaves
-                                              # PyPSA's inf default attached) have resolved investment
-                                              # but no finite lifetime to average in; mixing that
-                                              # investment into a denominator that excludes it from the
-                                              # numerator would silently understate the average.
-    pure_annuity_by_agent: dict = {}         # Σ(investment_i × annuity(lifetime_i, r)) — the PURE capital-
-                                              # recovery annuity (no FOM term), matched to the SAME
-                                              # finite-lifetime subset. This is the correct benchmark for
-                                              # "capital cost coverage": cash_flow here is already net of
-                                              # FOM, so comparing it against a FOM-inclusive capital_cost
-                                              # (as stored on the network) would double-count FOM.
-    total_capex_ground_truth = 0.0
-    unresolved = []  # (name, annualised capex)
-    for cls, attr, nom in _INVESTMENT_COMP_SPECS:
-        df = _slice_df_first_scenario(getattr(n, attr, pd.DataFrame()))
-        if df is None or df.empty:
-            continue
-        ext_col = f"{nom}_extendable"
-        if ext_col not in df.columns or "capital_cost" not in df.columns:
-            continue
-        mask = df[ext_col].astype(bool) & (pd.to_numeric(df["capital_cost"], errors="coerce").fillna(0.0) > 0)
-        for name, row in df[mask].iterrows():
-            cap_col = f"{nom}_opt" if f"{nom}_opt" in row.index and pd.notna(row.get(f"{nom}_opt")) else nom
-            cap = pd.to_numeric(row.get(cap_col), errors="coerce")
-            if not np.isfinite(cap) or cap <= 0:
-                continue
-            annualised = float(cap) * float(row["capital_cost"])
-            total_capex_ground_truth += annualised
-            agent = lookup.get((cls, str(name)), "Unallocated")
-
-            inv = _investment_for(row, nom, tech_costs, comp_tech_map, name, composite_overrides, n_config)
-            if inv is None:
-                unresolved.append((name, annualised))
-                continue
-            investment_by_agent[agent] = investment_by_agent.get(agent, 0.0) + inv
-            fom_by_agent[agent] = fom_by_agent.get(agent, 0.0) + (
-                _annual_fom_for(row, nom, tech_costs, comp_tech_map, name, fom_overrides) or 0.0)
-            lifetime = pd.to_numeric(row.get("lifetime"), errors="coerce")
-            if np.isfinite(lifetime) and lifetime > 0:
-                lifetime_weighted_by_agent[agent] = lifetime_weighted_by_agent.get(agent, 0.0) + inv * float(lifetime)
-                lifetime_investment_by_agent[agent] = lifetime_investment_by_agent.get(agent, 0.0) + inv
-                pure_annuity_by_agent[agent] = (pure_annuity_by_agent.get(agent, 0.0)
-                                                 + inv * annuity(float(lifetime), discount_rate))
-
-    coverage_pct = (100.0 * (total_capex_ground_truth - sum(a for _, a in unresolved)) / total_capex_ground_truth
-                    if total_capex_ground_truth > 0 else float("nan"))
-    if unresolved:
-        unresolved.sort(key=lambda x: -x[1])
-        listed = ", ".join(f"{nm} ({ann:,.0f} EUR/y)" for nm, ann in unresolved[:10])
-        more = f", +{len(unresolved) - 10} more" if len(unresolved) > 10 else ""
-        print(f"[Payback-agent] investment coverage {coverage_pct:.1f}% of total annualised capex. "
-              f"{len(unresolved)} component(s) not resolved: {listed}{more}")
-    else:
-        print(f"[Payback-agent] investment coverage 100.0% of total annualised capex.")
+    (investment_by_agent, fom_by_agent, lifetime_weighted_by_agent, lifetime_investment_by_agent,
+     eff_period_weighted_by_agent, eff_period_investment_by_agent,
+     pure_annuity_by_agent, coverage_pct) = _agent_capex_fom_lifetime(
+        n, lookup, tech_costs, comp_tech_map, n_config, discount_rate,
+        amortization_period=amortization_period, log_tag="Payback-agent")
 
     # ── Cash flow per agent: per-component shadow-price net value ───────────
     # revenue(component) already nets input cost against output revenue at
@@ -2334,27 +2381,51 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
                 agent = lookup.get((comp_kind, str(comp_name)), "Unallocated")
                 target[agent] = target.get(agent, 0.0) + float(val) * w
 
+    return _assemble_and_save_payback(
+        revenue_by_agent, opex_by_agent, investment_by_agent, fom_by_agent,
+        lifetime_weighted_by_agent, lifetime_investment_by_agent,
+        eff_period_weighted_by_agent, eff_period_investment_by_agent, pure_annuity_by_agent,
+        coverage_pct, discount_rate, out_csv, out_plot, amortization_period,
+        log_tag="Payback-agent", title="Payback and capital cost coverage by agent")
+
+
+MARGIN_TOLERANCE = 0.03  # 3% — coverage in [97%, 103%] is treated as "priced at own margin"
+
+
+def _assemble_and_save_payback(revenue_by_agent, opex_by_agent, investment_by_agent, fom_by_agent,
+                                lifetime_weighted_by_agent, lifetime_investment_by_agent,
+                                eff_period_weighted_by_agent, eff_period_investment_by_agent,
+                                pure_annuity_by_agent, coverage_pct, discount_rate, out_csv, out_plot,
+                                amortization_period, log_tag, title):
+    """Shared row-assembly, margin-snap, CSV/plot step for
+    :func:`compute_payback_by_agent`. Factored out separately since this
+    part (payback/coverage formulas, the margin snap, CSV/plot output) is
+    independent of how ``revenue_by_agent``/``opex_by_agent`` were computed.
+
+    See :func:`compute_payback_by_agent`'s docstring for the "priced at own
+    margin" snap rationale (mathematically, cash_flow == pure capital-
+    recovery annuity implies discounted payback == the *effective
+    amortization period* exactly — ``amortization_period`` if set, else the
+    technology's own lifetime, since that's what the LP's own annuity
+    actually uses; MARGIN_TOLERANCE treats a noise-level shortfall near
+    that point as such, instead of showing a wildly unstable near-infinite
+    number for an economically negligible difference). The reported
+    "technical lifetime, investment-weighted" column is always the
+    technology's own true catalogue lifetime, regardless of
+    ``amortization_period`` — a separate, informational question ("does
+    this pay back within its physical life") from the snap target.
+    """
     def _weighted_lifetime(agent):
         denom = lifetime_investment_by_agent.get(agent, 0.0)
         if denom <= 0:
             return float("nan")
         return lifetime_weighted_by_agent.get(agent, 0.0) / denom
 
-    # ── Capital-cost coverage & the "priced at its own margin" snap ─────────
-    # A continuously-sized (extendable) technology gets built by the LP right
-    # up to the point where cash_flow == its own pure capital-recovery annuity
-    # (investment × annuity(lifetime, r)) — that's the optimizer's first-order
-    # condition, not a failure. Mathematically, if cash_flow equals that
-    # annuity *exactly*, discounted payback comes out to exactly the
-    # technology's own lifetime. But the discounted-payback formula is
-    # extremely sensitive right at that point: a coverage shortfall of even a
-    # fraction of a percent (well within dispatch/rounding noise) sends
-    # discounted payback rocketing toward infinity, even though nothing
-    # economically meaningful changed. MARGIN_TOLERANCE treats coverage within
-    # a few percent of 100% as noise around the marginal-pricing condition and
-    # reports it as exactly the technology's own lifetime instead of a
-    # wildly unstable (or literally infinite) number.
-    MARGIN_TOLERANCE = 0.03  # 3% — coverage in [97%, 103%] is treated as "at margin"
+    def _weighted_eff_period(agent):
+        denom = eff_period_investment_by_agent.get(agent, 0.0)
+        if denom <= 0:
+            return float("nan")
+        return eff_period_weighted_by_agent.get(agent, 0.0) / denom
 
     def _capital_coverage(agent, cash_flow):
         annuity_target = pure_annuity_by_agent.get(agent, 0.0)
@@ -2365,9 +2436,9 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     def _apply_margin_snap(agent, cash_flow, discounted):
         coverage = _capital_coverage(agent, cash_flow)
         if np.isfinite(coverage) and abs(1.0 - coverage) <= MARGIN_TOLERANCE:
-            lt = _weighted_lifetime(agent)
-            if np.isfinite(lt):
-                return lt, True
+            ep = _weighted_eff_period(agent)
+            if np.isfinite(ep):
+                return ep, True
         return discounted, False
 
     # ── Assemble rows ────────────────────────────────────────────────────────
@@ -2384,6 +2455,8 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
         rows.append({
             "investment (EUR)":            round(investment, 0),
             "annual FOM (EUR/y)":          round(fom, 0),
+            "annual revenue (EUR/y)":      round(revenue_by_agent.get(agent, 0.0), 0),
+            "annual running cost (EUR/y)": round(opex_by_agent.get(agent, 0.0), 0),
             "annual cash flow (EUR/y)":    round(cash_flow, 0),
             "capital cost coverage (%)":   round(coverage * 100, 1) if np.isfinite(coverage) else coverage,
             "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
@@ -2395,20 +2468,26 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
 
     total_investment = sum(investment_by_agent.values())
     total_fom = sum(fom_by_agent.values())
-    total_cash_flow = sum(revenue_by_agent.values()) - sum(opex_by_agent.values()) - total_fom
+    total_revenue = sum(revenue_by_agent.values())
+    total_opex = sum(opex_by_agent.values())
+    total_cash_flow = total_revenue - total_opex - total_fom
     simple, discounted = _payback_years(total_investment, total_cash_flow, discount_rate)
     total_annuity_target = sum(pure_annuity_by_agent.values())
     total_coverage = total_cash_flow / total_annuity_target if total_annuity_target > 0 else float("nan")
     total_lifetime = (sum(lifetime_weighted_by_agent.values()) / sum(lifetime_investment_by_agent.values())
                        if sum(lifetime_investment_by_agent.values()) > 0 else float("nan"))
+    total_eff_period = (sum(eff_period_weighted_by_agent.values()) / sum(eff_period_investment_by_agent.values())
+                         if sum(eff_period_investment_by_agent.values()) > 0 else float("nan"))
     total_at_margin = False
-    if np.isfinite(total_coverage) and abs(1.0 - total_coverage) <= MARGIN_TOLERANCE and np.isfinite(total_lifetime):
-        discounted, total_at_margin = total_lifetime, True
+    if np.isfinite(total_coverage) and abs(1.0 - total_coverage) <= MARGIN_TOLERANCE and np.isfinite(total_eff_period):
+        discounted, total_at_margin = total_eff_period, True
     row_names.append("TOTAL")
     rows.append({
         "investment (EUR)":            round(total_investment, 0),
         "investment coverage (%)":     round(coverage_pct, 1) if np.isfinite(coverage_pct) else coverage_pct,
         "annual FOM (EUR/y)":          round(total_fom, 0),
+        "annual revenue (EUR/y)":      round(total_revenue, 0),
+        "annual running cost (EUR/y)": round(total_opex, 0),
         "annual cash flow (EUR/y)":    round(total_cash_flow, 0),
         "capital cost coverage (%)":   round(total_coverage * 100, 1) if np.isfinite(total_coverage) else total_coverage,
         "simple payback (years)":      round(simple, 2) if np.isfinite(simple) else simple,
@@ -2422,14 +2501,14 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     out_csv = Path(out_csv)
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     df_out.to_csv(out_csv)
-    print(f"[Payback-agent] saved → {out_csv}")
+    print(f"[{log_tag}] saved → {out_csv}")
 
     amortization_label = "tech lifetime" if amortization_period in (None, "", "null") \
         else f"{float(amortization_period):.0f} years"
 
     _plot_payback_bar(df_out, Path(out_plot), total_label="TOTAL",
-                       title="Payback and capital cost coverage by agent",
-                       log_tag="Payback-agent",
+                       title=title,
+                       log_tag=log_tag,
                        lifetime_col="technical lifetime, investment-weighted (years)",
                        amortization_label=amortization_label, margin_tolerance=MARGIN_TOLERANCE)
     return df_out
