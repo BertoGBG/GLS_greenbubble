@@ -41,6 +41,7 @@ from scripts.config import (En_price_year,
                             EUR_to_DKK,
                             latitude,
                             longitude,
+                            pypsa_eur_link,
                             )
 
 # ── Demand profiles ─────────────────────────────────────────────────────────
@@ -1169,11 +1170,50 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
             "price_bioCH4": targets_dict["price_bioCH4"],
         }
 
+        if pypsa_eur_link["enabled"] and pypsa_eur_link["override_bioCH4_price"]:
+            # Soft-linked run: bioCH4 shares PyPSA-Eur-sec's blended
+            # fossil+biomethane gas pool, so by default derive its price from
+            # the (also soft-linked) NG price automatically, without
+            # requiring targets.price_bioCH4: 'NG_based' to be set by hand.
+            # Any non-numeric value here is excluded from price_ts below,
+            # which is exactly the existing 'NG_based' mechanism relied on
+            # in prepare_network.py's build_bus_list_demand_or_price (absence
+            # of "price_bioCH4" from inputs_dict -> falls back to
+            # en_market_prices["bioCH4_grid_sell_price"], NG-price-derived).
+            # Set override_bioCH4_price: false to keep targets.price_bioCH4
+            # as configured instead (a flat manual price, or 'NG_based' too).
+            prices["price_bioCH4"] = "NG_based"
+
         price_ts = {
             k: pd.Series(-float(v), index=idx).to_frame(k)
             for k, v in prices.items()
             if isinstance(v, (int, float))
         }
+
+        if pypsa_eur_link["enabled"]:
+            # Soft-linked run: H2 and/or methanol exogenous sale prices come
+            # from the matched PyPSA-Eur node instead of config.yaml's flat
+            # scalar, overriding whatever the loop above built for these
+            # keys -- gated individually by override_H2_price /
+            # override_methanol_price so either can be left as the plain
+            # config.yaml scalar instead. Same negative-marginal_cost
+            # convention as the constant case (marginal_cost on a sale link
+            # must be negative = revenue). price_bioCH4 is untouched here --
+            # set targets.price_bioCH4: "NG_based" in config.yaml to derive
+            # it from the (also soft-linked) NG price via add_targets'
+            # existing fallback, matching PyPSA-Eur's own blended
+            # fossil+biomethane gas pool rather than adding a separate
+            # bioCH4 extraction.
+            _folder = os.path.dirname(p.El_price_input_file)
+            _overrides = []
+            if pypsa_eur_link["override_H2_price"]:
+                _overrides.append(("price_H2", "H2_price_input.csv"))
+            if pypsa_eur_link["override_methanol_price"]:
+                _overrides.append(("price_meoh", "Methanol_price_input.csv"))
+            for _key, _filename in _overrides:
+                _raw = pd.read_csv(f"{_folder}/{_filename}", sep=";", index_col=0).set_axis(idx)
+                price_ts[_key] = (-_raw.iloc[:, 0]).to_frame(_key)
+
         inputs_dict.update(price_ts)
 
     return inputs_dict

@@ -127,3 +127,24 @@ rolling_horizon:
   overlap:       72   # hours
   network_path: ''    # REQUIRED when enabled
   rh_year:      2024
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-pypsa-eur-link
+# Soft-link to a solved PyPSA-Eur(-sec) network: node-matched exogenous prices,
+# capacity factors, CO2 cost and biomass potentials replace the usual
+# data/Inputs_{year} sources. See docs/pypsa_eur_link.rst.
+pypsa_eur_link:
+  enabled:               false
+  network_path:          ''         # REQUIRED when enabled — path to a solved PyPSA-Eur .nc
+  regions_path:          ''         # REQUIRED when enabled — path to the matching onshore-regions GeoJSON
+  id:                    ''         # optional run id; folder becomes data/Inputs_{En_price_year}_pypsa-eur[_id]
+  co2_stored_price_mode: average    # "average" (energy-weighted scalar) | "timeseries"
+  # Per-series overrides -- each defaults to true (fully soft-linked). Set any
+  # to false to keep GreenBubble's own config.yaml/n_config.yaml value for
+  # that series instead of the one extracted from the linked PyPSA-Eur node.
+  override_co2_cost:            true
+  override_solid_biomass_price: true   # pellets market / moist biomass market price
+  override_DH_price:            true   # only applies if n_options.DH.price profile is unset
+  override_H2_price:            true   # only applies in price mode (targets.driver == "price")
+  override_methanol_price:      true   # only applies in price mode (targets.driver == "price")
+  override_bioCH4_price:        true   # forces targets.price_bioCH4 to 'NG_based' automatically;
+                                        # false keeps whatever targets.price_bioCH4 is set to in config.yaml

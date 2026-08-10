@@ -20,8 +20,9 @@ import pandas as pd
 import os
 
 from pathlib import Path
-from scripts.config import En_price_year, year_investment, latitude, longitude, EUR_to_DKK
+from scripts.config import En_price_year, year_investment, latitude, longitude, EUR_to_DKK, pypsa_eur_link
 from scripts.helpers import build_snapshots, is_eu_or_us
+from scripts.pypsa_eur_link import inputs_folder
 
 
 def _load_dotenv(path: str = ".env") -> None:
@@ -97,7 +98,7 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 
 folder_model_inputs='data' # folder where csv files for model input are saved after the pre-processing
 if is_eu_or_us(latitude,longitude)  == 'EU':
-    folder_data= 'data/' + 'Inputs_' + str(En_price_year)
+    folder_data = inputs_folder(En_price_year, pypsa_eur_link["enabled"], pypsa_eur_link["id"])
 elif is_eu_or_us(latitude,longitude)  == 'US':
     folder_data= 'data/California/' + 'Inputs_' + str(En_price_year)
 

@@ -1756,6 +1756,7 @@ def save_config(results_folder, c):
         "optimization":          c.optimization,
         "clustering":            c.clustering,
         "rolling_horizon":       c.rolling_horizon,
+        "pypsa_eur_link":        c.pypsa_eur_link,
     })
 
     # ── n_config (component name → params, NaN dropped) ───────────────────────
