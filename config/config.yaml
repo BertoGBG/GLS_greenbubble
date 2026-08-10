@@ -1,0 +1,137 @@
+# config/config.default.yaml
+# BASE DEFAULTS — do not edit for individual runs.
+# To customise, create config/config.yaml with only the keys that differ.
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-general
+run_name: pypsa_eur_link
+CO2_cost:          100   # €/t  (overridden by pypsa_eur_link.override_co2_cost)
+CO2_cost_ref_year: 100   # €/t  (set if energy prices already embed a CO₂ tax)
+max_RE_to_grid:    0.1
+En_price_year:    2050
+latitude:        56.566
+longitude:        9.033
+outputs_folder: outputs/single_analysis
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-targets
+targets:
+  driver: 'price'          # 'demand' | 'price'
+  demand_H2:   200000       # MWh/y
+  demand_CH4:  350000       # MWh/y
+  demand_meoh:   9000       # MWh/y
+  price_H2:      120        # €/MWh  (price mode only; overridden by pypsa_eur_link.override_H2_price)
+  price_bioCH4:  200        # €/MWh  (price mode only; overridden -> 'NG_based' by pypsa_eur_link.override_bioCH4_price)
+  price_meoh:    200        # €/MWh  (price mode only; overridden by pypsa_eur_link.override_methanol_price)
+  CH4_demand_mode:    flat  # flat | profile | bins_flat | bins_profile
+  CH4_bins:            1
+  CH4_flexibility:  0.00
+  CH4_profile:       null   # null = built-in NG_DK profile
+  H2_demand_mode:    profile
+  H2_bins:           12
+  H2_flexibility:    0.2
+  H2_profile:  data/common/NG_demand_DK_profile.csv
+  MeOH_demand_mode:  bins_profile
+  MeOH_bins:          2
+  MeOH_flexibility:  0.5
+  MeOH_profile: data/common/NG_demand_DK_profile.csv
+  demand_store_buffer: 0.5
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-nflags
+n_flags:
+  biogas:       true
+  central_heat: true
+  renewables:   true
+  electrolysis: true
+  meoh:         true
+  methanation:  true
+  symbiosis:    true
+  storage:      true
+  print:        true
+  export:       false
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-nflags-opt
+n_flags_opt:
+  print:  true
+  export: true
+  plot:   true
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rfnbos
+rfnbos_dict:
+  limit:             'unlimited'  # 'emissions' | 'price' | 'unlimited' | 'disconnected'
+  price_threshold:     20         # €/MWh
+  emission_threshold:  0.0648     # tCO₂/MWh
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-economics
+year_investment:       2030
+amortization_period:   null   # null = each technology's technical lifetime (forced null when pypsa_eur_link.enabled)
+USD_to_EUR:            0.85
+EUR_to_DKK:            7.46
+discount_rate:         0.07
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-tariffs
+# Values converted from DKK/MWh to €/MWh using EUR_to_DKK (7.46).
+tariffs_dict:
+  el_transmission_tariff:  1.3298
+  el_system_tariff:        0.9169
+  el_afgift:               0
+  el_net_tariff_low:       0.2681
+  el_net_tariff_high:      0.8043
+  el_net_tariff_peak:      1.6086
+  el_tariff_sell:          0.1877
+  NG_dso_tariff:           0.2413
+  NG_tso_tariff:           0.00134
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-optimization
+optimization:
+  solver:            'gurobi'       # 'gurobi' | 'highs'
+  solver_profile:    'gurobi-barrier-fast'  # see scripts/solver_profiles.py
+  collect_all_duals:  true
+  return_model:       true
+  overrides:          null
+  zero_threshold_MW:  0.01         # MW — components below this are treated as not built
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-stochastic
+# NOTE: scenarios / CO2_cost_s / CO2_cost_ref_year_s below replace the
+# defaults wholesale (not merged key-by-key) — see _REPLACE_WHOLESALE_KEYS
+# in scripts/config.py. Must be the COMPLETE set of years/probabilities you
+# want (probabilities summing to 1); years must match across all three dicts.
+stochastic:
+  stochastic: false
+  scenarios:
+    '2023': 0.30
+    '2024': 0.35
+    '2025': 0.35
+  CO2_cost_s:
+    '2023': 100
+    '2024': 100
+    '2025': 100
+  CO2_cost_ref_year_s:
+    '2023': 100
+    '2024': 100
+    '2025': 100
+  EVPI: true
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-clustering
+clustering:
+  temporal:
+    resolution: '4h'   # false | "4h" | "8h" | "24h"  -- must match the linked PyPSA-Eur network's own resolution
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rolling-horizon
+rolling_horizon:
+  enabled:      false
+  horizon:      168   # hours
+  overlap:       72   # hours
+  network_path: ''    # REQUIRED when enabled
+  rh_year:      2024
+
+# docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-pypsa-eur-link
+# Soft-link to a solved PyPSA-Eur(-sec) network. See scripts/pypsa_eur_link.py
+# and docs/pypsa_eur_link.rst. network_path/regions_path point at the local
+# test files under pypsa-eur/ (gitignored -- not part of the repo; place your
+# own solved network + onshore-regions GeoJSON there, or point elsewhere).
+pypsa_eur_link:
+  enabled:               true
+  network_path:          pypsa-eur/networks/base_s_90__4h_2050.nc
+  regions_path:          pypsa-eur/resources/regions_onshore_base_s_90.geojson
+  id:                    ''
+  co2_stored_price_mode: average

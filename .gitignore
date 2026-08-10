@@ -19,5 +19,10 @@ text_docs/
 # Resources
 resources/
 
+# Local PyPSA-Eur soft-link test data (solved network + regions GeoJSON) —
+# not part of the repo; point pypsa_eur_link.network_path/regions_path at
+# your own copy.
+pypsa-eur/
+
 # Claude Code project instructions (local only)
 CLAUDE.md
