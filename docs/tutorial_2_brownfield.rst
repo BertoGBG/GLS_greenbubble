@@ -150,6 +150,52 @@ baseload because CO₂ supply is continuous.
 
 ---
 
+5 · Payback by agent
+---------------------
+
+Brownfield changes more than dispatch — it changes how fast each agent pays
+back what's actually still owed on it. This tutorial also sets
+``amortization_period: 10``, shorter than most technologies' true technical
+lifetime, which matters for how the payback numbers below should be read
+(see :ref:`economics-payback` for the full formulas).
+
+.. figure:: /_static/tutorials/tut2_payback_by_agent.png
+   :width: 95%
+
+   Payback and capital cost coverage by agent (price mode; gated on
+   ``targets.driver == 'price'``).
+
+.. admonition:: Reading brownfield vs. cross-subsidised agents
+   :class: important
+
+   - **Brownfield-heavy agents pay back fast, by construction**:
+     ``biogas`` (1107 % coverage, 0.7-year payback), ``symbiosis``
+     (461 %, 1.7 y) and ``meoh`` (683 %, 1.1 y) all carry a small residual
+     annuity — only 30 % of the original biogas/wind/solar investment is
+     still outstanding — so even modest cash flow clears it easily. This
+     is the payback-side view of the same ``remaining_investment_fraction``
+     mechanic from Section 1.
+   - **``electrolysis`` is the interesting case**: pure greenfield, freely
+     sized by the optimiser, yet only 26 % capital cost coverage and an
+     infinite discounted payback. This is *not* a sign it's mis-sized —
+     it's a **cross-subsidy**. Its hydrogen makes the extra biomethanation
+     capacity built alongside it (Section 4) worthwhile; part of the value
+     electrolysis creates shows up on ``methanation``'s books, not its
+     own. Checking a low-coverage, freely-sized agent against whichever
+     agent consumes its main product is the general diagnostic — see
+     :ref:`guide-economic-analysis`.
+   - **``amortization_period: 10`` sets the bar these agents are compared
+     against.** Coverage is cash flow ÷ *effective*-period annuity — here
+     10 years, not each technology's own 20–30-year technical lifetime
+     (still shown separately as the black tick / "technical lifetime"
+     column). A shorter amortization period demands faster capital
+     recovery, which is why even ``storage`` (87 % coverage) and
+     ``central_heat`` (66 %) — neither a loss, both simply short of fully
+     clearing a *steeper* annuity than their own physical lifetime would
+     imply — sit below 100 % here.
+
+---
+
 What you learned
 ----------------
 
@@ -157,6 +203,8 @@ What you learned
 - The **committable / ramping / min-load** process constraints and when each applies.
 - Adding a heat off-take (district heating) as a revenue stream.
 - Why brownfield context changes the biomethanation break-even.
+- Reading per-agent payback and capital cost coverage, and spotting a
+  cross-subsidised agent versus a genuine brownfield fast-payback.
 
 Next: :ref:`tutorial-3-rolling-horizon` re-dispatches this fixed plant hour-by-hour
 over the full year using rolling horizon, and :ref:`tutorial-2b-brownfield-heat`
@@ -164,4 +212,6 @@ extends the brownfield plant with a larger electrolysis and heat-network integra
 
 .. seealso::
 
-   :ref:`guide-outputs` · :ref:`config-economics` · :ref:`economics` · :ref:`tutorial-1-greenfield`
+   :ref:`guide-outputs` · :ref:`config-economics` · :ref:`economics` ·
+   :ref:`economics-payback` · :ref:`guide-economic-analysis` ·
+   :ref:`tutorial-1-greenfield`
