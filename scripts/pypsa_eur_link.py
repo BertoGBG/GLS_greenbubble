@@ -12,7 +12,7 @@ the solved network — nothing is read from PyPSA-Eur's broader ``resources/``
 tree, even where a more granular pre-solve source exists (e.g. biomass
 potentials), so the soft-link only ever depends on two files per linked run.
 
-See ``docs/pypsa_eur_link.rst`` for the extraction table and design rationale
+See ``docs/guide_pypsa_eur_link.rst`` for the extraction table and design rationale
 (node-matching method, CO2 cost sign convention, why capacity potential comes
 from ``e_sum_max`` and not ``p_nom``, the onshore-wind/solar-only carrier
 choice, and the resolution-matching requirement on the GreenBubble side).

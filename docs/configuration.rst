@@ -287,6 +287,40 @@ time-varying inputs (prices, capacity factors) with data from that year.
 See :ref:`guide-rolling-horizon` for the full workflow, cross-year analysis,
 committable dispatch, and cost comparison outputs.
 
+.. _config-pypsa-eur-link:
+
+pypsa_eur_link
+^^^^^^^^^^^^^^
+
+Soft-links a solved PyPSA-Eur(-sec) network as the source of exogenous
+prices, renewable capacity factors, and CO₂ cost, in place of the usual
+historical ``data/Inputs_{year}/`` data. Off by default.
+
+.. code-block:: yaml
+
+   pypsa_eur_link:
+     enabled:               false
+     network_path:          ''        # REQUIRED — path to a solved PyPSA-Eur .nc
+     regions_path:          ''        # REQUIRED — matching onshore-regions GeoJSON
+     id:                    ''        # optional; folder becomes Inputs_{year}_pypsa-eur[_id]
+     co2_stored_price_mode: average   # "average" | "timeseries"
+     override_co2_cost:            true
+     override_solid_biomass_price: true
+     override_DH_price:            true
+     override_H2_price:            true
+     override_methanol_price:      true
+     override_bioCH4_price:        true
+
+``network_path`` and ``regions_path`` are required when ``enabled: true``.
+Each ``override_*`` flag independently controls whether that one series comes
+from the linked network (``true``, default) or from your own
+``config.yaml``/``n_config.yaml`` value (``false``). Forces
+``amortization_period: null`` and requires ``clustering.temporal.resolution``
+to match the linked network's own resolution.
+
+See :ref:`guide-pypsa-eur-link` for the extraction table, node-matching
+method, folder-naming scheme, and design rationale.
+
 .. _config-optimization:
 
 optimization

@@ -17,6 +17,7 @@
    plots
    prepare_network
    preprocessing
+   pypsa_eur_link
    retrieve
    snakemake_build_network
    snakemake_plot
