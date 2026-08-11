@@ -73,13 +73,13 @@ biogas engine:
 
 biomethanation: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 1 # % of total power capacity per hour
-  ramp limit down: 1 # % of total power capacity per hour
+  ramp limit up: null # % of total power capacity per hour
+  ramp limit down: null # % of total power capacity per hour
 
 biomethanation CO2: # (bus0 unit: MW H2)
   <<: *base
-  ramp limit up: 1 # % of total power capacity per hour
-  ramp limit down: 1 # % of total power capacity per hour
+  ramp limit up: null # % of total power capacity per hour
+  ramp limit down: null # % of total power capacity per hour
 
 methanation biogas: # (bus0 unit: MW H2)
   <<: *base

@@ -15,7 +15,7 @@ outputs_folder: outputs/single_analysis
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-targets
 targets:
-  driver: 'price'          # 'demand' | 'price'
+  driver: 'demand'          # 'demand' | 'price'
   demand_H2:   200000       # MWh/y
   demand_CH4:  350000       # MWh/y
   demand_meoh:   9000       # MWh/y
@@ -47,7 +47,7 @@ n_flags:
   symbiosis:    true
   storage:      true
   print:        true
-  export:       false
+  export:       true
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-nflags-opt
 n_flags_opt:
@@ -135,3 +135,5 @@ pypsa_eur_link:
   regions_path:          pypsa-eur/resources/regions_onshore_base_s_90.geojson
   id:                    ''
   co2_stored_price_mode: average
+  override_methanol_price: false
+  override_bioCH4_price: false

@@ -110,9 +110,9 @@ stochastic:
     '2023': 100
     '2024': 100
   CO2_cost_ref_year_s:
-    '2022': 0
-    '2023': 0
-    '2024': 0
+    '2022': 100
+    '2023': 100
+    '2024': 100
   EVPI: true
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-clustering
