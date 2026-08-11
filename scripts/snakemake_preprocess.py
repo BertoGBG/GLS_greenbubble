@@ -21,6 +21,8 @@ year = int(snakemake.wildcards.year)
 if c.pypsa_eur_link["enabled"]:
     from scripts import pypsa_eur_link as pel
     from scripts import parameters as p
+    from scripts.helpers import prepare_costs
+    from scripts.technology_inputs import tech_inputs
 
     # config.py already enforces clustering.temporal.resolution is set (not
     # False) when pypsa_eur_link is enabled, but can't cheaply verify it
@@ -29,12 +31,27 @@ if c.pypsa_eur_link["enabled"]:
     # anyway (avoids loading a large sector-coupled network twice).
     expected_res = float(str(c.clustering["temporal"]["resolution"]).rstrip("hH"))
 
+    # Needed for the methanol price's CO2-cost markup (see
+    # pypsa_eur_link.get_methanol_price_with_co2) — same call as
+    # snakemake_build_network.py.
+    tech_costs = prepare_costs(
+        latitude        = c.latitude,
+        longitude       = c.longitude,
+        tech_inputs     = tech_inputs,
+        USD_to_EUR      = c.USD_to_EUR,
+        discount_rate   = c.discount_rate,
+        cost_path_EU    = snakemake.input.costs_eu,
+        cost_path_US    = p.cost_path_US,
+        dict_tech_US_EU = p.dict_tech_US_EU,
+    )
+
     pel.write_softlink_inputs(
         year=year,
         network_path=c.pypsa_eur_link["network_path"],
         regions_path=c.pypsa_eur_link["regions_path"],
         latitude=p.latitude,
         longitude=p.longitude,
+        tech_costs=tech_costs,
         co2_stored_price_mode=c.pypsa_eur_link["co2_stored_price_mode"],
         run_id=c.pypsa_eur_link["id"],
         expected_resolution_hours=expected_res,

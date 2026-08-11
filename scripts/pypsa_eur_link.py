@@ -162,6 +162,25 @@ def get_co2_cost(n: pypsa.Network, constraint_name: str = "CO2Limit") -> float:
     return abs(mu)
 
 
+def get_methanol_price_with_co2(n: pypsa.Network, tech_costs) -> pd.Series:
+    """EU-wide methanol price, marked up with its combustion CO2 cost.
+
+    Same logic as ``helpers.en_market_prices_w_CO2``'s natural-gas markup
+    (``mk_NG_grid_price``/``mk_NG_grid_sell_price``): the "EU methanol" bus's
+    shadow price is a production-side commodity price out of PyPSA-Eur-sec's
+    solve, with no combustion-carbon tax baked in — that liability sits with
+    whoever burns the methanol, not with the commodity price itself, exactly
+    like natural gas and unlike the electricity spot price. So the full
+    ``co2_cost`` (no reference-year netting) is added, weighted by methanol's
+    CO2 intensity from the technology-data cost table
+    (``tech_costs.at["methanol", "CO2 intensity"]``, tCO2/MWh_th — a fixed
+    stoichiometric constant, not a cost-year-dependent assumption).
+    """
+    co2_intensity_methanol = tech_costs.at["methanol", "CO2 intensity"]  # tCO2/MWh_th
+    co2_cost = get_co2_cost(n)
+    return get_price(n, "EU", "methanol") + co2_intensity_methanol * co2_cost
+
+
 def get_biomass_potential(n: pypsa.Network, prefix: str, carrier: str) -> float:
     """Annual biomass resource potential (MWh/y) at the matched node.
 
@@ -207,8 +226,15 @@ def snapshot_resolution_hours(n: pypsa.Network) -> float:
     return mode.iloc[0].total_seconds() / 3600.0
 
 
-def extract_all(n: pypsa.Network, prefix: str) -> dict:
+def extract_all(n: pypsa.Network, prefix: str, tech_costs) -> dict:
     """Bundle every soft-link extraction for one matched node into a single dict.
+
+    Parameters
+    ----------
+    tech_costs : pd.DataFrame
+        GreenBubble's main cost table (as returned by ``helpers.prepare_costs``),
+        used for ``tech_costs.at["methanol", "CO2 intensity"]`` — see
+        ``get_methanol_price_with_co2``.
 
     Returns
     -------
@@ -229,6 +255,8 @@ def extract_all(n: pypsa.Network, prefix: str) -> dict:
     "price_methanol" is read from the single **EU-wide** ``"EU methanol"``
     bus, not a per-node one — PyPSA-Eur-sec models methanol as a globally
     tradeable commodity, unlike gas/H2/heat which are spatially resolved.
+    It is marked up with its combustion CO2 cost, same as natural gas — see
+    ``get_methanol_price_with_co2``.
     """
     return {
         "CF_onwind":              get_capacity_factor(n, prefix, "onwind"),
@@ -237,7 +265,7 @@ def extract_all(n: pypsa.Network, prefix: str) -> dict:
         "price_gas":              get_price(n, prefix, "gas"),
         "price_H2":               get_price(n, prefix, "H2"),
         "price_co2_stored":       get_price(n, prefix, "co2 stored"),
-        "price_methanol":         get_price(n, "EU", "methanol"),
+        "price_methanol":         get_methanol_price_with_co2(n, tech_costs),
         "price_rural_heat":       get_price(n, prefix, "rural heat"),
         "price_solid_biomass":    get_energy_weighted_mean_price(n, prefix, "solid biomass"),
         "co2_cost":               get_co2_cost(n),
@@ -247,7 +275,7 @@ def extract_all(n: pypsa.Network, prefix: str) -> dict:
     }
 
 
-def load_and_extract(network_path: str, regions_path: str, latitude: float, longitude: float) -> dict:
+def load_and_extract(network_path: str, regions_path: str, latitude: float, longitude: float, tech_costs) -> dict:
     """Convenience entry point: load the network, match the node, extract everything.
 
     Adds a ``"node"`` key (the matched cluster prefix) to the ``extract_all``
@@ -255,7 +283,7 @@ def load_and_extract(network_path: str, regions_path: str, latitude: float, long
     """
     n = pypsa.Network(network_path)
     prefix = match_node(latitude, longitude, regions_path)
-    result = extract_all(n, prefix)
+    result = extract_all(n, prefix, tech_costs)
     result["node"] = prefix
     return result
 
@@ -292,6 +320,7 @@ def _repeat_to_hourly(series: pd.Series, resolution_hours: float, target_hours: 
 
 def write_softlink_inputs(year: int, network_path: str, regions_path: str,
                             latitude: float, longitude: float,
+                            tech_costs,
                             co2_stored_price_mode: str = "average",
                             out_folder: str | None = None,
                             run_id: str = "",
@@ -307,6 +336,15 @@ def write_softlink_inputs(year: int, network_path: str, regions_path: str,
     writes ``H2_price_input.csv`` and ``CO2_stored_price_input.csv`` — new
     files with no existing consumer yet (wiring them into the network build
     is separate, follow-up scope).
+
+    ``Methanol_price_input.csv`` is written CO2-cost-inclusive (see
+    ``get_methanol_price_with_co2``) rather than raw, unlike gas/electricity
+    which stay raw here and get their CO2 markup applied later, centrally, by
+    ``helpers.en_market_prices_w_CO2``: methanol has no such central markup
+    step downstream (``price_meoh`` is consumed directly, not routed through
+    ``en_market_prices_w_CO2``), so it has to happen here or not at all.
+    ``tech_costs`` (GreenBubble's main cost table) supplies the CO2 intensity
+    constant this needs.
 
     Writes ``CO2emis_input.csv`` (grid CO2 intensity) as all zeros —
     ``load_input_data()`` reads it unconditionally regardless of
@@ -375,7 +413,7 @@ def write_softlink_inputs(year: int, network_path: str, regions_path: str,
     _write(get_price(n, prefix, None), "Elspotprices_input.csv", "SpotPrice")
     _write(get_price(n, prefix, "gas"), "NG_price_year_input.csv", "THE_NG_pricesEUR_MWh")
     _write(get_price(n, prefix, "H2"), "H2_price_input.csv", "H2_price_EUR_MWh")
-    _write(get_price(n, "EU", "methanol"), "Methanol_price_input.csv", "Methanol_price_EUR_MWh")
+    _write(get_methanol_price_with_co2(n, tech_costs), "Methanol_price_input.csv", "Methanol_price_EUR_MWh")
 
     # DH price profile: written comma-separated (not ';') with a genuine
     # calendar-matched datetime index — unlike every other file here, GB's
@@ -398,7 +436,7 @@ def write_softlink_inputs(year: int, network_path: str, regions_path: str,
     else:
         raise ValueError(f"co2_stored_price_mode must be 'average' or 'timeseries', got {co2_stored_price_mode!r}")
 
-    result = extract_all(n, prefix)
+    result = extract_all(n, prefix, tech_costs)
     result["node"] = prefix
 
     # Scalars sidecar: co2_cost/price_solid_biomass etc. need to reach

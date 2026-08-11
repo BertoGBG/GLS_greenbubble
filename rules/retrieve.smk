@@ -17,7 +17,14 @@ rule preprocess_inputs:
     """Download and preprocess energy-market input data for a given year.
     Called once per year (En_price_year + all stochastic scenario years).
     Re-trigger manually with --forcerun preprocess_inputs if data needs refreshing.
+
+    costs_eu is only actually read when pypsa_eur_link.enabled (methanol
+    price's CO2-cost markup, see scripts/pypsa_eur_link.py), but is listed
+    unconditionally so the DAG dependency on retrieve_tech_data is always
+    correct regardless of config.
     """
+    input:
+        costs_eu = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
     output:
         done = "data/Inputs_{year}/.preprocessed",
     log:

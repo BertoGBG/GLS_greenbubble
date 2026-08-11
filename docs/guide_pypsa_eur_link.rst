@@ -66,8 +66,15 @@ How it works
         - ``n.buses_t.marginal_price`` at the node's ``H2`` bus
         -
       * - Methanol price
-        - ``n.buses_t.marginal_price`` at the ``EU methanol`` bus
-        - methanol is a single EU-wide bus in PyPSA-Eur-sec, not per-node
+        - ``n.buses_t.marginal_price`` at the ``EU methanol`` bus, **plus**
+          ``tech_costs.at["methanol", "CO2 intensity"] * co2_cost``
+        - methanol is a single EU-wide bus in PyPSA-Eur-sec, not per-node.
+          The CO2 markup mirrors the natural-gas treatment in
+          ``helpers.en_market_prices_w_CO2`` (full ``co2_cost``, no
+          reference-year netting — the commodity price carries no
+          combustion-carbon tax) — applied here rather than downstream
+          because, unlike gas/electricity, methanol has no later central
+          markup step (``price_meoh`` is consumed directly).
       * - District heating price
         - ``n.buses_t.marginal_price`` at the node's ``rural heat`` bus
         -
