@@ -2910,17 +2910,17 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             "Link",
             name=name,
             carrier = carrier,
-            bus0=meoh_buses.at['CO2 in bus', 'methanolisation'],#meoh_comp_dict['CO2 HP bus'],
+            bus0=meoh_buses.at['H2 in bus', 'methanolisation'],#meoh_comp_dict['CO2 HP bus'],
             bus1=meoh_buses.at['product bus', 'methanolisation'],
-            bus2=meoh_buses.at['H2 in bus', 'methanolisation'],
+            bus2=meoh_buses.at['CO2 in bus', 'methanolisation'],
             bus3=meoh_buses.at['local EL bus', 'methanolisation'],
             bus4=meoh_buses.at['Heat MT', 'methanolisation'],
             bus5=meoh_buses.at['Heat DH', 'methanolisation'],
-            efficiency=GL_eff.loc["Methanol", "Methanol plant"],
-            efficiency2=GL_eff.loc["H2", "Methanol plant"],
-            efficiency3=GL_eff.loc["El2 bus", "Methanol plant"],
-            efficiency4=GL_eff.at["Heat MT", "Methanol plant"],
-            efficiency5=GL_eff.at["Heat DH", "Methanol plant"],
+            efficiency=  1 / tech_costs.at["methanolisation", "hydrogen-input"],
+            efficiency2= - tech_costs.at["methanolisation", "carbondioxide-input"] / tech_costs.at["methanolisation", "hydrogen-input"],
+            efficiency3= - 0.1 * tech_costs.at["methanolisation", "electricity-input"] / tech_costs.at["methanolisation", "hydrogen-input"], # input data include compression
+            efficiency4= - tech_costs.at["methanolisation", "heat-input"]/tech_costs.at["methanolisation", "hydrogen-input"],
+            efficiency5= tech_costs.at["methanolisation", "heat-output"]/tech_costs.at["methanolisation", "hydrogen-input"],
             p_nom_extendable=expansion,
             p_nom=capacity,
             lifetime = tech_costs.at["methanolisation", "lifetime"],
@@ -3044,11 +3044,11 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
 
     if t in cap_to_add:
         cap = n_config.at[t, "initial capacity"]
-        _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs)
+        _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs) / tech_costs.at["methanolisation", "hydrogen-input"]
         n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
 
     if t in exp_to_add:
-        cost = tech_costs.at["methanolisation", "fixed"] * n_config.at["methanolisation", "cost factor"]
+        cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
         n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
 
     new_components = log_new_components(n, n0_dict)
