@@ -42,6 +42,7 @@ Design notes
 from __future__ import annotations
 
 import logging
+import time as _time
 
 import numpy as np
 import pandas as pd
@@ -467,6 +468,222 @@ def _safe_convex_hull(arr: np.ndarray):
 
 
 # --------------------------------------------------------------------------- #
+# Tier 2 (adaptive) — Grochowicz et al.'s iterative facet/centre-ball sampler
+# --------------------------------------------------------------------------- #
+def explore_hull_adaptive(
+    n,
+    dimensions: dict,
+    slack: float = 0.05,
+    direction_method: str = "maximal-centre-then-facets",
+    direction_angle_sep: float = 10.0,
+    angle_tolerance: float = 0.1,
+    conv_method: str = "volume",
+    conv_eps: float = 1.0,
+    conv_iter: int = 3,
+    max_iter: int = 100,
+    n_flags: dict | None = None,
+    re_alpha: float | None = None,
+    solver_name: str = "highs",
+    solver_options: dict | None = None,
+    seed=None,
+    c_opt: float | None = None,
+) -> dict:
+    """Tier 2 (adaptive) — near-optimal hull via Grochowicz et al.'s iterative sampler.
+
+    Alternative to :func:`explore_hull`'s fixed-count sampling: probes new search
+    directions *adaptively*, chosen from the boundary of the hull built so far
+    (facet normals, directions touching the current Chebyshev ball, or both), and
+    stops on a volume- or Chebyshev-centre-shift convergence criterion rather than
+    a fixed direction budget. Ported from the official Grochowicz et al. (2023)
+    reference implementation's ``workflow/scripts/compute_near_opt.py``
+    (https://github.com/aleks-g/intersecting-near-opt-spaces) — the direction
+    generators and hull bookkeeping are the vendored
+    :mod:`scripts.vendor.near_opt_geometry` (GPL-3.0-or-later, see that module's
+    header), reused as-is; only the per-direction *solve* is GreenBubble's own
+    constraint-correct :func:`_solve_mga_in_direction` (their code solves via the
+    pre-Linopy ``pypsa.linopf`` API and in parallel worker processes — this ports
+    the algorithm, run serially, onto GreenBubble's PyPSA 1.0.7 Linopy solve path;
+    see the module docstring's provenance note).
+
+    Parameters
+    ----------
+    direction_method : "facets" | "random-uniform" | "random-lhc" | "maximal-centre"
+        | "maximal-centre-then-facets"
+        Same five options as the reference implementation's ``directions`` config.
+    conv_method : "volume" | "centre"
+        Stop once the change between successive iterations (hull volume, or
+        Euclidean shift of the Chebyshev centre as a percent of its norm) stays
+        below ``conv_eps`` for ``conv_iter`` consecutive iterations.
+
+    Returns
+    -------
+    dict with keys ``points``, ``hull``, ``volume``, ``c_opt``, ``dimensions``,
+    ``iterations`` (int, solves that actually advanced the hull), ``converged``
+    (bool) — same shape as :func:`explore_hull`'s result plus the last two.
+    """
+    from scipy.spatial import ConvexHull
+
+    from scripts.vendor import near_opt_geometry as geo
+
+    if conv_method not in ("volume", "centre"):
+        raise ValueError("conv_method must be 'volume' or 'centre'.")
+
+    c_opt = optimal_objective(n) if c_opt is None else float(c_opt)
+    keys = list(dimensions)
+    k = len(keys)
+
+    # Seed with the cardinal ±unit-axis directions (mirrors the reference
+    # implementation's `mga.py` pass, and GreenBubble's own Tier-1 unit axes).
+    probed_directions: list[np.ndarray] = list(np.eye(k)) + list(-np.eye(k))
+    seed_points, used_directions = [], []
+    for i, d in enumerate(probed_directions):
+        _t0 = _time.time()
+        direction = {key: float(d[i2]) for i2, key in enumerate(keys)}
+        status, cond, coords = _solve_mga_in_direction(
+            n, direction, dimensions, c_opt, slack,
+            n_flags=n_flags, re_alpha=re_alpha,
+            solver_name=solver_name, solver_options=solver_options,
+        )
+        logger.info(
+            "Adaptive Tier 2 seed %d/%d (%s): %s in %.1fs",
+            i + 1, len(probed_directions), status, cond, _time.time() - _t0,
+        )
+        if status == "ok" and coords is not None:
+            seed_points.append(coords.reindex(keys).to_numpy())
+            used_directions.append(d)
+        else:
+            logger.warning("Adaptive MGA seed direction failed: %s / %s", status, cond)
+
+    if len(seed_points) < k + 1:
+        raise RuntimeError(
+            f"Only {len(seed_points)}/{2 * k} cardinal-direction seed solves "
+            f"succeeded — need at least {k + 1} to form an initial hull."
+        )
+
+    points = np.array(seed_points)
+
+    # Rescale so each dimension has width 1 (reference implementation: makes the
+    # hull closer to an orthoplex, so direction sampling explores each dimension
+    # evenly and qhull is better conditioned numerically).
+    scaling_ranges = points.max(axis=0) - points.min(axis=0)
+    if not (scaling_ranges > 1e-9).all():
+        raise RuntimeError(
+            "Degenerate near-optimal space after seeding: at least one dimension "
+            "has (near-)zero range."
+        )
+    scaled_points = points / scaling_ranges
+    scaled_hull = ConvexHull(scaled_points, incremental=True)
+
+    centre, radius, _ = geo.ch_centre(scaled_hull)
+    history = [(centre, radius, scaled_hull.volume)]
+
+    if seed is not None:
+        np.random.seed(seed)  # the vendored samplers draw from the global RNG
+
+    if direction_method == "random-uniform":
+        sampler = geo.uniform_random_hypersphere_sampler(k)
+        dir_gen = geo.filter_vectors_auto(
+            sampler, init_angle=direction_angle_sep,
+            initial_vectors=used_directions, min_angle_tolerance=angle_tolerance,
+        )
+    elif direction_method == "random-lhc":
+        sampler = geo.lhc_random_hypersphere_sampler(k)
+        dir_gen = geo.filter_vectors_auto(
+            sampler, init_angle=direction_angle_sep,
+            initial_vectors=used_directions, min_angle_tolerance=angle_tolerance,
+        )
+    elif direction_method == "facets":
+        dir_gen = geo.large_facet_directions(
+            scaled_hull, used_directions, direction_angle_sep,
+            autodecrease=True, min_angle_tolerance=angle_tolerance,
+        )
+    elif direction_method == "maximal-centre":
+        dir_gen = geo.touching_ball_directions(scaled_hull, used_directions, angle_tolerance)
+    elif direction_method == "maximal-centre-then-facets":
+        dir_gen = geo.maximal_centre_then_facets(
+            scaled_hull, used_directions, direction_angle_sep, angle_tolerance,
+        )
+    else:
+        raise ValueError(
+            f"Unknown direction_method {direction_method!r}; use facets | "
+            "random-uniform | random-lhc | maximal-centre | maximal-centre-then-facets."
+        )
+
+    num_iters = 0
+    converged = False
+    while num_iters < max_iter:
+        _t_dir = _time.time()
+        try:
+            d = next(dir_gen)
+        except StopIteration:
+            break
+        logger.info("Direction generation (%s) took %.2fs", direction_method, _time.time() - _t_dir)
+        if d is None:
+            logger.info("Adaptive sampler ran out of directions after %d iterations.", num_iters)
+            break
+
+        # Mark as probed before solving (matches reference: prevents the
+        # generator re-offering the same direction even if the solve fails).
+        used_directions.append(d)
+        direction = {key: float(d[i]) for i, key in enumerate(keys)}
+        _t_solve = _time.time()
+        status, cond, coords = _solve_mga_in_direction(
+            n, direction, dimensions, c_opt, slack,
+            n_flags=n_flags, re_alpha=re_alpha,
+            solver_name=solver_name, solver_options=solver_options,
+        )
+        logger.info(
+            "Adaptive Tier 2 solve %d (%s): %s in %.1fs",
+            num_iters + 1, status, cond, _time.time() - _t_solve,
+        )
+        if status != "ok" or coords is None:
+            logger.warning("Adaptive MGA direction failed: %s / %s — trying another.", status, cond)
+            continue
+
+        num_iters += 1
+        p = coords.reindex(keys).to_numpy()
+        scaled_hull.add_points([p / scaling_ranges])
+
+        centre, radius, _ = geo.ch_centre(scaled_hull)
+        history.append((centre, radius, scaled_hull.volume))
+
+        if len(history) - 1 >= conv_iter:
+            if conv_method == "volume":
+                vols = np.array([h[2] for h in history])
+                deltas = 100 * (vols[1:] - vols[:-1]) / vols[:-1]
+            else:  # "centre"
+                centres = [h[0] for h in history]
+                dists = np.array([
+                    np.linalg.norm(c2 - c1) for c1, c2 in zip(centres[:-1], centres[1:])
+                ])
+                norms = np.array([np.linalg.norm(c) for c in centres[1:]])
+                deltas = 100 * np.divide(
+                    dists, norms, out=np.zeros_like(dists), where=norms > 0
+                )
+            if np.all(np.abs(deltas[-conv_iter:]) < conv_eps):
+                logger.info(
+                    "Adaptive hull converged after %d iterations (%s delta < %.2f%%).",
+                    num_iters, conv_method, conv_eps,
+                )
+                converged = True
+                break
+
+    final_scaled = scaled_hull.points[scaled_hull.vertices]
+    final_points = final_scaled * scaling_ranges
+    final_hull, final_volume = _safe_convex_hull(final_points)
+
+    return {
+        "points": pd.DataFrame(final_points, columns=keys),
+        "hull": final_hull,
+        "volume": float(final_volume) if final_volume is not None else np.nan,
+        "c_opt": c_opt,
+        "dimensions": keys,
+        "iterations": num_iters,
+        "converged": converged,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Tier 3 — robustness: intersection + Chebyshev centre
 # --------------------------------------------------------------------------- #
 def chebyshev_centre(hulls: list, keys=None) -> dict:
@@ -481,38 +698,57 @@ def chebyshev_centre(hulls: list, keys=None) -> dict:
 
     Returns ``{"centre": np.ndarray(k), "radius": float, "feasible": bool}``.
     A non-positive radius means the per-year near-optimal spaces do not overlap.
+
+    Delegates to the vendored, solver-agnostic port of
+    :func:`scripts.vendor.near_opt_geometry.ch_centre_from_constraints` (itself
+    ported from the official Grochowicz et al. (2023) reference implementation,
+    https://github.com/aleks-g/intersecting-near-opt-spaces) rather than a
+    separate from-scratch LP — see ``scripts/vendor/near_opt_geometry.py`` for
+    provenance and the GPL-3.0-or-later licence boundary this crosses.
     """
-    from scipy.optimize import linprog
     from scipy.spatial import ConvexHull
 
-    A_rows, b_rows = [], []
+    from scripts.vendor import near_opt_geometry as geo
+
+    A_rows, eq_rows = [], []
     for h in hulls:
         if not isinstance(h, ConvexHull):
             h = ConvexHull(np.asarray(h))
-        eqs = h.equations  # rows [a_1..a_k, b] meaning a·x + b <= 0  ->  a·x <= -b
-        A_rows.append(eqs[:, :-1])
-        b_rows.append(-eqs[:, -1])
-    A = np.vstack(A_rows)
-    b = np.concatenate(b_rows)
+        eq_rows.append(h.equations)  # rows [a_1..a_k, b] meaning a·x <= -b
+    constraints = np.vstack(eq_rows)
 
-    norms = np.linalg.norm(A, axis=1)
-    k = A.shape[1]
-    # variables: [x_1..x_k, r]; maximise r  ->  minimise -r
-    c = np.zeros(k + 1)
-    c[-1] = -1.0
-    A_ub = np.column_stack([A, norms])
-    bounds = [(None, None)] * k + [(0, None)]
-    res = linprog(c, A_ub=A_ub, b_ub=b, bounds=bounds, method="highs")
-
-    if not res.success:
+    centre, radius, _tight = geo.ch_centre_from_constraints(constraints)
+    if centre is None:
         return {"centre": None, "radius": float("nan"), "feasible": False}
-    centre = res.x[:-1]
-    radius = float(res.x[-1])
+    radius = float(radius)
     return {
         "centre": pd.Series(centre, index=list(keys)) if keys is not None else centre,
         "radius": radius,
         "feasible": radius > 0,
     }
+
+
+def intersect_hulls(hulls: list) -> np.ndarray | None:
+    """Vertices of the (approximate) geometric intersection of several hulls.
+
+    Thin wrapper around the vendored
+    :func:`scripts.vendor.near_opt_geometry.intersection` (qhull
+    ``HalfspaceIntersection``-based, exact up to qhull's own approximation
+    tolerance — see that function's docstring). Returns ``None`` if the
+    intersection is empty. Each entry in ``hulls`` is a ``ConvexHull`` or an
+    ``(N, k)`` point array, same as :func:`chebyshev_centre`.
+
+    Unlike :func:`chebyshev_centre` (which only needs the *interior point*
+    of the intersection), this recovers the intersection's full boundary —
+    useful for plotting the actual intersected near-optimal region rather
+    than only its centre.
+    """
+    from scipy.spatial import ConvexHull
+
+    from scripts.vendor import near_opt_geometry as geo
+
+    hulls = [h if isinstance(h, ConvexHull) else ConvexHull(np.asarray(h)) for h in hulls]
+    return geo.intersection(hulls)
 
 
 def realise_design(

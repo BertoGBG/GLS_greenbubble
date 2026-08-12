@@ -1,0 +1,9 @@
+Files in this directory are vendored from
+https://github.com/aleks-g/intersecting-near-opt-spaces (Koen van
+Greevenbroek & Aleksander Grochowicz), used under the terms of the
+GNU General Public License v3.0 or later.
+
+This directory (and only this directory) is GPL-3.0-or-later licensed,
+distinct from the rest of GreenBubble, which is MIT licensed. See the
+full licence text at https://www.gnu.org/licenses/gpl-3.0.html and the
+per-file SPDX headers for provenance of each vendored file.
