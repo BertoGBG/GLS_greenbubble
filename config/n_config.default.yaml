@@ -124,13 +124,31 @@ El boiler:
   <<: *base
   expansion : true
 
-electrolysis: # (bus0 unit: MW el )
+# -- Electrolysis
+AEC:
   <<: *base
-  cost factor: 1      # according to IEA (last pypsa-eur inputs)
+  cost factor: 1 
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.15 # 0.15
+  committable : false
+
+PEMEC:
+  <<: *base
+  cost factor: 1 
+  ramp limit up: 0.9 # % of total power capacity per hour
+  ramp limit down: 0.9 # % of total power capacity per hour
+  min load: 0.15 # 0.15
+  committable : false
+
+SOEC:
+  <<: *base
+  cost factor: 1 
+  ramp limit up: 0.9 # % of total power capacity per hour
+  ramp limit down: 0.9 # % of total power capacity per hour
+  min load: 0.15 # 0.15
+  committable : false
+# --
 
 DH heat exchanger:
   <<: *base

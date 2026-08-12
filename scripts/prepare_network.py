@@ -134,7 +134,7 @@ _NAME_TO_TECH: dict[str, str] = {
     "EXI_El3_to_DK1":   "electricity grid connection",
 }
 
-
+_ELECTROLYSIS_TECHS = {"AEC", "PEMEC", "SOEC"}
 def _build_comp_tech_map(network, tech_costs_index: set) -> dict[str, str]:
     """Build component-name → tech_costs-index mapping after the network is assembled.
 
@@ -163,6 +163,14 @@ def _build_comp_tech_map(network, tech_costs_index: set) -> dict[str, str]:
                 mapping[name] = _NAME_TO_TECH[name]
             elif base in tech_costs_index:
                 mapping[name] = base
+            # addition: check if small or large electrolyzer costs
+            # cleaner way maybe propagating small/large flag into link name and then reading it out here
+            elif base in _ELECTROLYSIS_TECHS: 
+                # size-suffixed variant — try large, then small
+                for suffix in (" large", " small"):
+                    if f"{base}{suffix}" in tech_costs_index:
+                        mapping[name] = f"{base}{suffix}"
+                        break
             elif carrier in _CARRIER_TO_TECH:
                 mapping[name] = _CARRIER_TO_TECH[carrier]
             elif carrier in tech_costs_index:
@@ -2137,7 +2145,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 e_product = float((demand_ts * weights).sum())
                 price_ts  = p_bioCH4
 
-            if any(k in plant.lower() for k in ["electrolysis"]):
+            if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
                 e_product = float((demand_ts * weights).sum())
@@ -2153,7 +2161,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
             if any(k in plant.lower() for k in ["biogas", "methanation"]):
                 bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
                 demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
-            if any(k in plant.lower() for k in ["electrolysis"]):
+            if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
             if any(k in plant.lower() for k in ["Methanol", "methanolisation", "meoh"]):
@@ -2270,8 +2278,8 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
     # ==============================================================
     # 2. HYDROGEN
     # ==============================================================
-    elif any(k in plant.lower() for k in ["electrolysis"]):
-        n = add_targets_per_product(n, driver = driver, product = 'H2', carrier = 'H2', unit = 'MW', bus_list = bus_list, demand_ts = demand_ts, price_ts = price_ts, e_product = e_product)
+    elif any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
+        n = add_targets_per_product(n, driver=driver, product='H2', carrier='H2', unit='MW', bus_list=bus_list, demand_ts=demand_ts, price_ts=price_ts, e_product=e_product)
 
     # ==============================================================
     # 3. METHANOL
@@ -2784,15 +2792,12 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         return n, local_EL_bus, link_rfnbos
 
     # ---------- Choose CAPEX depending on H2 demand
-    if H2_input_demand.iloc[:, 0].sum() > 0:
-        electrolysis_cost = tech_costs.at['electrolysis', 'fixed'] * n_config.at['electrolysis', 'cost factor']
-        electrolysis_lifetime = tech_costs.at['electrolysis', 'lifetime']
-    else:
-        electrolysis_cost = tech_costs.at['electrolysis small', 'fixed'] * n_config.at['electrolysis', 'cost factor']
-        electrolysis_lifetime = tech_costs.at['electrolysis small', 'lifetime']
+    # produces suffix that gets added to lookup name in tech_costs csv
+    def get_electrolysis_size_suffix():
+        """Return ' large' or ' small' depending on total H2 input demand."""
+        return " large" if H2_input_demand.iloc[:, 0].sum() > 0 else " small"
 
-    # ---------- Electrolyzer component builder
-    def add_H2_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier):
+    def add_AEC_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier, tech_name):
 
         n = add_requirements_buses(n, {
             'bus_list': ['El3'],
@@ -2805,7 +2810,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=carrier, n_flags=n_flags,
                                                        tech_costs=tech_costs, n_config=n_config)
 
-        name = f"{prefix}electrolysis"
+        name = f"{prefix}AEC"
 
         n.add("Link",
               name=name,
@@ -2815,42 +2820,123 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               bus2=new_heat_buses[0],  # Heat LT
               efficiency=GL_eff.at['H2', 'GreenHyScale'],
               efficiency2=GL_eff.at['Heat LT', 'GreenHyScale'],
-              lifetime = electrolysis_lifetime,
+              lifetime=tech_costs.at[tech_name, 'lifetime'],
               capital_cost=capital_cost,
               p_nom_extendable=expansion,
               p_nom=capacity,
-              p_nom_max=n_config.at['electrolysis', 'max capacity'],
-              committable=(n_config.at['electrolysis', 'committable'] == True) and not expansion,
-              p_min_pu=n_config.at['electrolysis', 'min load'],
-              ramp_limit_up=n_config.at['electrolysis', 'ramp limit up'],
-              ramp_limit_down=n_config.at['electrolysis', 'ramp limit down']
+              p_nom_max=n_config.at['AEC', 'max capacity'],
+              committable=(n_config.at['AEC', 'committable'] == True) and not expansion,
+              p_min_pu=n_config.at['AEC', 'min load'],
+              ramp_limit_up=n_config.at['AEC', 'ramp limit up'],
+              ramp_limit_down=n_config.at['AEC', 'ramp limit down']
+              )
+
+        return n
+
+    def add_PEMEC_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier, tech_name):
+
+        n = add_requirements_buses(n, {
+            'bus_list': ['El3'],
+            'carrier_list': ['El'],
+            'unit_list': ['MW'],
+        }, symbiosis_n)
+
+        # ---------- Add local heat connections
+        heat_bus_dict = {'Heat LT': 1}
+        n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=carrier, n_flags=n_flags,
+                                                       tech_costs=tech_costs, n_config=n_config)
+
+        name = f"{prefix}PEMEC"
+
+        n.add("Link",
+              name=name,
+              bus0=local_EL_bus,
+              bus1=product_bus,
+              carrier = carrier,
+              bus2=new_heat_buses[0],  # Heat LT
+              efficiency=tech_costs.at[tech_name, 'efficiency'],
+              efficiency2=tech_costs.at[tech_name, 'efficiency-heat'],
+              lifetime=tech_costs.at[tech_name, 'lifetime'],
+              capital_cost=capital_cost,
+              p_nom_extendable=expansion,
+              p_nom=capacity,
+              p_nom_max=n_config.at['PEMEC', 'max capacity'],
+              committable=(n_config.at['PEMEC', 'committable'] == True) and not expansion,
+              p_min_pu=n_config.at['PEMEC', 'min load'],
+              ramp_limit_up=n_config.at['PEMEC', 'ramp limit up'],
+              ramp_limit_down=n_config.at['PEMEC', 'ramp limit down']
+              )
+
+        return n
+
+    def add_SOEC_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier, tech_name):
+
+        n = add_requirements_buses(n, {
+            'bus_list': ['El3'],
+            'carrier_list': ['El'],
+            'unit_list': ['MW'],
+        }, symbiosis_n)
+
+        # ---------- Add local heat connections
+        heat_bus_dict = {'Heat MT': -1} # process needs heat input
+        n, new_heat_buses = add_local_heat_connections(n, heat_bus_dict, plant_name=carrier, n_flags=n_flags,
+                                                       tech_costs=tech_costs, n_config=n_config)
+
+        name = f"{prefix}SOEC"
+
+        n.add("Link",
+              name=name,
+              bus0=local_EL_bus,
+              bus1=product_bus,
+              carrier = carrier,
+              bus2=new_heat_buses[0],  # Heat MT input
+              efficiency=tech_costs.at[tech_name, 'efficiency'],
+              efficiency2= - tech_costs.at[tech_name, 'efficiency-heat'],
+              lifetime=tech_costs.at[tech_name, 'lifetime'],
+              capital_cost=capital_cost,
+              p_nom_extendable=expansion,
+              p_nom=capacity,
+              p_nom_max=n_config.at['SOEC', 'max capacity'],
+              committable=(n_config.at['SOEC', 'committable'] == True) and not expansion,
+              p_min_pu=n_config.at['SOEC', 'min load'],
+              ramp_limit_up=n_config.at['SOEC', 'ramp limit up'],
+              ramp_limit_down=n_config.at['SOEC', 'ramp limit down']
               )
 
         return n
 
     # ---------- Determine what to add
-    techs = ['electrolysis']
+    techs = ['AEC', 'PEMEC', 'SOEC']
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
-    for t in techs:
+    if cap_to_add or exp_to_add:
+        n, local_EL_bus, link_rfnbos = electrolysis_aux(n, plant='electrolysis')
+
+    # produce suffix for tech_costs name lookup i.e. small/large
+    size_suffix = get_electrolysis_size_suffix()
+
+    for t, add_fn in [
+        ("AEC", add_AEC_cap_exp),
+        ("PEMEC", add_PEMEC_cap_exp),
+        ("SOEC", add_SOEC_cap_exp),
+    ]:
         if t in cap_to_add or t in exp_to_add:
             ensure_carrier(n, t)
+            n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                        n_options=n_options, targets_dict=targets_dict)
+        tech_name = f"{t}{size_suffix}"  # produces lookup name: "AEC large", "SOEC small"...
 
-            # create connections for plant
-            n, local_EL_bus, link_rfnbos = electrolysis_aux(n, plant=t)
+        if t in cap_to_add:
+            cap = n_config.at[t, 'initial capacity']
+            cost = tech_costs.at[tech_name, 'fixed'] * n_config.at[t, 'cost factor']
+            _exi_cc = _exi_capital_cost(t, t, tech_costs, pre_annualized_cc=cost / max(n_config.at[t, 'cost factor'], 1e-9))
+            n = add_fn(n, product_bus, 'EXI_', _exi_cc, cap, False,
+                       carrier=t, tech_name=tech_name)
 
-            # add targets
-            n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs, n_options=n_options,
-                                         targets_dict=targets_dict)
-            # add plants
-            if t in cap_to_add:
-                cap = n_config.at[t, 'initial capacity']
-                _cf = n_config.at[t, 'cost factor']
-                _exi_cc = _exi_capital_cost('electrolysis', t, tech_costs,
-                                             pre_annualized_cc=electrolysis_cost / max(_cf, 1e-9))
-                n = add_H2_cap_exp(n, product_bus, 'EXI_', _exi_cc, cap, False, carrier=t)
-            if t in exp_to_add:
-                n = add_H2_cap_exp(n, product_bus, '', electrolysis_cost, 0, True, carrier = t)
+        if t in exp_to_add:
+            cost = tech_costs.at[tech_name, 'fixed'] * n_config.at[t, 'cost factor']
+            n = add_fn(n, product_bus, '', cost, 0, True,
+                       carrier=t, tech_name=tech_name)
 
     new_components = log_new_components(n, n0_dict)
     return n, new_components
