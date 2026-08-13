@@ -23,7 +23,9 @@ carrier_colors:
   rfnbos_grid_import:   "#ce93d8"   # light purple
 
   # Electrolysis / H2
-  electrolysis:         "#2196f3"   # blue
+  AEC:                  "#2196f3"   # blue
+  PEMEC:                "#1976d2"   # medium-dark blue
+  SOEC:                 "#0d47a1"   # dark blue
   H2 HP storage:        "#90caf9"   # light blue
   H2 compressor:        "#64b5f6"   # medium blue
   H2 pipe:              "#42a5f5"   # blue
@@ -82,10 +84,20 @@ plotting:
       field: p
       selector: solar
 
-    - label: Electrolyzer
+    - label: AEC
       kind: Link
       field: p0
-      selector: electrolysis
+      selector: AEC
+
+    - label: PEMEC
+      kind: Link
+      field: p0
+      selector: PEMEC
+
+    - label: SOEC
+      kind: Link
+      field: p0
+      selector: SOEC
 
     - label: Biogas
       kind: Link
