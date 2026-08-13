@@ -320,3 +320,191 @@ order — is computed the same way but without amortised CAPEX
    ``clustering.temporal.resolution`` only does simple uniform downsampling
    (all weighting columns equal), but would need revisiting if a
    representative-period clustering method were ever adopted.
+
+---
+
+.. _economics-payback:
+
+Payback time by agent
+----------------------
+
+Alongside per-technology LCOP, GreenBubble reports **payback time** and
+**capital cost coverage** aggregated by *agent* — the same ``n_flags``-based
+groups (``biogas``, ``electrolysis``, ``renewables``, ``storage``, ...) used
+by ``TSC_by_agent``. Grouping by agent rather than by individual component
+answers a different question than LCOP: not "what does this one link cost
+to run", but "does everything this agent owns — digester, upgrading,
+storage, engine, shared infrastructure — collectively earn back what was
+put into it." Computed by ``compute_payback_by_agent`` in
+``scripts/plots.py``, gated to price mode (``targets.driver == 'price'``)
+since demand mode's bus duals already reveal the marginal technology's cost
+directly (see :ref:`economics-lcop`'s demand-vs-price-mode note).
+
+**Cash flow.** For each component, cash flow is
+``n.statistics.revenue()`` (net value at every port, valued at each bus's
+own KKT shadow price — the same duality documented in
+:ref:`economics-lcop`, here summed over *all* ports rather than just the
+main product bus) minus ``n.statistics.opex()`` (explicit ``marginal_cost``
+× dispatch), summed by agent. FOM is subtracted separately (it is a real
+recurring cost, not a bookkeeping construct like the annualised capital
+charge):
+
+.. math::
+
+   \text{cash\_flow}_a = \sum_{i \in a} \Big[\, \text{revenue}(i) -
+       \text{opex}(i) \,\Big] - \text{FOM}_a
+
+**Why per-component shadow prices, not a shared link's own opex.** A
+shared external sale link (e.g. the single bioCH4 collection→delivery
+link) is built **once**, by whichever producing agent's constructor runs
+first in ``prepare_network.py``. If a second agent later also feeds the
+same collection bus (catalytic methanation alongside biogas upgrading,
+both selling bioCH4), naively crediting "whichever component touches the
+external market" would attribute *all* of that revenue to the first
+agent — silently wrong the moment more than one agent produces the same
+carrier. Per-component shadow-price revenue avoids this: each producer
+earns revenue proportional to its **own** throughput at the bus's own
+price, and the shared delivery link itself nets to ~zero (a pure
+pass-through) — confirmed empirically to floating-point precision on a
+real solved network. The same reasoning covers any future carrier
+producible by more than one agent, with no code changes needed.
+
+**Stochastic networks.** ``n.statistics.*(groupby=False)`` raises
+``TypeError`` unconditionally on any scenario-enabled network in the
+pinned PyPSA 1.0.7 release (an internal ``rename_axis`` call in
+``pypsa/statistics/abstract.py`` assumes a flat, non-MultiIndex result).
+The workaround is ``n.get_scenario(name)``, PyPSA's own accessor for a
+genuine flat per-scenario ``Network`` (not a view or mutation of the
+original) — the same call works normally on each one. Cash flow is then
+the probability-weighted **expected** value across scenarios, mirroring
+how ``TSC_by_agent`` reports an expected total:
+
+.. math::
+
+   \text{cash\_flow}_a = \sum_s p_s \sum_{i \in a}
+       \Big[\, \text{revenue}_s(i) - \text{opex}_s(i) \,\Big] - \text{FOM}_a
+
+Cross-checked against a real solved stochastic network: the weighted
+revenue − opex total matches ``n.objective`` exactly, net of capex.
+
+**Investment.** Unlike LCOP's ``CAPEX`` (the *annualised* charge from
+``n.statistics.capex()``), payback needs the *raw upfront* investment —
+how much money would need to be recovered, not how much is charged per
+year. This is read directly from the technology-data catalogue rather
+than reverse-engineered from ``capital_cost`` (naively dividing
+``capital_cost`` by the annuity factor would double-subtract FOM, since
+``capital_cost = I × [annuity + FOM/100]`` bakes both together — see
+:ref:`economics-annuity`):
+
+.. math::
+
+   \text{investment}_a = \sum_{i \in a} I(\text{tech}_i) \times \text{capacity}_i
+       \times \text{scale}_i
+
+where :math:`\text{scale}_i = \text{rif}_i` (``remaining_investment_fraction``)
+for an ``EXI_``-prefixed (brownfield) component, else :math:`1`. This
+mirrors — but is a deliberate **simplification of** — the LP's own
+``EXI_capital_cost`` formula (:ref:`economics-brownfield`): the network
+charges ``rif × I(construction_year) × annuity(...)``, interpolating the
+investment cost at the asset's actual *construction year*; the payback
+calculation instead scales the *current* ``year_investment`` catalogue
+cost by the same ``rif``, without the construction-year lookup. The two
+agree when ``construction_year`` is close to ``year_investment`` and
+diverge (usually only slightly, given technology-data's real per-year
+cost changes) for older assets. Without this scaling at all, a
+partially-or-fully depreciated brownfield agent's payback would compare
+its cash flow against the *full as-new* cost of an asset the model only
+ever charges (and needs to recover) a residual fraction of — inflating
+its apparent payback time arbitrarily, potentially past its own technical
+lifetime even though the model is, correctly, recovering only what it
+actually still owes.
+
+**Capital cost coverage and the "priced at own margin" condition.** A
+continuously-sized (extendable) technology is built by the LP right up to
+the point where its cash flow equals its own annualised capital charge —
+the optimizer's first-order condition for a technology at an interior
+optimum, not a failure of the technology or the model. Define the
+*effective amortization period* :math:`L^{\text{eff}}_i` as
+``amortization_period`` if set, else the technology's own technical
+lifetime (the same substitution ``helpers.read_costs()`` makes for
+``capital_cost`` itself — see :ref:`economics-annuity`), and the **pure**
+capital-recovery annuity (deliberately excluding FOM, since ``cash_flow``
+above is already net of FOM — comparing it against a FOM-inclusive target
+would double-count FOM):
+
+.. math::
+
+   \text{capital\_cost\_coverage}_a = \frac{\text{cash\_flow}_a}
+       {\displaystyle\sum_{i \in a} \text{investment}_i \times
+       \text{annuity}(r,\, L^{\text{eff}}_i)}
+
+- **> 100 %** — the agent earns a real surplus above its own capital cost.
+- **≈ 100 %** (within a tolerance band — 3 % by default,
+  ``MARGIN_TOLERANCE`` in ``scripts/plots.py``) — priced at its own
+  margin: the *expected*, healthy outcome for an optimally-sized
+  extendable technology, not a red flag.
+- **0–100 %, outside tolerance** — a genuine shortfall: cash flow covers
+  opex/FOM but not the full capital charge.
+- **< 0 %** — net loss: doesn't even cover opex/FOM.
+
+**Why discounted payback needs a tolerance band, not just a coverage
+number.** Substituting :math:`\text{cash\_flow}_a = \text{investment}_a
+\times \text{annuity}(r, L^{\text{eff}})` (i.e. coverage exactly 100 %)
+into the discounted-payback formula:
+
+.. math::
+
+   N = \frac{-\ln\!\big(1 - r \cdot \text{investment}/\text{cash\_flow}\big)}
+            {\ln(1+r)}
+
+gives :math:`r \cdot I / CF = r / \text{annuity}(r, L^{\text{eff}}) = 1 -
+(1+r)^{-L^{\text{eff}}}`, and therefore :math:`N = L^{\text{eff}}`
+**exactly** — a technology priced at its own margin pays back, on a
+discounted basis, in precisely its own effective amortization period, as
+it should. But the formula is extremely sensitive right at that point: a
+coverage shortfall of even a fraction of a percent (well within
+dispatch/rounding noise) sends :math:`N` rocketing toward infinity, even
+though nothing economically meaningful changed — the discounted-payback
+*metric* has a knife-edge exactly where the *economics* are most benign.
+When coverage falls within ``MARGIN_TOLERANCE`` of 100 %, GreenBubble
+reports discounted payback as exactly :math:`L^{\text{eff}}_a` (flagged
+``priced at own margin = True`` in the CSV, marked with ``*`` in the
+plot) instead of this unstable raw value.
+
+**Simple and discounted payback**, per agent and for ``TOTAL``
+(``_payback_years`` in ``scripts/plots.py``):
+
+.. math::
+
+   \text{simple payback} = \frac{\text{investment}}{\text{cash\_flow}}
+   \qquad\qquad
+   \text{discounted payback} =
+       \frac{-\ln\!\big(1 - r \cdot \text{investment}/\text{cash\_flow}\big)}
+            {\ln(1+r)}
+
+``nan`` if there is no investment to recover; ``inf`` if the cash flow
+never recovers it (``cash_flow ≤ 0``, or — for the discounted case — the
+perpetuity value ``cash_flow / r`` still falls short of the investment,
+i.e. coverage would stay below 100 % even given infinite time).
+
+**Worked examples** (price mode, real runs):
+
+- ``storage`` in a stochastic run: coverage 98.9 % — just inside the ±3 %
+  tolerance band, but the *raw* discounted-payback formula already gives
+  ``inf`` at that shortfall (:math:`r \cdot I/CF` just crosses 1). Snapped
+  instead to exactly its own 34.9-year investment-weighted lifetime
+  (``priced at own margin = True``) — a battery/CO2-liquefaction-dominated
+  agent sized right at its own economic margin, correctly read as healthy
+  rather than as "never pays back."
+- Tutorial 2 (:ref:`tutorial-2-brownfield`, ``amortization_period: 10``):
+  ``biogas`` — mostly sunk brownfield capacity (30 % residual) — shows
+  1107 % coverage and a 0.7-year payback: the small residual annuity is
+  trivially cleared. ``electrolysis`` — pure greenfield, fully
+  expandable — shows only 26 % coverage and an infinite discounted
+  payback, *not* because it is mis-sized, but because its optimal size is
+  driven by the value it creates for **other** agents (its hydrogen makes
+  additional biomethanation profitable) rather than by its own standalone
+  economics — a genuine cross-subsidy the LP is happy to pay for at the
+  system level, invisible if you only look at electrolysis's own books.
+  See :ref:`guide-economic-analysis` for how to read this pattern in
+  practice, and the full figure in :ref:`tutorial-2-brownfield`.

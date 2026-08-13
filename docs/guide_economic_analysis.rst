@@ -11,8 +11,9 @@ GreenBubble's post-processing pipeline (``scripts/plots.py``).  It covers:
 - the Levelised Cost of Production (LCOP) formula and its components,
 - the KKT-based LCOP verification (zero-profit condition),
 - the short-run marginal cost (SRMC) and merit order,
-- the full KKT revenue and annual profit, and
-- how to interpret LCOP versus the shadow price at the collection bus.
+- the full KKT revenue and annual profit,
+- how to interpret LCOP versus the shadow price at the collection bus, and
+- payback time and capital cost coverage aggregated by agent.
 
 ---
 
@@ -349,3 +350,109 @@ A practical diagnostic workflow:
    (``in_merit = True``).  Hours with SRMC near the shadow price reveal the
    marginal technology.  Large SRMC variance indicates strong sensitivity to
    electricity or H2 price fluctuations.
+
+---
+
+Payback and capital cost coverage by agent
+--------------------------------------------
+
+While LCOP asks "what does this one technology cost to run", payback asks a
+plant-level question: "does everything a given agent owns — digester,
+upgrading, storage, shared infrastructure — collectively earn back what was
+put into it, and how fast." See :ref:`economics-payback` for the full
+theory (formulas, the KKT cash-flow computation, the brownfield investment
+scaling, and the "priced at own margin" derivation). This section covers
+how to read the output.
+
+``csv/payback_by_agent.csv``
+   One row per agent (the same ``n_flags``-based groups as
+   ``TSC_by_agent.csv``), plus a ``TOTAL`` row. Only generated in price mode.
+
+   .. list-table::
+      :header-rows: 1
+      :widths: 38 62
+
+      * - Column
+        - Description
+      * - ``investment (EUR)``
+        - Raw upfront investment (not annualised), summed across the
+          agent's components; brownfield (``EXI_``) components scaled by
+          their own ``remaining_investment_fraction``
+      * - ``annual FOM (EUR/y)``
+        - Fixed O&M, summed across the agent's components
+      * - ``annual revenue (EUR/y)`` / ``annual running cost (EUR/y)``
+        - ``n.statistics.revenue()`` / ``.opex()`` summed by agent (KKT
+          shadow-price value net across every port, and explicit
+          ``marginal_cost`` × dispatch, respectively)
+      * - ``annual cash flow (EUR/y)``
+        - ``revenue − running cost − FOM``
+      * - ``capital cost coverage (%)``
+        - ``cash flow ÷`` the agent's own pure capital-recovery annuity
+          (no FOM). 100 % = exactly recovering the annualised capital
+          charge; see :ref:`economics-payback` for the four-way reading
+          (surplus / priced-at-margin / shortfall / loss)
+      * - ``simple payback (years)`` / ``discounted payback (years)``
+        - ``investment ÷ cash flow``, and the annuity-inverted discounted
+          equivalent. ``nan`` = no investment; ``inf`` = never recovers
+          (or, for discounted, recovers only past a coverage shortfall
+          outside the margin tolerance)
+      * - ``priced at own margin``
+        - ``True`` when coverage is within ``MARGIN_TOLERANCE`` (default
+          3 %) of 100 % — discounted payback is then reported as exactly
+          the effective amortization period, not the numerically unstable
+          raw value
+      * - ``technical lifetime, investment-weighted (years)``
+        - Investment-weighted average of each component's own **true**
+          catalogue lifetime (independent of ``amortization_period``) —
+          "does this pay back within its physical life"
+      * - ``investment coverage (%)`` (``TOTAL`` row only)
+        - Share of total annualised capex the investment column could
+          actually resolve (composite technologies with no matching
+          catalogue row are logged and excluded — see the console output
+          for the list)
+
+``plots/payback_by_agent.png``
+   Two-panel figure, one shared legend:
+
+   - **Left — discounted payback (years)**: one bar per agent, black tick
+     marking each agent's own investment-weighted technical lifetime. Bars
+     that never pay back (loss, or a shortfall beyond the margin tolerance)
+     are capped and hatched rather than dropped — silently omitting them
+     made a chart with several loss-making agents look like most agents
+     had no data at all.
+   - **Right — capital cost coverage (%)**: the same agents, colour-coded
+     surplus (green) / priced-at-own-margin (amber) / shortfall (red) /
+     loss (grey), with a 100 % reference line. Reads calmly exactly where
+     the left panel is least stable (right around 100 % coverage).
+
+   .. figure:: /_static/tutorials/tut2_payback_by_agent.png
+      :width: 95%
+
+      Tutorial 2 (brownfield, ``amortization_period: 10``). Brownfield-heavy
+      agents (``biogas``, ``symbiosis``, ``meoh``) clear their small residual
+      annuity easily — coverage well above 100 %, payback under two years.
+      ``electrolysis`` sits at only 26 % coverage with an infinite payback:
+      not mis-sized, but cross-subsidising biomethanation's extra profit
+      with hydrogen it doesn't itself get paid full value for — see the
+      reading below.
+
+**How to read a low-coverage agent that isn't a brownfield asset.** If an
+agent shows low coverage despite being freely, continuously sized by the
+optimiser (no forced brownfield floor, no hard capacity minimum), check
+whether it's a genuine underperformer or a **cross-subsidy**: does its
+product feed another agent that shows unusually *high* coverage? If so,
+the low-coverage agent is paying for value that shows up on someone else's
+books — a legitimate system-level trade-off, not a modelling error. The
+``electrolysis`` case in Tutorial 2 above is exactly this: its hydrogen
+makes additional biomethanation capacity worthwhile, so part of its true
+value is invisible if you only look at its own payback. Confirm the
+suspected link by checking the product-flow topology (:ref:`guide-outputs`)
+between the two agents.
+
+**How to read a "priced at own margin" agent.** Coverage ≈ 100 % is the
+*expected*, healthy signature of a continuously-sized (extendable)
+technology at its optimum — the LP builds exactly until marginal revenue
+equals marginal annualised cost. It is not a red flag, and the payback
+plot marks it distinctly (amber, ``*``, pinned to the effective
+amortization period) precisely so it doesn't read as "broken" the way an
+unmarked near-infinite discounted payback would.

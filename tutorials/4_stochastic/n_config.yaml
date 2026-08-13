@@ -38,7 +38,9 @@ options:
     price: 30
 
 # --- REQUIRED for stochastic: disable ramp limits (null, not a number) ---
-electrolysis:          {ramp limit up: null, ramp limit down: null}
+AEC:                   {ramp limit up: null, ramp limit down: null}
+PEMEC:                 {ramp limit up: null, ramp limit down: null}
+SOEC:                  {ramp limit up: null, ramp limit down: null}
 methanolisation:       {ramp limit up: null, ramp limit down: null}
 biomethanation:        {ramp limit up: null, ramp limit down: null}
 biomethanation CO2:    {ramp limit up: null, ramp limit down: null}

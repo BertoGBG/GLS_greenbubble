@@ -16,6 +16,7 @@ scripts.plots
       component_revenue_split_long_per_scenario
       compute_lcop_by_technology
       compute_lcop_kkt_by_technology
+      compute_payback_by_agent
       compute_srmc_by_technology
       export_shadow_prices_mean_csv
       extract_deterministic_from_stochastic

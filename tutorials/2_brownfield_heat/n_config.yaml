@@ -40,7 +40,7 @@ solar:                        # 30 MW existing solar PV
   construction_year: 2020
   remaining_investment_fraction: 0.1
 
-electrolysis: # (bus0 unit: MW el ) # no cost allocated to the electrolysis plant
+AEC: # (bus0 unit: MW el ) # no cost allocated to the electrolysis plant
   initial capacity: 100
   expansion: false
 
