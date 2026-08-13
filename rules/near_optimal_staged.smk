@@ -65,8 +65,12 @@ rule nos_year_optimum:
     """Per-year cost-optimal network for the robustness tier (wildcard: {year}).
 
     Mirrors the reference implementation's `compute_optimum.py`, one instance
-    per `mga.robustness.years` entry instead of per weather year.
+    per `mga.robustness.years` entry instead of per weather year. Builds its
+    own network from scratch (like explore_near_optimal's robustness path
+    does), so its only real input is the cost data.
     """
+    input:
+        costs_eu = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
     output:
         network = f"{NOS_STAGED_DIR}/years/{{year}}_optimum.nc",
         obj     = f"{NOS_STAGED_DIR}/years/{{year}}_obj.txt",
@@ -132,9 +136,9 @@ rule nos_robust_exact:
     the current-config (NOS_NET_IN) network.
 
     Note: unlike the reference implementation, this realises against a single
-    reference network, not a simultaneous multi-year dispatch check -- the
-    'conservative' / 'mean' / 'naive' heuristic allocation strategies and a
-    multi-year feasibility check are not yet ported (see the guide's
+    reference network -- the simultaneous multi-year dispatch check is
+    nos_robust_validate below. Their 'conservative' / 'mean' / 'naive'
+    heuristic allocation strategies are not ported (see the guide's
     near-optimal_dev3 notes).
     """
     input:
@@ -147,3 +151,27 @@ rule nos_robust_exact:
         "logs/nos_staged_robust_exact.log",
     script:
         "../scripts/snakemake_nos_robust_exact.py"
+
+
+rule nos_robust_validate:
+    """Simultaneous multi-year feasibility check (Grochowicz et al.'s
+    validate_robust / solve_operations.py + summarise_feasibility.py):
+    fixes nos_robust_exact's realised design non-extendable and re-solves
+    pure operations against EACH robustness year's own cost-optimal network
+    (nos_year_optimum, i.e. the same real weather/price/demand data the
+    per-year hulls were built from), with a load-shedding safety valve at
+    every Load bus so a shortfall is a graded curtailment number rather than
+    an opaque solver "infeasible". See scripts/near_optimal.py's
+    validate_design_across_years and scripts/vendor/near_opt_feasibility.py.
+    """
+    input:
+        realised = f"{NOS_STAGED_DIR}/robust_exact.nc",
+        network  = NOS_NET_IN,
+        years    = expand(f"{NOS_STAGED_DIR}/years/{{year}}_optimum.nc", year=NOS_YEARS),
+        costs_eu = f"data/technology-data/outputs/costs_{YEAR_INVESTMENT}.csv",
+    output:
+        summary = f"{NOS_STAGED_DIR}/robust_validation.csv",
+    log:
+        "logs/nos_staged_robust_validate.log",
+    script:
+        "../scripts/snakemake_nos_robust_validate.py"

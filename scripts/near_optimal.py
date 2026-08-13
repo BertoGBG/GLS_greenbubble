@@ -219,7 +219,25 @@ def available_dimensions(
         cc = df["capital_cost"].fillna(0.0) if "capital_cost" in df.columns else 0.0
         mask = df[ext_col].astype(bool) & (cc > 0)
         for name, row in df[mask].iterrows():
-            key = comp_tech_map.get(name) or (str(row.get("carrier", "")) or None)
+            tech_key = comp_tech_map.get(name)
+            carrier_key = str(row.get("carrier", "")) or None
+            if core is not None:
+                # Prefer whichever grouping key is an actual n_config technology.
+                # comp_tech_map is resolved for tech_costs lookups (e.g. the
+                # size-suffixed "AEC large"/"AEC small" electrolysis rows,
+                # scripts.prepare_network._build_comp_tech_map), which is right
+                # for a cost report but not necessarily an n_config key; carrier
+                # is often the bare technology name instead (e.g. "AEC", set
+                # directly as the Link's carrier in add_electrolysis) and should
+                # win when it's the one that actually matches n_config.
+                if tech_key in core:
+                    key = tech_key
+                elif carrier_key in core:
+                    key = carrier_key
+                else:
+                    key = tech_key or carrier_key
+            else:
+                key = tech_key or carrier_key
             if not key:
                 continue
             if core is not None and key not in core:
@@ -839,6 +857,154 @@ def realise_design(
     opts = dict(solver_options or {})
     status, condition = n.optimize.solve_model(solver_name=solver_name, **opts)
     return status, condition
+
+
+# --------------------------------------------------------------------------- #
+# Tier 3 (continued) — simultaneous multi-year feasibility check
+#
+# Grochowicz et al. (2023)'s own validation step (their `validate_robust` /
+# `solve_operations.py` + `summarise_feasibility.py`, see
+# scripts/vendor/near_opt_feasibility.py for the ported primitives): rather
+# than trusting that a Chebyshev-centre design realised against one reference
+# network (:func:`realise_design`) is also feasible in every other year -- the
+# hull it was checked against is only a *sampled approximation* of the true
+# near-optimal region -- fix that design's capacities and re-solve pure
+# operations (no more capacity expansion) against each year's own network,
+# with a load-shedding safety valve so a shortfall shows up as a graded
+# curtailment number instead of an opaque "infeasible".
+# --------------------------------------------------------------------------- #
+_NOMINAL_ATTR = {
+    "generators": "p_nom",
+    "links": "p_nom",
+    "stores": "e_nom",
+    "storage_units": "p_nom",
+}
+
+
+def apply_realised_capacities(n_target, n_source) -> None:
+    """Copy a realised design's solved capacities from ``n_source`` onto ``n_target``.
+
+    ``n_source`` is the network :func:`realise_design` was run against -- its
+    ``_opt`` columns hold the per-component allocation consistent with the
+    Chebyshev centre (the aggregate-dimension-to-individual-component mapping
+    problem, solved once). ``n_target`` is a *different* year's network sharing
+    the same component index (same model structure, different weather/price/
+    demand time series); this transplants the allocation rather than
+    re-deriving it. Modifies ``n_target`` in place.
+
+    GreenBubble-specific: the reference implementation's ``set_nom_to_opt``
+    (not vendored -- see ``near_opt_feasibility.py``'s docstring) copies
+    ``_opt`` onto nominal *within one network*, since their multi-year
+    robustness check runs on one combined multi-year network. GreenBubble
+    instead has separate per-year network files, so the copy has to cross
+    networks -- this function exists because of that architecture difference,
+    not because the underlying idea differs.
+    """
+    for comp_attr, nom in _NOMINAL_ATTR.items():
+        src_df = getattr(n_source, comp_attr)
+        tgt_df = getattr(n_target, comp_attr)
+        if src_df.empty or tgt_df.empty:
+            continue
+        opt_col = f"{nom}_opt"
+        common = src_df.index.intersection(tgt_df.index)
+        if len(common) == 0:
+            continue
+        vals = src_df.loc[common, opt_col] if opt_col in src_df.columns else src_df.loc[common, nom]
+        tgt_df.loc[common, nom] = vals.astype(float).fillna(0.0)
+        # Dirty fix mirroring solve_operations.py: replace any remaining NaN
+        # nominal capacities (components untouched by the copy above) with 0.
+        tgt_df[nom] = tgt_df[nom].fillna(0.0)
+
+
+def add_load_shedding(n, marginal_cost: float = 7.3e3) -> None:
+    """Add a slack generator at every bus carrying a Load, so a design that
+    can't quite meet demand shows up as (expensive) load shedding instead of
+    an outright infeasible solve.
+
+    GreenBubble-specific adaptation of the reference implementation's
+    ``solve_operations.add_load_shedding``: their version adds one at every
+    AC-carrier bus, since their model is a country-level power network.
+    GreenBubble has no generic "AC bus" concept -- demand instead sits on
+    named product buses (H2/bioCH4/Methanol delivery, Heat DH, ...) -- so this
+    targets every bus that actually carries a Load component instead.
+    ``marginal_cost`` default (EUR/MWh-equivalent) is their same value (a
+    highRES / Price & Zeyringer 2022 value-of-lost-load figure), applied
+    uniformly across all Load buses regardless of commodity -- a
+    simplification, same in spirit as their blanket per-AC-bus price.
+    """
+    if "load-shedding" not in n.carriers.index:
+        n.add("Carrier", "load-shedding")
+    for bus in n.loads["bus"].unique():
+        name = f"{bus} load shedding"
+        if name in n.generators.index:
+            continue
+        n.add(
+            "Generator", name,
+            bus=bus, carrier="load-shedding",
+            marginal_cost=marginal_cost, p_nom=1e6,
+        )
+
+
+def validate_design_across_years(
+    realised_network,
+    year_network_paths: dict,
+    n_flags: dict | None = None,
+    re_alpha: float | None = None,
+    solver_name: str = "highs",
+    solver_options: dict | None = None,
+) -> pd.DataFrame:
+    """Simultaneous multi-year feasibility check (Grochowicz et al. 2023's
+    ``validate_robust`` / ``solve_operations.py`` + ``summarise_feasibility.py``).
+
+    ``realised_network`` is the output of :func:`realise_design` (its ``_opt``
+    capacities define the design under test). For each entry in
+    ``year_network_paths`` (``{year_label: path to that year's network}``),
+    transplants those capacities (:func:`apply_realised_capacities`), fixes
+    them non-extendable
+    (:func:`scripts.vendor.near_opt_feasibility.set_extendable_false`), adds
+    load-shedding slack at every Load bus (:func:`add_load_shedding`),
+    re-applies GreenBubble's custom constraints (the design must still respect
+    the RE-to-grid policy etc. -- same reasoning as
+    :func:`_solve_mga_in_direction`), and re-solves *operations only* (no more
+    capacity expansion).
+
+    Returns one row per year
+    (:func:`scripts.vendor.near_opt_feasibility.compute_feasibility_criteria`'s
+    columns), plus the solve ``status``/``condition``.
+    """
+    import pypsa
+
+    from scripts.helpers import apply_custom_constraints
+    from scripts.vendor.near_opt_feasibility import (
+        compute_feasibility_criteria,
+        set_extendable_false,
+    )
+
+    rows = []
+    for year, path in year_network_paths.items():
+        n_year = pypsa.Network(str(path))
+        apply_realised_capacities(n_year, realised_network)
+        set_extendable_false(n_year)
+        add_load_shedding(n_year)
+
+        m = n_year.optimize.create_model()
+        apply_custom_constraints(n_year, m, n_flags=n_flags, re_alpha=re_alpha)
+        opts = dict(solver_options or {})
+        status, condition = n_year.optimize.solve_model(solver_name=solver_name, **opts)
+
+        if status == "ok":
+            row = compute_feasibility_criteria(n_year, str(year))
+        else:
+            row = pd.DataFrame(
+                [[float("nan"), float("nan")]],
+                columns=["Total curtailment", "Relative curtailment"],
+                index=[str(year)],
+            )
+        row["status"] = status
+        row["condition"] = condition
+        rows.append(row)
+
+    return pd.concat(rows)
 
 
 # --------------------------------------------------------------------------- #

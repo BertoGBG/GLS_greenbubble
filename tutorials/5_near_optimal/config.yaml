@@ -40,7 +40,7 @@ optimization:
 mga:
   enabled:      true
   network_path: ''            # '' = explore the network built from this config
-  dimensions:   [onwind, solar, electrolysis, methanolisation, battery]
+  dimensions:   [onwind, solar, AEC, methanolisation, battery]
   slack:        0.05          # near-optimal budget: c·x <= c_opt + slack·|c_opt|
   n_directions: 20            # Tier 2 hull; set to 0 to run Tier 1 only
   direction_sampling: halton
