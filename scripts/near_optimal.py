@@ -158,15 +158,16 @@ def available_dimensions(
     n,
     comp_tech_map: dict[str, str] | None = None,
     n_config_index=None,
+    weight_by: str = "capacity",
 ) -> dict[str, dict]:
     """Auto-derive the selectable NOS dimensions from a built/solved network.
 
-    A *dimension* is a technology; its value is the summed installed capacity (MW)
-    of all extendable, costed components belonging to it. The returned structure is
-    the nested ``weights`` dict that PyPSA's MGA API expects::
+    A *dimension* is a technology; its value is a weighted sum over all extendable,
+    costed components belonging to it. The returned structure is the nested
+    ``weights`` dict that PyPSA's MGA API expects::
 
-        {tech_key: {"Generator": {"p_nom": {comp_name: 1.0, ...}},
-                    "Store":     {"e_nom": {comp_name: 1.0, ...}}, ...}}
+        {tech_key: {"Generator": {"p_nom": {comp_name: weight, ...}},
+                    "Store":     {"e_nom": {comp_name: weight, ...}}, ...}}
 
     Grouping key per component: ``comp_tech_map[name]`` if available, else the
     component ``carrier`` (recovers techs that ``comp_tech_map`` drops, e.g. battery).
@@ -183,11 +184,29 @@ def available_dimensions(
         Iterable of valid ``n_config`` technology keys. If given, only dimensions
         whose key is in this set are kept (the "core technology" gate that removes
         auxiliary/balance-of-plant groupings). If ``None``, all groups are kept.
+    weight_by : "capacity" | "investment"
+        ``"capacity"`` (default): weight 1.0 per component — a dimension is the
+        summed installed capacity in MW, GreenBubble's original convention.
+        ``"investment"``: weight = the component's own ``capital_cost``
+        (EUR/MW/year, already annualised — GreenBubble's ``capital_cost`` is
+        computed via ``annuity()`` at build time, so no extra "scale by years"
+        step is needed here, unlike the reference implementation working from
+        multi-year raw investment figures) — a dimension becomes that
+        technology's summed *annual investment cost* (EUR/year), matching the
+        Grochowicz et al. (2023) reference implementation's own
+        ``projection:`` config (every entry there sets
+        ``weight: "capital_cost"``; see ``config/config-default.yaml`` in
+        https://github.com/aleks-g/intersecting-near-opt-spaces). The
+        near-optimal-space mathematics is agnostic to this choice — it's a
+        modelling decision about what "a dimension" physically represents,
+        not part of the theory (see docs/meetings/grochowicz_nos_summary).
 
     Stochastic networks are handled transparently: the ``(scenario, name)`` index is
     collapsed to plain names (the shared first-stage investment), so dimensions are
     keyed by plain component names — exactly what PyPSA's MGA expects.
     """
+    if weight_by not in ("capacity", "investment"):
+        raise ValueError(f"weight_by must be 'capacity' or 'investment', got {weight_by!r}.")
     comp_tech_map = comp_tech_map or {}
     core = set(n_config_index) if n_config_index is not None else None
 
@@ -205,7 +224,8 @@ def available_dimensions(
                 continue
             if core is not None and key not in core:
                 continue
-            dims.setdefault(key, {}).setdefault(cls, {}).setdefault(nom, {})[name] = 1.0
+            weight = float(row["capital_cost"]) if weight_by == "investment" else 1.0
+            dims.setdefault(key, {}).setdefault(cls, {}).setdefault(nom, {})[name] = weight
     return dims
 
 
@@ -214,13 +234,15 @@ def resolve_dimensions(
     selected,
     comp_tech_map: dict[str, str] | None = None,
     n_config_index=None,
+    weight_by: str = "capacity",
 ) -> dict[str, dict]:
     """Validate the user-selected dimension names and return the restricted weights dict.
 
     Empty / falsy ``selected`` ⇒ use *all* available dimensions. Unknown names raise
-    a ``ValueError`` that lists what is available.
+    a ``ValueError`` that lists what is available. ``weight_by`` — see
+    :func:`available_dimensions`.
     """
-    avail = available_dimensions(n, comp_tech_map, n_config_index)
+    avail = available_dimensions(n, comp_tech_map, n_config_index, weight_by=weight_by)
     if not avail:
         raise ValueError(
             "No extendable, costed technologies found in the network — nothing to "
@@ -334,11 +356,22 @@ def mga_ranges(
     re_alpha: float | None = None,
     solver_name: str = "highs",
     solver_options: dict | None = None,
-) -> pd.DataFrame:
+    return_points: bool = False,
+) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
     """Tier 1: min and max installed capacity per dimension within the cost budget.
 
     Returns a DataFrame indexed by dimension with columns ``[optimal, min, max]`` (MW)
     and the boolean flags ``must_have`` (min > tol) and ``must_avoid`` (max ≤ tol).
+
+    ``return_points=True`` additionally returns the full coordinate vector (all
+    dimensions, not just the one being minimised/maximised) from each of the
+    ``2 * len(dimensions)`` cardinal-direction solves, as a second DataFrame —
+    the real extreme points those solves actually landed on, not points
+    reconstructed from the ``[min, max]`` table (which only keeps the projected
+    scalar per dimension, not the other dimensions' values at that solve). This
+    is the seed point set :func:`explore_hull_adaptive` (or the staged
+    ``nos_seed`` -> ``nos_hull_adaptive`` pipeline) builds on, so it solves
+    exactly once per cardinal direction rather than duplicating this loop.
     """
     c_opt = optimal_objective(n)
     keys = list(dimensions)
@@ -347,6 +380,7 @@ def mga_ranges(
     optimal = project_static(n, dimensions)
 
     rows = {}
+    points = [] if return_points else None
     for d in keys:
         res = {"optimal": float(optimal.get(d, np.nan))}
         for sense, sign in (("min", -1.0), ("max", +1.0)):
@@ -360,12 +394,16 @@ def mga_ranges(
                 res[sense] = np.nan
             else:
                 res[sense] = float(coords[d])
+                if return_points:
+                    points.append(coords.reindex(keys))
         rows[d] = res
 
     df = pd.DataFrame.from_dict(rows, orient="index")[["optimal", "min", "max"]]
     tol = 1e-3  # MW
     df["must_have"] = df["min"] > tol
     df["must_avoid"] = df["max"] <= tol
+    if return_points:
+        return df, pd.DataFrame(points, columns=keys).reset_index(drop=True)
     return df
 
 
@@ -487,6 +525,7 @@ def explore_hull_adaptive(
     solver_options: dict | None = None,
     seed=None,
     c_opt: float | None = None,
+    seed_points: pd.DataFrame | None = None,
 ) -> dict:
     """Tier 2 (adaptive) — near-optimal hull via Grochowicz et al.'s iterative sampler.
 
@@ -515,6 +554,17 @@ def explore_hull_adaptive(
         Euclidean shift of the Chebyshev centre as a percent of its norm) stays
         below ``conv_eps`` for ``conv_iter`` consecutive iterations.
 
+    seed_points : pd.DataFrame | None
+        Pre-solved cardinal-direction extreme points (columns = ``dimensions``
+        keys), e.g. from ``mga_ranges(..., return_points=True)`` or the staged
+        ``nos_seed`` Snakemake rule's output — skips the internal seeding
+        solve loop below and reuses these instead. The direction-filter seed
+        (``used_directions``) is set to the canonical ``±eye(k)`` cardinal set
+        regardless of the exact per-row solve order in ``seed_points``: for
+        filtering purposes only the *set* of already-probed directions matters
+        (which cardinal axes to avoid re-suggesting), not which specific point
+        value each one produced, so no direction↔point pairing is needed.
+
     Returns
     -------
     dict with keys ``points``, ``hull``, ``volume``, ``c_opt``, ``dimensions``,
@@ -532,35 +582,39 @@ def explore_hull_adaptive(
     keys = list(dimensions)
     k = len(keys)
 
-    # Seed with the cardinal ±unit-axis directions (mirrors the reference
-    # implementation's `mga.py` pass, and GreenBubble's own Tier-1 unit axes).
-    probed_directions: list[np.ndarray] = list(np.eye(k)) + list(-np.eye(k))
-    seed_points, used_directions = [], []
-    for i, d in enumerate(probed_directions):
-        _t0 = _time.time()
-        direction = {key: float(d[i2]) for i2, key in enumerate(keys)}
-        status, cond, coords = _solve_mga_in_direction(
-            n, direction, dimensions, c_opt, slack,
-            n_flags=n_flags, re_alpha=re_alpha,
-            solver_name=solver_name, solver_options=solver_options,
-        )
-        logger.info(
-            "Adaptive Tier 2 seed %d/%d (%s): %s in %.1fs",
-            i + 1, len(probed_directions), status, cond, _time.time() - _t0,
-        )
-        if status == "ok" and coords is not None:
-            seed_points.append(coords.reindex(keys).to_numpy())
-            used_directions.append(d)
-        else:
-            logger.warning("Adaptive MGA seed direction failed: %s / %s", status, cond)
+    if seed_points is not None:
+        used_directions: list[np.ndarray] = list(np.eye(k)) + list(-np.eye(k))
+        points = seed_points[keys].to_numpy()
+        logger.info("Adaptive Tier 2: reusing %d pre-solved seed points.", len(points))
+    else:
+        # Seed with the cardinal ±unit-axis directions (mirrors the reference
+        # implementation's `mga.py` pass, and GreenBubble's own Tier-1 unit axes).
+        probed_directions: list[np.ndarray] = list(np.eye(k)) + list(-np.eye(k))
+        seed_pts, used_directions = [], []
+        for i, d in enumerate(probed_directions):
+            _t0 = _time.time()
+            direction = {key: float(d[i2]) for i2, key in enumerate(keys)}
+            status, cond, coords = _solve_mga_in_direction(
+                n, direction, dimensions, c_opt, slack,
+                n_flags=n_flags, re_alpha=re_alpha,
+                solver_name=solver_name, solver_options=solver_options,
+            )
+            logger.info(
+                "Adaptive Tier 2 seed %d/%d (%s): %s in %.1fs",
+                i + 1, len(probed_directions), status, cond, _time.time() - _t0,
+            )
+            if status == "ok" and coords is not None:
+                seed_pts.append(coords.reindex(keys).to_numpy())
+                used_directions.append(d)
+            else:
+                logger.warning("Adaptive MGA seed direction failed: %s / %s", status, cond)
 
-    if len(seed_points) < k + 1:
-        raise RuntimeError(
-            f"Only {len(seed_points)}/{2 * k} cardinal-direction seed solves "
-            f"succeeded — need at least {k + 1} to form an initial hull."
-        )
-
-    points = np.array(seed_points)
+        if len(seed_pts) < k + 1:
+            raise RuntimeError(
+                f"Only {len(seed_pts)}/{2 * k} cardinal-direction seed solves "
+                f"succeeded — need at least {k + 1} to form an initial hull."
+            )
+        points = np.array(seed_pts)
 
     # Rescale so each dimension has width 1 (reference implementation: makes the
     # hull closer to an orthoplex, so direction sampling explores each dimension
@@ -795,9 +849,12 @@ def _itertools_pairs(keys):
     return list(combinations(keys, 2))
 
 
-def plot_ranges(ranges_df: pd.DataFrame, slack: float, outpath, title: str | None = None):
-    """Tier 1 figure: horizontal bar of the [min, max] capacity band per technology,
-    with the cost-optimal capacity marked. MW on the x-axis."""
+def plot_ranges(ranges_df: pd.DataFrame, slack: float, outpath, title: str | None = None,
+                 unit: str = "installed capacity [MW]"):
+    """Tier 1 figure: horizontal bar of the [min, max] band per technology,
+    with the cost-optimal value marked. ``unit`` labels the x-axis — override
+    for ``mga.dimension_weight: investment`` dimensions (e.g. "annual investment
+    [EUR/y]"), since the values are no longer MW in that mode."""
     import matplotlib.pyplot as plt
 
     df = ranges_df.sort_values("max", ascending=True)
@@ -808,7 +865,7 @@ def plot_ranges(ranges_df: pd.DataFrame, slack: float, outpath, title: str | Non
     ax.scatter(df["optimal"], y, color="#de2d26", zorder=3, label="cost optimum")
     ax.set_yticks(y)
     ax.set_yticklabels(df.index)
-    ax.set_xlabel("installed capacity [MW]")
+    ax.set_xlabel(unit)
     ax.set_title(title or f"Near-optimal capacity ranges (slack {slack:.0%})")
     ax.legend(loc="lower right", fontsize=8)
     ax.grid(axis="x", alpha=0.3)
@@ -816,9 +873,28 @@ def plot_ranges(ranges_df: pd.DataFrame, slack: float, outpath, title: str | Non
     plt.close(fig)
 
 
-def plot_hull_projections(result: dict, optimal: pd.Series | None, outpath, scale: float = 1e3):
+def plot_hull_projections(
+    result: dict,
+    optimal: pd.Series | None,
+    outpath,
+    scale: float = 1e3,
+    centre: pd.Series | None = None,
+    unit: str = "GW",
+):
     """Tier 2 figure: pairwise 2-D projections of the near-optimal point cloud + convex
-    hull, with the cost optimum marked. ``scale`` divides capacities (default GW)."""
+    hull, with the cost optimum marked. ``scale`` divides the raw dimension values
+    before plotting (default 1e3, i.e. MW -> GW for capacity-weighted dimensions).
+
+    ``unit`` labels the axes — override together with ``scale`` for
+    ``mga.dimension_weight: investment`` dimensions, e.g. ``scale=1e6, unit="M EUR/y"``
+    (the raw values are then EUR/year, not MW).
+
+    ``centre``, if given, marks the hull's own Chebyshev centre (deepest interior
+    point) — not a multi-year intersection centre like :func:`plot_robustness`'s,
+    just this one hull's. Compute it with ``chebyshev_centre([result["hull"]],
+    keys=result["dimensions"])["centre"]`` (or straight off ``result["points"]`` if
+    ``result["hull"]`` is ``None``).
+    """
     import matplotlib.pyplot as plt
     from scipy.spatial import ConvexHull, QhullError
 
@@ -845,9 +921,13 @@ def plot_hull_projections(result: dict, optimal: pd.Series | None, outpath, scal
         if optimal is not None and a in optimal.index and b in optimal.index:
             ax.scatter([optimal[a] / scale], [optimal[b] / scale],
                        color="#de2d26", marker="*", s=120, zorder=4, label="optimum")
+        if centre is not None and a in centre.index and b in centre.index:
+            ax.scatter([centre[a] / scale], [centre[b] / scale],
+                       color="black", marker="X", s=110, zorder=5, label="Chebyshev centre")
+        if (optimal is not None) or (centre is not None):
             ax.legend(fontsize=7, loc="best")
-        ax.set_xlabel(f"{a} [GW]")
-        ax.set_ylabel(f"{b} [GW]")
+        ax.set_xlabel(f"{a} [{unit}]")
+        ax.set_ylabel(f"{b} [{unit}]")
         ax.grid(alpha=0.3)
     for j in range(len(pairs), nrow * ncol):
         axes[j // ncol][j % ncol].axis("off")
@@ -857,9 +937,10 @@ def plot_hull_projections(result: dict, optimal: pd.Series | None, outpath, scal
     plt.close(fig)
 
 
-def plot_robustness(per_year_points: dict, centre, keys, outpath, scale: float = 1e3):
+def plot_robustness(per_year_points: dict, centre, keys, outpath, scale: float = 1e3, unit: str = "GW"):
     """Tier 3 figure: per-year near-optimal hulls overlaid on each 2-D projection, with
-    the Chebyshev centre of their intersection marked."""
+    the Chebyshev centre of their intersection marked. ``unit``/``scale`` — see
+    :func:`plot_hull_projections` (override together for investment-weighted dimensions)."""
     import matplotlib.pyplot as plt
     from scipy.spatial import ConvexHull, QhullError
 
@@ -889,8 +970,8 @@ def plot_robustness(per_year_points: dict, centre, keys, outpath, scale: float =
         if centre is not None and a in centre.index and b in centre.index:
             ax.scatter([centre[a] / scale], [centre[b] / scale],
                        color="black", marker="X", s=110, zorder=5, label="Chebyshev centre")
-        ax.set_xlabel(f"{a} [GW]")
-        ax.set_ylabel(f"{b} [GW]")
+        ax.set_xlabel(f"{a} [{unit}]")
+        ax.set_ylabel(f"{b} [{unit}]")
         ax.grid(alpha=0.3)
         ax.legend(fontsize=6, loc="best")
     for j in range(len(pairs), nrow * ncol):

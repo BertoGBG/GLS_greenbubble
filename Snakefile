@@ -146,6 +146,7 @@ include: "rules/build.smk"
 include: "rules/solve.smk"
 include: "rules/plot.smk"
 include: "rules/rolling_horizon.smk"
+include: "rules/near_optimal_staged.smk"
 
 
 rule all:

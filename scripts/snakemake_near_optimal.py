@@ -60,9 +60,11 @@ if mga["network_path"]:
     print(f"[NOS] config source: {'config_run.yaml' if run_cfg else 'LIVE config (config_run.yaml not found!)'} "
           f"| n_flags={ {k:v for k,v in nos_n_flags.items() if v} } | max_RE_to_grid={nos_re_alpha}")
 
+weight_by = mga.get("dimension_weight", "capacity")
 dimensions = nos.resolve_dimensions(
-    n, mga["dimensions"], comp_tech_map, c.n_config.index
+    n, mga["dimensions"], comp_tech_map, c.n_config.index, weight_by=weight_by
 )
+plot_unit, plot_scale = ("GW", 1e3) if weight_by == "capacity" else ("M EUR/y", 1e6)
 dim_keys = list(dimensions)
 print(f"[NOS] {'STOCHASTIC' if stochastic else 'deterministic'} network — "
       f"exploring dimensions: {dim_keys}  (slack={slack}, solver={solver}/{profile})")
@@ -82,7 +84,8 @@ ranges = nos.mga_ranges(
     solver_name=solver, solver_options=solver_options,
 )
 ranges.to_csv(snakemake.output.ranges)
-nos.plot_ranges(ranges, slack, plot_dir / "nos_ranges.png")
+nos.plot_ranges(ranges, slack, plot_dir / "nos_ranges.png",
+                 unit="installed capacity [MW]" if weight_by == "capacity" else "annual investment [EUR/y]")
 summary["must_have"] = ranges.index[ranges["must_have"]].tolist()
 summary["must_avoid"] = ranges.index[ranges["must_avoid"]].tolist()
 print("[NOS] Tier 1 ranges:\n", ranges.to_string())
@@ -103,7 +106,8 @@ if mga["n_directions"] > 0:
     result["slack"] = slack
     points = result["points"]
     points.to_csv(snakemake.output.points, index=False)
-    nos.plot_hull_projections(result, optimal_point, plot_dir / "nos_hull.png")
+    nos.plot_hull_projections(result, optimal_point, plot_dir / "nos_hull.png",
+                               scale=plot_scale, unit=plot_unit)
     summary["n_points"] = int(len(points))
     summary["hull_volume"] = result["volume"]
     print(f"[NOS] Tier 2: {len(points)} extreme points, hull volume={result['volume']}")
@@ -147,7 +151,7 @@ elif rob["enabled"] and rob["years"]:
         )
         ctm_y = nos.build_comp_tech_map(ny, tech_costs.index)
         year_nets[str(year)] = ny
-        year_dims[str(year)] = nos.resolve_dimensions(ny, dim_keys, ctm_y, c.n_config.index)
+        year_dims[str(year)] = nos.resolve_dimensions(ny, dim_keys, ctm_y, c.n_config.index, weight_by=weight_by)
         per_year_copt[str(year)] = nos.optimal_objective(ny)   # optimal objective c_opt(i)
 
     # Shared budget anchor c* across years (Grochowicz eq. 9) or per-year optimum.
@@ -178,7 +182,8 @@ elif rob["enabled"] and rob["years"]:
         "feasible_intersection": bool(cheb["feasible"]),
         "centre": (cheb["centre"].to_dict() if cheb["centre"] is not None else None),
     }
-    nos.plot_robustness(per_year_points, cheb["centre"], dim_keys, plot_dir / "nos_robustness.png")
+    nos.plot_robustness(per_year_points, cheb["centre"], dim_keys, plot_dir / "nos_robustness.png",
+                         scale=plot_scale, unit=plot_unit)
     print(f"[NOS] Tier 3: Chebyshev radius={cheb['radius']}, feasible={cheb['feasible']}")
 
 # ---- write summary + sentinel --------------------------------------------- #

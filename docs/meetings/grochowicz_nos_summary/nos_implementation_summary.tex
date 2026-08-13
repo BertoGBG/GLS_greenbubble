@@ -414,7 +414,7 @@ function by function:
     is exactly what we are doing next.
 \end{itemize}
 
-\subsection{Reuse plan: \texttt{near-optimal\_dev3}}
+\subsection{Reuse landed: \texttt{near-optimal\_dev3}}
 \label{sec:dev3}
 Their \texttt{geometry.py} module (Chebyshev centre, hull intersection,
 facet-normal/hypersphere-based direction sampling) is pure
@@ -422,17 +422,141 @@ NumPy/SciPy/(Gurobi) geometry with \textbf{no dependency on the PyPSA
 optimisation API} --- unlike the per-direction solve, it does not need
 porting to work with GreenBubble's PyPSA version, only the LP backend needs
 adapting (Gurobi $\to$ solver-agnostic, as we already do for the Chebyshev
-centre). This makes it the practical, low-risk target for direct code
-reuse. We are vendoring it on a new \texttt{near-optimal\_dev3} branch:
-their geometry utilities are being carried over under their original
-GPL-3.0-or-later licence and attribution into a clearly separated module
-(rather than merged into GreenBubble's MIT-licensed files, which GPL
-licensing does not permit), so that Tier 2's direction sampling and Tier
-3's intersection can reuse their adaptive algorithm directly instead of our
-simpler from-scratch version --- as much of their code reused as the
-licence boundary allows, properly cited.
+centre). This made it the practical, low-risk target for direct code
+reuse, and it is now fully wired in and validated on a local
+\texttt{near-optimal\_dev3} branch (not yet pushed --- see the licence
+discussion in Section~\ref{sec:honest-summary}):
+\begin{itemize}[leftmargin=1.4em]
+  \item Their geometry utilities (\texttt{ch\_centre}, \texttt{intersection},
+    \texttt{facet\_normals}, the hypersphere samplers, and the three
+    facet/Chebyshev-ball direction generators originally split across
+    \texttt{geometry.py} and \texttt{compute\_near\_opt.py}) are vendored
+    verbatim (module structure, docstrings, algorithm) under their original
+    GPL-3.0-or-later licence and attribution, in a module clearly separated
+    from GreenBubble's MIT-licensed code (GPL licensing does not permit
+    merging the two) --- the only change is porting the Gurobi LP calls to
+    \texttt{scipy.optimize.linprog}.
+  \item \texttt{chebyshev\_centre()} now calls their ported function
+    directly rather than a separate from-scratch LP; a new
+    \texttt{intersect\_hulls()} exposes their qhull-based
+    \texttt{HalfspaceIntersection} approach for the full intersected
+    polytope, not just its centre.
+  \item A new \texttt{explore\_hull\_adaptive()} runs their iterative
+    facet-/Chebyshev-ball-based direction sampler in place of our fixed-count
+    Halton sampling for Tier 2, using their exact convergence criteria
+    (volume- or centre-shift, \texttt{conv\_eps}/\texttt{conv\_iter}) ---
+    only the per-direction \emph{solve} is GreenBubble's own
+    constraint-correct one, since their code solves via the pre-Linopy
+    \texttt{pypsa.linopf} API in parallel worker processes.
+  \item \textbf{Verified twice}: first standalone (10 seed + 5 adaptive
+    solves, $\sim$3 minutes with \texttt{gurobi-}\allowbreak\texttt{barrier-fast};
+    the identical run with \texttt{gurobi-default} did not finish a single
+    direction in 36+ minutes and had to be killed --- an independent, real-network
+    confirmation of the solver-degeneracy finding in
+    Section~\ref{sec:results}), then again through the real Snakemake
+    pipeline described next (22 points, 12 adaptive iterations, converged).
+\end{itemize}
+
+\subsubsection{Staged pipeline: mirroring their rule decomposition}
+GreenBubble's default \texttt{explore\_near\_optimal} rule runs all three
+tiers inline in one Snakemake rule/script. Their reference pipeline instead
+splits into discrete rules --- \texttt{compute\_optimum} $\to$ \texttt{mga}
+(cardinal seed) $\to$ \texttt{compute\_near\_opt} (adaptive refinement)
+$\to$ \texttt{intersect\_near\_optimal} $\to$ \texttt{compute\_robust\_*}
+--- which tracks the paper's own stepwise structure closely. We mirrored
+that decomposition (not the repo itself) in a new
+\texttt{rules/near\_optimal\_staged.smk}, reachable only by explicit target
+name (not wired into the default \texttt{rule all}):
+
+\begin{center}
+\small
+\texttt{nos\_seed} $\to$ \texttt{nos\_hull\_adaptive}\\[4pt]
+\texttt{nos\_year\_optimum}\{2023,2024,2025\} $\to$ \texttt{nos\_cost\_bound}
+$\to$ \texttt{nos\_year\_hull}\{2023,2024,2025\} $\to$ \texttt{nos\_intersect}
+$\to$ \texttt{nos\_robust\_exact}
+\end{center}
+
+Each stage writes an intermediate file, so e.g.\ re-running the intersection
+after a tuning change no longer requires re-solving three years of networks
+--- exactly the caching benefit their decomposition buys. \texttt{nos\_seed}
+solves the $2k$ cardinal directions once and derives \emph{both} the Tier-1
+ranges table \emph{and} \texttt{explore\_hull\_adaptive}'s real seed points
+from the same solves (no duplicate solving, and no seed points
+reconstructed/approximated from the ranges table, which only keeps the
+projected scalar per dimension). \texttt{nos\_robust\_exact} realises the
+Chebyshev centre against a single reference network via
+\texttt{realise\_design} (Grochowicz et al.'s ``exact'' strategy); their
+three heuristic allocation strategies (\texttt{conservative}/\texttt{mean}/
+\texttt{naive}) and simultaneous multi-year feasibility check are not
+ported yet.
+
+\textbf{Real end-to-end run} (\texttt{snakemake nos\_hull\_adaptive},
+tutorial 5's exact config, all 5 pipeline steps completing): 10 real
+cardinal seed points $+$ 12 adaptive iterations $=$ 22 points, converged on
+the volume criterion, $c_{\mathrm{opt}} = 66.6\,\text{M}$ (consistent with
+the dev2 baseline's $\sim$67\,M --- confirms it's the same problem, not a
+config drift), Chebyshev radius of this single hull $= 3.15$.
+
+\subsubsection{Dev2 vs.\ dev3, same problem, same config}
+Re-running the 3-year robustness comparison (Section~\ref{sec:results}'s
+network, dev2's fixed 20-direction Halton sampler vs.\ dev3's adaptive
+sampler, identical \texttt{slack}, dimensions and years) gives a direct,
+apples-to-apples reading of what the adaptive sampler buys:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+ & Chebyshev radius & onwind & solar & electrolysis & methanolisation \\
+\midrule
+dev2 (Halton, fixed count) & 0.58 & 147.6 & 5.2 & 53.2 & 0.85 \\
+dev3 (adaptive)            & 2.08 & 132.7 & 17.4 & 52.5 & 3.45 \\
+\bottomrule
+\end{tabular}
+\end{center}
+($c_{\mathrm{opt}}$ per year matched to within rounding across both runs:
+65.9/67.0/61.8\,M vs.\ 65.8/66.9/61.8\,M --- same problem.) The adaptive
+sampler found a \textbf{3.6$\times$ larger} Chebyshev radius for a
+comparable solve budget --- it characterises the intersection region more
+completely than a fixed direction count, and lands on a noticeably
+different (more solar/methanolisation/battery-leaning) centre as a result.
+
+\subsection{Capacity- vs.\ investment-weighted dimensions}
+\label{sec:weighting}
+While comparing implementations we noticed their actual \texttt{projection:}
+config (\texttt{config/config-}\allowbreak\texttt{default.yaml}) weights
+\emph{every} dimension by \texttt{capital\_cost}:
+\begin{lstlisting}
+projection:
+  onwind:
+    - {c: "Generator", v: "p_nom", carrier: "onwind",
+       weight: "capital_cost", scale_by_years: True}
+\end{lstlisting}
+i.e.\ their dimensions are \textbf{annualised investment cost} (EUR/year)
+per technology, not installed capacity --- whereas GreenBubble's
+\texttt{available\_dimensions} (Section~\ref{sec:constraint-problem})
+hardcodes weight $=1$ per component, i.e.\ pure \textbf{MW}. Same PyPSA
+mechanism (\texttt{build\_linexpr\_from\_weights} just computes
+$\sum w_i \cdot \text{var}_i$ for whatever $w$ it's given), different
+modelling choice layered on top --- the near-optimal-space maths itself is
+agnostic to what a ``dimension'' physically represents.
+
+We added \texttt{mga.dimension\_weight: capacity \textbar\ investment} so
+both are selectable (default \texttt{capacity}, unchanged behaviour).
+Verified exactly on a real network: the ratio of a component's
+investment-weighted to capacity-weighted projected value equals its
+\texttt{capital\_cost} to full float precision (onwind:
+$128{,}306.330322\ldots$ both ways), and the full staged pipeline
+(\texttt{nos\_seed} $\to$ \texttt{nos\_hull\_adaptive}) runs correctly
+end-to-end in \texttt{investment} mode too: 5/5 Snakemake steps, 17 points
+(10 seed $+$ 7 adaptive), converged. \textbf{Open question for the
+meeting}: was cost-weighting a deliberate methodological choice for your
+study (e.g.\ to put technologies with very different EUR/MW on a common
+economic axis), or would capacity weighting have worked equally well for
+your results?
 
 \subsection{The honest summary}
+\label{sec:honest-summary}
 We reused PyPSA's low-level MGA \emph{mechanics} as much as the public API
 allowed, and reimplemented the one piece it doesn't expose a hook for
 (constraint-correct solving). Grochowicz et al.\ (2023)'s specific
@@ -440,11 +564,13 @@ contribution --- multi-year robustness via intersection and the Chebyshev
 centre --- was implemented from the paper's mathematics alone in the current
 released version, and Section~\ref{sec:verification} confirms it is
 mathematically identical to their reference code where the two are directly
-comparable. \textbf{We would value your read on Section~\ref{sec:results}'s
-Tier 2 comparison and the \texttt{near-optimal\_dev3} reuse plan above} ---
-in particular whether the adaptive sampler's convergence behaviour in
-\texttt{compute\_near\_opt.py} has any gotchas we should know about before
-we lean on it.
+comparable; Section~\ref{sec:dev3} now reuses their actual code (Tier 2's
+adaptive sampler, Tier 3's intersection) directly, license boundary
+permitting. \textbf{We would value your read on whether
+\texttt{near-optimal\_dev3}'s reuse is the right scope}, and on the
+solver-degeneracy behaviour reported there --- has the
+\texttt{gurobi-default}/\texttt{gurobi-barrier-fast} gap come up in your own
+runs of this algorithm?
 
 % =====================================================================
 \section{Validation status}
@@ -517,13 +643,19 @@ three tiers end-to-end on a small demonstration network with dimensions
 \section{Discussion points for the meeting}
 % =====================================================================
 \begin{enumerate}[leftmargin=1.4em]
-  \item We're vendoring \texttt{geometry.py}'s adaptive direction sampler
-    (facets / touching-ball / combined, with volume- or centre-shift
-    convergence) into GreenBubble on a \texttt{near-optimal\_dev3} branch,
-    to close the Tier 2 gap in Section~\ref{sec:verification} --- any
+  \item We've vendored and validated \texttt{geometry.py}'s adaptive
+    direction sampler (facets / touching-ball / combined, with volume- or
+    centre-shift convergence) on \texttt{near-optimal\_dev3}
+    (Section~\ref{sec:dev3}) --- it found a $3.6\times$ larger Chebyshev
+    radius than our fixed-count Halton sampler on the same problem. Any
     practical gotchas from running it at scale (angle-tolerance tuning,
     typical iteration counts, cases where it stalls) we should know before
-    we lean on it?
+    we lean on it further?
+  \item Was cost-weighting your dimensions
+    (\texttt{weight: "capital\_cost"} in \texttt{projection:}, see
+    Section~\ref{sec:weighting}) a deliberate methodological choice, or
+    would capacity-weighted dimensions have told the same story for your
+    study?
   \item Does the sign-robust budget generalisation
     (Section~\ref{sec:budget}) for negative-objective (net-revenue,
     price-driven) systems come up in other applications you're aware of?

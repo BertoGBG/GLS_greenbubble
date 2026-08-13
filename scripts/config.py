@@ -178,10 +178,12 @@ if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:
 
 _mga = _cfg.get("mga", {}) or {}
 _mga_rob = _mga.get("robustness", {}) or {}
+_mga_adaptive = _mga.get("adaptive", {}) or {}
 mga = {
     "enabled":            bool(_mga.get("enabled", False)),
     "network_path":       (_mga.get("network_path") or "").strip(),
     "dimensions":         list(_mga.get("dimensions", []) or []),
+    "dimension_weight":   str(_mga.get("dimension_weight", "capacity")),
     "slack":              float(_mga.get("slack", 0.05)),
     "n_directions":       int(_mga.get("n_directions", 0)),
     "direction_sampling": str(_mga.get("direction_sampling", "halton")),
@@ -192,6 +194,17 @@ mga = {
         "enabled":    bool(_mga_rob.get("enabled", False)),
         "years":      dict(_mga_rob.get("years", {}) or {}),
         "cost_bound": str(_mga_rob.get("cost_bound", "max")),
+    },
+    # Adaptive Tier 2 (near-optimal_dev3's staged pipeline only — see
+    # rules/near_optimal_staged.smk / scripts.near_optimal.explore_hull_adaptive).
+    "adaptive": {
+        "direction_method":    str(_mga_adaptive.get("direction_method", "maximal-centre-then-facets")),
+        "direction_angle_sep": float(_mga_adaptive.get("direction_angle_sep", 15.0)),
+        "angle_tolerance":     float(_mga_adaptive.get("angle_tolerance", 1.0)),
+        "conv_method":         str(_mga_adaptive.get("conv_method", "volume")),
+        "conv_eps":            float(_mga_adaptive.get("conv_eps", 2.0)),
+        "conv_iter":           int(_mga_adaptive.get("conv_iter", 2)),
+        "max_iter":            int(_mga_adaptive.get("max_iter", 20)),
     },
 }
 

@@ -134,12 +134,31 @@ mga:
   network_path: ''
   # subset (~4-5) of auto-available technology names; [] = use all available dimensions
   dimensions:   [] # example: [onwind, solar, electrolysis, methanolisation, battery]
+  # capacity: dimension = summed installed capacity (MW), GreenBubble's original convention.
+  # investment: dimension = summed annualised capital cost (EUR/year) -- matches the
+  # Grochowicz et al. (2023) reference implementation's own projection: config, which
+  # weights every dimension by capital_cost. Same near-optimal-space maths either way --
+  # this only changes what a "dimension" physically represents. See scripts.near_optimal
+  # .available_dimensions and docs/meetings/grochowicz_nos_summary.
+  dimension_weight: capacity  # capacity | investment
   slack:        0.05          # near-optimal budget: c.x <= c_opt + slack*|c_opt|
   # Tier 2 (near-optimal hull). n_directions: 0 runs Tier 1 (per-tech min/max ranges) only.
   n_directions: 40
   direction_sampling: halton  # halton | evenly_spaced | random
   max_parallel: 4
   seed:         42
+  # Adaptive Tier 2 (near-optimal_dev3 only, staged pipeline: nos_seed -> nos_hull_adaptive
+  # -- see rules/near_optimal_staged.smk). Ported from the Grochowicz et al. (2023)
+  # reference implementation's compute_near_opt.py; not used by explore_near_optimal's
+  # fixed-count sampling above.
+  adaptive:
+    direction_method: maximal-centre-then-facets  # facets | random-uniform | random-lhc | maximal-centre | maximal-centre-then-facets
+    direction_angle_sep: 15.0   # initial angle threshold (degrees) between sampled directions
+    angle_tolerance: 1.0        # minimum angle threshold direction_angle_sep may auto-decrease to
+    conv_method: volume         # volume | centre -- stop once the change stays below conv_eps
+    conv_eps: 2.0                # convergence threshold, percent
+    conv_iter: 2                 # consecutive iterations below conv_eps required to stop
+    max_iter: 20                 # hard cap on adaptive iterations regardless of convergence
   # Tier 3 (robustness): intersect per-year near-optimal spaces, take the Chebyshev centre.
   # `years` mirrors the stochastic.scenarios structure (weather/energy year + CO2 cost).
   robustness:
