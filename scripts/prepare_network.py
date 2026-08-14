@@ -3289,7 +3289,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus1=methanation_buses.at['biogas in bus', 'biomethanation'],
             bus2=methanation_buses.at['product bus', 'biomethanation'],
             bus3=methanation_buses.at['local EL bus', 'biomethanation'],
-            efficiency=tech_costs.at["biomethanation", "biogas-input"],
+            efficiency=-tech_costs.at["biomethanation", "biogas-input"],
             efficiency2=tech_costs.at["biomethanation", "methane-output"],
             efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
             p_nom=capacity,
