@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../01_pypsa-eur_AA/pypsa-eur" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../03_technology_data/technology-data" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../../../04_Papers_and_reviews/NOS_GB/intersecting-near-opt-spaces" vcs="Git" />
+  </component>
+</project>
