@@ -684,7 +684,7 @@ def en_market_prices_w_CO2(inputs_dict, tech_costs, n_options):
         "el_grid_price": mk_el_grid_price,
         "el_grid_sell_price": mk_el_grid_sell_price,
         "NG_grid_price": mk_NG_grid_price,
-        "bioCH4_grid_sell_price" : mk_NG_grid_sell_price ,
+        "CH4_grid_sell_price" : mk_NG_grid_sell_price ,
         "DH_price": DH_price,
     }
 
@@ -700,7 +700,7 @@ def add_market_import_fallback(n, targets_dict: dict, verbose=True):
     specs = [
         dict(bus="H2",       load="H2 grid",  demand_key="demand_H2",  price_key="price_H2",     carrier="H2"),
         dict(bus="Methanol", load="Methanol", demand_key="demand_meoh", price_key="price_meoh",   carrier="Methanol"),
-        dict(bus="bioCH4",   load="bioCH4",   demand_key="demand_CH4", price_key="price_bioCH4", carrier="gas"),
+        dict(bus="CH4",   load="CH4",   demand_key="demand_CH4", price_key="price_CH4", carrier="gas"),
     ]
 
     def _to_float(x):

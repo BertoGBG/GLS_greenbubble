@@ -68,7 +68,7 @@ symbiosis_data = {
     'CO2 biogas upgrading': {"fluid": 'CO2', "T": 50, 'P': 1, 'carrier' : 'CO2', 'buses' : ["CO2 sep", "CO2 distribution", 'CO2 to biomethanation']},
     'biogas': {"fluid": "biogas", "T": 50, 'P': 1, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' : ['biogas', 'biogas to biomethanation']}, # coolprop name assigned in function (as a mixture)
     'biogas to methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' :['biogas to methanation']},
-    'bioCH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['bioCH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
+    'CH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['CH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
     'meoh': {"fluid": "Methanol", "T": 50, 'P': 1, 'LHV': lhv_meoh, 'carrier' : 'Methanol', 'buses' : ['Methanol']},
     'CO2 to methanolisation': {"fluid": 'CO2', "T": T_max_comp, 'P': 80, 'carrier' : 'CO2', 'buses' : ['CO2 to methanolisation', 'CO2 to meoh']},
     'CO2 to methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'carrier' : 'CO2', 'buses' :['CO2 to methanation']},

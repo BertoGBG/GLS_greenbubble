@@ -109,10 +109,10 @@ def create_inputs_per_scenario(n, s, tech_costs, CO2_cost_s, CO2_cost_ref_year_s
     el_price = en_market_prices["el_grid_price"].astype(float).interpolate("linear")
     el_grid_sell_price = en_market_prices["el_grid_sell_price"].astype(float).interpolate("linear")
     NG_price = en_market_prices["NG_grid_price"].astype(float).interpolate("linear")
-    p_bioCH4 = en_market_prices["bioCH4_grid_sell_price"].astype(float).interpolate("linear")
+    p_CH4 = en_market_prices["CH4_grid_sell_price"].astype(float).interpolate("linear")
     p_max_pu_rfnbos = p_max_pu_rfnbos.reindex(n.snapshots).astype(float)
 
-    return CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_bioCH4
+    return CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_CH4
 
 
 def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
@@ -121,7 +121,7 @@ def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
     Sets ``n.snapshots`` to the new year's time index (derived from the
     electricity price series) and overwrites:
       - solar / wind capacity factors (``generators_t.p_max_pu``)
-      - electricity buy/sell prices, NG price, bioCH4 sale price
+      - electricity buy/sell prices, NG price, CH4 sale price
         (``links_t.marginal_cost``)
       - RFNBO hourly import constraint (``links_t.p_max_pu``)
       - CO2 sequestration and biochar credits (``links_t.marginal_cost``)
@@ -137,7 +137,7 @@ def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
     el_price           = en_market_prices["el_grid_price"].astype(float).interpolate("linear")
     el_grid_sell_price = en_market_prices["el_grid_sell_price"].astype(float).interpolate("linear")
     NG_price           = en_market_prices["NG_grid_price"].astype(float).interpolate("linear")
-    p_bioCH4           = en_market_prices["bioCH4_grid_sell_price"].astype(float).interpolate("linear")
+    p_CH4           = en_market_prices["CH4_grid_sell_price"].astype(float).interpolate("linear")
 
     # Update snapshots to the new year (reindexes all _t DataFrames to NaN first)
     n.set_snapshots(el_price.index)
@@ -174,8 +174,8 @@ def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
         n.links_t.marginal_cost[lk] = NG_price.reindex(n.snapshots)
 
     # Patch product sale prices
-    for lk in sale_links_by_product.get("bioCH4", []):
-        n.links_t.marginal_cost[lk] = p_bioCH4.reindex(n.snapshots)
+    for lk in sale_links_by_product.get("CH4", []):
+        n.links_t.marginal_cost[lk] = p_CH4.reindex(n.snapshots)
 
     # Patch RFNBO constraint
     for lk in rfnbos_links:
@@ -230,7 +230,7 @@ def create_scenarios(n, scenarios, CO2_cost_s, CO2_cost_ref_year_s, n_flags_OK, 
     n.set_scenarios(scenarios)
 
     for s in n.scenarios:
-        CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_bioCH4 = \
+        CF_wind, CF_solar, el_price, el_grid_sell_price, NG_price, p_max_pu_rfnbos, p_CH4 = \
             create_inputs_per_scenario(n, s, tech_costs, CO2_cost_s, CO2_cost_ref_year_s)
 
         # Solar / wind CFs
@@ -248,8 +248,8 @@ def create_scenarios(n, scenarios, CO2_cost_s, CO2_cost_ref_year_s, n_flags_OK, 
             n.links_t.marginal_cost.loc[:, (s, lk)] = NG_price.reindex(n.snapshots)
 
         # selling links - prices
-        for lk in sale_links_by_product.get("bioCH4", []):
-            n.links_t.marginal_cost.loc[:, (s, lk)] = p_bioCH4.reindex(n.snapshots)
+        for lk in sale_links_by_product.get("CH4", []):
+            n.links_t.marginal_cost.loc[:, (s, lk)] = p_CH4.reindex(n.snapshots)
 
         # RFNBO constraint
         for lk in rfnbos_links:
