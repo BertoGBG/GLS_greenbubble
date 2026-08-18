@@ -1377,7 +1377,14 @@ def export_constraint_duals(n, patterns, outpath, compress=True):
         data_vars[k] = d
 
     if not data_vars:
-        raise ValueError("No matching constraint duals found to export.")
+        warnings.warn(
+            "No constraint duals were available to export (solver returned no "
+            "shadow prices — e.g. a barrier solve with Crossover=0 has no basis). "
+            "Skipping dual export; the primal solution is unaffected.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return None
 
     ds = xr.Dataset(data_vars)
 
@@ -1584,7 +1591,10 @@ def build_model_solve_network(
                 outpath=dual_export_path,
                 compress=compress_duals,
             )
-            print("Exported dual blocks:", [k for k in ds.data_vars])
+            if ds is None:
+                dual_export_path = None
+            else:
+                print("Exported dual blocks:", [k for k in ds.data_vars])
 
     # ---- meta breadcrumbs ----
     n.meta = getattr(n, "meta", {}) or {}

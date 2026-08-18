@@ -873,10 +873,10 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, name,
 
     # --- Reference plant efficiencies and capacities ---
     η_ref = abs(n.links.at[name, heat_efficiency_plant])
-    η_ref3 = abs(n.links.at[name, 'efficiency3'])
+    #η_ref3 = abs(n.links.at[name, 'efficiency3'])
 
     capacity_boiler = capacity * η_ref
-    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref3
+    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref
 
     # --- Natural gas boiler ---
     n.add("Link",
