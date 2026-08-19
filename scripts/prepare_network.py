@@ -2383,9 +2383,6 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
     # take a status of the network before adding components
     n0_dict = get_network_status(n)
 
-    # pull biomethane premium
-    premium_bioCH4 = inputs_dict.get('premium_bioCH4', 0.0)
-
     if n_flags['biogas']:
 
         # ------- add EL connections------------
@@ -2532,7 +2529,8 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   p_nom_max = n_config.at['biogas upgrading', 'max capacity'],
                   lifetime = tech_costs.at['biogas upgrading', 'lifetime'],
                   capital_cost= capital_cost,
-                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'] - premium_bioCH4) # added premium ontop for bio
+                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM']
+                  )
 
             # existing or additional NG boiler
             capacity_boiler = np.abs(capacity * n.links.at[prefix + 'biogas upgrading', 'efficiency3'] / tech_costs.at['gas boiler steam', 'efficiency']) * 1.01 # lock the capacity to the biogas upgrading,
@@ -3274,9 +3272,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         empty = {k: [] for k in ["links", "generators", "loads", "stores", "buses", "storage_units"]}
         return n, empty
 
-    # pull e methane premium:
-    premium_eCH4 = inputs_dict.get('premium_eCH4', 0.0)
-
     # ----------------------------------------------------------------------
     # BIOLOGICAL METHANATION (biogas)
     # ----------------------------------------------------------------------
@@ -3324,7 +3319,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["biomethanation", "max capacity"],
             capital_cost=capital_cost,
-            marginal_cost=tech_costs.at["biomethanation", "VOM"] - premium_eCH4, # assuming all outputs are eCH4
+            marginal_cost=tech_costs.at["biomethanation", "VOM"],
             ramp_limit_up=n_config.at['biomethanation', 'ramp limit up'],
             ramp_limit_down=n_config.at['biomethanation', 'ramp limit down'],
             )
@@ -3398,7 +3393,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             lifetime = tech_costs.at["biomethanation CO2", "lifetime"],
             p_nom_max=n_config.at["biomethanation CO2", "max capacity"],
             capital_cost=capital_cost,
-            marginal_cost=tech_costs.at["biomethanation CO2", "VOM"] - premium_eCH4, # assuming all outputs are eCH4
+            marginal_cost=tech_costs.at["biomethanation CO2", "VOM"],
             ramp_limit_up=n_config.at['biomethanation CO2', 'ramp limit up'],
             ramp_limit_down=n_config.at['biomethanation CO2', 'ramp limit down'],
         )
@@ -3487,7 +3482,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             committable=(n_config.at["methanation biogas", "committable"] == True) and not expansion,
             p_min_pu=n_config.at["methanation biogas", "min load"],
             capital_cost=capital_cost,
-            marginal_cost=tech_costs.at["methanation biogas","VOM"] - premium_eCH4, # assuming all outputs are eCH4
+            marginal_cost=tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up=n_config.at['methanation biogas', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanation biogas', 'ramp limit down']
             )
@@ -3600,7 +3595,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             committable=(n_config.at["methanation CO2", "committable"] == True) and not expansion,
             p_min_pu=n_config.at["methanation CO2", "min load"],
             capital_cost= capital_cost * vol_ratio,
-            marginal_cost= tech_costs.at["methanation biogas","VOM"] - premium_eCH4, # assuming all outputs are eCH4
+            marginal_cost= tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up=n_config.at['methanation CO2', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanation CO2', 'ramp limit down']
             )
