@@ -223,7 +223,8 @@ plotting:
     - H2 delivery
     - H2 distribution
     - bioCH4 collection
-    - bioCH4 delivery
+    - eCH4 collection
+    - CH4 delivery
     - Methanol collection
     - Methanol delivery
     - Heat MT

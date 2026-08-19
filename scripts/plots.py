@@ -1399,7 +1399,7 @@ def _find_product_slot(links, lk, collection_buses):
     The main product is not always on bus1 — e.g. biomethanation and
     biomethanation CO2 output their main product via bus2 (bus1 is their
     carbon-source input). Detecting the slot by which bus is actually tagged,
-    rather than assuming a fixed bus number, makes this correct for bioCH4,
+    rather than assuming a fixed bus number, makes this correct for CH4,
     H2 and Methanol alike, and for any future product/bus layout.
     """
     for bus_col, eff_col in _PRODUCT_BUS_SLOTS:
@@ -2289,16 +2289,16 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     just tagged product-bus links.
 
     This matters because a shared external sale link (e.g. the single
-    bioCH4-collection-to-delivery link) is created **once**, by whichever
+    CH4-collection-to-delivery link) is created **once**, by whichever
     producing agent happens to build it first — if a *second* agent later
     also feeds the same collection bus (e.g. catalytic methanation
-    alongside biogas upgrading, both selling bioCH4), attributing revenue to
+    alongside biogas upgrading, both selling CH4), attributing revenue to
     "whichever component touches the external market" would silently credit
     all of it to the first agent. Per-component shadow-price revenue avoids
     this entirely: each producer earns revenue proportional to its **own**
     throughput at the bus's own price, and the shared sale/delivery link
     itself nets to ~zero (a pure pass-through) — confirmed empirically
-    (revenue - opex ≈ 0 to floating-point precision for the bioCH4/H2/
+    (revenue - opex ≈ 0 to floating-point precision for the CH4/H2/
     Methanol collection→delivery links in a real solved network). The same
     reasoning applies to any future carrier producible by more than one
     agent (electricity, if a biogas engine is enabled alongside grid export;
@@ -6078,7 +6078,7 @@ def component_revenue_split_long_per_scenario(
     flat sale price exceeding the internal shadow price because of a binding
     annual quota, a ratio constraint (max_RE_to_grid), etc. It's computed
     generically for every revenue-bearing link (opex < 0), not just tagged
-    product-collection links, so it applies equally to bioCH4/H2/Methanol
+    product-collection links, so it applies equally to CH4/H2/Methanol
     sales, electricity/DH exports, and CO2 credits — and correctly comes out
     as ~0 wherever there's no such decoupling (e.g. demand mode, or a sale
     link with no separate internal collection bus).
@@ -6476,7 +6476,7 @@ def run_plot_and_export(
                 {"label": "El pruchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
                 {"label": "El selling price", "name": "El3 bus_to_DK1", "ls": "-", "lw": 1.8},
                 {"label": "NG price", "selector": {"regex": r"_NG boiler$"}, "ls": "-", "lw": 1.8},
-                {"label": "NG selling price", "name": "bioCH4_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "NG selling price", "name": "CH4_to_delivery", "ls": "-", "lw": 1.8},
                 {"label": "DH selling price", "name": "DH_GL_to_DH_grid", "ls": "-", "lw": 1.8},
                 {"label": "Biochar selling price", "name": "biochar sequestration", "ls": "-", "lw": 1.8},
                 {"label": "CO2 (L) selling price", "name": "CO2 Liq seq", "ls": "-", "lw": 1.8},
@@ -6730,7 +6730,7 @@ def run_plot_operational(
                 {"label": "El purchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
                 {"label": "El selling price",  "name": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
                 {"label": "NG price",          "selector": {"regex": r"_NG boiler$"},   "ls": "-", "lw": 1.8},
-                {"label": "NG selling price",  "name": "bioCH4_to_delivery",            "ls": "-", "lw": 1.8},
+                {"label": "NG selling price",  "name": "CH4_to_delivery",            "ls": "-", "lw": 1.8},
                 {"label": "DH selling price",  "name": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
                 {"label": "Biochar selling price", "name": "biochar sequestration",     "ls": "-", "lw": 1.8},
                 {"label": "CO2 (L) selling price", "name": "CO2 Liq seq",              "ls": "-", "lw": 1.8},

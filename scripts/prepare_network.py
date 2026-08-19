@@ -2152,7 +2152,7 @@ def add_heat_pump(n, n_flags, inputs_dict, tech_costs):
 
 
 def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
-    """Add exogenous energy demands / selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links.
+    """Add exogenous energy demands / selling links (CH4, H2, Methanol) and corresponding delivery/storage links.
 
     INPUTS
     plant : str  — matches the technology key used in the plant-adding section
@@ -2172,8 +2172,8 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
         """Return (bus_list, demand_ts, price_ts, e_product).
 
         bus_list always has two elements:
-          [0] product collection bus   e.g. "bioCH4 collection"  ← tagged for discovery
-          [1] delivery/demand bus      e.g. "bioCH4 delivery"
+          [0] product collection bus   e.g. "CH4 collection"  ← tagged for discovery
+          [1] delivery/demand bus      e.g. "CH4 delivery"
 
         All plants producing the same product inject directly into the shared [0]
         collection bus (bus1 of the plant multilink).  The collection-to-delivery
@@ -2188,19 +2188,29 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
             p_H2   = clean_series(inputs_dict["price_H2"], n)
             p_meoh = clean_series(inputs_dict["price_meoh"], n)
 
-            if "price_bioCH4" in inputs_dict:
-                p_bioCH4 = clean_series(inputs_dict["price_bioCH4"], n)
+            if "price_CH4" in inputs_dict:
+                p_CH4 = clean_series(inputs_dict["price_CH4"], n)
             else:
                 en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
-                p_bioCH4 = en_market_prices["bioCH4_grid_sell_price"].reindex(n.snapshots).ffill()
+                p_CH4 = en_market_prices["CH4_grid_sell_price"].reindex(n.snapshots).ffill()
 
             weights = n.snapshot_weightings["objective"]
 
-            if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
-                demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
+            # Premiums as incentives for e/bio-methane
+            premium_bioCH4 = float(inputs_dict.get('premium_bioCH4', 0.0))
+            premium_eCH4   = float(inputs_dict.get('premium_eCH4', 0.0))
+
+            if "biogas" in plant.lower():
+                bus_list  = ["bioCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
                 e_product = float((demand_ts * weights).sum())
-                price_ts  = p_bioCH4
+                price_ts  = p_CH4 - premium_bioCH4   # price_ts already negative
+
+            if "methanation" in plant.lower():
+                bus_list  = ["eCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
+                e_product = float((demand_ts * weights).sum())
+                price_ts  = p_CH4 - premium_eCH4
 
             if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
@@ -2215,9 +2225,12 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 price_ts  = p_meoh
 
         elif driver == "demand":
-            if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
-                demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
+            if "biogas" in plant.lower():
+                bus_list  = ["bioCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
+            if "methanation" in plant.lower():
+                bus_list  = ["eCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
             if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
@@ -2272,12 +2285,14 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     marginal_cost=0.0,
                 )
 
-            if product not in n.loads.index:
-                n.add("Load", product, bus=bus_list[1], carrier=carrier)
-                n.loads_t.p_set[product] = demand_ts.reindex(n.snapshots)
+            load_name = bus_list[1] # create only one
+            if load_name not in n.loads.index:
+                n.add("Load", load_name, bus=bus_list[1], carrier=carrier)
+                n.loads_t.p_set[load_name] = demand_ts.reindex(n.snapshots)
 
-                # Delivery store: sized by inputs_dict; None or 0 → rigid demand (no store)
-                _store_key = f"{product}_store_e_nom_max"
+                # Delivery store: sized by inputs_dict; None or 0 => rigid demand (no store)
+                product_key = bus_list[1].replace(" delivery", "")   # "CH4", "H2", "Methanol"
+                _store_key = f"{product_key}_store_e_nom_max"
                 store_e_nom_max = inputs_dict.get(_store_key, float("inf"))
                 if store_e_nom_max is not None and store_e_nom_max > 0:
                     store_kwargs = dict(
@@ -2287,7 +2302,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     )
                     if store_e_nom_max != float("inf"):
                         store_kwargs["e_nom_max"] = store_e_nom_max
-                    n.add("Store", f"{product} delivery", **store_kwargs)
+                    n.add("Store", f"{bus_list[1]} store", **store_kwargs)
 
         elif driver == "price":
             lk_ext = f"{product}_collection_to_delivery"
@@ -2303,13 +2318,15 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 )
                 n.links_t.marginal_cost[lk_ext] = price_ts.reindex(n.snapshots)
 
-                # tag for stochastic scenario creation
                 n.links.loc[lk_ext, "is_product_sale"] = True
                 n.links.loc[lk_ext, "product"]         = product
 
+            # Create one single store for all CH4 products
+            store_name = f"{bus_list[1]} store"
+            if store_name not in n.stores.index:
                 n.add(
                     "Store",
-                    f"{product} delivery",
+                    store_name,
                     bus=bus_list[1],
                     e_nom_extendable=True,
                     e_cyclic=False,
@@ -2327,10 +2344,15 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
     if bus_list is None:
         raise ValueError(f"Could not determine product for plant='{plant}' (driver={driver}).")
     # ==============================================================
-    # 1. BIOCH4
+    # 1. bioCH4 / eCH4
     # ==============================================================
-    if any(k in plant.lower() for k in ["biogas", "methanation"]):
-        n = add_targets_per_product(n, driver = driver, product = 'bioCH4', carrier = 'gas', unit = 'MW', bus_list = bus_list, demand_ts = demand_ts, price_ts = price_ts, e_product = e_product)
+    if "biogas" in plant.lower():
+        n = add_targets_per_product(n, driver=driver, product='bioCH4', carrier='gas', unit='MW',
+                                    bus_list=bus_list, demand_ts=demand_ts, price_ts=price_ts, e_product=e_product)
+
+    elif "methanation" in plant.lower():
+        n = add_targets_per_product(n, driver=driver, product='eCH4', carrier='gas', unit='MW',
+                                    bus_list=bus_list, demand_ts=demand_ts, price_ts=price_ts, e_product=e_product)
 
     # ==============================================================
     # 2. HYDROGEN
@@ -2507,7 +2529,8 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   p_nom_max = n_config.at['biogas upgrading', 'max capacity'],
                   lifetime = tech_costs.at['biogas upgrading', 'lifetime'],
                   capital_cost= capital_cost,
-                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'])
+                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM']
+                  )
 
             # existing or additional NG boiler
             capacity_boiler = np.abs(capacity * n.links.at[prefix + 'biogas upgrading', 'efficiency3'] / tech_costs.at['gas boiler steam', 'efficiency']) * 1.01 # lock the capacity to the biogas upgrading,
@@ -3261,7 +3284,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         methanation_buses.at['biogas in bus', 'biomethanation'] = methanation_buses.at['biogas in bus', 'methanation']
         methanation_buses.at['local EL bus', 'biomethanation'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['H2 storage bus', 'biomethanation'] = methanation_buses.at['H2 storage bus', 'methanation']
-
 
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)

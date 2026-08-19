@@ -50,7 +50,7 @@ def build_network_name(cfg):
     else:
         H2   = int(cfg["targets"]["price_H2"])
         MeOH = int(cfg["targets"]["price_meoh"])
-        CH4  = cfg["targets"]["price_bioCH4"]
+        CH4  = cfg["targets"]["price_CH4"]
         CH4  = int(CH4) if isinstance(CH4, (int, float)) else 0
 
     year = cfg["En_price_year"]
