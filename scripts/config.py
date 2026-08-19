@@ -179,5 +179,6 @@ if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:
 plot_cfg = plt_config["plotting"]
 items = plot_cfg["capacity_items"]
 bus_list_mp = plot_cfg["bus_list_mp"]
+capacity_threshold_default = float(plot_cfg.get("capacity_threshold_default", 1e-3))
 carrier_colors = dict(plt_config.get("carrier_colors", {}))
 

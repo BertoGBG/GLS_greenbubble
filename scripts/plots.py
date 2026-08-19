@@ -6437,6 +6437,7 @@ def run_plot_and_export(
         items_f = filter_items_by_capacity_threshold(
             n,
             items,
+            default_th=c.capacity_threshold_default, 
             include_exi=True,
             verbose=True,
         )
@@ -6456,7 +6457,7 @@ def run_plot_and_export(
             n,
             items,
             ws_networks=ws,
-            default_th=0.5,
+            default_th=c.capacity_threshold_default,
             sp_col="SP",
         )
         df_caps.to_csv(csv_folder / "opt_capacities_SP_vs_WP.csv")
@@ -6563,7 +6564,7 @@ def run_plot_and_export(
 
         figure_heatmaps_compare_scenarios_actual(
             n,
-            items,
+            items_f,
             outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
             title="Operational heatmaps by scenario (actual values; capacity-normalized colors)",
             cmap_pos="viridis",  # sequential for >=0 series
@@ -6718,7 +6719,11 @@ def run_plot_operational(
 
     def step_filter_items() -> None:
         items_f_holder["items_f"] = filter_items_by_capacity_threshold(
-            n, items, include_exi=True, verbose=True,
+            n,
+            items,
+            default_th=c.capacity_threshold_default,
+            include_exi=True,
+            verbose=True,
         )
 
     def step_inputs_ldc() -> None:
@@ -6816,7 +6821,7 @@ def run_plot_operational(
 
         figure_heatmaps_compare_scenarios_actual(
             n,
-            items,
+            items_f,
             outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
             title="Operational heatmaps — rolling horizon (actual values)",
             cmap_pos="viridis",
