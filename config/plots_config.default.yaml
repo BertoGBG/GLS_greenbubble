@@ -72,6 +72,7 @@ carrier_colors:
   El boiler:             "#0288d1"  # dark blue (shared with El boiler above)
 
 plotting:
+  capacity_threshold_default: 0.1 #1e-3 #unified filter threshold
   capacity_items:
 
     - label: Wind
