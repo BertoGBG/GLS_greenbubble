@@ -1795,6 +1795,68 @@ def save_config(results_folder, c):
         yaml.safe_dump(output, f, sort_keys=False, allow_unicode=True)
 
 
+def load_run_config(results_folder):
+    """Load the ``config_run.yaml`` fingerprint written by :func:`save_config`
+    next to a solved network's outputs, if present. Returns ``{}`` if absent
+    (e.g. an older run predating this mechanism).
+
+    Rules that only *interpret* an already-solved, fixed network (plotting,
+    CSV export) should describe it using the config that actually produced
+    it, not whatever ``config.yaml``/``n_config.yaml`` currently say -- which
+    may have drifted since the solve if an individual rule is rerun later.
+    See :func:`apply_run_config_overrides`.
+    """
+    path = Path(results_folder) / "networks" / "config_run.yaml"
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def apply_run_config_overrides(c, run_cfg):
+    """Return a config-like object describing a solved network by its own
+    recorded ``config_run.yaml`` (from :func:`load_run_config`) rather than
+    the live config module ``c``.
+
+    ``c`` itself is never mutated: a shim copying all of ``c``'s attributes
+    is built, then overlaid with whichever recorded values are present in
+    ``run_cfg``. If ``run_cfg`` is empty (no ``config_run.yaml`` found),
+    ``c`` is returned unchanged -- this is a no-op fallback, not an error,
+    so callers can use this unconditionally.
+    """
+    if not run_cfg:
+        return c
+
+    from types import SimpleNamespace
+    shim = SimpleNamespace(**{k: v for k, v in vars(c).items() if not k.startswith("_")})
+
+    cfg = run_cfg.get("config", {})
+    for attr in (
+        "USD_to_EUR", "amortization_period", "discount_rate",
+        "n_flags_opt", "stochastic", "targets_dict", "optimization",
+    ):
+        if attr in cfg:
+            setattr(shim, attr, cfg[attr])
+
+    n_config = run_cfg.get("n_config")
+    if n_config:
+        shim.n_config = pd.DataFrame.from_dict(n_config, orient="index").sort_index()
+
+    plots_config = run_cfg.get("plots_config")
+    if plots_config:
+        plot_cfg = plots_config.get("plotting", {})
+        if "capacity_items" in plot_cfg:
+            shim.items = plot_cfg["capacity_items"]
+        if "bus_list_mp" in plot_cfg:
+            shim.bus_list_mp = plot_cfg["bus_list_mp"]
+        if "capacity_threshold_default" in plot_cfg:
+            shim.capacity_threshold_default = float(plot_cfg["capacity_threshold_default"])
+        if "carrier_colors" in plots_config:
+            shim.carrier_colors = dict(plots_config["carrier_colors"])
+
+    return shim
+
+
 def create_folder_if_not_exists(path, folder_name):
     # general function for storing plots
     folder_path = os.path.join(path, folder_name)

@@ -10,11 +10,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pickle
 import pypsa
-from scripts.helpers import create_folder_if_not_exists, zero_small_capacities
+from scripts.helpers import (
+    create_folder_if_not_exists, zero_small_capacities,
+    load_run_config, apply_run_config_overrides,
+)
 from scripts.plots import run_plot_and_export
 from scripts import config as c
 
 n = pypsa.Network(snakemake.input.network)
+
+results_folder = str(Path(snakemake.input.network).parent.parent)
+
+# Describe this network using the config that actually produced it (recorded
+# in networks/config_run.yaml at solve time), not the live config.yaml/
+# n_config.yaml -- which may have changed since if this rule is rerun on its
+# own (see docs/issue #14: individual-rule reruns picking up config drift).
+# No-op fallback to live config if no config_run.yaml is found.
+c = apply_run_config_overrides(c, load_run_config(results_folder))
 
 # Clean solver-noise artifacts in-memory before any analysis.
 # The .nc on disk is never touched — this mirrors the pypsa-eur brownfield
@@ -33,7 +45,6 @@ else:
     comp_tech_map   = {}
     tech_costs_used = None
 
-results_folder = str(Path(snakemake.input.network).parent.parent)
 plot_folder    = create_folder_if_not_exists(results_folder, "plots")
 csv_folder     = create_folder_if_not_exists(results_folder, "csv")
 
