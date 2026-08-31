@@ -873,10 +873,10 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, name,
 
     # --- Reference plant efficiencies and capacities ---
     η_ref = abs(n.links.at[name, heat_efficiency_plant])
-    η_ref3 = abs(n.links.at[name, 'efficiency3'])
+    #η_ref3 = abs(n.links.at[name, 'efficiency3'])
 
     capacity_boiler = capacity * η_ref
-    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref3
+    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref
 
     # --- Natural gas boiler ---
     n.add("Link",
@@ -2429,7 +2429,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   lifetime = tech_costs.at['biogas','lifetime'],
                   p_nom_extendable = expansion,
                   p_nom = capacity ,
-                  p_nom_max = n_config.at['biogas', 'max capacity'],
+                  p_nom_max = n_config.at['biogas', 'max capacity'] / GL_eff.loc["bioCH4", "SkiveBiogas"],
                   capital_cost = capital_cost )
             return n
 
@@ -3287,11 +3287,13 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             carrier = carrier,
             bus0=methanation_buses.at['H2 in bus', 'biomethanation'],
             bus1=methanation_buses.at['biogas in bus', 'biomethanation'],
-            bus2=methanation_buses.at['product bus', 'biomethanation'],
+            bus2=methanation_buses.at['product bus', 'biomethanation'], # eCH4 collection
+            # bus4 = methanation_buses.at['product bus 2', 'biomethanation'],   product bus 2 = bioCH4 colleciton
             bus3=methanation_buses.at['local EL bus', 'biomethanation'],
             efficiency=-tech_costs.at["biomethanation", "biogas-input"],
-            efficiency2=tech_costs.at["biomethanation", "methane-output"],
+            efficiency2=tech_costs.at["biomethanation", "methane-output"], # - tech_costs.at["biomethanation", "biogas-input"]
             efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
+            # efficency4 = tech_costs.at["biomethanation", "biogas-input"],
             p_nom=capacity,
             lifetime=tech_costs.at["biomethanation", "lifetime"],
             p_nom_extendable=expansion,
