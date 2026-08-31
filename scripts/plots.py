@@ -1411,7 +1411,7 @@ def _find_product_slot(links, lk, collection_buses):
     return None
 
 
-def compute_lcop_by_technology(n, out_csv, out_plot):
+def compute_lcop_by_technology(n, out_csv, out_plot, capacity_th=0.0):
     """Compute LCOP, revenue, and annual profit for each technology injecting
     into a product collection bus (tagged is_product_bus=True).
 
@@ -1511,6 +1511,10 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
     rows = []
     link_names = []
     for lk in product_links:
+        p_nom_opt = _capacity_opt(links.loc[lk], "p_nom")
+        if p_nom_opt is None or p_nom_opt < capacity_th:
+            continue
+
         capex = _get_stat(capex_s, lk)
         opex  = _get_stat(opex_s,  lk)
 
@@ -6475,12 +6479,13 @@ def run_plot_and_export(
             ncols=3,
             price_links=[
                 {"label": "El pruchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
-                {"label": "El selling price", "name": "El3 bus_to_DK1", "ls": "-", "lw": 1.8},
+                {"label": "El selling price", "selector": "El3 bus_to_DK1", "ls": "-", "lw": 1.8},
                 {"label": "NG price", "selector": {"regex": r"_NG boiler$"}, "ls": "-", "lw": 1.8},
-                {"label": "NG selling price", "name": "CH4_to_delivery", "ls": "-", "lw": 1.8},
-                {"label": "DH selling price", "name": "DH_GL_to_DH_grid", "ls": "-", "lw": 1.8},
-                {"label": "Biochar selling price", "name": "biochar sequestration", "ls": "-", "lw": 1.8},
-                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq", "ls": "-", "lw": 1.8},
+                {"label": "bioCH4 selling price", "selector": "bioCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "eCH4 selling price", "selector": "eCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "DH selling price", "selector": "DH_GL_to_DH_grid", "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "selector": "biochar sequestration", "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "selector": "CO2 Liq seq", "ls": "-", "lw": 1.8},
             ],
             price_gens=[
                 {"label": "Pellets price", "selector": "pellets market", "ls": "-.", "lw": 1.8},
@@ -6596,6 +6601,7 @@ def run_plot_and_export(
             n,
             out_csv=csv_folder / "lcop_by_technology.csv",
             out_plot=plot_folder / "lcop_by_technology.png",
+            capacity_th=c.capacity_threshold_default,
         )
 
     def step_lcop_kkt() -> None:
@@ -6733,12 +6739,13 @@ def run_plot_operational(
             ncols=3,
             price_links=[
                 {"label": "El purchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
-                {"label": "El selling price",  "name": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
+                {"label": "El selling price",  "selector": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
                 {"label": "NG price",          "selector": {"regex": r"_NG boiler$"},   "ls": "-", "lw": 1.8},
-                {"label": "NG selling price",  "name": "CH4_to_delivery",            "ls": "-", "lw": 1.8},
-                {"label": "DH selling price",  "name": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
-                {"label": "Biochar selling price", "name": "biochar sequestration",     "ls": "-", "lw": 1.8},
-                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
+                {"label": "bioCH4 selling price", "selector": "bioCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "eCH4 selling price", "selector": "eCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "DH selling price",  "selector": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "selector": "biochar sequestration",     "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "selector": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
             ],
             price_gens=[
                 {"label": "Pellets price",  "selector": "pellets market",       "ls": "-.", "lw": 1.8},
@@ -6837,6 +6844,7 @@ def run_plot_operational(
             n,
             out_csv=csv_folder / "lcop_by_technology.csv",
             out_plot=plot_folder / "lcop_by_technology.png",
+            capacity_th=c.capacity_threshold_default,
         )
 
     def step_lcop_kkt() -> None:
