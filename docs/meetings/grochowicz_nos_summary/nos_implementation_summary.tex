@@ -640,6 +640,332 @@ three tiers end-to-end on a small demonstration network with dimensions
 
 \clearpage
 % =====================================================================
+\section{The decisive comparison: 7-year robust NOS design vs.\ equal-weight stochastic optimum}
+\label{sec:decisive}
+% =====================================================================
+Tutorial 5 (Section~\ref{sec:results}) demonstrates the machinery on a
+3-year slice with a small, illustrative dimension set. The run described
+here is the one we actually care about for the project: a full,
+production-scale comparison between \textbf{two structurally different ways
+of producing a single design that is good across several weather/price
+years}, run side by side on the identical underlying network, demand
+targets, and years, so that any difference in the resulting capacity mix is
+attributable to the \emph{method}, not to a config mismatch.
+
+\subsection{Two philosophies for one design}
+\label{sec:decisive-philosophy}
+Both sides of this comparison answer the question ``what capacity mix
+should we build if we don't want to bet on one specific weather/price
+year?'' --- but they answer it with different mathematics, and the
+difference is exactly the contrast Grochowicz et al.\ (2023) motivate their
+paper with (\S 1):
+
+\begin{description}[leftmargin=1.4em]
+  \item[Equal-weight stochastic optimisation.] PyPSA's native
+    multi-scenario mode solves \emph{one} LP with a shared first-stage
+    investment ($p_{\mathrm{nom}}$, $e_{\mathrm{nom}}$) and per-scenario
+    second-stage dispatch, minimising the \textbf{probability-weighted
+    expected cost} $\sum_s p_s\, c_s^\top x_s$. With seven years weighted
+    equally ($p_s = 1/7$), this is the classic two-stage stochastic-programming
+    answer: the design that is cheapest \emph{on average} over the seven
+    years, with no guarantee that it is good in any \emph{particular} one of
+    them --- a design can be the expected-cost optimum while still being
+    badly over budget in the single worst year, as long as it is
+    compensated by being especially cheap in others.
+  \item[Chebyshev-centre robust NOS design.] The Tier-3 procedure of
+    Section~\ref{sec:results} instead solves the cost-optimum
+    \emph{independently} for each of the seven years, builds each year's own
+    $\varepsilon$-near-optimal hull (Eq.~\ref{eq:budget}), intersects all
+    seven hulls, and takes the Chebyshev centre of the intersection. This
+    design carries \textbf{no probabilities at all} --- it asks only
+    whether a capacity mix exists that stays within $\varepsilon$ of
+    optimal \emph{simultaneously in every one of the seven years}, and if
+    so, picks the one with the largest margin ($r$, the Chebyshev radius) to
+    every year's boundary. It is a \emph{feasibility-of-robustness}
+    statement, not an expectation: $r > 0$ is itself the finding that a
+    single design can satisfy all seven years' near-optimality at once;
+    $r \le 0$ would mean no design does, at this slack.
+\end{description}
+Neither is more ``correct'' than the other; they trade off different
+things. Stochastic optimisation needs no slack parameter but needs
+probabilities (here, an equal-weight assumption standing in for genuine
+year-likelihood estimates) and only ever reports an \emph{average}; the
+robust NOS design needs no probabilities but needs a slack $\varepsilon$
+and reports a design that is \emph{simultaneously} acceptable everywhere it
+applies, at the cost of usually costing a little more in the design's own
+reference year than that year's true optimum would. Running both against
+the identical seven years, targets, and network is what lets us actually
+quantify that trade-off for GreenBubble's own technology mix, rather than
+taking it on faith from the literature.
+
+\subsection{Run configuration}
+Both runs share: \texttt{targets.driver: demand} with
+$\texttt{demand\_H2} = 200{,}000$, $\texttt{demand\_CH4} = 300{,}000$,
+$\texttt{demand\_meoh} = 15{,}000$ (MWh/y, flat profiles),
+\texttt{clustering.temporal.resolution: 3h}, and the seven weather/price
+years 2019--2025 each at \texttt{CO2\_cost = CO2\_cost\_ref\_year = 100}
+(no inter-year cost escalation --- isolating weather/price variability as
+the only thing that differs year to year). \texttt{n\_flags} enable
+biogas, central heat, renewables, electrolysis, methanolisation, and
+storage; \texttt{methanation} is off for this comparison (see
+Section~\ref{sec:decisive-notes}).
+
+\textbf{NOS side} (\texttt{run\_name: stochastic\_vs\_NOS\_D}, this document):
+run through \texttt{rules/near\_optimal\_staged.smk}'s
+\texttt{nos\_robust\_validate} target (Section~\ref{sec:dev3}) --- i.e.\ the
+\emph{adaptive, Grochowicz-method} sampler, not the fixed-count Halton
+sampler of \texttt{explore\_near\_optimal}, with dimensions
+\texttt{[onwind, solar, AEC, methanolisation, battery]} and
+$\varepsilon = \texttt{slack} = 0.05$. Concretely this executes seven
+independent \texttt{nos\_year\_optimum} solves, seven
+\texttt{nos\_year\_hull} adaptive Tier-2 explorations under the shared bound
+$c^\star = \max_i c_{\mathrm{opt}}(i)$, \texttt{nos\_intersect}'s Chebyshev
+centre of all seven hulls, \texttt{nos\_robust\_exact}'s realisation of that
+centre as a full network design, and finally
+\texttt{nos\_robust\_validate}'s simultaneous multi-year feasibility check
+--- the realised design's capacities fixed non-extendable and re-dispatched
+against each year's own real cost-optimal network, with a load-shedding
+safety valve turning any shortfall into a graded curtailment number instead
+of an opaque solver failure (Section~\ref{sec:dev3}, \emph{"Reuse landed"}).
+
+\textbf{Stochastic side}: the same seven years as an equal-weight
+(\,$p_s = 1/7$\,) PyPSA multi-scenario network, single joint solve.
+
+\subsection{Solver choice and a numerical-stability finding along the way}
+\label{sec:decisive-notes}
+Getting to a trustworthy run required resolving two real bugs uncovered
+while preparing this comparison, both worth recording since they bear
+directly on how much to trust any single solve's feasibility/infeasibility
+verdict on a network this size ($\sim$625k rows, $\sim$250k columns at 3h
+resolution):
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{A units mismatch on the biogas plant's expansion cap.}
+    \texttt{n\_config}'s \texttt{max capacity} for the digester link is
+    documented (and used elsewhere, e.g.\ its \texttt{initial capacity}
+    conversion) as MW of \emph{CH4 output}, but \texttt{p\_nom\_max} was
+    being set directly from that value onto a link whose \texttt{p\_nom}
+    bounds \emph{digester-input} flow (t/h dry matter) --- silently
+    capping real deliverable CH4 at roughly half the intended figure
+    (efficiency $\approx 0.477$). Fixed by applying the same
+    digester-efficiency division already used for \texttt{initial capacity}.
+  \item \textbf{Solver-algorithm disagreement on a degenerate cost-optimal
+    solve.} With \texttt{methanation} enabled, the base year-optimal solve
+    returned \emph{three different verdicts} depending on the Gurobi
+    algorithm: plain dual simplex (\texttt{DualReductions=0}) reported
+    \emph{unbounded}; the numerically robust homogeneous-barrier method
+    (\texttt{NumericFocus=3, BarHomogeneous=1}) reported \emph{infeasible};
+    and Gurobi's own internal re-solve during \texttt{computeIIS()} reported
+    \emph{feasible}. The objective's coefficient range spans nine orders of
+    magnitude ($5\times10^{-6}$ to $4\times10^{5}$), consistent with the kind
+    of ill-conditioning that produces exactly this disagreement. Disabling
+    \texttt{methanation} alone (leaving everything else, including a still
+    free-priced digester feedstock, unchanged) resolved it to a clean
+    \texttt{optimal} --- narrowing the remaining issue to the biological
+    methanation link's economics, not yet fully root-caused as of this
+    writing.
+\end{itemize}
+Given this, and consistent with the solver-degeneracy finding already
+reported in Section~\ref{sec:results} and Section~\ref{sec:dev3}
+(\texttt{gurobi-default} unusably slow on this class of degenerate MGA
+objective; \texttt{highs-fast} an outright correctness risk), this run uses
+\texttt{gurobi-numeric-focus} (\texttt{NumericFocus: 3, Method: 2,
+Crossover: 0, BarHomogeneous: 1}) rather than the faster
+\texttt{gurobi-barrier-fast} used elsewhere in this document --- the same
+speed class (still \texttt{Crossover: 0}), but the one setting combination
+that gave an unambiguous answer on this specific network during debugging.
+
+\subsection{Results}
+\label{sec:decisive-results}
+
+\subsubsection{First attempts: an empty intersection, and why}
+The first two full seven-year Tier-3 runs both came back with \emph{no}
+robust design: identical setup (dimensions, years, slack \emph{or}
+7\,\% slack, and after the ramp-limit fix of
+Section~\ref{sec:decisive-notes} identical ramp-limit-free technical
+assumptions), \texttt{nos\_intersect} reported
+\texttt{feasible\_intersection: false}, \texttt{chebyshev\_radius: NaN} in
+both cases, and \texttt{nos\_robust\_exact} correctly refused to realise a
+design rather than return something misleading. The per-year cost-optimal
+objectives explained why: \textbf{2022 was roughly half the cost-optimal
+objective of every other year} (28.09\,M€/y vs.\ 53--61\,M€/y elsewhere),
+and its optimal capacity mix sat in a completely different region of the
+5-dimensional space --- 159.6\,MW solar and 125.1\,MW battery, versus
+$\le$1.4\,MW and $\le$6.7\,MW respectively in every other year.
+Digging into the revenue structure (\texttt{El3\_to\_DK1}, the
+RE-to-grid export link, priced at each snapshot's real spot price) showed
+this was RE-export arbitrage: 2022's extreme spot-price spikes (the
+European energy-price crisis year) made 55.94\,M€/y of export revenue
+available at the default \texttt{max\_RE\_to\_grid=0.3} cap --- \emph{almost
+twice 2022's entire net objective} --- versus 11.23\,M€/y for 2024 and
+essentially none for 2019. 2022 wasn't cheaper because its underlying
+system was cheaper to build; it was cheaper because the optimal design
+was aggressively sized to arbitrage a price spike unique to that year.
+
+\subsubsection{Tightening the export cap, and the successful run}
+Sweeping \texttt{max\_RE\_to\_grid} down (cheap check: \texttt{nos\_year\_optimum}
+only, all seven years, no hull) tracked 2022 converging back toward the
+other six as the arbitrage channel narrowed:
+\begin{center}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$\alpha$ (\texttt{max\_RE\_to\_grid}) & 2022 objective & Objective range (7y) & 2022 solar/battery \\
+\midrule
+0.30 & 28.09\,M€/y (outlier) & 33.0\,M€/y & 159.6 / 125.1\,MW \\
+0.10 & 50.95\,M€/y (still lowest) & 12.7\,M€/y & 62.7 / 42.4\,MW \\
+0.05 & 58.19\,M€/y (mid-pack) & 12.2\,M€/y & 43.5 / 26.5\,MW \\
+\bottomrule
+\end{tabular}
+\end{center}
+At $\alpha = 0.05$, 2022 was no longer the extreme point of the group at
+all, so we committed to the full pipeline at
+$\alpha = \varepsilon = 0.05$ (\texttt{stochastic\_vs\_NOS\_D4\_a05s05}).
+\textbf{This time the intersection was feasible}:
+$r = 1.1334$, \texttt{feasible\_intersection: true}, realised design
+\begin{center}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+onwind & solar & AEC & methanolisation & battery & Cost \\
+\midrule
+137.18\,MW & 29.47\,MW & 70.73\,MW & 3.12\,MW & 26.52\,MW & 65.39\,M€/y \\
+\bottomrule
+\end{tabular}
+\end{center}
+and \texttt{nos\_robust\_validate}'s simultaneous multi-year feasibility
+check (this design fixed non-extendable, re-dispatched against each year's
+own real weather/price conditions, load-shedding safety valve at every
+Load bus) confirmed it: relative curtailment $\approx \mathbf{0.015\,\%}$
+in \emph{every one} of the seven years (22.5--26.2\,MWh out of the full
+year's demand, in all seven, including 2022) --- genuinely,
+simultaneously feasible, not just inside an approximated hull.
+
+\subsubsection{Stochastic side, with EVPI}
+The matched equal-weight (\,$p_s=1/7$\,) stochastic solve at the same
+$\alpha=0.05$ (\texttt{stochastic\_vs\_NOS\_S2}), with
+\texttt{stochastic.EVPI: true} additionally solving each year's own
+wait-and-see (WS) deterministic optimum:
+\begin{center}
+\small
+\begin{tabular}{@{}lc@{}}
+\toprule
+Quantity & Value [M€/y] \\
+\midrule
+RP (stochastic / here-and-now expected cost) & 63.978 \\
+$E[\text{WS}]$ (probability-weighted expected wait-and-see cost) & 60.971 \\
+\textbf{EVPI} $= \text{RP} - E[\text{WS}]$ & \textbf{3.007} \\
+\bottomrule
+\end{tabular}
+\end{center}
+EVPI $\approx$ 3.01\,M€/y ($\approx$\,4.7\,\% of RP) is
+the maximum GreenBubble should be willing to pay for perfect foresight of
+which weather/price year will occur before committing capacity --- a
+modest premium, meaning the equal-weight stochastic design already
+captures most of the value a perfectly-informed planner would have.
+(The seven per-scenario WS objectives reproduce the NOS side's own
+\texttt{nos\_year\_optimum} values exactly, as expected --- both are the
+same deterministic per-year optimum, computed two different ways.)
+
+\subsubsection{The cost of robustness, head to head}
+With both sides now run under identical technical assumptions ($\alpha =
+0.05$, ramp-limit-free, same seven years, same targets), the comparison
+Section~\ref{sec:decisive-philosophy} set out to make is now a real number:
+the robust Chebyshev-centre design costs \textbf{65.39\,M€/y}, the
+stochastic expected-cost optimum costs \textbf{63.98\,M€/y} --- a gap of
+\textbf{1.41\,M€/y ($\approx$\,2.2\,\%)}. That premium is what
+``no probabilities, but simultaneous $\varepsilon$-near-optimality in
+\emph{every} year'' costs over ``cheapest on average, no guarantee in any
+one year'' for this network, at this slack. It is a strikingly small
+premium for a materially stronger guarantee: the robust design isn't just
+cheap on average, it is verified (Section 8.4.2) to need essentially zero
+load-shedding in \emph{any} of the seven years, including the one
+(2022) that initially broke the na\"ive version of this same analysis.
+
+\emph{Note on comparability}: the technology-data cost tables were
+refreshed by the pipeline's own \texttt{onstart} staleness check between
+the diagnostic $\alpha$-sweep above and this final run, so the earlier
+$\alpha=0.3$ stochastic result reported in an earlier draft of this
+document (58.16\,M€/y) used a slightly different cost vintage than the
+numbers here; both sides of the final head-to-head comparison in this
+subsection used the identical (refreshed) cost table.
+
+\subsubsection{Coordinates side by side}
+\label{sec:decisive-coords}
+The two designs' actual dimension values, not just their objectives:
+\begin{center}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Dimension & Chebyshev centre (NOS) & Stochastic (RP) & Difference \\
+\midrule
+onwind           & 137.18\,MW & 146.99\,MW &  $-$9.81\,MW \\
+solar            &  29.47\,MW &   0.50\,MW & $+$28.97\,MW \\
+AEC              &  70.73\,MW &  85.09\,MW & $-$14.36\,MW \\
+methanolisation  &   3.12\,MW &   1.95\,MW &  $+$1.17\,MW \\
+battery          &  26.52\,MW &   0.00\,MW & $+$26.52\,MW \\
+\midrule
+Cost             & 65.39\,M€/y & 63.98\,M€/y & $+$1.41\,M€/y (2.2\,\%) \\
+\bottomrule
+\end{tabular}
+\end{center}
+The pattern is exactly what the two philosophies predict: the stochastic
+optimum bets almost entirely on onwind+AEC and builds essentially
+\textbf{zero battery and negligible solar} --- cheapest on average, since
+most of the seven years don't rent out solar/battery. The Chebyshev centre
+instead carries real solar and battery capacity specifically to stay
+inside 2022's own near-optimal band too (even at $\alpha=0.05$, 2022's own
+unconstrained optimum still wants $\sim$43.5/26.5\,MW solar/battery,
+Section 8.4.2) --- trading some onwind/AEC for that hedge, at the
+1.41\,M€/y premium above.
+
+\subsubsection{Grid connection: import vs.\ export capacity (a result, not a dimension)}
+\label{sec:decisive-grid}
+Not one of the five MGA dimensions, but a natural result to read off both
+solved networks --- the external grid connection's sized capacity,
+import (\texttt{DK1\_to\_El\_*}, one link per on-site agent, summed) and
+export (\texttt{El3\_to\_DK1}, priced at real spot prices, Section 8.4.1):
+\begin{center}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Grid connection & Chebyshev centre (NOS) & Stochastic (RP) & Difference \\
+\midrule
+Import (purchase) & 44.12\,MW & 40.07\,MW &  $+$4.04\,MW \\
+Export (sale)      & 19.08\,MW & 27.87\,MW &  $-$8.79\,MW \\
+\bottomrule
+\end{tabular}
+\end{center}
+The stochastic design leans harder on export (27.9 vs.\ 19.1\,MW) despite
+having no battery to smooth output --- more exposed to raw onwind
+variability, so it simply sells the surplus. The Chebyshev centre's
+battery lets it shift surplus in time instead, needing less export
+capacity but slightly more import capacity to keep the electrolyser firm
+through periods its own solar+battery pairing doesn't cover.
+\texttt{n\_config}'s \texttt{grid connection: max capacity} is
+\texttt{.inf} (unset, base default) in both runs, so neither of these
+figures is bumping against an artificial ceiling --- the sizing is purely
+economic.
+
+\textbf{An open modelling question worth flagging}: import and export are
+built as \emph{separate} extendable links (one \texttt{DK1\_to\_El\_*} per
+agent, plus the standalone \texttt{El3\_to\_DK1}), and --- checked directly
+against both solved networks --- \emph{every one of them carries the
+identical} \texttt{electricity grid connection} \textbf{capital-cost rate}
+(17,767.89\,€/MW/y), charged independently on each link's own
+\texttt{p\_nom\_opt}. That is, the model pays capital cost on
+\emph{import capacity + export capacity} added together, not on
+$\max(\text{import}, \text{export})$ as a single shared bidirectional
+connection would suggest. If GreenLab's real grid connection is one
+physical asset usable in both directions, this over-counts its cost by
+exactly the smaller direction's own contribution --- 339,079\,€/y for the
+Chebyshev centre design, 495,192\,€/y for the stochastic design (both
+happen to be the export link's own annualised capex, since export is the
+smaller of the two capacities in both designs). We could not determine
+from the code alone whether this is intentional (e.g.\ representing
+genuinely separate import/export equipment) or an oversight --- worth
+resolving before treating either design's absolute cost as final.
+
+% =====================================================================
 \section{Discussion points for the meeting}
 % =====================================================================
 \begin{enumerate}[leftmargin=1.4em]
@@ -673,6 +999,18 @@ three tiers end-to-end on a small demonstration network with dimensions
     PyPSA's native \emph{stochastic} (probability-weighted scenario) mode,
     which we currently treat as orthogonal (Tier 3 skipped on stochastic
     networks, see Section 3.3) rather than combined?
+  \item Section~\ref{sec:decisive} ran the robust Chebyshev-centre design
+    and an equal-weight 7-year stochastic solve head to head on the same
+    network, and the seven-year intersection came back \textbf{empty at
+    both 5\,\% and 7\,\% slack} --- with one year (2022) at roughly half
+    every other year's cost-optimal objective, plausibly the culprit. Does
+    an empty or near-empty intersection at practically-sized slack values
+    come up often in your own multi-year runs, and is a large cost-optimum
+    outlier among the intersected years the usual explanation when it does?
+    Is there a principled way to choose $\varepsilon$ a priori (rather than
+    raising it until the intersection opens up), or a diagnostic for
+    \emph{which} year(s) are driving an empty intersection short of
+    dropping them one at a time and re-running?
 \end{enumerate}
 
 % =====================================================================
