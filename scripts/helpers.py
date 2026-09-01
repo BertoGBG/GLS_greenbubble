@@ -1306,6 +1306,98 @@ def add_max_RE_sales_constraint(
             stacklevel=2,
         )
 
+
+def add_grid_connection_shared_capacity_constraint(
+    n,
+    m,
+    import_link: str = "DK1_to_ElDK1_buy",
+    export_link: str = "El3_to_DK1",
+    name: str = "grid_connection__shared_capacity",
+    warn: bool = True,
+):
+    """
+    Ties the shared import link's p_nom to the export link's p_nom so only one
+    physical grid-connection capacity is ever paid for (see
+    ``build_network()``'s grid-connection consolidation step and
+    ``add_local_el_connections`` in ``prepare_network.py``).
+
+    Only adds the constraint when ``n.meta["consolidated_grid_connection"]`` is
+    True *and* both links are independently re-confirmed present -- the flag is
+    never trusted alone (same belt-and-suspenders style as
+    :func:`add_max_RE_sales_constraint`). An n_flags configuration with only one
+    side present (e.g. a pure-import site with no export capability, or a fully
+    self-sufficient renewables site that never buys from the grid) has nothing
+    to share -- that link's own capital_cost was left untouched at build time,
+    and this function silently skips, exactly like every other custom
+    constraint in this module never raises for a missing model element.
+
+    A single equality constraint, not one per snapshot. Unlike
+    :func:`add_max_RE_sales_constraint` (which ties snapshot-indexed dispatch
+    variables that *are* broadcast per scenario), ``p_nom`` is a shared,
+    scenario-invariant first-stage investment variable in PyPSA's optimisation
+    -- confirmed by :func:`add_custom_constraints_stores`'s own p_nom-tying
+    logic a few lines above ("If your p_nom/e_nom variables are (name) only...
+    adding ONE constraint is sufficient, shared across scenarios"). So no
+    per-scenario looping is needed here. Each link's own native PyPSA bound on
+    dispatch (``p(t) <= p_nom``) then caps hourly flow for free, once the two
+    ``p_nom`` variables are tied together -- no per-timestep constraints
+    needed either.
+
+    The constraint name deliberately contains ``"__"`` so it's automatically
+    picked up by :func:`export_constraint_duals`'s generic custom-constraint
+    export (``custom = [k for k in n.model.constraints if "__" in k]``),
+    matching how :func:`add_max_RE_sales_constraint`'s stochastic-mode
+    constraints already get their duals exported.
+
+    Note for ``near-optimal_dev3`` / NOS: like :func:`add_max_RE_sales_constraint`,
+    PyPSA's native ``optimize_mga*`` never calls ``extra_functionality``, so if
+    this consolidation is ported to that branch, ``_solve_mga_in_direction``'s
+    ``apply_custom_constraints`` must also re-apply this constraint the same
+    way it already re-applies ``add_max_RE_sales_constraint`` -- otherwise the
+    near-optimal space would be computed against the wrong (looser) feasible
+    region, exactly the bug that pattern exists to avoid.
+    """
+
+    def _skip(msg: str):
+        if warn:
+            warnings.warn(f"[{name}] {msg} (skipping constraint)", RuntimeWarning, stacklevel=2)
+        return
+
+    meta = getattr(n, "meta", None) or {}
+    if not meta.get("consolidated_grid_connection", False):
+        return _skip("network.meta['consolidated_grid_connection'] is not set")
+
+    if import_link not in n.links.index or export_link not in n.links.index:
+        return _skip(f"'{import_link}' and/or '{export_link}' not present in this network")
+
+    def _link_p_nom_expr(link_key):
+        if "Link-p_nom" not in m.variables:
+            return None
+        v = m.variables["Link-p_nom"]
+        if "name" not in v.dims:
+            return None
+        names = list(v.coords["name"].values)
+        if names and isinstance(names[0], tuple):
+            matches = [k for k in names if (k[-1] if isinstance(k, tuple) else k) == link_key]
+            if not matches:
+                return None
+            key = matches[0]
+        else:
+            if link_key not in names:
+                return None
+            key = link_key
+        return v.sel(name=key)
+
+    import_expr = _link_p_nom_expr(import_link)
+    export_expr = _link_p_nom_expr(export_link)
+    if import_expr is None or export_expr is None:
+        return _skip(
+            f"could not resolve Link-p_nom variable for '{import_link}' and/or '{export_link}'"
+        )
+
+    m.add_constraints(import_expr == export_expr, name=name)
+
+
 # --- OPTIMIZATION-----
 def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
     if threads is not None:
@@ -1502,6 +1594,8 @@ def build_model_solve_network(
         n_flags=n_flags,
         include_agents=["biogas", "electrolysis", "methanation", "meoh"],  # NOTE DO NOT INCLUDE CENTRAL HEAT
     )
+
+    add_grid_connection_shared_capacity_constraint(n, m)
 
     add_custom_constraints_stores(n, m, n_config=n_config)
 
@@ -1855,6 +1949,91 @@ def apply_run_config_overrides(c, run_cfg):
             shim.carrier_colors = dict(plots_config["carrier_colors"])
 
     return shim
+
+
+def reallocate_grid_connection_capex(n, tolerance: float = 0.01):
+    """
+    Post-processing only: reallocate the shared grid-connection link's capital
+    cost onto the individual import/export links it actually represents, in
+    proportion to each link's own share of flow at the year's peak-usage
+    hour(s) -- so per-agent reporting (``save_full_component_csv``,
+    ``compute_payback_by_agent`` in ``plots.py``) reflects who actually drove
+    the shared connection's size, with no code changes needed in either
+    function (they already read ``capital_cost``/``p_nom_opt`` straight off
+    ``n.links``).
+
+    Mutates ``n`` in memory only -- never writes to disk, and never touches
+    the optimisation. Meant to be called right after a network is loaded for
+    reporting (e.g. in ``snakemake_plot.py``, immediately after
+    ``zero_small_capacities`` -- same "clean in-memory before analysis"
+    pattern already used there). No-op if
+    ``n.meta["consolidated_grid_connection"]`` isn't True, or if either the
+    shared import link or the export link is missing (nothing was
+    consolidated for this network -- see ``build_network()``'s
+    grid-connection consolidation step).
+
+    Method, no LP duals needed: sum flow across the shared import link's
+    branches (identified structurally, by ``bus0 == "ElDK1 buy bus"`` --
+    robust to which agents happen to be active) plus the export link, for
+    every snapshot. The hour(s) within ``tolerance`` of the combined peak are
+    the ones that actually forced the shared connection to be as big as it
+    is -- average each link's share of flow at just those hour(s), and give
+    it that same share of the shared link's total capex. The shared link's
+    own ``capital_cost`` is zeroed afterward so the total isn't
+    double-counted (mirrors the "external_grids should carry no allocated
+    cost" principle this whole design follows).
+    """
+    meta = getattr(n, "meta", None) or {}
+    if not meta.get("consolidated_grid_connection", False):
+        return
+
+    shared_import_link = "DK1_to_ElDK1_buy"
+    export_link = "El3_to_DK1"
+    if shared_import_link not in n.links.index or export_link not in n.links.index:
+        return
+
+    branch_links = list(n.links.index[n.links["bus0"] == "ElDK1 buy bus"])
+    flow_links = branch_links + [export_link]
+
+    p0 = n.links_t.p0
+    if isinstance(p0.columns, pd.MultiIndex):
+        # p_nom (capacity) is scenario-invariant, but dispatch isn't; average
+        # across scenarios as a pragmatic approximation for this
+        # reporting-only reallocation (never used in the optimisation).
+        p0 = p0.groupby(level=-1, axis=1).mean()
+
+    flow = pd.DataFrame(
+        {name: (p0[name] if name in p0.columns else 0.0) for name in flow_links},
+        index=n.snapshots,
+    ).clip(lower=0.0)
+    combined = flow.sum(axis=1)
+
+    if combined.empty or combined.max() <= 0:
+        # nothing ever dispatched through the shared connection -- nothing to
+        # reallocate off of; leave costs as build_network() left them.
+        return
+
+    peak = combined.max()
+    near_peak_snapshots = combined.index[combined >= peak * (1.0 - tolerance)]
+    shares = flow.loc[near_peak_snapshots].mean(axis=0)
+    total_share = float(shares.sum())
+    if total_share <= 0:
+        return
+    shares = shares / total_share
+
+    total_capex = float(
+        n.links.at[shared_import_link, "capital_cost"]
+        * n.links.at[shared_import_link, "p_nom_opt"]
+    )
+
+    for name in flow_links:
+        p_nom_opt = float(n.links.at[name, "p_nom_opt"])
+        allocated_eur_per_year = total_capex * float(shares.get(name, 0.0))
+        n.links.at[name, "capital_cost"] = (
+            allocated_eur_per_year / p_nom_opt if p_nom_opt > 1e-9 else 0.0
+        )
+
+    n.links.at[shared_import_link, "capital_cost"] = 0.0
 
 
 def create_folder_if_not_exists(path, folder_name):

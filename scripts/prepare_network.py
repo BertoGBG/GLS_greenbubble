@@ -799,20 +799,54 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
     # --- Local electricity bus ---
     ensure_bus(n, local_EL_bus, carrier="El", unit="MW")
 
-    # --- Grid connection link (DK1 → local bus) ---
-    link_name1 = f"DK1_to_{local_EL_bus}"
-    if link_name1 not in n.links.index:
-        cap_cost = tech_costs.at["electricity grid connection", "fixed"]
+    # --- Shared, capital-costed import connection (ElDK1 bus -> ElDK1 buy bus) ---
+    # Every agent's branch link below draws from this one bus/link instead of each
+    # independently paying its own "electricity grid connection" capex -- see
+    # build_network()'s grid-connection consolidation step and
+    # add_grid_connection_shared_capacity_constraint (helpers.py), which ties this
+    # link's p_nom to the export link's (El3_to_DK1) p_nom so only one physical
+    # connection capacity is ever paid for, whenever both sides exist for a given
+    # n_flags configuration.
+    shared_import_bus = "ElDK1 buy bus"
+    shared_import_link = "DK1_to_ElDK1_buy"
+    ensure_bus(n, shared_import_bus, carrier="El", unit="MW")
+    if shared_import_link not in n.links.index:
+        shared_cap_cost = tech_costs.at["electricity grid connection", "fixed"]
         if n_config is not None:
-            cap_cost *= n_config.at["grid connection", "cost factor"]
+            shared_cap_cost *= n_config.at["grid connection", "cost factor"]
 
         n.add(
             "Link",
-            link_name1,
+            shared_import_link,
             bus0="ElDK1 bus",
+            bus1=shared_import_bus,
+            efficiency=1.0,
+            capital_cost=float(shared_cap_cost),
+            p_nom_extendable=True,
+            lifetime=tech_costs.at["electricity grid connection", "lifetime"],
+        )
+
+    # --- Per-agent branch (ElDK1 buy bus -> local bus) ---
+    # capital_cost=loop_tol (not literally 0): the shared link above is now the
+    # only thing that pays real grid-connection capex, but a genuinely free
+    # extendable p_nom is a degenerate variable to an interior-point solver --
+    # with nothing to minimise, it can park p_nom_opt at an arbitrary, huge
+    # value (observed: ~3e6 MW on a real solve) since dispatch is bounded
+    # elsewhere anyway and cost is unaffected either way. loop_tol is the same
+    # trick already used a few lines below for the symbiosis link, for exactly
+    # this reason ("tiny cost prevents IPM assigning spurious capacity") --
+    # economically negligible, just enough to keep p_nom_opt meaningful when
+    # reported. Each branch still gets its own marginal_cost below, so
+    # per-agent purchase-cost (VOM) reporting is completely unaffected.
+    link_name1 = f"DK1_to_{local_EL_bus}"
+    if link_name1 not in n.links.index:
+        n.add(
+            "Link",
+            link_name1,
+            bus0=shared_import_bus,
             bus1=local_EL_bus,
             efficiency=1.0,
-            capital_cost=float(cap_cost),
+            capital_cost=loop_tol,
             p_nom_extendable=True,
             lifetime = tech_costs.at["electricity grid connection", "lifetime"],
         )
@@ -2696,6 +2730,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         if t in exp_to_add:
             capital_cost = tech_costs.at['biogas engine', 'fixed'] * n_config.at[t, 'cost factor']
             n = add_biogas_engine_cap_exp(n, prefix='', capital_cost=capital_cost, capacity=0, expansion=True, carrier=t)
+
         # add grid connections for both cases
         if t in cap_to_add + exp_to_add:
             # add connection to the external grid (based on "add_local_el_connections")
@@ -4338,6 +4373,58 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
     # 4. Apply system-wide constraints
     # ---------------------------------------------------------
     define_total_supply_constraints(network, network.snapshots, component='Generator')
+
+    # ---------------------------------------------------------
+    # 4b. Consolidate shared grid-connection capital cost
+    # ---------------------------------------------------------
+    # DK1_to_ElDK1_buy (import, added in add_local_el_connections) and El3_to_DK1
+    # (export, added in add_biogas/add_renewables) both represent capacity on what
+    # is physically one shared site grid connection. If both exist for this
+    # n_flags configuration, zero the export link's own capital_cost (the import
+    # link stays the sole payer -- arbitrary choice of anchor, since
+    # add_grid_connection_shared_capacity_constraint in helpers.py forces their
+    # p_nom to be equal anyway) and flag the network so that constraint gets
+    # added at solve time, and so snakemake_plot.py's post-processing step knows
+    # to reallocate the shared cost back onto individual links for reporting. If
+    # only one side exists (e.g. a pure-import site with no export capability, or
+    # a fully self-sufficient renewables site that never buys from the grid),
+    # there's nothing to share -- leave that link's own cost untouched, exactly
+    # as before this change.
+    _shared_import_link = "DK1_to_ElDK1_buy"
+    _export_link = "El3_to_DK1"
+    _both_grid_sides_exist = (
+        _shared_import_link in network.links.index and _export_link in network.links.index
+    )
+    network.meta = getattr(network, "meta", {}) or {}
+    if _both_grid_sides_exist:
+        network.links.at[_export_link, "capital_cost"] = 0.0
+        network.meta["consolidated_grid_connection"] = True
+    else:
+        network.meta["consolidated_grid_connection"] = False
+
+    # Fix agent allocation for the site-wide grid-connection components: they're
+    # not meaningfully "owned" by whichever add_XXX() happened to run first and
+    # create them via add_link_if_new's dedup (currently always add_biogas, an
+    # accident of call order) -- prefer "renewables" as the natural owner of
+    # grid import/export economics, falling back to "biogas" only if renewables
+    # isn't active.
+    _grid_components = [
+        c for c in (_shared_import_link, _export_link, "EXI_" + _export_link)
+        if c in network.links.index
+    ]
+    if _grid_components:
+        _target_comp = comp_renewables if n_flags.get("renewables", False) else comp_biogas
+        for _comp_dict in (comp_biogas, comp_renewables):
+            _comp_dict.setdefault("links", [])
+            if _comp_dict is _target_comp:
+                continue
+            for _c in _grid_components:
+                if _c in _comp_dict["links"]:
+                    _comp_dict["links"].remove(_c)
+        _target_comp.setdefault("links", [])
+        for _c in _grid_components:
+            if _c not in _target_comp["links"]:
+                _target_comp["links"].append(_c)
 
     # ---------------------------------------------------------
     # 5. Collect all component logs

@@ -387,6 +387,30 @@ how ``TSC_by_agent`` reports an expected total:
 Cross-checked against a real solved stochastic network: the weighted
 revenue − opex total matches ``n.objective`` exactly, net of capex.
 
+.. _payback-cost-allocation:
+
+**Shared grid-connection capex.** The import/export grid-connection links
+are consolidated onto one shared, capital-costed link at build time (see
+:ref:`grid-connection-capex` in :doc:`network_model`) so the LP only ever
+pays for one physical connection capacity. For reporting,
+``reallocate_grid_connection_capex`` (``scripts/helpers.py``, called from
+``snakemake_plot.py`` right after a solved network is loaded) splits that
+shared cost back onto the individual import/export links: it sums flow
+across all of them per snapshot, finds the hour(s) within 1% of the
+combined peak — the hour(s) that actually forced the shared connection to
+be that size — and gives each link that same share of the shared link's
+total annualised capital cost, in place of its own (zeroed)
+``capital_cost``. This is in-memory, reporting-only, and feeds
+``save_full_component_csv``'s "Fixed cost"/"Total cost" columns
+automatically, with no changes to that function. It does **not** reach the
+raw-investment/FOM figures below (``_investment_for``/``_annual_fom_for``),
+which look up cost by *technology* via ``comp_tech_map`` independent of
+``capital_cost`` — those still attribute the shared connection's raw
+investment as a single lump to whichever agent it's allocated to (fixed to
+prefer "renewables", falling back to "biogas", in :ref:`grid-connection-capex`)
+rather than split across consumers. Splitting that figure too is a
+known, scoped-out follow-up.
+
 **Investment.** Unlike LCOP's ``CAPEX`` (the *annualised* charge from
 ``n.statistics.capex()``), payback needs the *raw upfront* investment —
 how much money would need to be recovered, not how much is charged per

@@ -258,6 +258,14 @@ capacity factor, curtailment, specific and total fixed/variable costs, productio
 and revenue. Most figures above are aggregations of this table — start here when
 a plot raises a question.
 
+.. note::
+
+   The fixed/total cost figures for ``DK1_to_El_*`` (grid import) and
+   ``El3_to_DK1`` (grid export) here are a *reallocated* share of one shared
+   grid-connection capacity's cost, not each link's own independent capex —
+   see :ref:`grid-connection-capex` in :doc:`network_model` and
+   :ref:`payback-cost-allocation` in :doc:`economics`.
+
 .. seealso::
 
    :ref:`guide-economic-analysis` (theory) · :ref:`wildcards` (network-name encoding)
