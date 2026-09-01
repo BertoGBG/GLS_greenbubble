@@ -136,7 +136,7 @@ Solver profiles with pre-tuned tolerance and thread settings are defined in
 
 .. _grid-connection-capex:
 
-Shared grid-connection capacity and its capital cost
+Modelling the electrical grid interface
 ------------------------------------------------------
 
 The site connects to the external DK1 grid in two directions: import (one
