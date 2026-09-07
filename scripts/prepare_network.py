@@ -2484,9 +2484,9 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   efficiency4=GL_eff.loc["DM digestate", "SkiveBiogas"],
                   lifetime = tech_costs.at['biogas','lifetime'],
                   p_nom_extendable = expansion,
-                  p_nom = capacity ,
+                  p_nom = capacity,
                   p_nom_max = n_config.at['biogas', 'max capacity'],
-                  capital_cost = capital_cost )
+                  capital_cost = capital_cost)
             return n
 
         def add_biogas_storage_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
@@ -3323,6 +3323,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
+        # check and create bioCH4 collection infrastructure in case biogas upgrading no existing
+        n, product_bus_bio = add_targets(n, plant='biogas upgrading', inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                        n_options=n_options, targets_dict=targets_dict)
+        methanation_buses.at['product bus 2', 'biomethanation'] = product_bus_bio
+
         # add Heat  bus
         meth_heat_directions = {'Heat DH': 1,  # for compressor
                                 'Heat LT': 1}  # for compressor
@@ -3344,10 +3349,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             carrier = carrier,
             bus0=methanation_buses.at['H2 in bus', 'biomethanation'],
             bus1=methanation_buses.at['biogas in bus', 'biomethanation'],
-            bus2=methanation_buses.at['product bus', 'biomethanation'],
+            bus2=methanation_buses.at['product bus', 'biomethanation'], #eCH4
+            bus4=methanation_buses.at['product bus 2', 'biomethanation'], #bioCH4
             bus3=methanation_buses.at['local EL bus', 'biomethanation'],
             efficiency=-tech_costs.at["biomethanation", "biogas-input"],
-            efficiency2=tech_costs.at["biomethanation", "methane-output"],
+            efficiency2=tech_costs.at["biomethanation", "methane-output"] - tech_costs.at["biomethanation", "biogas-input"], #eCH4
+            efficiency4=tech_costs.at["biomethanation", "biogas-input"], #bioCH4
             efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
             p_nom=capacity,
             lifetime=tech_costs.at["biomethanation", "lifetime"],
