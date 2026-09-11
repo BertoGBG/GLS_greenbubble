@@ -3487,6 +3487,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='methanation biogas', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
+        # bioCH4 collection infrastructure is created unconditionally by add_biogas()
+        # (a hard dependency of methanation via network_dependencies), so only the
+        # bus reference is needed here.
+        methanation_buses.at['product bus 2', 'methanation biogas'] = 'bioCH4 collection'
+
         # add Heat MT bus
         meth_heat_directions = {'Heat MT': 1,
                                 'Heat DH': 1, # for compressor
@@ -3513,10 +3518,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['biogas in bus', 'methanation biogas'],
             bus3=methanation_buses.at['local EL bus', 'methanation biogas'],
             bus4=methanation_buses.at['Heat MT', 'methanation biogas'],
-            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
+            bus5=methanation_buses.at['product bus 2', 'methanation biogas'], #bioCH4
+            efficiency= tech_costs.at["methanation biogas","methane-output"] - tech_costs.at["methanation biogas","biogas-input"], #eCH4
             efficiency2=-tech_costs.at["methanation biogas","biogas-input"],
             efficiency3=-tech_costs.at["methanation biogas","electricity-input"] ,
             efficiency4=tech_costs.at["methanation biogas","heat-output"],
+            efficiency5=tech_costs.at["methanation biogas","biogas-input"], #bioCH4
             lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom=capacity,
             p_nom_extendable=expansion,
