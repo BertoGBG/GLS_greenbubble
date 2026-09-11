@@ -3229,8 +3229,94 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     # Add plant depending on tech status
     # ----------------------------------------------------------------------
 
+    def add_methanol_synthesis_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """H2 + CO2 -> crude methanol (methanol/water mixture), releasing reactor heat at MT.
+
+        Basis: bus0 = H2, as for 'methanolisation', so capacity is in MW_H2 and the
+        coefficients are divided by hydrogen-input. Unlike the aggregate unit this link
+        is a heat SOURCE: the reactor duty that DEA nets out internally is made explicit
+        on the Heat MT bus, where the distillation reboiler can bid for it.
+        """
+        name = f"{prefix}methanol synthesis"
+        n.add(
+            "Link",
+            name=name,
+            carrier=carrier,
+            bus0=meoh_buses.at['H2 in bus', 'methanol synthesis'],
+            bus1=meoh_buses.at['crude MeOH bus', 'methanol synthesis'],
+            bus2=meoh_buses.at['CO2 in bus', 'methanol synthesis'],
+            bus3=meoh_buses.at['local EL bus', 'methanol synthesis'],
+            bus4=meoh_buses.at['Heat MT', 'methanol synthesis'],
+            efficiency=  1 / tech_costs.at["methanol synthesis", "hydrogen-input"],
+            efficiency2= - tech_costs.at["methanol synthesis", "carbondioxide-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"],
+            efficiency3= - 0.1 * tech_costs.at["methanol synthesis", "electricity-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # same 0.1 convention as methanolisation
+            efficiency4= tech_costs.at["methanol synthesis", "heat-output"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # reactor heat, PRODUCED
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            lifetime=tech_costs.at["methanol synthesis", "lifetime"],
+            p_nom_max=n_config.at["methanol synthesis", "max capacity"],
+            capital_cost=capital_cost,
+            committable=(n_config.at["methanol synthesis", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanol synthesis", "min load"],
+            ramp_limit_up=n_config.at['methanol synthesis', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanol synthesis', 'ramp limit down'],
+            )
+        return n, meoh_buses
+
+    def add_methanol_distillation_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """Crude methanol -> AA-grade methanol, consuming reboiler heat at MT and rejecting condenser heat to DH.
+
+        Basis: bus0 = crude MeOH, so capacity is in MW_MeOH contained. No methanol is
+        lost (the step sets purity, not yield); the separated water is not wired to a bus.
+        """
+        name = f"{prefix}methanol distillation"
+        n.add(
+            "Link",
+            name=name,
+            carrier=carrier,
+            bus0=meoh_buses.at['crude MeOH bus', 'methanol distillation'],
+            bus1=meoh_buses.at['product bus', 'methanol distillation'],
+            bus2=meoh_buses.at['Heat MT', 'methanol distillation'],
+            bus3=meoh_buses.at['local EL bus', 'methanol distillation'],
+            bus4=meoh_buses.at['Heat DH', 'methanol distillation'],
+            efficiency=  1.0,                                                            # purity step, no MeOH lost
+            # Gross reboiler duty is DERIVED, never transcribed: Q_reb = net steam + Q_rxn.
+            # This makes (Q_reb - Q_rxn) == methanolisation heat-input an invariant of the
+            # code, so the split cannot silently drift from the aggregate it decomposes.
+            efficiency2= - (tech_costs.at["methanolisation", "heat-input"]
+                            + tech_costs.at["methanol synthesis", "heat-output"]),         # reboiler, CONSUMED
+            efficiency3= - 0.1 * tech_costs.at["methanol distillation", "electricity-input"], # same 0.1 convention as methanolisation
+            efficiency4= tech_costs.at["methanol distillation", "heat-output"],           # condenser -> DH
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            lifetime=tech_costs.at["methanol distillation", "lifetime"],
+            p_nom_max=n_config.at["methanol distillation", "max capacity"],
+            capital_cost=capital_cost,
+            committable=(n_config.at["methanol distillation", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanol distillation", "min load"],
+            ramp_limit_up=n_config.at['methanol distillation', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanol distillation', 'ramp limit down'],
+            )
+        return n, meoh_buses
+
+    def add_crude_meoh_storage_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """Intermediate crude-methanol tank: the buffer that lets synthesis and distillation run apart."""
+        n.add('Store',
+              name=prefix + 'crude MeOH store',
+              bus=meoh_buses.at['crude MeOH bus', 'methanol synthesis'],
+              carrier=carrier,
+              e_nom_extendable=expansion,
+              e_nom=capacity,
+              e_nom_max=n_config.at['crude MeOH storage', 'max capacity'],
+              e_cyclic=True,
+              capital_cost=capital_cost,
+              )
+        return n, meoh_buses
+
     # check what technologies to add
-    techs = ["methanolisation"]
+    # 'meoh split' replaces the single methanolisation link with synthesis + distillation
+    meoh_split = bool(n_options.at['meoh split', 'enable']) if 'meoh split' in n_options.index else False
+    techs = ["methanol synthesis", "methanol distillation"] if meoh_split else ["methanolisation"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
     if cap_to_add or exp_to_add:
@@ -3265,6 +3351,13 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             meoh_buses.at['CO2 storage bus', 'carrier'] = ''
             meoh_buses.at['CO2 storage bus', 'unit'] = ''
 
+        # intermediate crude-methanol bus, only when the split is active
+        if meoh_split:
+            meoh_buses.at['crude MeOH bus', 'meoh'] = 'crude MeOH'
+            meoh_buses.at['crude MeOH bus', 'carrier'] = 'crude MeOH'
+            meoh_buses.at['crude MeOH bus', 'unit'] = 'MW'
+            ensure_carrier(n, 'crude MeOH')
+
         n, meoh_buses = set_plant_connection(n, buses = meoh_buses , tech ='meoh', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
     else:
@@ -3275,20 +3368,75 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # Add technologies
     # ----------------------------------------------------------------------
-    t = 'methanolisation'
-    n.add('Carrier', t)
-    n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
-                                 n_options=n_options, targets_dict=targets_dict)
-    meoh_buses.at['product bus', t] = product_bus
+    if not meoh_split:
+        t = 'methanolisation'
+        n.add('Carrier', t)
+        n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                     n_options=n_options, targets_dict=targets_dict)
+        meoh_buses.at['product bus', t] = product_bus
 
-    if t in cap_to_add:
-        cap = n_config.at[t, "initial capacity"]
-        _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs) / tech_costs.at["methanolisation", "hydrogen-input"]
-        n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
+        if t in cap_to_add:
+            cap = n_config.at[t, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs) / tech_costs.at["methanolisation", "hydrogen-input"]
+            n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
 
-    if t in exp_to_add:
-        cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
-        n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
+        if t in exp_to_add:
+            cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
+            n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
+
+    else:
+        # Heat buses, shared by both halves. Heat MT is bidirectional (0) here, unlike the
+        # monolithic unit's -1: with the split the plant both supplies MT (reactor) and
+        # draws it (reboiler), and the net may go either way hour to hour.
+        _meoh_heat_directions = {'Heat MT': 0,
+                                 'Heat DH': 1,
+                                 'Heat LT': 1}
+        n, _meoh_heat_buses = add_local_heat_connections(n, _meoh_heat_directions, 'methanolisation',
+                                                         n_flags, tech_costs, n_config)
+        for _col in ['meoh', 'methanol synthesis', 'methanol distillation']:
+            meoh_buses.loc['Heat MT', _col] = _meoh_heat_buses[0]
+            meoh_buses.loc['Heat DH', _col] = _meoh_heat_buses[1]
+            meoh_buses.loc['Heat LT', _col] = _meoh_heat_buses[2]
+
+        # ---- synthesis: H2 + CO2 -> crude MeOH (+ reactor heat to MT) ----
+        t = 'methanol synthesis'
+        n.add('Carrier', t)
+        for _row in ['H2 in bus', 'CO2 in bus', 'local EL bus', 'crude MeOH bus']:
+            meoh_buses.at[_row, t] = meoh_buses.at[_row, 'meoh']
+
+        # ---- distillation: crude MeOH -> product (the sellable methanol) ----
+        d = 'methanol distillation'
+        n.add('Carrier', d)
+        meoh_buses.at['crude MeOH bus', d] = meoh_buses.at['crude MeOH bus', 'meoh']
+        meoh_buses.at['local EL bus', d] = meoh_buses.at['local EL bus', 'meoh']
+        n, product_bus = add_targets(n, plant='methanolisation', inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                     n_options=n_options, targets_dict=targets_dict)
+        meoh_buses.at['product bus', d] = product_bus
+
+        if t in cap_to_add:
+            cap = n_config.at[t, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanol synthesis", t, tech_costs) / tech_costs.at["methanol synthesis", "hydrogen-input"]
+            n, meoh_buses = add_methanol_synthesis_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier=t, meoh_buses=meoh_buses)
+        if t in exp_to_add:
+            cost = tech_costs.at["methanol synthesis", "fixed"] / tech_costs.at["methanol synthesis", "hydrogen-input"] * n_config.at[t, "cost factor"]
+            n, meoh_buses = add_methanol_synthesis_cap_exp(n, "", cost, 0, True, carrier=t, meoh_buses=meoh_buses)
+
+        if d in cap_to_add:
+            cap = n_config.at[d, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanol distillation", d, tech_costs)
+            n, meoh_buses = add_methanol_distillation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier=d, meoh_buses=meoh_buses)
+        if d in exp_to_add:
+            cost = tech_costs.at["methanol distillation", "fixed"] * n_config.at[d, "cost factor"]
+            n, meoh_buses = add_methanol_distillation_cap_exp(n, "", cost, 0, True, carrier=d, meoh_buses=meoh_buses)
+
+        # ---- intermediate crude-methanol tank ----
+        st = 'crude MeOH storage'
+        if n_config.at[st, 'expansion'] or n_config.at[st, 'initial capacity'] > 0:
+            n.add('Carrier', 'crude MeOH')
+            n, meoh_buses = add_crude_meoh_storage_cap_exp(
+                n, "", tech_costs.at['methanol storage', 'fixed'] if 'methanol storage' in tech_costs.index else 0.0,
+                n_config.at[st, 'initial capacity'], bool(n_config.at[st, 'expansion']),
+                carrier='crude MeOH', meoh_buses=meoh_buses)
 
     new_components = log_new_components(n, n0_dict)
 

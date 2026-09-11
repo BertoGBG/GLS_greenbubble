@@ -936,6 +936,96 @@ CO2_comp_res = compress_multistage_with_Tcap(
 )
 
 # ---- Update tech_inputs:
+# ----------------------------------------------------------------------------------
+# Methanol synthesis / distillation split  (option: n_options['meoh split','enable'])
+# ----------------------------------------------------------------------------------
+# The DEA sheet "98 Methanol from hydrogen" describes ONE aggregate unit and reports
+# NET steam (note F: "Steam produced in the methanol reactor is reused for heating
+# purposes in the distillation section. The value provided states the net import
+# steam."). Splitting the unit therefore needs one extra assumption; everything else
+# is pinned by the aggregate.
+#
+# Basis: per MWh_MeOH of final product, matching 'methanolisation'.
+#   Q_rxn  = 49.2 kJ/mol / 637.6 kJ/mol = 0.0772   reactor heat released (MT)
+#   Q_reb  = Q_rxn + heat-input(0.1049) = 0.1821   gross reboiler duty (MT)
+#   Q_cond = heat-output                 = 0.1000   condenser heat to DH
+# so that  Q_reb - Q_rxn == methanolisation heat-input, by construction.
+#   ΔH°298 = -49.2 kJ/mol  : Mbatha et al. 2021, Sustain. Energy Fuels 5:3490-3569, eqn (3)
+#   MeOH LHV 19.9 GJ/t     : DEA "98 Methanol from hydrogen", specific energy content
+#
+# Electricity is split 90/10 synthesis/distillation: the aggregate figure is
+# compressor-dominated ("Electricity demand (mostly compressor)", Taslimi et al. 2024
+# Table 2), and distillation draws only pumping power. 0.2439 + 0.0271 = 0.271, i.e.
+# the aggregate 'methanolisation' electricity-input, preserved exactly.
+#
+# CAPEX is split 80/20 -- AN ASSUMPTION, pending the itemised bare-module costs behind
+# Mucci et al. 2023 (arXiv:2305.18338), who costed "compressors, reactor, heat
+# exchangers, flashes, and distillation column" separately but report only the total.
+# 1364.7451 EUR/kW-methanol (methanolisation, costs_2030) x 0.8 / x 0.2.
+#
+# ALL of these must keep summing to the aggregate: the equivalence test (crude store
+# disabled) checks exactly that. Revise here, not in prepare_network.py.
+
+tech_inputs['methanol synthesis', 'hydrogen-input'] = {
+    'value': 1.138, 'unit': 'MWh_H2/MWh_MeOH',
+    'source': 'DEA 98 Methanol from hydrogen, via methanolisation',
+    'further description': 'all H2 enters the synthesis step; unchanged from the aggregate unit',
+}
+tech_inputs['methanol synthesis', 'carbondioxide-input'] = {
+    'value': 0.248, 'unit': 't_CO2/MWh_MeOH',
+    'source': 'DEA 98 Methanol from hydrogen, via methanolisation',
+    'further description': 'all CO2 enters the synthesis step; unchanged from the aggregate unit',
+}
+tech_inputs['methanol synthesis', 'electricity-input'] = {
+    'value': 0.2439, 'unit': 'MWh_e/MWh_MeOH',
+    'source': 'methanolisation electricity-input (0.271) x 0.9',
+    'further description': '90% of the aggregate; compressor-dominated (Taslimi et al. 2024 Table 2)',
+}
+tech_inputs['methanol synthesis', 'heat-output'] = {
+    'value': 0.0772, 'unit': 'MWh_th/MWh_MeOH',
+    'source': 'dH 298K = -49.2 kJ/mol (Mbatha et al. 2021, eqn 3) / MeOH LHV 637.6 kJ/mol',
+    'further description': 'reactor heat released at MT. Reaction enthalpy, not the recoverable duty at reactor temperature -- a lower bound, so the implied 42.4% reboiler reuse is conservative',
+}
+tech_inputs['methanol synthesis', 'investment'] = {
+    'value': 1091.7961, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030) x 0.8 -- ASSUMED SPLIT',
+    'further description': 'placeholder pending itemised costs behind Mucci et al. 2023 (arXiv:2305.18338)',
+}
+tech_inputs['methanol synthesis', 'lifetime'] = {
+    'value': 30, 'unit': 'years',
+    'source': 'DEA 98 Methanol from hydrogen',
+}
+
+# NOTE: 'methanol distillation' has NO heat-input entry on purpose. The gross reboiler
+# duty is derived in prepare_network.py as
+#     Q_reb = methanolisation['heat-input'] + methanol synthesis['heat-output']
+# so that (Q_reb - Q_rxn) equals the DEA net steam import exactly, by construction, and
+# cannot drift if Q_rxn is revised. At Q_rxn = 0.0772 this gives Q_reb = 0.1819.
+tech_inputs['methanol distillation', 'electricity-input'] = {
+    'value': 0.0271, 'unit': 'MWh_e/MWh_MeOH',
+    'source': 'methanolisation electricity-input (0.271) x 0.1',
+    'further description': '10% of the aggregate; pumping only',
+}
+tech_inputs['methanol distillation', 'heat-output'] = {
+    'value': 0.1, 'unit': 'MWh_th/MWh_MeOH',
+    'source': 'DEA 98 Methanol from hydrogen, district heating output (= methanolisation heat-output)',
+    'further description': 'condenser heat rejected to DH; unchanged from the aggregate unit',
+}
+tech_inputs['methanol distillation', 'investment'] = {
+    'value': 272.9490, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030) x 0.2 -- ASSUMED SPLIT',
+    'further description': 'placeholder pending itemised costs behind Mucci et al. 2023 (arXiv:2305.18338)',
+}
+tech_inputs['methanol distillation', 'lifetime'] = {
+    'value': 30, 'unit': 'years',
+    'source': 'DEA 98 Methanol from hydrogen',
+}
+tech_inputs['methanol distillation', 'water-output'] = {
+    'value': 0.55, 'unit': 't_H2O/t_MeOH',
+    'source': 'DEA 98 Methanol from hydrogen, Water row',
+    'further description': 'waste water separated from crude methanol -> crude is 64.5 wt% MeOH. Not wired to a bus; recorded for tank sizing',
+}
+
 tech_inputs['hydrogen storage compressor MeOH', 'electricity-input'] = {
     'value': H2_comp_res['specific_work_kWh_per_kg'] / lhv_h2,
     'unit': 'MW/MW_H2',

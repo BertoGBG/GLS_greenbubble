@@ -53,6 +53,9 @@ carrier_colors:
 
   # Methanol
   methanolisation:       "#f44336"  # red
+  methanol synthesis:    "#e57373"  # light red
+  methanol distillation: "#b71c1c"  # dark red
+  crude MeOH:            "#ff8a65"  # orange, intermediate
 
   # Battery / electrical storage
   battery:               "#1565c0"  # dark blue
