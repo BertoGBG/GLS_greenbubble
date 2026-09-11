@@ -21,3 +21,6 @@ resources/
 
 # Claude Code project instructions (local only)
 CLAUDE.md
+
+# JetBrains per-developer IDE state (open tabs, recent paths, window layout)
+.idea/workspace.xml
