@@ -3575,6 +3575,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_cat_methanation_CO2_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # costs are scaled form methantion biogas ( as small biogas dedicated plants, but efficiencies are taken form large scale methanation (Sabatier) reactors)
         # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here — see add_biomethanation_biogas_cap_exp.
         methanation_buses.at['H2 in bus', 'methanation CO2'] = methanation_buses.at['H2 in bus', 'methanation']
         methanation_buses.at['CO2 in bus', 'methanation CO2'] = 'CO2 to methanation'
@@ -3634,10 +3635,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['CO2 in bus', 'methanation CO2'],
             bus3=methanation_buses.at['local EL bus', 'methanation CO2'],
             bus4=methanation_buses.at['Heat MT', 'methanation CO2'],
-            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
-            efficiency2= - CO2_input,
-            efficiency3= - tech_costs.at["methanation biogas","electricity-input"] ,
-            efficiency4= tech_costs.at["methanation biogas","heat-output"],
+            efficiency= 1/tech_costs.at["methanation","hydrogen-input"],
+            efficiency2= - tech_costs.at["methanation","carbondioxide-input"]/tech_costs.at["methanation","hydrogen-input"],
+            efficiency3= - tech_costs.at["methanation biogas","electricity-input"] * vol_ratio,
+            efficiency4= tech_costs.at["methanation biogas","heat-output"] * vol_ratio,
             lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom_extendable= expansion,
             p_nom= capacity,
