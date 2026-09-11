@@ -3323,10 +3323,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
-        # check and create bioCH4 collection infrastructure in case biogas upgrading no existing
-        n, product_bus_bio = add_targets(n, plant='biogas upgrading', inputs_dict=inputs_dict, tech_costs=tech_costs,
-                                        n_options=n_options, targets_dict=targets_dict)
-        methanation_buses.at['product bus 2', 'biomethanation'] = product_bus_bio
+        # bioCH4 collection infrastructure is created unconditionally by add_biogas()
+        # (a hard dependency of methanation via network_dependencies), so only the
+        # bus reference is needed here.
+        methanation_buses.at['product bus 2', 'biomethanation'] = 'bioCH4 collection'
 
         # add Heat  bus
         meth_heat_directions = {'Heat DH': 1,  # for compressor
