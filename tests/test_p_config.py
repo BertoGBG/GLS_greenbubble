@@ -51,6 +51,23 @@ def test_lhv_biogas_is_derived_not_configured():
     assert lhv_biogas == pytest.approx(expected, rel=1e-4)
 
 
+def test_every_stream_has_a_bus_carrier():
+    """p_config's `carrier` is the BUS carrier (add_requirements_buses -> n.add("Bus", carrier=...)).
+
+    It is never the component carrier: the stores on the HP-storage buses all share
+    'HP gas storage' from n_config. Every stream needs one; 'H2 HP storage' was missing
+    it historically, which went unnoticed only because another code path created that
+    bus with the right carrier first.
+    """
+    missing = [i for i in c.p_streams.index if not isinstance(c.p_streams.at[i, "carrier"], str)]
+    assert not missing, f"streams without a bus carrier: {missing}"
+
+
+def test_hp_storage_carriers_match_their_fluid():
+    assert c.p_streams.at["H2 HP storage", "carrier"] == "H2"
+    assert c.p_streams.at["CO2 HP storage", "carrier"] == "CO2"
+
+
 def test_heat_tiers_are_ordered():
     """MT above DH above LT -- the cascade the heat buses assume."""
     mt = c.p_streams.at["Heat MT min", "T"]

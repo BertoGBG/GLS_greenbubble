@@ -97,7 +97,7 @@ streams:
   "H2 HP storage":
     state: {fluid: "H2", T: "${T_ambient}", P: 150}
     energy: {LHV: "${lhv.h2}"}
-    model: {buses: ["H2 HP storage"]}
+    model: {carrier: "H2", buses: ["H2 HP storage"]}
   "CO2 biogas upgrading":
     state: {fluid: "CO2", T: 50, P: 1}
     model: {carrier: "CO2", buses: ["CO2 sep", "CO2 distribution", "CO2 to biomethanation"]}
