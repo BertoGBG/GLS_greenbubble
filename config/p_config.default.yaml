@@ -1,0 +1,182 @@
+# SPDX-License-Identifier: MIT
+# =====================================================================
+# p_config -- PROCESS configuration: the physical state of every stream
+# in the model, separate from the techno-economic data (technology-data
+# / tech_inputs) and from the network component config (n_config).
+#
+# Division of labour, deliberately:
+#   technology-data / tech_inputs  ->  MAGNITUDES  (MWh/MWh, t/MWh, EUR/kW)
+#   p_config (this file)           ->  STATE       (fluid, T, P, LHV)
+# A duty and its temperature therefore live in different files and are
+# linked by reference, never duplicated -- duplicated numbers drift.
+#
+# Each stream carries up to three blocks:
+#   state:  physical condition        -- fluid, T [C], P [bar(a)]
+#   energy: energy content            -- LHV [MWh/t], moisture [-]
+#   model:  PyPSA topology            -- carrier, buses
+# A future heat-integration / pinch module reads `state` (and, later, a
+# `process_streams` section) and never needs to know what a bus is.
+#
+# "${...}" references resolve against `globals` below; lhv.biogas is DERIVED
+# from globals.mixtures.biogas at load time and is referenceable the same way.
+#
+# Overrides go in config/p_config.yaml (gitignored), deep-merged on top.
+# =====================================================================
+
+globals:
+  T_max_comp: 160    # maximum discharge temperature for all compressors [C]
+  T_ambient:  20    # [C]
+
+  lhv:              # [MWh/t]
+    ch4:     13.9
+    h2:      33.33
+    meoh:    5.54
+    pellets: 4.027777777777778     # straw pellets at `moisture`
+    chips:   2.3     # moist biomass at `moisture`
+    # biogas: DERIVED at load time from mixtures.biogas (mass-weighted CH4 fraction)
+
+  mixtures:         # mole fractions; CoolProp names
+    biogas:
+      Methane:       0.65
+      CarbonDioxide: 0.35
+
+# ---------------------------------------------------------------------
+# Streams. Index is a UNIQUE NAME used for look-up throughout the model.
+# `fluid` must match GreenBubble nomenclature (matched to CoolProp inside
+# compressor_calculation); `carrier` must match n_config naming, e.g. H2
+# -> "H2 compressor", not Hydrogen.
+# ---------------------------------------------------------------------
+streams:
+  "Heat MT max":
+    state: {fluid: "Water", T: 180, P: 10}
+    model: {carrier: "Heat"}
+  "Heat MT min":
+    state: {fluid: "Water", T: 140, P: 3}
+    model: {carrier: "Heat", buses: ["Heat MT", "Heat MT storage"]}
+  "Heat DH min":
+    state: {fluid: "Water", T: 90, P: 1}
+    model: {carrier: "Heat", buses: ["Heat DH", "DH grid", "Heat DH storage"]}
+  "Heat LT min":
+    state: {fluid: "Water", T: 50, P: 1}
+    model: {carrier: "Heat", buses: ["Heat LT"]}
+  "Ambient":
+    state: {fluid: "Air", T: "${T_ambient}", P: 1}
+    model: {carrier: "Heat", buses: ["Heat amb"]}
+  "H2 normal":
+    state: {fluid: "H2", T: 0, P: 1}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: []}
+  "CO2 normal":
+    state: {fluid: "CO2", T: 0, P: 1}
+    energy: {LHV: 0}
+    model: {carrier: "CO2", buses: []}
+  "CH4 normal":
+    state: {fluid: "CH4", T: 0, P: 1}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: []}
+  "NG grid":
+    state: {fluid: "CH4", T: "${T_ambient}", P: 40}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: ["NG"]}
+  "H2 production":
+    state: {fluid: "H2", T: 50, P: 30}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2", "H2 distribution", "H2 delivery"]}
+  "H2 to methanolisation":
+    state: {fluid: "H2", T: "${T_max_comp}", P: 80}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 to methanolisation"]}
+  "H2 to biomethanation":
+    state: {fluid: "H2", T: "${T_ambient}", P: 1}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 to biomethanation"]}
+  "H2 to methanation":
+    state: {fluid: "H2", T: "${T_max_comp}", P: "${T_ambient}"}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 to methanation"]}
+  "H2 HP storage":
+    state: {fluid: "H2", T: "${T_ambient}", P: 150}
+    energy: {LHV: "${lhv.h2}"}
+    model: {buses: ["H2 HP storage"]}
+  "CO2 biogas upgrading":
+    state: {fluid: "CO2", T: 50, P: 1}
+    model: {carrier: "CO2", buses: ["CO2 sep", "CO2 distribution", "CO2 to biomethanation"]}
+  "biogas":
+    state: {fluid: "biogas", T: 50, P: 1}
+    energy: {LHV: "${lhv.biogas}"}
+    model: {carrier: "gas", buses: ["biogas", "biogas to biomethanation"]}
+  "biogas to methanation":
+    state: {fluid: "biogas", T: "${T_max_comp}", P: "${T_ambient}"}
+    energy: {LHV: "${lhv.biogas}"}
+    model: {carrier: "gas", buses: ["biogas to methanation"]}
+  "CH4":
+    state: {fluid: "CH4", T: 50, P: 1}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: ["CH4", "biomethane", "bio methane", "bio CH4"]}
+  "meoh":
+    state: {fluid: "Methanol", T: 50, P: 1}
+    energy: {LHV: "${lhv.meoh}"}
+    model: {carrier: "Methanol", buses: ["Methanol"]}
+  "CO2 to methanolisation":
+    state: {fluid: "CO2", T: "${T_max_comp}", P: 80}
+    model: {carrier: "CO2", buses: ["CO2 to methanolisation", "CO2 to meoh"]}
+  "CO2 to methanation":
+    state: {fluid: "CO2", T: "${T_max_comp}", P: "${T_ambient}"}
+    model: {carrier: "CO2", buses: ["CO2 to methanation"]}
+  "CO2 HP storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 60}
+    model: {carrier: "CO2", buses: ["CO2 HP storage"]}
+  "CO2 from HP storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 30}
+    model: {carrier: "CO2"}
+  "CO2 from Liq storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 16}
+    model: {carrier: "CO2"}
+  "CO2 Liq storage":
+    state: {fluid: "CO2", T: -26, P: 16}
+    model: {carrier: "CO2", buses: ["CO2 Liq sequestration", "CO2 Liq storage"]}
+  "pellets":
+    state: {fluid: "pellets", T: "${T_ambient}"}
+    energy: {LHV: "${lhv.pellets}", moisture: 0.13}
+    model: {carrier: "pellets", buses: ["pellets"]}
+  "chips":
+    state: {fluid: "pellets", T: "${T_ambient}"}
+    energy: {LHV: "${lhv.chips}", moisture: 0.5}
+    model: {carrier: "moist biomass", buses: ["moist biomass"]}
+
+# ---------------------------------------------------------------------
+# process_streams -- the hooks for future heat integration (pinch / HEN).
+#
+# NOT YET CONSUMED BY THE MODEL. Declared here so that temperature
+# attribution has a home the day it is needed: technology-data gives the
+# duty magnitude, this gives the temperature it is available/required at,
+# which is exactly what technology-data can never supply and what a pinch
+# analysis cannot do without.
+#
+# Per stream:
+#   duty_ref  "<technology>:<parameter>"  -> looked up in tech_costs, never copied
+#   T_supply  [C]   temperature the stream starts at
+#   T_target  [C]   temperature it must reach
+#   type      source (releases heat) | sink (requires heat)
+#
+# Populate as each process is characterised. The methanol pair below is
+# commented out until the 'meoh split' work lands on this branch.
+# ---------------------------------------------------------------------
+process_streams: {}
+#  methanol synthesis:
+#    reactor:
+#      duty_ref: "methanol synthesis:heat-output"
+#      T_supply: 250
+#      T_target: 180
+#      type: source
+#  methanol distillation:
+#    reboiler:
+#      duty_ref: "methanol distillation:heat-input"
+#      T_supply: 180
+#      T_target: 179
+#      type: sink
+#    condenser:
+#      duty_ref: "methanol distillation:heat-output"
+#      T_supply: 95
+#      T_target: 90
+#      type: source

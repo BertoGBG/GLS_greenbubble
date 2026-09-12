@@ -89,6 +89,67 @@ _n_opt.pop("base", None)
 n_config = pd.DataFrame.from_dict(_n_raw, orient="index").sort_index()
 n_options = pd.DataFrame.from_dict(_n_opt, orient="index").sort_index()
 
+# --- process config (stream state: fluid / T / P / LHV) ---
+# p_config holds the PHYSICAL state of every stream; magnitudes (duties, costs,
+# efficiencies) stay in technology-data / tech_inputs. See config/p_config.default.yaml.
+_p_raw = _load_with_override(
+    _CFG_DIR / "p_config.default.yaml",
+    _CFG_DIR / "p_config.yaml",
+)
+p_globals = _p_raw.get("globals", {})
+
+
+def _p_derive_lhv_biogas(g: dict) -> float:
+    """Mass-weighted CH4 LHV of the biogas mixture.
+
+    Derived, not configured: it follows from globals.mixtures.biogas and the
+    CoolProp molar masses, so it must never be typed into the YAML where it
+    could drift from the composition it is supposed to describe.
+    """
+    import CoolProp.CoolProp as CP
+    mix = g["mixtures"]["biogas"]
+    M = {sp: CP.PropsSI("M", "T", 300, "P", 1e5, sp) for sp in mix}
+    M_mix = sum(mix[sp] * M[sp] for sp in mix)
+    w_CH4 = mix["Methane"] * M["Methane"] / M_mix
+    return g["lhv"]["ch4"] * w_CH4
+
+
+def _p_resolve(value, ns: dict):
+    """Resolve "${a.b}" references against the flattened globals namespace."""
+    if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+        key = value[2:-1]
+        if key not in ns:
+            raise KeyError(f"p_config: unknown reference '${{{key}}}'")
+        return ns[key]
+    return value
+
+
+def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
+    """Flatten streams.<name>.{state,energy,model} into one row per stream.
+
+    Absent fields stay absent (NaN in the frame) rather than being filled with a
+    default -- the legacy dict was heterogeneous and reproducing it exactly is what
+    lets the migration be verified field-for-field.
+    """
+    ns = {"T_max_comp": g["T_max_comp"], "T_ambient": g["T_ambient"]}
+    ns.update({f"lhv.{k}": v for k, v in g["lhv"].items()})
+    ns["lhv.biogas"] = _p_derive_lhv_biogas(g)
+
+    flat = {}
+    for name, blocks in (raw.get("streams") or {}).items():
+        row = {}
+        for blk in ("state", "energy", "model"):
+            for k, v in (blocks.get(blk) or {}).items():
+                row[k] = _p_resolve(v, ns)
+        flat[name] = row
+    return pd.DataFrame.from_dict(flat, orient="index")
+
+
+p_streams = _p_build_streams(_p_raw, p_globals)
+p_mixtures = p_globals.get("mixtures", {})
+# Declared-but-unconsumed heat-integration hooks; see p_config.default.yaml.
+p_process_streams = _p_raw.get("process_streams") or {}
+
 # --- plots ---
 plt_config = _load_with_override(
     _CFG_DIR / "plots_config.default.yaml",

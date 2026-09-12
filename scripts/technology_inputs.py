@@ -18,72 +18,45 @@ import numpy as np
 import pandas as pd
 import CoolProp.CoolProp as CP
 
-# --- Network Inputs  T and P levels -------
-T_max_comp = 160 # maximum discharge temperature for all compressors
-T_ambient = 20 #
+# --- Process inputs: stream state (fluid / T / P / LHV) --------------------------
+# These now live in config/p_config.default.yaml (+ gitignored p_config.yaml override),
+# loaded by scripts/config.py. Only DERIVED quantities are computed here -- anything
+# typed by a human belongs in the YAML.
+#
+# symbiosis_n keeps its name, shape and contents exactly: it is built from the YAML and
+# is field-for-field identical to the dict it replaces, so every existing look-up
+# (58 here, 67 in prepare_network.py) is untouched.
+from scripts import config as _c
+
+T_max_comp = _c.p_globals["T_max_comp"]   # maximum discharge temperature for all compressors
+T_ambient  = _c.p_globals["T_ambient"]
 
 # biogas composition (used only locally)
-biogas_mix = {"Methane": 0.65, "CarbonDioxide": 0.35}
+biogas_mix = _c.p_mixtures["biogas"]
 M_CH4 = CP.PropsSI("M", "T", 300, "P", 1e5, "Methane")       # [kg/mol]
 M_CO2 = CP.PropsSI("M", "T", 300, "P", 1e5, "CarbonDioxide") # [kg/mol]
 M_mix = biogas_mix['Methane']*M_CH4 + biogas_mix['CarbonDioxide']*M_CO2
 w_CH4 = biogas_mix['Methane']*M_CH4 / M_mix
 w_CO2 = biogas_mix['CarbonDioxide']*M_CO2 / M_mix
 
-lhv_ch4 = 13.9 # MWh/t
-lhv_biogas = lhv_ch4 * w_CH4
-lhv_h2 = 33.33 # MWh/t
-lhv_meoh = 5.54 # MWh/t
-lhv_pellets = 14.5/3.6 #  MWh/t @ moisture pellets (straw pellets)
-lhv_chips = 2.3 #  MWh/t @ moisture moist biomass (straw pellets)
+_lhv = _c.p_globals["lhv"]
+lhv_ch4     = _lhv["ch4"]
+lhv_h2      = _lhv["h2"]
+lhv_meoh    = _lhv["meoh"]
+lhv_pellets = _lhv["pellets"]
+lhv_chips   = _lhv["chips"]
+lhv_biogas  = lhv_ch4 * w_CH4   # derived, mirrors config._p_derive_lhv_biogas
 
-# CoolProp -  cache to avoid rebuilding phase envelopes for mixtures repeatedly (needed for not pure fluids)
+# CoolProp - cache to avoid rebuilding phase envelopes for mixtures repeatedly (needed for not pure fluids)
 _AS_cache = {}
 
-# ------ List of stream in symbiosis network
-# if a value is missing is either calculated or constrained by a global value (e.g. T_max_comp)
-# fluid nomenclature must follow the Greenbube model, but it is matched to CoolProp standards: https://coolprop.org/fluid_properties/PurePseudoPure.html#list-of-fluids  within compressor_calculation
-# fluid field must match the nomenclature in n_config (e.g. H2 --> H2 compressor, do not use Hydrogen --> H2 compressor # TODO : make it more general
-# biogas is handles direclty from mixture defined in p
-
-# network of fluid streams : index is a UNIQUE NAME and is used for look-up in the model and add buses
-# T : Celsius
-# P : bar(a)
-
-symbiosis_data = {
-    "Heat MT max": {"fluid": 'Water', "T": 180, 'P' : 10, 'carrier' : 'Heat'}, # production
-    'Heat MT min': {"fluid": 'Water', "T": 140, 'P': 3, 'carrier' : 'Heat', 'buses' : ['Heat MT', "Heat MT storage"] }, # return
-    'Heat DH min': {"fluid": 'Water', "T": 90, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat DH' ,'DH grid', "Heat DH storage"] },
-    'Heat LT min': {"fluid": 'Water', "T": 50, 'P': 1, 'carrier' : 'Heat', 'buses' : ['Heat LT'] },
-    'Ambient': {"fluid": 'Air', "T": T_ambient, 'P': 1, 'carrier' : 'Heat' , 'buses' : ['Heat amb'] },
-    'H2 normal': {"fluid": 'H2', "T": 0, 'P': 1, 'LHV': lhv_h2, 'carrier': 'H2', 'buses': []},
-    'CO2 normal': {"fluid": 'CO2', "T": 0, 'P': 1, 'LHV': 0, 'carrier': 'CO2', 'buses': []},
-    'CH4 normal': {"fluid": 'CH4', "T": 0, 'P': 1, 'LHV': lhv_ch4, 'carrier': 'gas', 'buses': []},
-    'NG grid': {"fluid": 'CH4', "T": T_ambient, 'P': 40, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['NG'] },
-    'H2 production': {"fluid": 'H2', "T": 50, 'P': 30, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2' , 'H2 distribution', 'H2 delivery']},
-    'H2 to methanolisation': {"fluid": 'H2', "T": T_max_comp, 'P': 80 , 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanolisation']},
-    'H2 to biomethanation': {"fluid": 'H2', "T": T_ambient, 'P': 1, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to biomethanation']},
-    'H2 to methanation': {"fluid": 'H2', "T": T_max_comp, 'P': 20, 'LHV': lhv_h2, 'carrier' : 'H2', 'buses' : ['H2 to methanation']},
-    'H2 HP storage': {"fluid": 'H2', "T": T_ambient, 'P': 150, 'LHV': lhv_h2, 'buses' : ['H2 HP storage']},
-    'CO2 biogas upgrading': {"fluid": 'CO2', "T": 50, 'P': 1, 'carrier' : 'CO2', 'buses' : ["CO2 sep", "CO2 distribution", 'CO2 to biomethanation']},
-    'biogas': {"fluid": "biogas", "T": 50, 'P': 1, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' : ['biogas', 'biogas to biomethanation']}, # coolprop name assigned in function (as a mixture)
-    'biogas to methanation': {"fluid": "biogas", "T": T_max_comp, 'P': 20, 'LHV': lhv_biogas, 'carrier' : 'gas', 'buses' :['biogas to methanation']},
-    'CH4': {"fluid": "CH4", "T": 50, 'P': 1, 'LHV': lhv_ch4, 'carrier' : 'gas', 'buses' : ['CH4', 'biomethane', 'bio methane', 'bio CH4']},  # coolprop name assigned in function (as a mixture)
-    'meoh': {"fluid": "Methanol", "T": 50, 'P': 1, 'LHV': lhv_meoh, 'carrier' : 'Methanol', 'buses' : ['Methanol']},
-    'CO2 to methanolisation': {"fluid": 'CO2', "T": T_max_comp, 'P': 80, 'carrier' : 'CO2', 'buses' : ['CO2 to methanolisation', 'CO2 to meoh']},
-    'CO2 to methanation': {"fluid": 'CO2', "T": T_max_comp, 'P': 20, 'carrier' : 'CO2', 'buses' :['CO2 to methanation']},
-    'CO2 HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 60, 'carrier' : 'CO2', 'buses' : ['CO2 HP storage']},
-    'CO2 from HP storage': {"fluid": 'CO2', "T": T_ambient, 'P': 30,'carrier' : 'CO2'},
-    'CO2 from Liq storage': {"fluid": 'CO2', "T": T_ambient, 'P': 16, 'carrier' : 'CO2',},
-    'CO2 Liq storage': {"fluid": 'CO2', "T": -26, 'P': 16, 'carrier' : 'CO2', 'buses' : ['CO2 Liq sequestration', 'CO2 Liq storage']},
-    'pellets': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_pellets, 'moisture' : 0.13, 'carrier' : 'pellets','buses': ['pellets']}, # name NOT valid in coolprop
-    'chips': {"fluid": "pellets", "T": T_ambient, 'LHV': lhv_chips, 'moisture' : 0.5, 'carrier' : 'moist biomass', 'buses' :["moist biomass"]},  # name NOT valid in coolprop
-}
-
-symbiosis_n = pd.DataFrame.from_dict(symbiosis_data, orient="index")
+# ------ Streams in the symbiosis network (see config/p_config.default.yaml) -------
+# index is a UNIQUE NAME used for look-up in the model and to add buses
+# T : Celsius ; P : bar(a)
+symbiosis_n = _c.p_streams.copy()
 
 # list of mixtures defined in the model
-mixture_database ={'biogas' : biogas_mix}
+mixture_database = dict(_c.p_mixtures)
 
 # --- Component specific Calculations & HELPERS
 
