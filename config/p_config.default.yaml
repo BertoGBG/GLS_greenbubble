@@ -31,7 +31,7 @@ globals:
     ch4:     13.9
     h2:      33.33
     meoh:    5.54
-    pellets: 4.027777777777778     # straw pellets at `moisture`
+    pellets: 4.027777777777778     # straw pellets at `moisture` 13%
     chips:   2.3     # moist biomass at `moisture`
     # biogas: DERIVED at load time from mixtures.biogas (mass-weighted CH4 fraction)
 
@@ -41,12 +41,17 @@ globals:
       CarbonDioxide: 0.35
 
 # ---------------------------------------------------------------------
-# Streams. Index is a UNIQUE NAME used for look-up throughout the model.
-# `fluid` must match GreenBubble nomenclature (matched to CoolProp inside
-# compressor_calculation); `carrier` must match n_config naming, e.g. H2
-# -> "H2 compressor", not Hydrogen.
+# shared -- states that belong to the NETWORK, not to any one process:
+# distribution headers, heat tiers, storage conditions, external markets and
+# the normal-condition reference states used for density calculations.
+#
+# A process port inherits from one of these with `from:` and overrides only
+# what its unit operation changes (almost always just T and P, downstream of
+# a compressor). Inheriting rather than restating is what makes two processes
+# on the same bus agree by construction instead of by someone keeping two
+# copies in step.
 # ---------------------------------------------------------------------
-streams:
+shared:
   "Heat MT max":
     state: {fluid: "Water", T: 180, P: 10}
     model: {carrier: "Heat"}
@@ -82,18 +87,6 @@ streams:
     state: {fluid: "H2", T: 50, P: 30}
     energy: {LHV: "${lhv.h2}"}
     model: {carrier: "H2", buses: ["H2", "H2 distribution", "H2 delivery"]}
-  "H2 to methanolisation":
-    state: {fluid: "H2", T: "${T_max_comp}", P: 80}
-    energy: {LHV: "${lhv.h2}"}
-    model: {carrier: "H2", buses: ["H2 to methanolisation"]}
-  "H2 to biomethanation":
-    state: {fluid: "H2", T: "${T_ambient}", P: 1}
-    energy: {LHV: "${lhv.h2}"}
-    model: {carrier: "H2", buses: ["H2 to biomethanation"]}
-  "H2 to methanation":
-    state: {fluid: "H2", T: "${T_max_comp}", P: "${T_ambient}"}
-    energy: {LHV: "${lhv.h2}"}
-    model: {carrier: "H2", buses: ["H2 to methanation"]}
   "H2 HP storage":
     state: {fluid: "H2", T: "${T_ambient}", P: 150}
     energy: {LHV: "${lhv.h2}"}
@@ -105,10 +98,6 @@ streams:
     state: {fluid: "biogas", T: 50, P: 1}
     energy: {LHV: "${lhv.biogas}"}
     model: {carrier: "gas", buses: ["biogas", "biogas to biomethanation"]}
-  "biogas to methanation":
-    state: {fluid: "biogas", T: "${T_max_comp}", P: "${T_ambient}"}
-    energy: {LHV: "${lhv.biogas}"}
-    model: {carrier: "gas", buses: ["biogas to methanation"]}
   "CH4":
     state: {fluid: "CH4", T: 50, P: 1}
     energy: {LHV: "${lhv.ch4}"}
@@ -117,12 +106,6 @@ streams:
     state: {fluid: "Methanol", T: 50, P: 1}
     energy: {LHV: "${lhv.meoh}"}
     model: {carrier: "Methanol", buses: ["Methanol"]}
-  "CO2 to methanolisation":
-    state: {fluid: "CO2", T: "${T_max_comp}", P: 80}
-    model: {carrier: "CO2", buses: ["CO2 to methanolisation", "CO2 to meoh"]}
-  "CO2 to methanation":
-    state: {fluid: "CO2", T: "${T_max_comp}", P: "${T_ambient}"}
-    model: {carrier: "CO2", buses: ["CO2 to methanation"]}
   "CO2 HP storage":
     state: {fluid: "CO2", T: "${T_ambient}", P: 60}
     model: {carrier: "CO2", buses: ["CO2 HP storage"]}
@@ -145,38 +128,50 @@ streams:
     model: {carrier: "moist biomass", buses: ["moist biomass"]}
 
 # ---------------------------------------------------------------------
-# process_streams -- the hooks for future heat integration (pinch / HEN).
+# processes -- ports of each unit operation, keyed by the port ROLE the
+# code uses ('H2 in', 'CO2 in', 'product bus'...), so this mirrors the
+# *_buses frames in prepare_network.py.
 #
-# NOT YET CONSUMED BY THE MODEL. Declared here so that temperature
-# attribution has a home the day it is needed: technology-data gives the
-# duty magnitude, this gives the temperature it is available/required at,
-# which is exactly what technology-data can never supply and what a pinch
-# analysis cannot do without.
-#
-# Per stream:
-#   duty_ref  "<technology>:<parameter>"  -> looked up in tech_costs, never copied
-#   T_supply  [C]   temperature the stream starts at
-#   T_target  [C]   temperature it must reach
-#   type      source (releases heat) | sink (requires heat)
-#
-# Populate as each process is characterised. The methanol pair below is
-# commented out until the 'meoh split' work lands on this branch.
+#   stream:  legacy flat name, still the index of symbiosis_n. Step 2 of the
+#            migration removes it, once prepare_network.py looks ports up by
+#            (process, role) instead of by flat name.
+#   from:    inherit fluid / LHV / carrier from a shared state.
+#            `from` NEVER inherits `buses` -- a bus belongs to exactly one
+#            state, and inheriting bus lists is how you would silently create
+#            the two-processes-one-bus conflict.
+#   state:   overrides, typically the compressor discharge condition.
 # ---------------------------------------------------------------------
-process_streams: {}
-#  methanol synthesis:
-#    reactor:
-#      duty_ref: "methanol synthesis:heat-output"
-#      T_supply: 250
-#      T_target: 180
-#      type: source
-#  methanol distillation:
-#    reboiler:
-#      duty_ref: "methanol distillation:heat-input"
-#      T_supply: 180
-#      T_target: 179
-#      type: sink
-#    condenser:
-#      duty_ref: "methanol distillation:heat-output"
-#      T_supply: 95
-#      T_target: 90
-#      type: source
+processes:
+  biomethanation:
+    "H2 in":
+      stream: "H2 to biomethanation"
+      from: "shared:H2 production"
+      state: {T: "${T_ambient}", P: 1}
+      model: {buses: ["H2 to biomethanation"]}
+  methanation:
+    "CO2 in":
+      stream: "CO2 to methanation"
+      from: "shared:CO2 biogas upgrading"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["CO2 to methanation"]}
+    "H2 in":
+      stream: "H2 to methanation"
+      from: "shared:H2 production"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["H2 to methanation"]}
+    "biogas in":
+      stream: "biogas to methanation"
+      from: "shared:biogas"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["biogas to methanation"]}
+  methanolisation:
+    "CO2 in":
+      stream: "CO2 to methanolisation"
+      from: "shared:CO2 biogas upgrading"
+      state: {T: "${T_max_comp}", P: 80}
+      model: {buses: ["CO2 to methanolisation", "CO2 to meoh"]}
+    "H2 in":
+      stream: "H2 to methanolisation"
+      from: "shared:H2 production"
+      state: {T: "${T_max_comp}", P: 80}
+      model: {buses: ["H2 to methanolisation"]}

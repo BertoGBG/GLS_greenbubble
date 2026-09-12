@@ -1,0 +1,204 @@
+Guide for Process Streams (``p_config``)
+========================================
+
+Where physical stream state lives, how a process declares its ports, and the one
+invariant you must not break.
+
+Overview
+--------
+
+GreenBubble separates three kinds of input on purpose:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 34 42
+
+   * - File
+     - Holds
+     - Example
+   * - ``technology-data`` / ``tech_inputs``
+     - **Magnitudes** — how much
+     - ``heat-input: 0.1047 MWh_th/MWh_MeOH``
+   * - ``config/p_config.default.yaml``
+     - **State** — at what condition
+     - ``{fluid: Water, T: 180, P: 10}``
+   * - ``config/n_config.default.yaml``
+     - **Network component config** — capacity, expansion, ramps
+     - ``expansion: true``
+
+The split between the first two is not cosmetic. ``technology-data`` reports *net*
+duties and never temperatures: the DEA sheet gives 0.58 MWh/t of reboiler steam
+without saying at what temperature it is required. Heat integration is impossible
+without the second half, and no amount of upstream data will supply it — so
+temperature attribution has to live here.
+
+**The rule that follows: never copy a magnitude into ``p_config``, and never write a
+temperature into ``tech_inputs``.** Duplicated numbers drift.
+
+File structure
+--------------
+
+``p_config.default.yaml`` has three sections. A gitignored ``config/p_config.yaml``
+is deep-merged on top, exactly like ``config.yaml`` and ``n_config.yaml``.
+
+``globals``
+~~~~~~~~~~~
+
+Primitives referenced elsewhere as ``${...}``::
+
+    globals:
+      T_max_comp: 160        # max compressor discharge temperature [C]
+      T_ambient:  20         # [C]
+      lhv: {ch4: 13.9, h2: 33.33, meoh: 5.54}
+      mixtures:
+        biogas: {Methane: 0.65, CarbonDioxide: 0.35}
+
+Anything **derived** stays in Python. ``lhv.biogas`` is computed at load time from
+``mixtures.biogas`` and the CoolProp molar masses, then exposed as ``${lhv.biogas}``
+— it is never typed into the YAML, where it could drift from the composition it is
+supposed to describe.
+
+``shared``
+~~~~~~~~~~
+
+States belonging to the **network**, not to any one process: distribution headers,
+heat tiers, storage conditions, external markets, and the normal-condition reference
+states used for density calculations::
+
+    shared:
+      "H2 production":
+        state:  {fluid: "H2", T: 50, P: 30}
+        energy: {LHV: "${lhv.h2}"}
+        model:  {carrier: "H2", buses: ["H2", "H2 distribution", "H2 delivery"]}
+
+``processes``
+~~~~~~~~~~~~~
+
+Ports of each unit operation, keyed by the **port role** the code uses, so this
+mirrors the ``*_buses`` frames in ``prepare_network.py``::
+
+    processes:
+      methanation:
+        "H2 in":
+          stream: "H2 to methanation"          # legacy flat name = symbiosis_n index
+          from:   "shared:H2 production"       # inherit fluid / LHV / carrier
+          state:  {T: "${T_max_comp}", P: 20}  # override what the compressor changes
+          model:  {buses: ["H2 to methanation"]}
+
+A port inherits from one shared state and overrides only what its unit operation
+changes — in practice just ``T`` and ``P`` downstream of a compressor.
+
+.. important::
+
+   ``from:`` never inherits ``buses``. A bus carries exactly one state, so inheriting
+   bus lists is precisely how you would create the conflict described below. Every
+   port declares its own buses.
+
+The invariant: one bus, one state
+---------------------------------
+
+**A bus carries exactly one thermodynamic state.** The loader enforces it: all ports
+targeting a bus must declare the same ``(fluid, T, P, carrier)``, or the build fails
+naming both offenders.
+
+This has a physical reading, and it is the useful part:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 32 34 34
+
+   * - Two processes → same bus
+     - Means
+     - What happens
+   * - Same declared state
+     - They genuinely mix
+     - Allowed — the normal case
+   * - Different state
+     - A unit operation is missing
+     - Build error
+   * - Different buses
+     - Already separated by a compressor/cooler
+     - Nothing to check
+
+If two processes need a stream at different conditions, that is **not** a config
+conflict to be resolved by ordering — it means a compressor or cooler belongs between
+them, and the model already represents those as separate buses joined by a component.
+``H2 production`` at 30 bar and ``H2 to methanation`` at 20 bar are two buses with a
+compressor between them, not one bus with two opinions.
+
+Inheriting from a shared state makes agreement *automatic* rather than coincidental:
+two ports that both write ``from: "shared:bioCH4"`` cannot disagree, because there is
+only one copy of the number.
+
+Adding a stream for a new technology
+------------------------------------
+
+Follow :doc:`guide_new_technology` for the component itself. For its streams:
+
+1. **Does the state already exist?** If the port consumes something from an existing
+   header (``H2 distribution``, ``CO2 distribution``, ``biogas``), inherit it —
+   do not restate it.
+
+2. **Add a ``processes:`` entry** keyed by your process name, with one entry per port
+   role. Use the same role names the code uses (``H2 in``, ``CO2 in``, ``product bus``),
+   because that is what makes the config readable next to ``prepare_network.py``.
+
+3. **Only add to ``shared:``** if the state genuinely belongs to the network — a new
+   distribution header, storage condition or market. A state used by one process is
+   a port, not a shared state.
+
+4. **Declare ``buses:`` on the port**, listing the bus names the model will create.
+   If two ports legitimately feed one bus, have both inherit the same shared state.
+
+5. **Run the tests**::
+
+       pytest tests/test_p_config.py
+
+   They pin: every stream has a bus carrier, no pressure resolves through a
+   temperature, ports do not inherit buses, and the one-state-per-bus validator both
+   catches conflicts and permits agreement.
+
+Gotchas
+-------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Gotcha
+     - Why it bites
+   * - Never write ``P: "${T_ambient}"``
+     - A pressure bound to a temperature. It happened: three methanation feed
+       pressures were silently tied to ``T_ambient`` because both were 20. The
+       numbers matched, so nothing failed — until someone changed the ambient
+       temperature. ``test_no_pressure_references_a_temperature_global`` now blocks it
+   * - Do not add derived values to ``globals``
+     - ``lhv.biogas`` follows from the mixture. Typing it in creates a second source
+       of truth that will disagree with the first
+   * - Do not put duties or costs here
+     - They belong in ``technology-data`` / ``tech_inputs``. ``p_config`` answers
+       *at what condition*, never *how much*
+   * - ``symbiosis_n`` is a derived view
+     - It is built from this file. Do not edit the frame at runtime; change the YAML
+
+Heat integration hooks
+----------------------
+
+``process_streams`` is declared, documented and **not yet consumed**. It is the home
+for temperature attribution of duties that live in ``technology-data``::
+
+    process_streams:
+      methanol distillation:
+        reboiler:
+          duty_ref: "methanol distillation:heat-input"   # magnitude, by reference
+          T_supply: 180
+          T_target: 179
+          type: sink
+
+``duty_ref`` points at a technology-data parameter rather than copying it. Supply and
+target temperatures plus a duty are exactly the input a pinch analysis or
+heat-exchanger-network synthesis needs, and grouping by process means the streams
+arrive already sorted by unit operation.
+
+Exposed as ``scripts.config.p_process_streams``. Populate it as each process is
+characterised.

@@ -124,28 +124,86 @@ def _p_resolve(value, ns: dict):
     return value
 
 
-def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
-    """Flatten streams.<name>.{state,energy,model} into one row per stream.
+def _p_flatten_blocks(entry: dict, skip_buses: bool = False) -> dict:
+    """Collapse state/energy/model blocks into one flat field dict."""
+    row = {}
+    for blk in ("state", "energy", "model"):
+        for k, v in (entry.get(blk) or {}).items():
+            if skip_buses and k == "buses":
+                continue
+            row[k] = v
+    return row
 
-    Absent fields stay absent (NaN in the frame) rather than being filled with a
-    default -- the legacy dict was heterogeneous and reproducing it exactly is what
-    lets the migration be verified field-for-field.
+
+def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
+    """Build the flat stream frame from `shared:` states and `processes:` ports.
+
+    Ports inherit from a shared state via `from: "shared:<name>"` and override only
+    what their unit operation changes -- normally just T and P downstream of a
+    compressor. `from` deliberately does NOT inherit `buses`: a bus carries exactly
+    one thermodynamic state, so inheriting bus lists is precisely how two processes
+    would end up claiming the same bus with different conditions.
+
+    Absent fields stay absent (NaN in the frame) rather than being defaulted -- the
+    legacy table was heterogeneous and reproducing it exactly is what lets the
+    migration be verified field-for-field.
     """
     ns = {"T_max_comp": g["T_max_comp"], "T_ambient": g["T_ambient"]}
     ns.update({f"lhv.{k}": v for k, v in g["lhv"].items()})
     ns["lhv.biogas"] = _p_derive_lhv_biogas(g)
 
-    flat = {}
-    for name, blocks in (raw.get("streams") or {}).items():
-        row = {}
-        for blk in ("state", "energy", "model"):
-            for k, v in (blocks.get(blk) or {}).items():
-                row[k] = _p_resolve(v, ns)
-        flat[name] = row
-    return pd.DataFrame.from_dict(flat, orient="index")
+    shared = raw.get("shared") or {}
+    flat = {name: _p_flatten_blocks(e) for name, e in shared.items()}
+
+    for proc, ports in (raw.get("processes") or {}).items():
+        for role, spec in ports.items():
+            name = spec.get("stream") or f"{proc}:{role}"
+            row = {}
+            parent = spec.get("from")
+            if parent:
+                if not parent.startswith("shared:"):
+                    raise ValueError(f"p_config: {proc}.{role} `from` must be 'shared:<name>', got {parent!r}")
+                key = parent.split(":", 1)[1]
+                if key not in shared:
+                    raise KeyError(f"p_config: {proc}.{role} inherits unknown shared state {key!r}")
+                row.update(_p_flatten_blocks(shared[key], skip_buses=True))
+            row.update(_p_flatten_blocks(spec))
+            flat[name] = row
+
+    frame = pd.DataFrame.from_dict(flat, orient="index")
+    return frame.map(lambda v: _p_resolve(v, ns))
+
+
+def _p_check_one_state_per_bus(raw: dict, frame: pd.DataFrame) -> None:
+    """A bus carries exactly one thermodynamic state.
+
+    Two processes may target the same bus only if the state they declare agrees --
+    which is automatic when both inherit the same shared state. A genuine
+    disagreement is not a config conflict to be resolved by ordering: it means a
+    unit operation (compressor, cooler) is missing between the process and the bus,
+    and the model already represents those as separate buses.
+    """
+    owners: dict = {}
+    for name in frame.index:
+        buses = frame.at[name, "buses"] if "buses" in frame.columns else None
+        for b in buses if isinstance(buses, list) else []:
+            prev = owners.get(b)
+            if prev is None:
+                owners[b] = name
+                continue
+            fields = ["fluid", "T", "P", "carrier"]
+            a = {f: frame.at[prev, f] for f in fields if f in frame.columns}
+            c_ = {f: frame.at[name, f] for f in fields if f in frame.columns}
+            if str(a) != str(c_):
+                raise ValueError(
+                    f"p_config: bus {b!r} is claimed by {prev!r} and {name!r} with different "
+                    f"states ({a} vs {c_}). A bus holds one state -- if these really differ, "
+                    f"the model needs a unit operation between them and two separate buses."
+                )
 
 
 p_streams = _p_build_streams(_p_raw, p_globals)
+_p_check_one_state_per_bus(_p_raw, p_streams)
 p_mixtures = p_globals.get("mixtures", {})
 # Declared-but-unconsumed heat-integration hooks; see p_config.default.yaml.
 p_process_streams = _p_raw.get("process_streams") or {}

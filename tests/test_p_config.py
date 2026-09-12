@@ -84,3 +84,70 @@ def test_process_streams_hooks_are_wellformed():
             assert ":" in spec["duty_ref"], f"{proc}.{name} duty_ref must be 'tech:param'"
             assert {"T_supply", "T_target"} <= set(spec), f"{proc}.{name} missing temperatures"
             assert spec.get("type") in {"source", "sink"}, f"{proc}.{name} bad type"
+
+
+# --- grouped schema (shared: + processes:) -------------------------------------
+
+def _raw():
+    import yaml
+    from pathlib import Path
+    return yaml.safe_load(open(Path(c.__file__).parent.parent / "config" / "p_config.default.yaml"))
+
+
+def test_no_pressure_references_a_temperature_global():
+    """P must never resolve through a temperature.
+
+    This is not hypothetical: the first generated p_config bound three methanation
+    feed pressures to ${T_ambient}, purely because T_ambient and the pressure were
+    both 20. Numerically identical, semantically wrong -- changing the ambient
+    temperature would have moved three pressures.
+    """
+    import re
+    from pathlib import Path
+    text = (Path(c.__file__).parent.parent / "config" / "p_config.default.yaml").read_text()
+    bad = re.findall(r'P:\s*"\$\{T_[A-Za-z_]+\}"', text)
+    assert not bad, f"pressure bound to a temperature global: {bad}"
+
+
+def test_ports_inherit_only_state_not_buses():
+    """`from` must not drag a parent's bus list into a port."""
+    raw = _raw()
+    shared = raw["shared"]
+    for proc, ports in (raw.get("processes") or {}).items():
+        for role, spec in ports.items():
+            parent = spec.get("from")
+            if not parent:
+                continue
+            pbuses = (shared[parent.split(":", 1)[1]].get("model") or {}).get("buses", [])
+            own = (spec.get("model") or {}).get("buses", [])
+            assert not (set(pbuses) & set(own)), f"{proc}.{role} shares a bus with its parent"
+
+
+def test_every_port_declares_its_own_buses():
+    raw = _raw()
+    for proc, ports in (raw.get("processes") or {}).items():
+        for role, spec in ports.items():
+            assert (spec.get("model") or {}).get("buses"), f"{proc}.{role} declares no buses"
+
+
+def test_one_state_per_bus_validator_catches_a_conflict():
+    """The validator must reject two states on one bus, not silently pick one."""
+    import pandas as pd
+    frame = pd.DataFrame(
+        {"fluid": ["H2", "H2"], "T": [20, 160], "P": [30, 80], "carrier": ["H2", "H2"],
+         "buses": [["shared bus"], ["shared bus"]]},
+        index=["low", "high"],
+    )
+    with pytest.raises(ValueError, match="claimed by"):
+        c._p_check_one_state_per_bus({}, frame)
+
+
+def test_one_state_per_bus_allows_agreement():
+    """Two ports on one bus are fine when they agree -- the inheritance case."""
+    import pandas as pd
+    frame = pd.DataFrame(
+        {"fluid": ["CH4", "CH4"], "T": [50, 50], "P": [1, 1], "carrier": ["gas", "gas"],
+         "buses": [["bioCH4 collection"], ["bioCH4 collection"]]},
+        index=["from biomethanation", "from upgrading"],
+    )
+    c._p_check_one_state_per_bus({}, frame)   # must not raise
