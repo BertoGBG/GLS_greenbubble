@@ -169,3 +169,10 @@ def test_bus_suffix_declared_not_hardcoded():
     src = (Path(c.__file__).parent / "prepare_network.py").read_text()
     assert 'bus_name.endswith("CO2 HP storage")' not in src, "suffix rule is hardcoded again"
     assert "bus_suffix" in src, "resolver no longer reads the declared suffix"
+
+
+def test_stream_for_bus_resolves_exact_then_suffix():
+    from scripts.prepare_network import stream_for_bus
+    assert stream_for_bus("Heat MT") == "Heat MT min"          # exact, from buses:
+    assert stream_for_bus("meoh H2 HP storage") == "H2 HP storage"   # via bus_suffix
+    assert stream_for_bus("not a bus") is None

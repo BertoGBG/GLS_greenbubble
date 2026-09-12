@@ -181,6 +181,22 @@ Gotchas
    * - ``symbiosis_n`` is a derived view
      - It is built from this file. Do not edit the frame at runtime; change the YAML
 
+Who owns the bus mapping
+------------------------
+
+``p_config`` catalogues **states**. It does not decide which bus carries which state
+— ``prepare_network.py`` does, because that is where bus names are invented.
+
+``stream_for_bus(bus_name)`` is the single place that answers "what state is on this
+bus": exact name first (from a ``buses:`` list), then a declared ``bus_suffix``.
+
+The many-to-one case is normal and expected. A plant-local heat bus is the same
+physical state as the shared tier it hangs off, so ``add_local_heat_connections``
+stamps the tier's stream onto every ``Heat MT_<plant>`` it creates —
+``Heat MT``, ``Heat MT_methanolisation``, ``Heat MT_methanation`` and
+``Heat MT_biogas`` all resolve to ``Heat MT min``. The config never lists them; it
+could not, since they are generated per plant at runtime.
+
 Plant-prefixed buses
 --------------------
 
