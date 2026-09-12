@@ -181,6 +181,20 @@ Gotchas
    * - ``symbiosis_n`` is a derived view
      - It is built from this file. Do not edit the frame at runtime; change the YAML
 
+Plant-prefixed buses
+--------------------
+
+Some buses are created with a runtime prefix — ``meoh H2 HP storage``,
+``methanation H2 HP storage`` — so ``p_config`` cannot enumerate them in ``buses:``.
+The stream declares a suffix instead::
+
+    "H2 HP storage":
+      model: {carrier: "H2", buses: ["H2 HP storage"], bus_suffix: "H2 HP storage"}
+
+``add_requirements_buses`` tries the exact ``buses:`` list first, then falls back to
+suffix matching. Before this, the rule was an ``if bus_name.endswith(...)`` naming
+those two streams in source; the config now owns it.
+
 Heat integration hooks
 ----------------------
 

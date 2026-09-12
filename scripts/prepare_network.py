@@ -348,13 +348,24 @@ def add_requirements_buses(n, bus_dict, symbiosis_n=None):
                         print(f"⚠️ Warning: Bus '{b}' appears in multiple symbiosis_n rows: "
                               f"{bus_to_property[b]} and {prop_name}")
 
-        # Helper: function to resolve special suffix mapping
+        # Suffix rules come from p_config (`model.bus_suffix`), not from hardcoded
+        # names here. Plant-local buses are created with a prefix at runtime --
+        # 'meoh H2 HP storage', 'methanation H2 HP storage' -- so the config cannot
+        # enumerate them; it declares the suffix and this matches on it.
+        suffix_to_property = {}
+        if "bus_suffix" in symbiosis_n.columns:
+            for prop_name, sfx in symbiosis_n["bus_suffix"].items():
+                if isinstance(sfx, str) and sfx:
+                    suffix_to_property[sfx] = prop_name
+
         def resolve_property_name(bus_name):
-            if bus_name.endswith("CO2 HP storage"):
-                return bus_to_property.get("CO2 HP storage")
-            elif bus_name.endswith("H2 HP storage"):
-                return bus_to_property.get("H2 HP storage")
-            return bus_to_property.get(bus_name)
+            hit = bus_to_property.get(bus_name)
+            if hit is not None:
+                return hit
+            for sfx, prop_name in suffix_to_property.items():
+                if bus_name.endswith(sfx):
+                    return prop_name
+            return None
 
         # Assign properties
         for b in bus_list:

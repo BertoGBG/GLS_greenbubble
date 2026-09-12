@@ -14,7 +14,7 @@ from scripts import config as c
 from scripts.technology_inputs import symbiosis_n, lhv_biogas, biogas_mix, T_max_comp
 
 
-EXPECTED_COLUMNS = {"fluid", "T", "P", "LHV", "carrier", "buses", "moisture"}
+EXPECTED_COLUMNS = {"fluid", "T", "P", "LHV", "carrier", "buses", "moisture", "bus_suffix"}
 EXPECTED_N_STREAMS = 27
 
 
@@ -151,3 +151,21 @@ def test_one_state_per_bus_allows_agreement():
         index=["from biomethanation", "from upgrading"],
     )
     c._p_check_one_state_per_bus({}, frame)   # must not raise
+
+
+def test_bus_suffix_declared_not_hardcoded():
+    """Plant-prefixed buses resolve via a declared suffix, not an if/elif in the code.
+
+    'meoh H2 HP storage' and 'methanation H2 HP storage' are created with a runtime
+    prefix, so p_config cannot enumerate them. It declares the suffix instead; the
+    resolver in add_requirements_buses reads that column rather than naming the two
+    streams in source.
+    """
+    suffixes = c.p_streams["bus_suffix"].dropna().to_dict()
+    assert suffixes == {"H2 HP storage": "H2 HP storage", "CO2 HP storage": "CO2 HP storage"}
+
+    import re
+    from pathlib import Path
+    src = (Path(c.__file__).parent / "prepare_network.py").read_text()
+    assert 'bus_name.endswith("CO2 HP storage")' not in src, "suffix rule is hardcoded again"
+    assert "bus_suffix" in src, "resolver no longer reads the declared suffix"
