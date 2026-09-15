@@ -89,6 +89,189 @@ _n_opt.pop("base", None)
 n_config = pd.DataFrame.from_dict(_n_raw, orient="index").sort_index()
 n_options = pd.DataFrame.from_dict(_n_opt, orient="index").sort_index()
 
+# --- process config (stream state: fluid / T / P / LHV) ---
+# p_config holds the PHYSICAL state of every stream; magnitudes (duties, costs,
+# efficiencies) stay in technology-data / tech_inputs. See config/p_config.default.yaml.
+_p_raw = _load_with_override(
+    _CFG_DIR / "p_config.default.yaml",
+    _CFG_DIR / "p_config.yaml",
+)
+p_globals = _p_raw.get("globals", {})
+
+
+def _p_derive_lhv_biogas(g: dict) -> float:
+    """Mass-weighted CH4 LHV of the biogas mixture.
+
+    Derived, not configured: it follows from globals.mixtures.biogas and the
+    CoolProp molar masses, so it must never be typed into the YAML where it
+    could drift from the composition it is supposed to describe.
+    """
+    import CoolProp.CoolProp as CP
+    mix = g["mixtures"]["biogas"]
+    M = {sp: CP.PropsSI("M", "T", 300, "P", 1e5, sp) for sp in mix}
+    M_mix = sum(mix[sp] * M[sp] for sp in mix)
+    w_CH4 = mix["Methane"] * M["Methane"] / M_mix
+    return g["lhv"]["ch4"] * w_CH4
+
+
+def _p_resolve(value, ns: dict):
+    """Resolve "${a.b}" references against the flattened globals namespace."""
+    if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+        key = value[2:-1]
+        if key not in ns:
+            raise KeyError(f"p_config: unknown reference '${{{key}}}'")
+        return ns[key]
+    return value
+
+
+def _p_flatten_blocks(entry: dict, skip_buses: bool = False) -> dict:
+    """Collapse state/energy/model blocks into one flat field dict."""
+    row = {}
+    for blk in ("state", "energy", "model"):
+        for k, v in (entry.get(blk) or {}).items():
+            if skip_buses and k == "buses":
+                continue
+            row[k] = v
+    return row
+
+
+def _p_tsat(P_bar: float) -> float:
+    """Saturation temperature of water [C] at P [bar(a)]."""
+    import CoolProp.CoolProp as CP
+    return CP.PropsSI("T", "P", P_bar * 1e5, "Q", 0, "Water") - 273.15
+
+
+def _p_expand_circuits(raw: dict, g: dict) -> dict:
+    """Expand `circuits:` into the flat "<name> min" / "<name> max" streams.
+
+    Pressure is the input. A circuit must stay LIQUID at its operating top with
+    margin -- water sitting exactly at P_sat is at its boiling point, which is not
+    how a pumped loop runs. `T_max: saturation` opts into T_sat(P) instead, for the
+    steam circuits to come, which do run at saturation.
+
+    Floors must descend with at least dT_min between consecutive circuits.
+    """
+    margin = float(g.get("liquid_margin_K", 5.0))
+    dT = float(g.get("dT_min", 10.0))
+    circuits = raw.get("circuits") or {}
+    out, floors = {}, []
+
+    for name, c in circuits.items():
+        P = float(c["P"])
+        fluid, carrier = c.get("fluid", "Water"), c.get("carrier", "Heat")
+        T_min = float(c["T_min"])
+        tmax_raw = c.get("T_max")
+        if tmax_raw is None:
+            T_max = None
+        elif isinstance(tmax_raw, str) and tmax_raw.strip().lower() == "saturation":
+            T_max = _p_tsat(P)
+        else:
+            T_max = float(tmax_raw)
+
+        if fluid == "Water":
+            tsat = _p_tsat(P)
+            top = T_max if T_max is not None else T_min
+            saturated = isinstance(tmax_raw, str)
+            if not saturated and top > tsat - margin:
+                raise ValueError(
+                    f"p_config circuit {name!r}: top temperature {top} C at {P} bar is within "
+                    f"{margin} K of saturation ({tsat:.1f} C) -- the circuit would flash. "
+                    f"Raise P, lower T, or declare `T_max: saturation` if it is meant to boil."
+                )
+
+        out[f"{name} min"] = {"fluid": fluid, "T": T_min, "P": P,
+                              "carrier": carrier, "buses": list(c.get("buses", []))}
+        if T_max is not None:
+            out[f"{name} max"] = {"fluid": fluid, "T": T_max, "P": P, "carrier": carrier}
+        floors.append((name, T_min))
+
+    for (n_hi, t_hi), (n_lo, t_lo) in zip(floors, floors[1:]):
+        if t_hi - t_lo < dT:
+            raise ValueError(
+                f"p_config: circuits {n_hi!r} ({t_hi} C) and {n_lo!r} ({t_lo} C) are closer than "
+                f"dT_min ({dT} K); cascading circuits need at least that separation."
+            )
+    return out
+
+
+def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
+    """Build the flat stream frame from `shared:` states and `processes:` ports.
+
+    Ports inherit from a shared state via `from: "shared:<name>"` and override only
+    what their unit operation changes -- normally just T and P downstream of a
+    compressor. `from` deliberately does NOT inherit `buses`: a bus carries exactly
+    one thermodynamic state, so inheriting bus lists is precisely how two processes
+    would end up claiming the same bus with different conditions.
+
+    Absent fields stay absent (NaN in the frame) rather than being defaulted -- the
+    legacy table was heterogeneous and reproducing it exactly is what lets the
+    migration be verified field-for-field.
+    """
+    ns = {"T_max_comp": g["T_max_comp"], "T_ambient": g["T_ambient"]}
+    ns.update({f"lhv.{k}": v for k, v in g["lhv"].items()})
+    ns["lhv.biogas"] = _p_derive_lhv_biogas(g)
+
+    shared = raw.get("shared") or {}
+    flat = {name: _p_flatten_blocks(e) for name, e in shared.items()}
+    # heat circuits are declared by pressure and expanded into flat streams
+    flat.update(_p_expand_circuits(raw, g))
+
+    for proc, ports in (raw.get("processes") or {}).items():
+        for role, spec in ports.items():
+            name = spec.get("stream") or f"{proc}:{role}"
+            row = {}
+            parent = spec.get("from")
+            if parent:
+                if not parent.startswith("shared:"):
+                    raise ValueError(f"p_config: {proc}.{role} `from` must be 'shared:<name>', got {parent!r}")
+                key = parent.split(":", 1)[1]
+                if key not in shared:
+                    raise KeyError(f"p_config: {proc}.{role} inherits unknown shared state {key!r}")
+                row.update(_p_flatten_blocks(shared[key], skip_buses=True))
+            row.update(_p_flatten_blocks(spec))
+            flat[name] = row
+
+    frame = pd.DataFrame.from_dict(flat, orient="index")
+    return frame.map(lambda v: _p_resolve(v, ns))
+
+
+def _p_check_one_state_per_bus(raw: dict, frame: pd.DataFrame) -> None:
+    """A bus carries exactly one thermodynamic state.
+
+    Two processes may target the same bus only if the state they declare agrees --
+    which is automatic when both inherit the same shared state. A genuine
+    disagreement is not a config conflict to be resolved by ordering: it means a
+    unit operation (compressor, cooler) is missing between the process and the bus,
+    and the model already represents those as separate buses.
+    """
+    owners: dict = {}
+    for name in frame.index:
+        buses = frame.at[name, "buses"] if "buses" in frame.columns else None
+        for b in buses if isinstance(buses, list) else []:
+            prev = owners.get(b)
+            if prev is None:
+                owners[b] = name
+                continue
+            fields = ["fluid", "T", "P", "carrier"]
+            a = {f: frame.at[prev, f] for f in fields if f in frame.columns}
+            c_ = {f: frame.at[name, f] for f in fields if f in frame.columns}
+            if str(a) != str(c_):
+                raise ValueError(
+                    f"p_config: bus {b!r} is claimed by {prev!r} and {name!r} with different "
+                    f"states ({a} vs {c_}). A bus holds one state -- if these really differ, "
+                    f"the model needs a unit operation between them and two separate buses."
+                )
+
+
+p_streams = _p_build_streams(_p_raw, p_globals)
+_p_check_one_state_per_bus(_p_raw, p_streams)
+p_mixtures = p_globals.get("mixtures", {})
+# Declared-but-unconsumed heat-integration hooks; see p_config.default.yaml.
+p_process_streams = _p_raw.get("process_streams") or {}
+# Minimum approach temperature [K] for heat exchange. Declared for the pinch/HEN
+# work; nothing consumes it yet. Shifted temperatures use p_dT_min / 2.
+p_dT_min = float(p_globals.get("dT_min", 10.0))
+
 # --- plots ---
 plt_config = _load_with_override(
     _CFG_DIR / "plots_config.default.yaml",

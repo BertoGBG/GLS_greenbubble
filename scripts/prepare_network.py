@@ -293,6 +293,32 @@ def network_dependencies(n_flags, ):
     return n_flags_OK
 
 
+def stream_for_bus(bus_name, symbiosis_n=None):
+    """Which p_config stream describes this bus?
+
+    Exact bus name first, then a declared `model.bus_suffix` (plant-local buses are
+    created with a runtime prefix, so the config cannot enumerate them).
+
+    This is the single place that answers "what state is on this bus". The mapping
+    lives here, in the code that invents the bus names -- p_config only catalogues
+    the states themselves.
+    """
+    if symbiosis_n is None:
+        from scripts.technology_inputs import symbiosis_n as _s
+        symbiosis_n = _s
+    if bus_name is None or not isinstance(bus_name, str):
+        return None
+    if "buses" in symbiosis_n.columns:
+        for prop_name, buses in symbiosis_n["buses"].items():
+            if isinstance(buses, list) and bus_name in buses:
+                return prop_name
+    if "bus_suffix" in symbiosis_n.columns:
+        for prop_name, sfx in symbiosis_n["bus_suffix"].items():
+            if isinstance(sfx, str) and sfx and bus_name.endswith(sfx):
+                return prop_name
+    return None
+
+
 def add_requirements_buses(n, bus_dict, symbiosis_n=None):
     """
     Ensure carriers exist, then add any missing buses with the specified attributes.
@@ -348,13 +374,24 @@ def add_requirements_buses(n, bus_dict, symbiosis_n=None):
                         print(f"⚠️ Warning: Bus '{b}' appears in multiple symbiosis_n rows: "
                               f"{bus_to_property[b]} and {prop_name}")
 
-        # Helper: function to resolve special suffix mapping
+        # Suffix rules come from p_config (`model.bus_suffix`), not from hardcoded
+        # names here. Plant-local buses are created with a prefix at runtime --
+        # 'meoh H2 HP storage', 'methanation H2 HP storage' -- so the config cannot
+        # enumerate them; it declares the suffix and this matches on it.
+        suffix_to_property = {}
+        if "bus_suffix" in symbiosis_n.columns:
+            for prop_name, sfx in symbiosis_n["bus_suffix"].items():
+                if isinstance(sfx, str) and sfx:
+                    suffix_to_property[sfx] = prop_name
+
         def resolve_property_name(bus_name):
-            if bus_name.endswith("CO2 HP storage"):
-                return bus_to_property.get("CO2 HP storage")
-            elif bus_name.endswith("H2 HP storage"):
-                return bus_to_property.get("H2 HP storage")
-            return bus_to_property.get(bus_name)
+            hit = bus_to_property.get(bus_name)
+            if hit is not None:
+                return hit
+            for sfx, prop_name in suffix_to_property.items():
+                if bus_name.endswith(sfx):
+                    return prop_name
+            return None
 
         # Assign properties
         for b in bus_list:
@@ -700,6 +737,15 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
 
         # ensure local_bus
         ensure_bus(n, local_bus, carrier="Heat", unit="MW")
+        # A plant-local heat bus is the same physical state as the shared tier it
+        # hangs off -- 'Heat MT_methanolisation' IS 'Heat MT min'. p_config cannot
+        # name these (they are generated per plant at runtime), so the mapping is
+        # made here, where the name is invented.
+        _tier_stream = stream_for_bus(b)
+        if _tier_stream is not None:
+            if "properties" not in n.buses.columns:
+                n.buses["properties"] = None
+            n.buses.at[local_bus, "properties"] = _tier_stream
         new_buses.append(local_bus)
 
         if n_flags.get("symbiosis", False):
