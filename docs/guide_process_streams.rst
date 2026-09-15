@@ -211,6 +211,35 @@ The stream declares a suffix instead::
 suffix matching. Before this, the rule was an ``if bus_name.endswith(...)`` naming
 those two streams in source; the config now owns it.
 
+Declared but not consumed
+-------------------------
+
+Some fields exist for work that has not landed yet. **No code reads them and they change
+no results.** They are listed here because an unread field is not free — ``Heat MT max``
+sat in the table unread and was twice mistaken for a binding constraint when reasoning
+about what could feed the MT bus.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 76
+
+   * - Field
+     - Status
+   * - ``Heat MT max`` (180 °C)
+     - The ceiling of the MT interval. Never read: sources injecting into MT (combustion
+       and similar) are far hotter than the floor, so the roof does not bind. A tier is
+       physically an interval — MT is 140→180 °C — whose fluid picks up heat progressively
+       along the loop, so a source contributes over whatever span it can cover rather than
+       having to deliver at the top. The model cannot express that yet: each tier is one
+       bus, i.e. a single node with no internal temperature resolution
+   * - ``globals.dT_min`` (10 K)
+     - Minimum approach temperature. Pinch convention is to allocate on *shifted*
+       temperatures — hot streams down by ``dT_min/2``, cold up by ``dT_min/2``. The full
+       value is stored and the half derived; storing the half invites halving it twice.
+       Exposed as ``scripts.config.p_dT_min``
+   * - ``process_streams``
+     - Temperature attribution of duties that live in technology-data. Empty; see below
+
 Heat integration hooks
 ----------------------
 

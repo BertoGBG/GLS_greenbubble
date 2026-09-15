@@ -35,6 +35,18 @@ globals:
     chips:   2.3     # moist biomass at `moisture`
     # biogas: DERIVED at load time from mixtures.biogas (mass-weighted CH4 fraction)
 
+  # Minimum approach temperature for heat exchange [K].
+  # DECLARED, NOT YET CONSUMED -- see "Declared but not consumed" in
+  # docs/guide_process_streams.rst. Nothing reads this today; it changes no results.
+  #
+  # Pinch convention: a hot stream cannot heat a cold stream to its own temperature,
+  # so duties are allocated on SHIFTED temperatures -- hot streams shifted DOWN by
+  # dT_min/2, cold streams shifted UP by dT_min/2. Store the full dT_min here and
+  # derive the half-shift; storing the half invites someone to halve it twice.
+  # At 10 K the shift is 5 K each way, so a 160 C hot stream and a 150 C cold stream
+  # both sit at 155 C shifted and are exactly pinched.
+  dT_min: 10
+
   mixtures:         # mole fractions; CoolProp names
     biogas:
       Methane:       0.65

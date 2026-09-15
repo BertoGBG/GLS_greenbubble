@@ -176,3 +176,23 @@ def test_stream_for_bus_resolves_exact_then_suffix():
     assert stream_for_bus("Heat MT") == "Heat MT min"          # exact, from buses:
     assert stream_for_bus("meoh H2 HP storage") == "H2 HP storage"   # via bus_suffix
     assert stream_for_bus("not a bus") is None
+
+
+def test_dT_min_present_and_sane():
+    """Minimum approach temperature, for the pinch work. Declared, not yet consumed."""
+    assert c.p_dT_min == 10.0
+    assert 0 < c.p_dT_min < 60, "dT_min outside any sensible range for gas/liquid HX"
+
+
+def test_declared_but_unconsumed_fields_are_documented():
+    """Every parameter no code reads must be listed in the guide's 'Declared but not consumed'.
+
+    'Heat MT max' sat unread in p_config and was twice misread as a binding constraint
+    while reasoning about what could feed the MT bus. Unread fields are not free -- they
+    have to announce themselves.
+    """
+    from pathlib import Path
+    doc = (Path(c.__file__).parent.parent / "docs" / "guide_process_streams.rst").read_text()
+    for field in ["Heat MT max", "dT_min", "process_streams"]:
+        assert field in doc, f"{field!r} is unconsumed but not documented as such"
+    assert "Declared but not consumed" in doc

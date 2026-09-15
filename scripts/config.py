@@ -207,6 +207,9 @@ _p_check_one_state_per_bus(_p_raw, p_streams)
 p_mixtures = p_globals.get("mixtures", {})
 # Declared-but-unconsumed heat-integration hooks; see p_config.default.yaml.
 p_process_streams = _p_raw.get("process_streams") or {}
+# Minimum approach temperature [K] for heat exchange. Declared for the pinch/HEN
+# work; nothing consumes it yet. Shifted temperatures use p_dT_min / 2.
+p_dT_min = float(p_globals.get("dT_min", 10.0))
 
 # --- plots ---
 plt_config = _load_with_override(
