@@ -1015,9 +1015,9 @@ tech_inputs['methanol synthesis', 'carbondioxide-input'] = {
     'further description': 'all CO2 enters the synthesis step; unchanged from the aggregate unit. [ALA] Table 4 gives 0.253',
 }
 tech_inputs['methanol synthesis', 'electricity-input'] = {
-    'value': 0.016281, 'unit': 'MWh_e/MWh_MeOH',
-    'source': '[DEA] electricity-input-no-compression (0.018090) x 0.9 -- ASSUMED SPLIT',
-    'further description': 'Now on the DEA basis, which already excludes H2/CO2 feed compression, so the old 0.1x fudge is gone. The 90/10 split itself is still unsourced: its original rationale ("compressor-dominated") does not apply precisely because compression is excluded. Needs re-deriving from a flowsheet.',
+    'value': 0.009045, 'unit': 'MWh_e/MWh_MeOH',
+    'source': '[DEA] electricity-input-no-compression (0.018090) x 0.5 -- ASSUMED SPLIT, no better basis',
+    'further description': 'Split 50/50 as an explicit admission of ignorance rather than a false precision. An earlier 90/10 was justified as "compressor-dominated" (Taslimi et al. Table 2), which never applied and applies even less on the DEA basis, where feed compression is excluded outright: what remains is recycle circulation and pumps. Re-derive from a flowsheet when one is available.',
 }
 tech_inputs['methanol synthesis', 'heat-output'] = {
     'value': 0.0772, 'unit': 'MWh_th/MWh_MeOH',
@@ -1039,9 +1039,9 @@ tech_inputs['methanol synthesis', 'lifetime'] = {
 #     Q_reb = methanolisation['heat-input'] + methanol synthesis['heat-output'] = 0.1819
 # That derivation is WRONG -- see item 1 in the header. [OLI] Table S14 measures 0.0670.
 tech_inputs['methanol distillation', 'electricity-input'] = {
-    'value': 0.001809, 'unit': 'MWh_e/MWh_MeOH',
-    'source': '[DEA] electricity-input-no-compression (0.018090) x 0.1 -- ASSUMED SPLIT',
-    'further description': 'pumping only; needs re-deriving from a flowsheet. 0.016281 + 0.001809 = 0.018090, i.e. the DEA total exactly.',
+    'value': 0.009045, 'unit': 'MWh_e/MWh_MeOH',
+    'source': '[DEA] electricity-input-no-compression (0.018090) x 0.5 -- ASSUMED SPLIT, no better basis',
+    'further description': 'See the synthesis entry. 0.009045 + 0.009045 = 0.018090, i.e. the DEA total exactly.',
 }
 tech_inputs['methanol distillation', 'heat-output'] = {
     'value': 0.1, 'unit': 'MWh_th/MWh_MeOH',
