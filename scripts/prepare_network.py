@@ -3203,7 +3203,11 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             bus5=meoh_buses.at['Heat DH', 'methanolisation'],
             efficiency=  1 / tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency2= - tech_costs.at["methanolisation", "carbondioxide-input"] / tech_costs.at["methanolisation", "hydrogen-input"],
-            efficiency3= - 0.1 * tech_costs.at["methanolisation", "electricity-input"] / tech_costs.at["methanolisation", "hydrogen-input"], # input data include compression
+            # DEA sheet 98 reports this EXCLUDING compression of the H2 and CO2 feeds,
+            # which GreenBubble models as separate components. Replaces a hardcoded
+            # 0.1x factor on the DECHEMA electricity-input (0.271), which was a fudge
+            # approximating the same thing.
+            efficiency3= - tech_costs.at["methanolisation", "electricity-input-no-compression"] / tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency4= - tech_costs.at["methanolisation", "heat-input"]/tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency5= tech_costs.at["methanolisation", "heat-output"]/tech_costs.at["methanolisation", "hydrogen-input"],
             p_nom_extendable=expansion,
@@ -3295,7 +3299,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             bus4=meoh_buses.at['Heat MT', 'methanol synthesis'],
             efficiency=  1 / tech_costs.at["methanol synthesis", "hydrogen-input"],
             efficiency2= - tech_costs.at["methanol synthesis", "carbondioxide-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"],
-            efficiency3= - 0.1 * tech_costs.at["methanol synthesis", "electricity-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # same 0.1 convention as methanolisation
+            efficiency3= - tech_costs.at["methanol synthesis", "electricity-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # DEA basis, no compression (see technology_inputs)
             efficiency4= tech_costs.at["methanol synthesis", "heat-output"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # reactor heat, PRODUCED
             p_nom_extendable=expansion,
             p_nom=capacity,
@@ -3331,7 +3335,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             # code, so the split cannot silently drift from the aggregate it decomposes.
             efficiency2= - (tech_costs.at["methanolisation", "heat-input"]
                             + tech_costs.at["methanol synthesis", "heat-output"]),         # reboiler, CONSUMED
-            efficiency3= - 0.1 * tech_costs.at["methanol distillation", "electricity-input"], # same 0.1 convention as methanolisation
+            efficiency3= - tech_costs.at["methanol distillation", "electricity-input"], # DEA basis, no compression (see technology_inputs)
             efficiency4= tech_costs.at["methanol distillation", "heat-output"],           # condenser -> DH
             p_nom_extendable=expansion,
             p_nom=capacity,
