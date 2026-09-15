@@ -955,6 +955,16 @@ CO2_comp_res = compress_multistage_with_Tcap(
 #         -> source of the aggregate coefficients in Taslimi et al. Table 2; itemised
 #            Biegler/Guthrie equipment costs exist in their model but are not published.
 #
+#  [MAG]  Methanol Magic LLC, "Methanol Plant Feasibility Study", ChE473k, University of
+#         Texas at Austin, Spring 2015.
+#         Local copy: text_docs/meoh_distillation/Methanol Magic Senior Design Report.pdf
+#         -> Supplementary Tables A8-A14: itemised bare equipment costs, tagged by unit
+#            number, for a 5000 t/d methanol plant. The only source found that costs the
+#            synthesis loop and the distillation train SEPARATELY, which is what a
+#            CAPEX split needs. Table 4: Chilton method installation factors.
+#         CAVEAT: a student design report, not peer reviewed, and the plant is
+#         shale-gas-to-syngas, not CO2 + H2. Used for RATIOS only, never for levels.
+#
 # ----------------------------------------------------------------------------------
 # !! THE HEAT COEFFICIENTS BELOW ARE KNOWN TO BE WRONG AND ARE PENDING A DECISION !!
 #
@@ -1000,9 +1010,55 @@ CO2_comp_res = compress_multistage_with_Tcap(
 # 0.271 with the hardcoded 0.1x factor gives 0.0271, which does not reproduce [ALA]'s
 # 0.018 either.)
 #
-# CAPEX split 80/20 is an ASSUMPTION. [OLI] Figure 11a reports reactor modules and
-# compressors as >75% of equipment cost, and Table S17 has per-equipment costs --
-# enough to derive a real split, not yet done.
+# ----------------------------------------------------------------------------------
+# CAPEX SPLIT 73/27 -- derived, no longer assumed.
+#
+# From [MAG] Supplementary Tables A8-A14, summing bare equipment cost by unit number.
+# The 1xxx units (natural gas processing / syngas front-end) are EXCLUDED: GreenBubble
+# feeds CO2 + H2, so that section has no counterpart here. The 35xx units (product
+# storage tanks and loading pumps) are excluded too -- they are the separate
+# 'methanol storage' technology below.
+#
+#   synthesis loop (31xx/32xx)                              USD 2015
+#     R-3101  methanol reactor                            11,984,300
+#     E-3101  heat recovery                                 6,687,100
+#     C-3201  recycle gas compressor                        2,799,300
+#     C-3202  purge gas compressor                          1,430,900
+#     E-3201  product cooler                                1,431,200
+#     V-3201  HP flash separator                            1,431,200
+#     E-3102  reactor preheater                             1,174,000
+#     V-3202  LP flash separator                              179,300
+#     V-3101  reactor steam drum                               54,000
+#                                                         -----------
+#                                                          27,171,300   72.6%
+#
+#   distillation train (33xx/34xx)
+#     T-3401  refining column                               5,103,200
+#     E-3401  refining condenser                            2,498,500
+#     T-3301  topping column                                  686,300
+#     RB-3301 topping reboiler                                686,300
+#     RB-3401 refining reboiler                               653,800
+#     V-3301  topping accumulator                             277,900
+#     E-3301  topping condenser                               237,900
+#     V-3401  refining accumulator                            135,300
+#                                                         -----------
+#                                                          10,279,200   27.4%
+#
+# Robustness (the reason 73/27 is quoted rather than 72.6/27.4):
+#   + the seven column pumps (Table A14 cont., 51,800 USD total)   -> 72.4 / 27.6
+#   - RB-3301, whose 686,300 is listed IDENTICALLY to T-3301 and
+#     looks like a transcription error in the report                -> 73.9 / 26.1
+# i.e. the split sits in 72-74% across every reading of the tables. Rounding to 73/27
+# claims no more precision than the source supports.
+#
+# Independent corroboration: [OLI] Figure 11a reports reactor modules plus compressors
+# at >75% of equipment cost for a CO2+H2 plant -- same side of the split, same order.
+#
+# CAVEAT: [MAG] is a syngas plant, so its synthesis loop handles CO + CO2 + H2 and its
+# columns produce Grade AA in TWO columns (topping + refining). A CO2-only loop has a
+# larger water make and [OLI] use a single column. Both effects move the split toward
+# distillation, so 73/27 is, if anything, generous to synthesis.
+# ----------------------------------------------------------------------------------
 
 tech_inputs['methanol synthesis', 'hydrogen-input'] = {
     'value': 1.138, 'unit': 'MWh_H2/MWh_MeOH',
@@ -1025,9 +1081,9 @@ tech_inputs['methanol synthesis', 'heat-output'] = {
     'further description': 'CONFIRMED by [OLI] Table S14 at plant scale: 61.8 MW over 801.8 MW_MeOH = 0.0771. Released at 247.5 C ([OLI] Section E), which is ABOVE every heat band in the model',
 }
 tech_inputs['methanol synthesis', 'investment'] = {
-    'value': 1091.7961, 'unit': 'EUR/kW-methanol',
-    'source': 'methanolisation investment (costs_2030) x 0.8 -- ASSUMED SPLIT',
-    'further description': 'derivable from [OLI] Figure 11a and Table S17 (per-equipment costs); not yet done',
+    'value': 990.1576, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.73, split derived from [MAG] Supplementary Tables A8-A14',
+    'further description': 'Synthesis loop (units 31xx/32xx: reactor, heat recovery, recycle and purge compressors, flashes, preheater, product cooler) = 27,171,300 USD of 37,450,500 USD total. See the CAPEX SPLIT block in the header for the itemised sum and the robustness check. LEVEL is DEA, only the RATIO comes from [MAG].',
 }
 tech_inputs['methanol synthesis', 'lifetime'] = {
     'value': 30, 'unit': 'years',
@@ -1049,9 +1105,9 @@ tech_inputs['methanol distillation', 'heat-output'] = {
     'further description': 'CONTRADICTED: [OLI] Table S14 column condenser = 143.6 MW / 801.8 MW_MeOH = 0.1791, rejected at 53 C ([OLI] Section E) i.e. Heat LT, not DH. [ALA] Table 4 gives 0.256',
 }
 tech_inputs['methanol distillation', 'investment'] = {
-    'value': 272.9490, 'unit': 'EUR/kW-methanol',
-    'source': 'methanolisation investment (costs_2030) x 0.2 -- ASSUMED SPLIT',
-    'further description': 'derivable from [OLI] Figure 11a and Table S17; not yet done',
+    'value': 374.5875, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.27, split derived from [MAG] Supplementary Tables A8-A14',
+    'further description': 'Distillation train (units 33xx/34xx: topping and refining columns, their reboilers, condensers and accumulators) = 10,279,200 USD of 37,450,500 USD total. See the CAPEX SPLIT block in the header. Sums with synthesis to 1364.7451, i.e. the monolithic methanolisation investment exactly.',
 }
 tech_inputs['methanol distillation', 'lifetime'] = {
     'value': 30, 'unit': 'years',
@@ -1063,13 +1119,10 @@ tech_inputs['methanol distillation', 'lifetime'] = {
 # run at different times. Without a cost here the store is FREE and the optimiser
 # sizes it arbitrarily, which would make any flexibility result meaningless.
 #
-#  [MAG]  Methanol Magic LLC, "Methanol Plant Feasibility Study", ChE473k, University of
-#         Texas at Austin, Spring 2015. Supplementary Table A12 (storage tanks) and
-#         Table 4 (Chilton method factors).
-#         Local copy: text_docs/meoh_distillation/Methanol Magic Senior Design Report.pdf
-#         CAVEAT: a student design report, not peer reviewed, for a shale-gas-to-methanol
-#         plant. Its tanks hold REFINED product; ours holds ~64.5 wt% crude. Used for the
-#         tank unit cost only, for want of a better source.
+#  [MAG]  as cited in the header above. Here: Supplementary Table A12 (storage tanks)
+#         and Table 4 (Chilton method factors).
+#         CAVEAT beyond the one in the header: [MAG]'s tanks hold REFINED product;
+#         ours holds ~64.5 wt% crude. Used for the tank unit cost for want of better.
 #
 #  [MI]   Methanol Institute, "Atmospheric Above Ground Tank Storage of Methanol".
 #         https://methanol.org/wp-content/uploads/2016/06/AtmosphericAboveGroundTankStorageMethanol-1.pdf
