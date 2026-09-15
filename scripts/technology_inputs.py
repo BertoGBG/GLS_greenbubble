@@ -1057,6 +1057,55 @@ tech_inputs['methanol distillation', 'lifetime'] = {
     'value': 30, 'unit': 'years',
     'source': '[DEA] sheet "98 Methanol from hydrogen"',
 }
+
+# ----------------------------------------------------------------------------------
+# Crude methanol storage tank -- the buffer that lets synthesis and distillation
+# run at different times. Without a cost here the store is FREE and the optimiser
+# sizes it arbitrarily, which would make any flexibility result meaningless.
+#
+#  [MAG]  Methanol Magic LLC, "Methanol Plant Feasibility Study", ChE473k, University of
+#         Texas at Austin, Spring 2015. Supplementary Table A12 (storage tanks) and
+#         Table 4 (Chilton method factors).
+#         Local copy: text_docs/meoh_distillation/Methanol Magic Senior Design Report.pdf
+#         CAVEAT: a student design report, not peer reviewed, for a shale-gas-to-methanol
+#         plant. Its tanks hold REFINED product; ours holds ~64.5 wt% crude. Used for the
+#         tank unit cost only, for want of a better source.
+#
+#  [MI]   Methanol Institute, "Atmospheric Above Ground Tank Storage of Methanol".
+#         https://methanol.org/wp-content/uploads/2016/06/AtmosphericAboveGroundTankStorageMethanol-1.pdf
+#         Design/safety guidance only -- contains NO costs. Cited for the tank being
+#         carbon steel with stainless cladding, and for methanol being hygroscopic
+#         (a real tank needs dry-nitrogen padding of the free-board).
+#
+# Derivation, from [MAG] Table A12 (TK-3501/2/3, identical):
+#     capacity      80,609 cuft            = 2282.6 m3   (geometry check: pi/4 x 61ft^2
+#                                                         x 28ft = 2317 m3, within 1.5%)
+#     bare cost     825,100 USD (2015)     = 361.5 USD/m3
+#     x 4.952  Chilton fixed-capital factor ([MAG] Table 4:
+#              1.43 x (1 + 0.40 + 0.07 + 0.15 + 0.50 + 0.10) x (1 + 0.35 + 0.20 + 0.01))
+#                                          = 1790 USD/m3 installed
+#     / 0.83   fluid volume ([MAG] Table A12)
+#                                          = 2157 USD per m3 of USABLE volume
+#     / 3.045  MWh_MeOH per m3 of crude at 64.5 wt% (methanol 791.0 kg/m3, water
+#              998.2 kg/m3, LHV 19.9 GJ/t; ideal mixing)
+#                                          = 708 USD/MWh_MeOH (2015 USD)
+#     x 0.9015 USD->EUR (2015 average 1.1095 USD/EUR)
+#     x 1.06   approximate 2015 -> 2020 EUR
+#                                          = 677 EUR/MWh_MeOH (2020 EUR)
+#
+# The Chilton factor is corroborated independently: [OLI] Table S15 gives
+# FCI = 4.8645 x equipment cost, against 4.952 here.
+#
+# This is a CONSERVATIVE (expensive) tank: [MAG]'s bare 361 USD/m3 is high for an
+# atmospheric tank of this size because of the 0.5 in SS316 cladding. A plain carbon
+# steel tank would be cheaper. Treat as an upper bound.
+
+# The tank cost now lives in technology-data (pypsa-eur_AA, commit 99a268b) as
+# technology 'methanol storage': investment 637.8 EUR/MWh_MeOH in 2015 EUR, lifetime 30
+# years, FOM 2%/year, with the full derivation and both sources in its source field.
+# prepare_network.py reads tech_costs.at['methanol storage','fixed'] directly, so there
+# is nothing to define here -- a literal would be a second source of truth that drifts.
+
 tech_inputs['methanol distillation', 'water-output'] = {
     'value': 0.55, 'unit': 't_H2O/t_MeOH',
     'source': '[DEA] sheet "98 Methanol from hydrogen", Water row',
