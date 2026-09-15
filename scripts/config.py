@@ -135,6 +135,65 @@ def _p_flatten_blocks(entry: dict, skip_buses: bool = False) -> dict:
     return row
 
 
+def _p_tsat(P_bar: float) -> float:
+    """Saturation temperature of water [C] at P [bar(a)]."""
+    import CoolProp.CoolProp as CP
+    return CP.PropsSI("T", "P", P_bar * 1e5, "Q", 0, "Water") - 273.15
+
+
+def _p_expand_circuits(raw: dict, g: dict) -> dict:
+    """Expand `circuits:` into the flat "<name> min" / "<name> max" streams.
+
+    Pressure is the input. A circuit must stay LIQUID at its operating top with
+    margin -- water sitting exactly at P_sat is at its boiling point, which is not
+    how a pumped loop runs. `T_max: saturation` opts into T_sat(P) instead, for the
+    steam circuits to come, which do run at saturation.
+
+    Floors must descend with at least dT_min between consecutive circuits.
+    """
+    margin = float(g.get("liquid_margin_K", 5.0))
+    dT = float(g.get("dT_min", 10.0))
+    circuits = raw.get("circuits") or {}
+    out, floors = {}, []
+
+    for name, c in circuits.items():
+        P = float(c["P"])
+        fluid, carrier = c.get("fluid", "Water"), c.get("carrier", "Heat")
+        T_min = float(c["T_min"])
+        tmax_raw = c.get("T_max")
+        if tmax_raw is None:
+            T_max = None
+        elif isinstance(tmax_raw, str) and tmax_raw.strip().lower() == "saturation":
+            T_max = _p_tsat(P)
+        else:
+            T_max = float(tmax_raw)
+
+        if fluid == "Water":
+            tsat = _p_tsat(P)
+            top = T_max if T_max is not None else T_min
+            saturated = isinstance(tmax_raw, str)
+            if not saturated and top > tsat - margin:
+                raise ValueError(
+                    f"p_config circuit {name!r}: top temperature {top} C at {P} bar is within "
+                    f"{margin} K of saturation ({tsat:.1f} C) -- the circuit would flash. "
+                    f"Raise P, lower T, or declare `T_max: saturation` if it is meant to boil."
+                )
+
+        out[f"{name} min"] = {"fluid": fluid, "T": T_min, "P": P,
+                              "carrier": carrier, "buses": list(c.get("buses", []))}
+        if T_max is not None:
+            out[f"{name} max"] = {"fluid": fluid, "T": T_max, "P": P, "carrier": carrier}
+        floors.append((name, T_min))
+
+    for (n_hi, t_hi), (n_lo, t_lo) in zip(floors, floors[1:]):
+        if t_hi - t_lo < dT:
+            raise ValueError(
+                f"p_config: circuits {n_hi!r} ({t_hi} C) and {n_lo!r} ({t_lo} C) are closer than "
+                f"dT_min ({dT} K); cascading circuits need at least that separation."
+            )
+    return out
+
+
 def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
     """Build the flat stream frame from `shared:` states and `processes:` ports.
 
@@ -154,6 +213,8 @@ def _p_build_streams(raw: dict, g: dict) -> pd.DataFrame:
 
     shared = raw.get("shared") or {}
     flat = {name: _p_flatten_blocks(e) for name, e in shared.items()}
+    # heat circuits are declared by pressure and expanded into flat streams
+    flat.update(_p_expand_circuits(raw, g))
 
     for proc, ports in (raw.get("processes") or {}).items():
         for role, spec in ports.items():

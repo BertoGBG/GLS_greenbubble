@@ -53,6 +53,48 @@ globals:
       CarbonDioxide: 0.35
 
 # ---------------------------------------------------------------------
+# circuits -- the pressurised heat-transfer loops of the plant.
+#
+# PRESSURE IS THE INPUT. It must keep the circuit liquid at its operating top
+# temperature, with margin: water at exactly P_sat is at its boiling point, which
+# is not how a pumped loop runs. The loader checks T_max <= T_sat(P) - margin and
+# fails the build otherwise. (Before this block existed, MT declared 180 C at
+# 10 bar and 140 C at 3 bar -- both AT or BELOW saturation, i.e. flashing.)
+#
+#   T_min : the FLOOR of the band -- the lowest temperature at which heat is still
+#           useful to this circuit. This is what the compressor split reads.
+#   T_max : the design operating top. Use the literal `saturation` to derive
+#           T_sat(P) instead -- for the steam circuits to come, which DO run at
+#           saturation. Omit entirely if the circuit has no declared top.
+#   P     : bar(a). Sub-100 C loops are set by pump and static head, not boiling:
+#           real DH distribution runs 6-10 bar (PN16), transmission up to 16-25.
+#
+# Floors must descend with at least globals.dT_min between consecutive circuits.
+# Each circuit generates the flat "<name> min" / "<name> max" streams used
+# throughout the model.
+# ---------------------------------------------------------------------
+circuits:
+  "Heat MT":
+    fluid: "Water"
+    P: 12          # T_sat = 188.0 C, so 180 C operates with 8 K margin
+    T_min: 140
+    T_max: 180
+    carrier: "Heat"
+    buses: ["Heat MT", "Heat MT storage"]
+  "Heat DH":
+    fluid: "Water"
+    P: 6           # pump/static head, not saturation; T_sat = 158.8 C
+    T_min: 90      # district-heating supply temperature (design/contractual)
+    carrier: "Heat"
+    buses: ["Heat DH", "DH grid", "Heat DH storage"]
+  "Heat LT":
+    fluid: "Water"
+    P: 3           # T_sat = 133.5 C
+    T_min: 50
+    carrier: "Heat"
+    buses: ["Heat LT"]
+
+# ---------------------------------------------------------------------
 # shared -- states that belong to the NETWORK, not to any one process:
 # distribution headers, heat tiers, storage conditions, external markets and
 # the normal-condition reference states used for density calculations.
@@ -64,18 +106,6 @@ globals:
 # copies in step.
 # ---------------------------------------------------------------------
 shared:
-  "Heat MT max":
-    state: {fluid: "Water", T: 180, P: 10}
-    model: {carrier: "Heat"}
-  "Heat MT min":
-    state: {fluid: "Water", T: 140, P: 3}
-    model: {carrier: "Heat", buses: ["Heat MT", "Heat MT storage"]}
-  "Heat DH min":
-    state: {fluid: "Water", T: 90, P: 1}
-    model: {carrier: "Heat", buses: ["Heat DH", "DH grid", "Heat DH storage"]}
-  "Heat LT min":
-    state: {fluid: "Water", T: 50, P: 1}
-    model: {carrier: "Heat", buses: ["Heat LT"]}
   "Ambient":
     state: {fluid: "Air", T: "${T_ambient}", P: 1}
     model: {carrier: "Heat", buses: ["Heat amb"]}

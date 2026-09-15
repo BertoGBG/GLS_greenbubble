@@ -58,6 +58,35 @@ Anything **derived** stays in Python. ``lhv.biogas`` is computed at load time fr
 — it is never typed into the YAML, where it could drift from the composition it is
 supposed to describe.
 
+``circuits``
+~~~~~~~~~~~~
+
+The pressurised heat-transfer loops. **Pressure is the input**; the temperatures are
+declared against it and validated::
+
+    circuits:
+      "Heat MT":
+        fluid: "Water"
+        P: 12          # T_sat = 188.0 C, so 180 C operates with 8 K margin
+        T_min: 140     # FLOOR of the band -- what the compressor split reads
+        T_max: 180     # design operating top; or the literal `saturation`
+        buses: ["Heat MT", "Heat MT storage"]
+
+Each circuit expands into the flat ``"<name> min"`` / ``"<name> max"`` streams used
+throughout the model. Two checks run at load and fail the build:
+
+* **liquid with margin** — ``T_max <= T_sat(P) - liquid_margin_K``. Water sitting
+  exactly at ``P_sat`` is at its boiling point, which is not how a pumped loop runs.
+  Before this block existed, MT declared 180 °C at 10 bar (``P_sat`` = 10.03) and
+  140 °C at 3 bar (``P_sat`` = 3.62) — both at or below saturation, i.e. flashing.
+* **cascade separation** — consecutive floors at least ``globals.dT_min`` apart.
+
+``T_max: saturation`` derives ``T_sat(P)`` instead of validating against it. That is
+how a **steam** circuit will declare itself: steam does run at saturation, so pressure
+alone fixes its temperature. Hot-water loops below 100 °C are the opposite case — their
+pressure comes from pump and static head, not boiling (real DH distribution runs
+6–10 bar, transmission 16–25), and their top temperature is a design choice.
+
 ``shared``
 ~~~~~~~~~~
 

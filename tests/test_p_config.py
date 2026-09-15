@@ -196,3 +196,50 @@ def test_declared_but_unconsumed_fields_are_documented():
     for field in ["Heat MT max", "dT_min", "process_streams"]:
         assert field in doc, f"{field!r} is unconsumed but not documented as such"
     assert "Declared but not consumed" in doc
+
+
+# --- heat circuits: pressure in, temperatures out ------------------------------
+
+def test_circuits_stay_liquid():
+    """Every water circuit must be below saturation at its top temperature.
+
+    Before circuits existed, MT declared 180 C at 10 bar (P_sat = 10.03) and 140 C at
+    3 bar (P_sat = 3.62) -- both at or below saturation, i.e. flashing.
+    """
+    import CoolProp.CoolProp as CP
+    for name in c.p_streams.index:
+        if not name.startswith("Heat") or c.p_streams.at[name, "fluid"] != "Water":
+            continue
+        T, P = float(c.p_streams.at[name, "T"]), float(c.p_streams.at[name, "P"])
+        tsat = CP.PropsSI("T", "P", P * 1e5, "Q", 0, "Water") - 273.15
+        assert T < tsat, f"{name}: {T} C at {P} bar is above saturation ({tsat:.1f} C)"
+
+
+def test_circuit_floors_respect_dT_min():
+    floors = [float(c.p_streams.at[f"{n} min", "T"]) for n in ["Heat MT", "Heat DH", "Heat LT"]]
+    for hi, lo in zip(floors, floors[1:]):
+        assert hi - lo >= c.p_dT_min, f"circuits {hi} and {lo} closer than dT_min"
+
+
+def test_circuit_temperatures_are_unchanged_by_the_refactor():
+    """The values the compressor split reads must not have moved."""
+    assert float(c.p_streams.at["Heat MT max", "T"]) == 180
+    assert float(c.p_streams.at["Heat MT min", "T"]) == 140
+    assert float(c.p_streams.at["Heat DH min", "T"]) == 90   # read as T_split_C
+    assert float(c.p_streams.at["Heat LT min", "T"]) == 50   # read as T_cool_C
+
+
+def test_flashing_circuit_is_rejected():
+    """A circuit whose top sits at saturation must fail the build, not pass quietly."""
+    g = {"dT_min": 10, "liquid_margin_K": 5}
+    raw = {"circuits": {"Bad": {"fluid": "Water", "P": 10, "T_min": 140, "T_max": 180}}}
+    with pytest.raises(ValueError, match="would flash"):
+        c._p_expand_circuits(raw, g)
+
+
+def test_saturation_keyword_derives_the_top():
+    """`T_max: saturation` is how a steam circuit will declare itself."""
+    g = {"dT_min": 10, "liquid_margin_K": 5}
+    raw = {"circuits": {"Steam": {"fluid": "Water", "P": 10, "T_min": 150, "T_max": "saturation"}}}
+    out = c._p_expand_circuits(raw, g)
+    assert abs(out["Steam max"]["T"] - 179.9) < 0.2
