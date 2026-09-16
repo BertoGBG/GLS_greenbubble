@@ -1,4 +1,4 @@
-﻿scripts.helpers
+scripts.helpers
 ===============
 
 .. automodule:: scripts.helpers
@@ -10,10 +10,12 @@
    
       add_custom_constraints_stores
       add_el_grid_import_RFNBOs
+      add_grid_connection_shared_capacity_constraint
       add_market_import_fallback
       add_max_RE_sales_constraint
       add_technology_cost
       annuity
+      apply_run_config_overrides
       assert_stochastic_schema_consistent
       build_NG_grid_price_w_tariff
       build_electricity_grid_price_w_tariff
@@ -35,6 +37,7 @@
       filter_consuming_links_by_counterparty_bus
       find_export_links
       is_eu_or_us
+      load_run_config
       merge_EU_US_tech_costs
       merge_into_costs
       optimal_network_only
@@ -42,6 +45,7 @@
       prepare_costs
       read_costs
       read_costs_at_year
+      reallocate_grid_connection_capex
       resample_network
       save_config
       save_network_comp_allocation

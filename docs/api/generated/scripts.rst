@@ -12,6 +12,7 @@
 
    config
    create_stoch_scenarios
+   heat_bands
    helpers
    parameters
    plots

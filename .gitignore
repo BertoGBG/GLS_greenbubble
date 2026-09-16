@@ -9,6 +9,7 @@ __pycache__/
 config/config.yaml
 config/n_config.yaml
 config/plots_config.yaml
+config/p_config.yaml
 
 # Outputs
 outputs/
