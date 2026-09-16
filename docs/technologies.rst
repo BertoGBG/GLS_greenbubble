@@ -101,6 +101,17 @@ CO₂ hydrogenation to methanol (``methanolisation``): CO₂ + H₂ → MeOH + H
 Modelled as a multi-input ``Link`` with ramp limits (8 %/h) and minimum
 load (15 %).  Waste heat is recovered to the medium-temperature heat bus.
 
+The water is not a side reaction that better catalysis could avoid: CO₂ carries
+two oxygens and methanol contains one, so the spare oxygen must leave with
+hydrogen.  Equivalently, the CO₂ route is the CO route plus reverse water-gas
+shift, and RWGS both consumes 45 % of the CO exotherm and creates the water —
+the modest reactor duty and the wet crude are the same phenomenon.
+
+Optionally this link is **split** into ``methanol synthesis`` + ``methanol
+distillation`` with a crude-methanol tank between them, so the reactor and the
+column can run at different times.  Enable with ``options['meoh split']`` in
+``n_config``; see :doc:`guide_meoh_split`.
+
 An eSMR + methanol synthesis route is planned but not yet implemented.
 
 ---
