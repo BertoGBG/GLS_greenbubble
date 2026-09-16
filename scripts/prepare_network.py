@@ -124,14 +124,14 @@ def _exi_capital_cost(tech_name: str, config_key: str, tech_costs: pd.DataFrame,
 # Maps carrier names that differ from their tech_costs index entry.
 _CARRIER_TO_TECH: dict[str, str] = {
     "wind":            "onwind",
-    "grid connection": "electricity grid connection",
+    "grid connection": "distribution grid reinforcement",
 }
 # Maps component names (including EXI_ variants) that differ from their tech_costs entry.
 _NAME_TO_TECH: dict[str, str] = {
     "onshorewind":      "onwind",
     "EXI_onshorewind":  "onwind",
-    "El3_to_DK1":       "electricity grid connection",
-    "EXI_El3_to_DK1":   "electricity grid connection",
+    "El3_to_DK1":       "distribution grid reinforcement",
+    "EXI_El3_to_DK1":   "distribution grid reinforcement",
 }
 # Electrolysis techs are looked up in tech_costs with a size suffix
 # ("AEC large"/"AEC small") that isn't part of the component name.
@@ -158,7 +158,7 @@ _FLUID_HP_STORAGE_TECH = {
 }
 _INFRA_NAME_PATTERNS = [
     # add_local_el_connections(): link name "DK1_to_{local_EL_bus}"
-    (re.compile(r"^DK1_to_El_.+$"), "electricity grid connection"),
+    (re.compile(r"^DK1_to_El_.+$"), "distribution grid reinforcement"),
     # add_local_heat_connections(): link name "{heat_bus}_{plant_name}_to_symb" / "_from_symb"
     (re.compile(r"^.+_(?:to|from)_symb$"), "DH heat exchanger"),
 ]
@@ -699,7 +699,7 @@ def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carr
         p_nom=capacity,
         p_nom_max=n_config.at['grid connection', 'max capacity'],  # module-level global
         capital_cost=capital_cost,
-        lifetime=tech_costs.at["electricity grid connection", "lifetime"],
+        lifetime=tech_costs.at["distribution grid reinforcement", "lifetime"],
         marginal_cost=en_market_prices["el_grid_sell_price"],
     )
 
@@ -847,7 +847,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
 
     # --- Shared, capital-costed import connection (ElDK1 bus -> ElDK1 buy bus) ---
     # Every agent's branch link below draws from this one bus/link instead of each
-    # independently paying its own "electricity grid connection" capex -- see
+    # independently paying its own "distribution grid reinforcement" capex -- see
     # build_network()'s grid-connection consolidation step and
     # add_grid_connection_shared_capacity_constraint (helpers.py), which ties this
     # link's p_nom to the export link's (El3_to_DK1) p_nom so only one physical
@@ -857,7 +857,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
     shared_import_link = "DK1_to_ElDK1_buy"
     ensure_bus(n, shared_import_bus, carrier="El", unit="MW")
     if shared_import_link not in n.links.index:
-        shared_cap_cost = tech_costs.at["electricity grid connection", "fixed"]
+        shared_cap_cost = tech_costs.at["distribution grid reinforcement", "fixed"]
         if n_config is not None:
             shared_cap_cost *= n_config.at["grid connection", "cost factor"]
 
@@ -869,7 +869,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
             efficiency=1.0,
             capital_cost=float(shared_cap_cost),
             p_nom_extendable=True,
-            lifetime=tech_costs.at["electricity grid connection", "lifetime"],
+            lifetime=tech_costs.at["distribution grid reinforcement", "lifetime"],
         )
 
     # --- Per-agent branch (ElDK1 buy bus -> local bus) ---
@@ -894,7 +894,7 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
             efficiency=1.0,
             capital_cost=loop_tol,
             p_nom_extendable=True,
-            lifetime = tech_costs.at["electricity grid connection", "lifetime"],
+            lifetime = tech_costs.at["distribution grid reinforcement", "lifetime"],
         )
 
     # --- Assign time-dependent marginal cost  ---
@@ -2782,7 +2782,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             # add connection to the external grid (based on "add_local_el_connections")
             gc_init = n_config.at['grid connection', 'initial capacity']
             if gc_init > 0:
-                _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
+                _exi_cc = _exi_capital_cost('distribution grid reinforcement', 'grid connection', tech_costs)
                 n = add_grid_connection_cap_exp(
                     n, 'EXI_El3_to_DK1', _exi_cc, gc_init, False,
                     carrier='grid connection',
@@ -2790,7 +2790,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                     tech_costs=tech_costs,
                 )
             if n_config.at['grid connection', 'expansion']:
-                cost = (tech_costs.at['electricity grid connection', 'fixed']
+                cost = (tech_costs.at['distribution grid reinforcement', 'fixed']
                         * n_config.at['grid connection', 'cost factor'])
                 n = add_grid_connection_cap_exp(
                     n, 'El3_to_DK1', cost, 0, True,
@@ -2912,10 +2912,10 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'grid connection' in cap_to_add:
         cap = n_config.at['grid connection', 'initial capacity']
-        _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
+        _exi_cc = _exi_capital_cost('distribution grid reinforcement', 'grid connection', tech_costs)
         n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', _exi_cc, cap, False, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
     if 'grid connection' in exp_to_add:
-        cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor']
+        cost = tech_costs.at['distribution grid reinforcement', 'fixed'] * n_config.at['grid connection', 'cost factor']
         n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
 
     # ----------------------------------------------------------------------

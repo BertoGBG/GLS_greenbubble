@@ -135,7 +135,7 @@ loop_tol = 5e-6
 # --------------------------
 """mapping to US costs """
 dict_tech_US_EU ={"DH heat exchanger" : '',
-                  "electricity grid connection": 'electricity grid connection',
+                  "distribution grid reinforcement": 'distribution grid reinforcement',
                   'gas boiler steam' : 'gas boiler steam',
                   'electric boiler steam' : 'electric boiler steam',
                   'NG grid connection': '',
