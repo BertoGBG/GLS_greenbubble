@@ -130,6 +130,12 @@ _CARRIER_TO_TECH: dict[str, str] = {
 _NAME_TO_TECH: dict[str, str] = {
     "onshorewind":      "onwind",
     "EXI_onshorewind":  "onwind",
+    # 'meoh split' intermediate tank. Its component name is not a tech_costs row and
+    # its carrier is 'crude MeOH', so neither the base-name nor the carrier rule
+    # matches -- without this it stays unmapped and its CAPEX/FOM drop out of the
+    # payback, LCOP and full-component exports.
+    "crude MeOH store":     "methanol storage",
+    "EXI_crude MeOH store": "methanol storage",
     "El3_to_DK1":       "distribution grid reinforcement",
     "EXI_El3_to_DK1":   "distribution grid reinforcement",
 }

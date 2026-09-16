@@ -118,6 +118,24 @@ plotting:
       field: p0
       selector: methanolisation
 
+    # 'meoh split' components. They exist only when options['meoh split'] is on;
+    # build_capacity_compare_from_items keeps only selectors present in the network,
+    # so these are harmless in monolithic runs.
+    - label: Methanol synthesis
+      kind: Link
+      field: p0
+      selector: methanol synthesis
+
+    - label: Methanol distillation
+      kind: Link
+      field: p0
+      selector: methanol distillation
+
+    - label: Crude MeOH Store
+      kind: Store
+      field: e
+      selector: crude MeOH store
+
     - label: biomethanation CO2
       kind: Link
       field: p0
@@ -229,6 +247,7 @@ plotting:
     - bioCH4 collection
     - eCH4 collection
     - CH4 delivery
+    - crude MeOH
     - Methanol collection
     - Methanol delivery
     - Heat MT
