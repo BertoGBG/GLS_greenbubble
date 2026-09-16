@@ -194,6 +194,14 @@ crude MeOH storage: # (unit: MWh_MeOH contained) intermediate buffer between syn
   <<: *base
   expansion: false        # opt-in; this is the whole point of the split, but off by default
 
+methanol from biogas: # (bus0 unit: MW H2) -- ALTERNATIVE to methanolisation:
+  <<: *base                # biogas + H2 -> methanol via tri-reforming (DEA v15 sheet 97).
+  expansion: false         # opt-in. Carbon comes from the biogas, so it needs 2.6x less
+  min load: 0.60           # H2 per MWh_MeOH but consumes biomethane that could be sold.
+  ramp limit up: 0.2       # DEA: min load 60%, cold start ~3 h
+  ramp limit down: 0.2
+  committable: false
+
 methanolisation: # (bus0 unit: t/h CO2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
