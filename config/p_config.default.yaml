@@ -128,7 +128,45 @@ shared:
   "H2 production":
     state: {fluid: "H2", T: 50, P: 30}
     energy: {LHV: "${lhv.h2}"}
-    model: {carrier: "H2", buses: ["H2", "H2 distribution", "H2 delivery"]}
+    # "H2 collection" is the shared 30 bar hydrogen header: AEC and PEMEC inject into it
+    # directly (DEA: both "can deliver hydrogen at pressures as high as 30 bar"), SOEC is
+    # lifted into it by a compressor, and every consumer draws from it. It was previously
+    # undeclared, which left its pressure unknown to the compressor calculations.
+    model: {carrier: "H2", buses: ["H2", "H2 collection", "H2 distribution", "H2 delivery"]}
+  # SOEC delivers at low pressure, unlike AEC and PEMEC. DEA's water-electrolysis
+  # chapter says "both AEC and PEMEC technology can deliver hydrogen at pressures as
+  # high as 30 bar" and pointedly does NOT include SOEC in that sentence, which is why
+  # 'H2 production' above (30 bar) cannot also describe SOEC.
+  #
+  # SOEC delivers at LOW pressure, unlike AEC and PEMEC, so it cannot share the 30 bar
+  # "H2 production" state above. prepare_network gives it this bus and a compressor up to
+  # the 30 bar header; without that it would receive 30 bar hydrogen for free.
+  #
+  # P = 3.5 bar -- the Topsoe SOEC electrolyser's delivery pressure. MANUFACTURER FIGURE,
+  # not DEA: the catalogue gives no SOEC pressure anywhere. Its Table 3 ("State-of-the-art
+  # characteristics of different electrolysis technologies") has no pressure row at all,
+  # and the SOEC section characterises the technology only by temperature (550-850 C),
+  # efficiency, materials and stack lifetime. DEA does state 30 bar for PEMEC ("a
+  # relatively high output pressure of ca. 30 bar"), groups AEC with it ("both AEC and
+  # PEMEC ... as high as 30 bar"), and pointedly leaves SOEC out of that sentence -- which
+  # is consistent with a low-pressure device but is an argument from omission, not a
+  # citation. Revisit if a DEA figure appears.
+  #
+  # The compressor duty is sensitive to this value (H2, 50 C, to the 30 bar header):
+  #     3.5 -> 30 bar   1.2212 kWh/kg_H2   3.66% of the H2 LHV   3 stages   <- in use
+  #     1.0 -> 30 bar   1.9281 kWh/kg_H2   5.78%                 5 stages
+  # i.e. the Topsoe figure is 37% cheaper than a near-atmospheric assumption.
+  #
+  # Consistency check available from DEA: it says the electrolyser datasheets EXCLUDE
+  # compression ("if a compressor for delivering high pressure hydrogen (>30 bar) is
+  # required, on top of the base system") and that compressing to 50 bar "could add about
+  # 20-40% to the ... CAPEX shown in the data sheets". So a compressor annualised cost far
+  # outside that band, scaled for the lower lift, would indicate a duty error.
+  "H2 SOEC outlet":
+    state: {fluid: "H2", T: 50, P: 3.5}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 SOEC LP"]}
+
   "H2 HP storage":
     state: {fluid: "H2", T: "${T_ambient}", P: 150}
     energy: {LHV: "${lhv.h2}"}

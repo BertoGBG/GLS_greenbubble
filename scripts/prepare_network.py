@@ -3049,12 +3049,22 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         return n
 
     def add_SOEC_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier, tech_name):
-
+        # SOEC delivers at LOW pressure, unlike AEC and PEMEC. DEA's water-electrolysis
+        # chapter names only AEC and PEMEC as able to "deliver hydrogen at pressures as
+        # high as 30 bar", which is the pressure the shared 'H2 collection' bus carries.
+        # So SOEC injects into its own LP bus and a compressor lifts it to the header;
+        # without this it would receive 30 bar hydrogen for free, worth 1.93 kWh/kg_H2
+        # (5.8% of the hydrogen LHV) that it never paid for.
+        #
+        # The LP pressure lives in p_config ("H2 SOEC outlet") and is NOT a sourced
+        # number -- see the warning there.
         n = add_requirements_buses(n, {
-            'bus_list': ['El3'],
-            'carrier_list': ['El'],
-            'unit_list': ['MW'],
+            'bus_list': ['El3', 'H2 SOEC LP'],
+            'carrier_list': ['El', 'H2'],
+            'unit_list': ['MW', 'MW'],
         }, symbiosis_n)
+        soec_lp_bus = 'H2 SOEC LP'
+        header_bus = product_bus          # 'H2 collection', 30 bar
 
         # ---------- Add local heat connections (SOEC consumes heat, drawn from Heat MT)
         heat_bus_dict = {'Heat MT': -1}  # process needs heat input
@@ -3066,7 +3076,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         n.add("Link",
               name=name,
               bus0=local_EL_bus,
-              bus1=product_bus,
+              bus1=soec_lp_bus,          # LP outlet, lifted to the header by the compressor below
               carrier = carrier,
               bus2=new_heat_buses[0],  # Heat MT input
               efficiency=tech_costs.at[tech_name, 'efficiency'],
@@ -3082,6 +3092,28 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               ramp_limit_up=n_config.at['SOEC', 'ramp limit up'],
               ramp_limit_down=n_config.at['SOEC', 'ramp limit down']
               )
+
+        # ---------------------------------------------------------------
+        # Lift SOEC's low-pressure hydrogen to the shared 30 bar header.
+        # No storage here (ST bus blank) -- this is a pass-through compressor,
+        # not a buffer. Heat DH/LT are the aftercooling sinks, as for every
+        # other compressor in the model.
+        # ---------------------------------------------------------------
+        n, _soec_heat = add_local_heat_connections(n, {'Heat DH': 1, 'Heat LT': 1},
+                                                   'SOEC', n_flags, tech_costs, n_config)
+        n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
+            'plant': 'SOEC',
+            'local EL bus': local_EL_bus,
+            'Heat DH bus': _soec_heat[0],
+            'Heat LT bus': _soec_heat[1],
+            'IN bus':  soec_lp_bus,
+            'OUT bus': header_bus,
+            'ST bus':  '',
+            'compressor capacity': capacity,
+            'storage capacity': 0,
+            'compressor expansion': expansion,
+            'storage expansion': False,
+        })
 
         # ---------------------------------------------------------------
         # Local fallback heat source (NG + electric boiler) for SOEC's Heat

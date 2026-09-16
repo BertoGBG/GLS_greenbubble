@@ -15,7 +15,7 @@ from scripts.technology_inputs import symbiosis_n, lhv_biogas, biogas_mix, T_max
 
 
 EXPECTED_COLUMNS = {"fluid", "T", "P", "LHV", "carrier", "buses", "moisture", "bus_suffix"}
-EXPECTED_N_STREAMS = 27
+EXPECTED_N_STREAMS = 28   # +1: "H2 SOEC outlet", SOEC's low-pressure H2 bus
 
 
 def test_streams_shape():
