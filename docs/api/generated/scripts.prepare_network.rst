@@ -41,5 +41,6 @@ scripts.prepare\_network
       network_dependencies
       set_plant_connection
       store_signature
+      stream_for_bus
       tech_to_add
    
