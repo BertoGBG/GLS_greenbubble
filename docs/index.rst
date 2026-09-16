@@ -27,6 +27,7 @@ multi-energy systems.
 
    network_model
    technologies
+   meoh_split
    economics
    methods
 
@@ -53,7 +54,6 @@ multi-energy systems.
 
    guide_demands
    guide_process_streams
-   guide_meoh_split
    guide_stochastic
    guide_temporal_resolution
    guide_rolling_horizon

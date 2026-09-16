@@ -38,11 +38,11 @@ The model was developed based on the [GreenLab Skive](https://www.greenlab.dk) i
 
 GreenBubble is designed to be extensible. The following are examples of technologies currently implemented — the list is not exhaustive:
 
-**Hydrogen production** — Alkaline electrolysis
+**Hydrogen production** — Alkaline (AEC) · PEM (PEMEC) · Solid-oxide (SOEC) electrolysis
 
 **Biomethane production** — Biogas upgrading · Biomethanation of biogas or CO₂ · Catalytic methanation of biogas or CO₂
 
-**Methanol production** — CO₂ hydrogenation
+**Methanol production** — CO₂ hydrogenation, optionally split into synthesis + distillation with an intermediate crude-methanol tank
 
 **Renewable electricity** — Onshore wind · Solar PV
 
