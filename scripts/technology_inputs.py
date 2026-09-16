@@ -1247,33 +1247,24 @@ tech_inputs['methanol distillation', 'lifetime'] = {
 # is nothing to define here -- a literal would be a second source of truth that drifts.
 
 # ----------------------------------------------------------------------------------
-# FOM 2.8 %/year -- DEA, supplied here as a WORKAROUND.
+# FOM 2.8 %/year -- DEA, for the two split halves only.
 #
-# [DEA] sheet "98 Methanol from hydrogen" gives Fixed O&M as 2.8 %/year of investment,
-# and upstream PyPSA/technology-data compiles it as methanolisation,FOM = 2.8. Our fork
-# does NOT: the value regressed on branch pypsa-eur_AA somewhere between commits 21479b6
-# and de9012c and is now missing entirely (Fischer-Tropsch went 6.35 -> 0.0008 in the
-# same regression, same sheet, same "Fixed O&M" row, with investment unaffected -- so the
-# defect is in the fork's FOM percentage calculation, not the input data).
+# 'methanolisation' gets its FOM from technology-data again: the fork used to drop it
+# (get_data_DEA mis-parsed the nested-bracket unit on DEA sheet 98 and the FOM block
+# writes only when exactly one row matches), fixed in pypsa-eur_AA commit ed71f0c.
+# 'methanol synthesis' and 'methanol distillation' exist only in GreenBubble, so their
+# FOM has to be declared here.
 #
-# Until technology-data is fixed, set it here for all THREE methanol technologies.
 # FOM is a PERCENTAGE of investment, so it is scale-free: the same 2.8 on each half
 # reproduces the monolithic total exactly, because the investment is already split 90/10.
 #     fixed = (annuity(lifetime, r) + FOM/100) x investment          [helpers.py:382]
 #     synthesis + distillation = (a + 0.028) x (1228.2706 + 136.4745)
 #                              = (a + 0.028) x 1364.7451 = monolithic
 #
-# NOTE this CHANGES RESULTS: methanolisation fixed goes 109,980 -> 148,193 EUR/MW/yr
-# (+35%). The model was previously charging NO fixed O&M on methanol capacity. It is set
-# on 'methanolisation' too, deliberately: giving the split halves an FOM the monolithic
-# link lacks would bias every split-vs-monolithic comparison in favour of the split.
-# REMOVE all three once the fork's compile is fixed, or they will double up.
+# NOTE this CHANGED RESULTS when it arrived: methanolisation fixed went 109,980 ->
+# 148,193 EUR/MW/yr (+35%). The model previously charged NO fixed O&M on methanol
+# capacity, so results from before 2026-09-16 are not comparable.
 # ----------------------------------------------------------------------------------
-tech_inputs['methanolisation', 'FOM'] = {
-    'value': 2.8, 'unit': '%/year',
-    'source': '[DEA] sheet "98 Methanol from hydrogen", Fixed O&M; = upstream technology-data methanolisation,FOM',
-    'further description': 'WORKAROUND for a regression in the pypsa-eur_AA fork, which drops this parameter. Remove when the fork compiles it again.',
-}
 tech_inputs['methanol synthesis', 'FOM'] = {
     'value': 2.8, 'unit': '%/year',
     'source': '[DEA] sheet "98 Methanol from hydrogen", Fixed O&M, same rate as the aggregate unit',
