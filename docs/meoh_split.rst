@@ -149,8 +149,12 @@ Heat bus wiring
   reboiler. Heat MT (140–180 °C) can.
 * **Condenser → Heat LT.** [OLI] measure it at 53 °C, which is LT-grade. Surplus
   leaves through the tier's ambient dump, so this cannot make the network
-  infeasible. Note the consequence: 53 °C heat can no longer be sold straight to
-  the DH grid — reaching 90 °C needs the ``heat pump`` technology.
+  infeasible. It matters only when DH off-take is switched on: with
+  ``options['DH']['enable']`` false (the default) the sole sink on Heat DH is the
+  ambient dump, so DH and LT are economically identical — a demand-mode pair
+  before and after the change returned bit-identical objectives. With DH sales
+  enabled, 53 °C heat can no longer be sold straight to the grid and reaching the
+  90 °C supply needs the ``heat pump`` technology.
 
 Reading the results
 -------------------

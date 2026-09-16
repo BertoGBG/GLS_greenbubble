@@ -1030,11 +1030,13 @@ CO2_comp_res = compress_multistage_with_Tcap(
 # CONDENSER -> Heat LT. CHANGED from Heat DH (prepare_network.py). [OLI] Section E puts
 # the column condenser at 53 C, which is LT-grade (T_min 50), not DH-grade. Surplus can
 # leave through the tier's ambient dump, so this cannot make the network infeasible.
-# CONSEQUENCE, worth knowing: heat rejected at 53 C can no longer be sold straight to the
-# DH grid. Reaching the 90 C DH supply now requires the 'heat pump' technology (n_config,
-# expansion false by default). That is physically honest -- 53 C heat genuinely needs
-# upgrading -- but it REMOVES a revenue stream the model previously got for free, so
-# results before and after this change are not comparable.
+# CONSEQUENCE, but ONLY when DH off-take is enabled: heat rejected at 53 C can no longer
+# be sold straight to the DH grid, and reaching the 90 C supply needs the 'heat pump'
+# technology (n_config, expansion false by default). With options['DH']['enable'] false
+# -- the DEFAULT -- the only sink on Heat DH is the ambient dump, so DH and LT are
+# economically identical and the change is a no-op. VERIFIED: a demand-mode brownfield
+# pair before and after this change returned bit-identical objectives (8,036,079.61) and
+# an identical crude store (29.9318 MWh).
 #
 # STILL APPROXIMATE: only 0.0772 of the 0.1288 synthesis export is genuinely MT-grade;
 # the balance is the HE5 stream at roughly 150 -> 60 C, so wiring it all to Heat MT is
