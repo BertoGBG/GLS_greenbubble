@@ -966,44 +966,74 @@ CO2_comp_res = compress_multistage_with_Tcap(
 #         shale-gas-to-syngas, not CO2 + H2. Used for RATIOS only, never for levels.
 #
 # ----------------------------------------------------------------------------------
-# !! THE HEAT COEFFICIENTS BELOW ARE KNOWN TO BE WRONG AND ARE PENDING A DECISION !!
+# HEAT BALANCE -- [DEA] for levels, [OLI] for the split. RESOLVED.
 #
-# [OLI] Table S14 measures the column duties directly, at a 145 t/h (801.8 MW_MeOH)
-# plant. Normalised per MWh_MeOH (one-step / three-step):
-#       column reboiler    53.7 / 56.5 MW  ->  0.0670 / 0.0705
-#       column condenser  143.6 / 143.0 MW ->  0.1791 / 0.1783
-#       reaction heat       61.8 MW        ->  0.0771   (= dH x flow, confirms [MBA])
-# and Section E gives the temperatures:
-#       reactor        247.5 C   (isothermal, boiling water at 38.07 bar)
-#       reboiler        99.6 C   (heated by 1.43 bar LP steam, T_sat 110 C -> dT ~10 K)
-#       condenser       53.0 C   (partial vapour-liquid)
+# [DEA] reports only TWO plant-level numbers (Note F: "Steam produced in the methanol
+# reactor is reused for heating purposes in the distillation section. The value provided
+# states the NET import steam."):
+#       net heat in   0.1047      heat out (district heating)   0.2562
+#                     ^ the COMPILED value; the sheet's own rounding gives 0.1049
+# A split needs THREE. The missing degree of freedom is X, the heat the synthesis block
+# exports. The code below closes it structurally rather than by transcription:
 #
-# Three consequences, none yet acted on:
-#  1. Q_reb below is 0.1819, derived as (DEA net steam + Q_rxn). That derivation assumed
-#     the reboiler is the only heat sink and the reactor the only source. [OLI] Table S14
-#     shows 8 exchangers in the one-step plant (14 in the three-step): DEA's net is a
-#     PLANT-level figure covering feed preheat too. Measured reboiler is 0.0670, i.e.
-#     2.7x smaller.
-#  2. Q_rxn (0.0771) EXCEEDS the reboiler (0.0670) by 15%: the reaction heat covers the
-#     column with surplus. DEA's positive net steam import comes from the other sinks,
-#     not the column.
-#  3. By temperature, the reboiler belongs on Heat DH (band 150-90) and the condenser on
-#     Heat LT (90-50) -- both one band below where the monolithic link puts them (MT in,
-#     DH out). And the reactor at 247.5 C is above every band the model has. [OLI] do not
-#     feed the reboiler directly from the reactor: they raise 38 bar steam, superheat it
-#     with purge combustion, take 30.3 MW through a turbine, and reboil with the exhaust.
+#       synthesis    heat-output =  X
+#       distillation heat-input  =  X + 0.1047      <- DERIVED in prepare_network.py
+#       distillation heat-output =      0.2562
 #
-# Pending decisions before these are corrected: (a) move reboiler to DH and condenser to
-# LT? (b) is the Rankine cycle in scope? (c) keep matching the monolithic DEA aggregate,
-# or re-base the methanol block on [OLI]?
+# so the COUPLED net is (X + 0.1047) - X = 0.1047 identically, for ANY X. The split
+# therefore reproduces [DEA] exactly and can always collapse back to the monolithic
+# solution -- which is the property that makes the flexibility result meaningful.
+# X is the cost of DECOUPLING, and it is the one number [DEA] structurally cannot give.
 #
-# When settled, these belong in the technology-data fork (branch pypsa-eur_AA) or a
-# consultable CSV in this repo -- not as literals here.
+# X is taken from [OLI], which is the right source: H2/CO2 = 3.000 feed, i.e. our exact
+# chemistry and our exact water make (H2O/MeOH = 1.009 out). [OLI] Table S14, one-step,
+# normalised over 801.8 MW_MeOH:
+#       reactor (247.5 C, boiling water)       61.8 MW   0.0771  = dH, confirms [MBA]
+#       HE5  product -> column feed           103.3 MW   0.1288  CROSSES the boundary
+#       HE7  product -> cooling water          24.2 MW   0.0302  out at 30 C, unusable
+#       HE4, HE6  internal recuperation       110.5 MW           never leaves synthesis
+#       Col. reboiler  (99.6 C)                53.7 MW   0.0670
+#       Col. condenser (53 C)                 143.6 MW   0.1791
+#
+#   X = 0.1288, the heat that MEASURABLY crosses the synthesis/distillation boundary.
+#
+# Two checks on the derived reboiler (0.1288 + 0.1047 = 0.2335):
+#  1. [OLI]'s column needs reboiler + feed preheat = 0.0670 + 0.1288 = 0.1958 when run
+#     standalone. A first-principles boil-up at reflux 2 (1100 kJ/kg x 3 / 5.54 MWh/t)
+#     gives 0.166, within 18% ignoring feed subcooling. So decoupling roughly TRIPLES
+#     the reboiler duty relative to [DEA]'s 0.0670-equivalent -- the store is not free.
+#  2. 0.2335 sits 19% ABOVE [OLI]'s measured 0.1958. The gap is real and is [DEA]'s, not
+#     ours: [OLI] burn purge gas in a fired heater (51 MW) driving a Rankine cycle, so
+#     their column is fed by turbine exhaust rather than imported steam. [DEA] models no
+#     purge burner, so [DEA] imports more. We model no purge burner either, so [DEA]'s
+#     convention is the correct one to inherit. The choice is also the conservative one.
+#
+# SENSITIVITY on X, all three endpoints referenced, none invented:
+#       0.0772  reaction enthalpy alone ([MBA] eqn 3 / [OLI] reactor) -- decoupling is
+#               cheapest, the store looks best
+#       0.0911  the value that makes the distillation import equal [OLI]'s measured
+#               standalone 0.1958
+#       0.1288  [OLI] HE5, used here -- decoupling is dearest, the store looks worst
+# X cannot exceed 0.2059 (= 0.0771 + 0.1288), which is all the recoverable heat the
+# synthesis block has; the remaining 0.0302 leaves at 30 C and is below every band.
+#
+# PENDING, deliberately not changed here (it is a wiring decision, not a data one):
+# by temperature [OLI] puts the reboiler at 99.6 C (fed by 110 C steam -> Heat DH is
+# enough; it is currently wired to Heat MT) and the condenser at 53 C (-> Heat LT, it is
+# currently wired to Heat DH). The reactor at 247.5 C is above every band the model has.
+# Note also that only 0.0772 of the 0.1288 synthesis export is genuinely MT-grade; the
+# balance is the HE5 stream at roughly 150 -> 60 C, so wiring it all to Heat MT is
+# generous to the model by about 40% of that export.
+#
+# [MAG] is deliberately ABSENT from this block. It is SMR syngas: its crude is 10.6 wt%
+# water against our 36.0 wt%, its columns strip reformer inerts we do not have, and its
+# reboiler duty (0.2916) reflects a Grade AA spec at reflux > 7. Useful for the CAPEX
+# ratio and as a documented example of the decoupled architecture; useless for heat.
 # ----------------------------------------------------------------------------------
 #
 # Basis: per MWh_MeOH of final product, matching 'methanolisation'.
-# Electricity is split 90/10 synthesis/distillation. NOTE: the stated rationale for that
-# split ("compressor-dominated") does NOT hold -- the H2 and CO2 compressors are modelled
+# Electricity is split 50/50 synthesis/distillation. NOTE: an earlier 90/10 was justified
+# as "compressor-dominated", which does NOT hold -- the H2 and CO2 compressors are modelled
 # as separate components, so [ALA] Table 4 reports methanol electricity as 0.018
 # MWel/MWmeoh "without compression of H2 and CO2". What remains is recycle circulation
 # and pumps, which needs re-deriving from a flowsheet. (The compiled electricity-input
@@ -1011,53 +1041,107 @@ CO2_comp_res = compress_multistage_with_Tcap(
 # 0.018 either.)
 #
 # ----------------------------------------------------------------------------------
-# CAPEX SPLIT 73/27 -- derived, no longer assumed.
+# STOICHIOMETRY -- derived here, never transcribed.
 #
-# From [MAG] Supplementary Tables A8-A14, summing bare equipment cost by unit number.
-# The 1xxx units (natural gas processing / syngas front-end) are EXCLUDED: GreenBubble
-# feeds CO2 + H2, so that section has no counterpart here. The 35xx units (product
-# storage tanks and loading pumps) are excluded too -- they are the separate
-# 'methanol storage' technology below.
+#   CO  + 2H2 -> CH3OH                dH_298 = -90.6 kJ/mol
+#   CO2 +  H2 <-> CO + H2O   (RWGS)   dH_298 = +41.2 kJ/mol
+#   ----------------------------------------------------------
+#   CO2 + 3H2 -> CH3OH + H2O          dH_298 = -49.4 kJ/mol   ([MBA] eqn 3: -49.2)
 #
-#   synthesis loop (31xx/32xx)                              USD 2015
-#     R-3101  methanol reactor                            11,984,300
-#     E-3101  heat recovery                                 6,687,100
-#     C-3201  recycle gas compressor                        2,799,300
-#     C-3202  purge gas compressor                          1,430,900
-#     E-3201  product cooler                                1,431,200
-#     V-3201  HP flash separator                            1,431,200
-#     E-3102  reactor preheater                             1,174,000
-#     V-3202  LP flash separator                              179,300
-#     V-3101  reactor steam drum                               54,000
-#                                                         -----------
-#                                                          27,171,300   72.6%
+# The CO2 route IS the CO route plus reverse water-gas shift. Water is not a side
+# reaction that better catalysis could avoid: CO2 carries TWO oxygens and methanol
+# contains ONE, so the spare oxygen must leave, and hydrogen is the only partner
+# available. RWGS therefore does two things at once -- it eats 45% of the CO
+# hydrogenation exotherm AND it makes the water. The modest reactor duty and the
+# wet crude are the same phenomenon, not two independent facts.
 #
-#   distillation train (33xx/34xx)
-#     T-3401  refining column                               5,103,200
-#     E-3401  refining condenser                            2,498,500
-#     T-3301  topping column                                  686,300
-#     RB-3301 topping reboiler                                686,300
-#     RB-3401 refining reboiler                               653,800
-#     V-3301  topping accumulator                             277,900
-#     E-3301  topping condenser                               237,900
-#     V-3401  refining accumulator                            135,300
-#                                                         -----------
-#                                                          10,279,200   27.4%
+# Consequence for the split: water out is an IDENTITY on the methanol PRODUCED,
+#     t_H2O / t_MeOH = M_H2O / M_MeOH = 0.5622
+# It is NOT a function of the CO2 fed -- CO2 that leaves in the purge makes no water,
+# so scaling from the feed (0.253266/M_CO2*M_H2O = 0.1037 t/MWh) overstates it by the
+# purge fraction. [DEA]'s Water row gives 0.55 t/t = 97.8% of stoichiometric; the ~2%
+# is byproduct formation (DME and higher alcohols shift the H2O/MeOH ratio) plus the
+# water that leaves dissolved in the product. Immaterial here -- nothing in the model
+# consumes water-output; its only job is fixing the crude composition for tank sizing.
+# ----------------------------------------------------------------------------------
+M_MEOH_gmol = CP.PropsSI("M", "T", 300, "P", 1e5, "Methanol") * 1000.0
+M_H2O_gmol  = CP.PropsSI("M", "T", 300, "P", 1e5, "Water") * 1000.0
+
+meoh_water_t_per_t = M_H2O_gmol / M_MEOH_gmol          # 0.5622 t H2O per t MeOH
+w_meoh_crude       = 1.0 / (1.0 + meoh_water_t_per_t)  # 0.6401 -> crude is 64.0 wt% MeOH
+rho_crude          = 1.0 / (w_meoh_crude / 791.0 + (1.0 - w_meoh_crude) / 998.2)
+crude_MWh_per_m3   = rho_crude * w_meoh_crude * lhv_meoh / 1000.0   # 3.032 MWh_MeOH/m3
+
+# Cross-check against the compiled feed: the carbon that does NOT reach methanol is the
+# purge, so the feed-based number must sit a few percent ABOVE the identity.
+_co2_feed_check = 0.253266 / 44.0098 * M_H2O_gmol / (1.0 / lhv_meoh)   # t_H2O per t_MeOH
+assert 1.00 <= _co2_feed_check / meoh_water_t_per_t <= 1.10, (
+    f"CO2 feed implies {_co2_feed_check:.4f} t_H2O/t_MeOH against a stoichiometric "
+    f"{meoh_water_t_per_t:.4f}; a ratio outside 1.00-1.10 means the feed is no longer "
+    f"near-stoichiometric and the split's chemistry assumptions need revisiting.")
+
+# ----------------------------------------------------------------------------------
+# CAPEX SPLIT 90/10 -- derived from [OLI], our own chemistry.
 #
-# Robustness (the reason 73/27 is quoted rather than 72.6/27.4):
-#   + the seven column pumps (Table A14 cont., 51,800 USD total)   -> 72.4 / 27.6
-#   - RB-3301, whose 686,300 is listed IDENTICALLY to T-3301 and
-#     looks like a transcription error in the report                -> 73.9 / 26.1
-# i.e. the split sits in 72-74% across every reading of the tables. Rounding to 73/27
-# claims no more precision than the source supports.
+# SUPERSEDES an earlier 73/27 taken from [MAG]. That was the wrong plant: [MAG] runs on
+# SMR syngas, and its distillation solves two problems we do not have. Its syngas carries
+# 3853 lbmol/h CH4 and 2846 lbmol/h N2 from the reformer, which need a dedicated topping
+# column to strip, and it targets Grade AA (99.85 wt%) at a reflux ratio above 7 in a
+# second, 83-tray column. CO2 + H2 brings no CH4 and only trace N2, so our separation is
+# methanol/water in ONE column -- exactly [OLI]'s.
 #
-# Independent corroboration: [OLI] Figure 11a reports reactor modules plus compressors
-# at >75% of equipment cost for a CO2+H2 plant -- same side of the split, same order.
+# [OLI] Table S17 itemises equipment for a CO2 + H2 plant fed at H2/CO2 = 3.000, i.e. our
+# stoichiometry exactly. Summing the units that GreenBubble's methanol block represents
+# (M EUR 2020, one-step process):
 #
-# CAVEAT: [MAG] is a syngas plant, so its synthesis loop handles CO + CO2 + H2 and its
-# columns produce Grade AA in TWO columns (topping + refining). A CO2-only loop has a
-# larger water make and [OLI] use a single column. Both effects move the split toward
-# distillation, so 73/27 is, if anything, generous to synthesis.
+#   synthesis
+#     Reactor (6 modules, 48600 m2)                       32.18
+#     HE4  reactor feed/effluent recuperation               3.01
+#     CP-REC  recycle compressor                            0.52
+#     HE7  reactor product -> cooling water                 0.48
+#     FLASH3 + FLASH4 + HE6                                 0.14
+#                                                         -------
+#                                                          36.33   90.2%
+#   distillation
+#     Packed column (5 m x 30 m, 2 units)                   2.06
+#     HE5  reactor product -> column feed                   0.94   (see note)
+#     Reboiler                                              0.50
+#     Condenser                                             0.43
+#                                                         -------
+#                                                           3.93    9.8%
+#
+# HE5 is the exchanger that couples the two blocks in [OLI]'s flowsheet. In the DECOUPLED
+# architecture this model represents, it survives as the distillation feed preheater on
+# utility heat, so it is charged to distillation. Moving it to synthesis gives 92.6/7.4;
+# dropping it entirely gives 92.4/7.6. The split is not sensitive to the choice.
+#
+# EXCLUDED, and why:
+#   CP1/2/3-CO2 + CP-H2   37.12   GreenBubble models feed compression as its own
+#                                 components, and [OLI] compress CO2 from 1 bar, which is
+#                                 not our duty -- the cost would not transfer even if the
+#                                 boundary matched.
+#   HE1/HE2/HE3, FLASH1/2  1.13   part of that same compression train.
+#   Fired heater + blower  4.10   [OLI] burn purge gas; we do not model a purge burner.
+#   Turbine + generator +
+#     HE8 + pump           2.90   [OLI]'s Rankine cycle; DEA has no such cycle.
+#
+# Why this differs from [MAG] so violently -- normalising each block per MW_MeOH:
+#       reactor        [OLI] 40.1 kEUR/MW   [MAG] 33.3 kUSD/MW   ratio 1.20
+#       column train   [OLI]  3.7 kEUR/MW   [MAG] 27.4 kUSD/MW   ratio 7.36
+# The reactors agree within 20%; [MAG]'s columns cost seven times as much per MW. The
+# disagreement is entirely in the separation, and entirely explained by the inerts and
+# the product spec above -- not by chemistry or by the water content of the crude.
+#
+# KNOWN GAP: [DEA]'s 1364.7451 EUR/kW almost certainly INCLUDES feed compression (its
+# electricity-input does, which is why 'electricity-input-no-compression' exists), while
+# GreenBubble also adds separate compressor components. That double count predates the
+# split and is not introduced by it. Folding [OLI]'s compressors onto the synthesis side
+# would give 95/5; 90/10 is used instead because [OLI]'s compression duty is not ours.
+#
+# SCALE: [OLI] is an 801.8 MW_MeOH plant. Applying their per-equipment scaling exponents
+# (reactor 0.44, packed column 0.86) down to 50-100 MW moves the split to roughly 94/6,
+# i.e. further toward synthesis. Not applied -- the reactor is 6 PARALLEL modules, which
+# scale nearer linearly than n=0.44 implies, so the exponent overstates the shift.
 # ----------------------------------------------------------------------------------
 
 tech_inputs['methanol synthesis', 'hydrogen-input'] = {
@@ -1076,14 +1160,14 @@ tech_inputs['methanol synthesis', 'electricity-input'] = {
     'further description': 'Split 50/50 as an explicit admission of ignorance rather than a false precision. An earlier 90/10 was justified as "compressor-dominated" (Taslimi et al. Table 2), which never applied and applies even less on the DEA basis, where feed compression is excluded outright: what remains is recycle circulation and pumps. Re-derive from a flowsheet when one is available.',
 }
 tech_inputs['methanol synthesis', 'heat-output'] = {
-    'value': 0.0772, 'unit': 'MWh_th/MWh_MeOH',
-    'source': '[MBA] eqn (3), dH_298 = -49.2 kJ/mol, over MeOH LHV 637.6 kJ/mol (19.9 GJ/t, [DEA])',
-    'further description': 'CONFIRMED by [OLI] Table S14 at plant scale: 61.8 MW over 801.8 MW_MeOH = 0.0771. Released at 247.5 C ([OLI] Section E), which is ABOVE every heat band in the model',
+    'value': 0.1288, 'unit': 'MWh_th/MWh_MeOH',
+    'source': '[OLI] Table S14 one-step, HE5 = 103.3 MW over 801.8 MW_MeOH; this is X, the heat crossing the synthesis/distillation boundary',
+    'further description': 'This is the FREE PARAMETER of the split -- see the HEAT BALANCE block in the header. It is NOT the reaction enthalpy alone: [MBA] eqn (3) / [OLI] reactor give 0.0771 at 247.5 C, and the reactor product contributes a further 0.1288 as it cools. Sensitivity range 0.0772 - 0.1288, hard ceiling 0.2059. prepare_network.py DERIVES the distillation reboiler as this + methanolisation heat-input, so the coupled plant reproduces [DEA] for any value here.',
 }
 tech_inputs['methanol synthesis', 'investment'] = {
-    'value': 990.1576, 'unit': 'EUR/kW-methanol',
-    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.73, split derived from [MAG] Supplementary Tables A8-A14',
-    'further description': 'Synthesis loop (units 31xx/32xx: reactor, heat recovery, recycle and purge compressors, flashes, preheater, product cooler) = 27,171,300 USD of 37,450,500 USD total. See the CAPEX SPLIT block in the header for the itemised sum and the robustness check. LEVEL is DEA, only the RATIO comes from [MAG].',
+    'value': 1228.2706, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.90, split derived from [OLI] Table S17',
+    'further description': 'Synthesis loop = 36.33 of 40.26 M EUR 2020 in-scope equipment, on a CO2 + H2 plant at H2/CO2 = 3.000 (our stoichiometry). See the CAPEX SPLIT block in the header. LEVEL is DEA, only the RATIO comes from [OLI].',
 }
 tech_inputs['methanol synthesis', 'lifetime'] = {
     'value': 30, 'unit': 'years',
@@ -1100,14 +1184,14 @@ tech_inputs['methanol distillation', 'electricity-input'] = {
     'further description': 'See the synthesis entry. 0.009045 + 0.009045 = 0.018090, i.e. the DEA total exactly.',
 }
 tech_inputs['methanol distillation', 'heat-output'] = {
-    'value': 0.1, 'unit': 'MWh_th/MWh_MeOH',
-    'source': '[DEA] sheet "98 Methanol from hydrogen", district heating output row',
-    'further description': 'CONTRADICTED: [OLI] Table S14 column condenser = 143.6 MW / 801.8 MW_MeOH = 0.1791, rejected at 53 C ([OLI] Section E) i.e. Heat LT, not DH. [ALA] Table 4 gives 0.256',
+    'value': 0.2562, 'unit': 'MWh_th/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", district heating output row, rebased per MWh_MeOH (the sheet reports 0.2 per MWh of TOTAL INPUT; x 7.08/5.5278)',
+    'further description': 'Matches [ALA] Table 4 (0.256). Was 0.1, which was neither DEA nor ALA. [OLI] Table S14 measure the column condenser at 143.6/801.8 = 0.1791 rejected at 53 C, i.e. Heat LT rather than the Heat DH this is wired to -- see PENDING in the HEAT BALANCE block. DEA is used for the level because DEA sets the plant-level heat out that the split must reproduce.',
 }
 tech_inputs['methanol distillation', 'investment'] = {
-    'value': 374.5875, 'unit': 'EUR/kW-methanol',
-    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.27, split derived from [MAG] Supplementary Tables A8-A14',
-    'further description': 'Distillation train (units 33xx/34xx: topping and refining columns, their reboilers, condensers and accumulators) = 10,279,200 USD of 37,450,500 USD total. See the CAPEX SPLIT block in the header. Sums with synthesis to 1364.7451, i.e. the monolithic methanolisation investment exactly.',
+    'value': 136.4745, 'unit': 'EUR/kW-methanol',
+    'source': 'methanolisation investment (costs_2030, 1364.7451) x 0.10, split derived from [OLI] Table S17',
+    'further description': 'Column + reboiler + condenser + the HE5 feed preheater = 3.93 of 40.26 M EUR 2020 in-scope equipment. See the CAPEX SPLIT block in the header. Sums with synthesis to 1364.7451, i.e. the monolithic methanolisation investment exactly.',
 }
 tech_inputs['methanol distillation', 'lifetime'] = {
     'value': 30, 'unit': 'years',
@@ -1122,7 +1206,7 @@ tech_inputs['methanol distillation', 'lifetime'] = {
 #  [MAG]  as cited in the header above. Here: Supplementary Table A12 (storage tanks)
 #         and Table 4 (Chilton method factors).
 #         CAVEAT beyond the one in the header: [MAG]'s tanks hold REFINED product;
-#         ours holds ~64.5 wt% crude. Used for the tank unit cost for want of better.
+#         ours holds 64.0 wt% crude (w_meoh_crude, derived). Used for the unit cost only.
 #
 #  [MI]   Methanol Institute, "Atmospheric Above Ground Tank Storage of Methanol".
 #         https://methanol.org/wp-content/uploads/2016/06/AtmosphericAboveGroundTankStorageMethanol-1.pdf
@@ -1141,6 +1225,9 @@ tech_inputs['methanol distillation', 'lifetime'] = {
 #                                          = 2157 USD per m3 of USABLE volume
 #     / 3.045  MWh_MeOH per m3 of crude at 64.5 wt% (methanol 791.0 kg/m3, water
 #              998.2 kg/m3, LHV 19.9 GJ/t; ideal mixing)
+#              NOTE: crude_MWh_per_m3, now derived from the stoichiometric identity,
+#              gives 3.032 at 64.0 wt% -- 0.4% dearer per MWh. Below the noise of the
+#              tank cost itself, so the technology-data entry is NOT re-issued.
 #                                          = 708 USD/MWh_MeOH (2015 USD)
 #     x 0.9015 USD->EUR (2015 average 1.1095 USD/EUR)
 #     x 1.06   approximate 2015 -> 2020 EUR
@@ -1160,9 +1247,9 @@ tech_inputs['methanol distillation', 'lifetime'] = {
 # is nothing to define here -- a literal would be a second source of truth that drifts.
 
 tech_inputs['methanol distillation', 'water-output'] = {
-    'value': 0.55, 'unit': 't_H2O/t_MeOH',
-    'source': '[DEA] sheet "98 Methanol from hydrogen", Water row',
-    'further description': 'waste water separated from crude methanol -> crude is 64.5 wt% MeOH. Not wired to a bus; recorded for tank sizing. [OLI] Section E: column bottom water 4581 kmol/h vs methanol distillate 4542 kmol/h, i.e. near 1:1 molar',
+    'value': meoh_water_t_per_t, 'unit': 't_H2O/t_MeOH',
+    'source': 'DERIVED: M_H2O / M_MeOH (CoolProp), the stoichiometric identity of CO2 + 3H2 -> CH3OH + H2O -- see the STOICHIOMETRY block in the header',
+    'further description': 'Was a transcribed [DEA] 0.55 (97.8% of stoichiometric; the ~2% is byproducts plus water dissolved in the product) and a matching literal 64.5 wt% crude. Both now follow from molar masses, so the tank sizing tracks the chemistry automatically. Confirmed by [OLI] Section E: column bottom water 4581 kmol/h vs methanol distillate 4542 kmol/h = 1.009, i.e. 1:1 molar. Not wired to a bus.',
 }
 
 tech_inputs['hydrogen storage compressor MeOH', 'electricity-input'] = {
