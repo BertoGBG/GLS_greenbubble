@@ -3320,7 +3320,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         return n, meoh_buses
 
     def add_methanol_distillation_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
-        """Crude methanol -> AA-grade methanol, consuming reboiler heat at MT and rejecting condenser heat to DH.
+        """Crude methanol -> AA-grade methanol, consuming reboiler heat at MT and rejecting condenser heat to LT.
 
         Basis: bus0 = crude MeOH, so capacity is in MW_MeOH contained. No methanol is
         lost (the step sets purity, not yield); the separated water is not wired to a bus.
@@ -3334,7 +3334,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             bus1=meoh_buses.at['product bus', 'methanol distillation'],
             bus2=meoh_buses.at['Heat MT', 'methanol distillation'],
             bus3=meoh_buses.at['local EL bus', 'methanol distillation'],
-            bus4=meoh_buses.at['Heat DH', 'methanol distillation'],
+            bus4=meoh_buses.at['Heat LT', 'methanol distillation'],
             efficiency=  1.0,                                                            # purity step, no MeOH lost
             # Gross reboiler duty is DERIVED, never transcribed: Q_reb = net steam + Q_rxn.
             # This makes (Q_reb - Q_rxn) == methanolisation heat-input an invariant of the
@@ -3342,7 +3342,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             efficiency2= - (tech_costs.at["methanolisation", "heat-input"]
                             + tech_costs.at["methanol synthesis", "heat-output"]),         # reboiler, CONSUMED
             efficiency3= - tech_costs.at["methanol distillation", "electricity-input"], # DEA basis, no compression (see technology_inputs)
-            efficiency4= tech_costs.at["methanol distillation", "heat-output"],           # condenser -> DH
+            efficiency4= tech_costs.at["methanol distillation", "heat-output"],           # condenser -> LT (53 C, [OLI] Section E)
             p_nom_extendable=expansion,
             p_nom=capacity,
             lifetime=tech_costs.at["methanol distillation", "lifetime"],

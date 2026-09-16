@@ -1017,13 +1017,28 @@ CO2_comp_res = compress_multistage_with_Tcap(
 # X cannot exceed 0.2059 (= 0.0771 + 0.1288), which is all the recoverable heat the
 # synthesis block has; the remaining 0.0302 leaves at 30 C and is below every band.
 #
-# PENDING, deliberately not changed here (it is a wiring decision, not a data one):
-# by temperature [OLI] puts the reboiler at 99.6 C (fed by 110 C steam -> Heat DH is
-# enough; it is currently wired to Heat MT) and the condenser at 53 C (-> Heat LT, it is
-# currently wired to Heat DH). The reactor at 247.5 C is above every band the model has.
-# Note also that only 0.0772 of the 0.1288 synthesis export is genuinely MT-grade; the
-# balance is the HE5 stream at roughly 150 -> 60 C, so wiring it all to Heat MT is
-# generous to the model by about 40% of that export.
+# BUS WIRING -- resolved 2026-09-16.
+#
+# REBOILER -> Heat MT. CORRECT, and stays. [OLI] Section E puts the reboiler at 99.6 C,
+# fed by 1.43 bar steam at 110 C, so it needs a source ABOVE the district-heating
+# temperature. The Heat DH circuit's T_min of 90 C is the DH SUPPLY temperature
+# (design/contractual, p_config circuits), not the saturation temperature of its 6 bar --
+# DH delivers heat AT 90 C and cannot drive a 110 C reboiler. Heat MT (140-180 C) can.
+# An earlier note here claimed DH would suffice by reading the 6 bar as T_sat = 158.8 C;
+# that confused circuit pressure with delivery temperature.
+#
+# CONDENSER -> Heat LT. CHANGED from Heat DH (prepare_network.py). [OLI] Section E puts
+# the column condenser at 53 C, which is LT-grade (T_min 50), not DH-grade. Surplus can
+# leave through the tier's ambient dump, so this cannot make the network infeasible.
+# CONSEQUENCE, worth knowing: heat rejected at 53 C can no longer be sold straight to the
+# DH grid. Reaching the 90 C DH supply now requires the 'heat pump' technology (n_config,
+# expansion false by default). That is physically honest -- 53 C heat genuinely needs
+# upgrading -- but it REMOVES a revenue stream the model previously got for free, so
+# results before and after this change are not comparable.
+#
+# STILL APPROXIMATE: only 0.0772 of the 0.1288 synthesis export is genuinely MT-grade;
+# the balance is the HE5 stream at roughly 150 -> 60 C, so wiring it all to Heat MT is
+# generous by about 40% of that export. The reactor at 247.5 C is above every band.
 #
 # [MAG] is deliberately ABSENT from this block. It is SMR syngas: its crude is 10.6 wt%
 # water against our 36.0 wt%, its columns strip reformer inerts we do not have, and its
