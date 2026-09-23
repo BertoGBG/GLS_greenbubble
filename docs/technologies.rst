@@ -464,6 +464,50 @@ at. Compression shows up distributed across the plants — ``SOEC`` lifting to t
 header, ``methanolisation H2 compressor`` lifting to 80 bar, and so on — so the
 site's total compression cost is the sum of those, not one line item.
 
+**Per-plant does not mean duplicated.** A greenfield build with methanation and
+both methanol routes active contains exactly these feed compressors:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 46 54
+
+   * - Component
+     - Lift
+   * - ``SOEC H2 compressor``
+     - ``H2 SOEC LP`` → ``H2 collection``, 3.5 → 30 bar
+   * - ``methanolisation H2 compressor``
+     - ``H2 distribution`` → ``H2 to methanolisation``, 30 → 80 bar
+   * - ``methanolisation CO2 compressor``
+     - ``CO2 distribution`` → ``CO2 to methanolisation``, 1 → 80 bar
+   * - ``methanation CO2 CO2 compressor``
+     - ``CO2 distribution`` → ``CO2 to methanation``, 1 → 20 bar
+   * - ``methanation biogas biogas compressor``
+     - ``biogas`` → ``biogas to methanation``, 1 → 20 bar
+
+Each one performs a **different** lift, so none is redundant. Carbon dioxide
+leaves the same header for two plants at two pressures — 20 bar for methanation,
+80 bar for methanolisation — and a single shared machine could not serve both
+without over-compressing one feed. The per-plant split is what the pressure
+ladder requires, not an oversight.
+
+Where several plants *do* want the same lift, they share one component rather
+than building two: the biomethanation, methanation-biogas and methanation-CO₂
+builders all pass the same ``methanation`` label for their hydrogen, the
+component name collides deliberately, and a guard skips anything already in the
+network. (For that particular case no compressor is built at all — methanation
+takes hydrogen at 20 bar from a 30 bar header, which is a reduction, so
+``compressor_calculation`` returns its "not needed" case.)
+
+That is also why the centralised placement has never been needed: it assumes one
+lift per fluid, and this model does not have that. It would only pay off if two
+plants wanted the same lift from the same header.
+
+.. note::
+
+   Component names are ``{plant} {fluid} compressor``, so a plant whose own name
+   already contains the fluid reads oddly — ``methanation CO2 CO2 compressor`` is
+   the CO₂ compressor of the ``methanation CO2`` plant, not a typo.
+
 The generic ``H2 compressor`` / ``CO2 compressor`` / ``CH4 compressor`` rows in
 ``n_config`` are still doing work in the per-plant case: they carry the
 ``expansion`` permission and the cost lookup that every per-plant instance
