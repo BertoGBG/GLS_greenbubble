@@ -578,11 +578,9 @@ It is documented in full, with the one-bus-one-state rule and the recipe for
 adding a stream, in :doc:`guide_process_streams`. Overrides go in
 ``config/p_config.yaml``.
 
-.. warning::
-
-   ``p_config`` is **not** captured in ``config_run.yaml``. Two runs whose
-   process states differ produce the same fingerprint, so record the file
-   yourself if you change it between runs.
+``p_config`` is captured in ``config_run.yaml`` under its own section, as the
+resolved stream frame — so a run that changes a pressure or a temperature is
+distinguishable from one that does not. See :doc:`guide_outputs`.
 
 ----
 

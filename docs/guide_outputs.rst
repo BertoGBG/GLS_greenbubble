@@ -78,18 +78,15 @@ The network **topology diagrams** live in ``plots/``:
 ``config_run.yaml`` — the run fingerprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``config_run.yaml`` records the parameters used in a run: the merged result of
-the ``config``, ``n_config`` (including its ``options:`` section) and
-``plots_config`` pairs, default + user override, written to disk after the solve
-completes.
+``config_run.yaml`` is the **single authoritative record** of every parameter
+used in a run.  It is the merged result of all four config-file pairs
+(default + user override) written to disk after the solve completes.
 
-.. warning::
-
-   It does **not** include ``p_config``. Stream states — fluids, temperatures,
-   pressures, heat circuits — are not part of the fingerprint, so two runs that
-   differ only in ``p_config`` are indistinguishable from this file. If you
-   change process states between runs, archive ``config/p_config.yaml``
-   alongside it.
+The ``p_config`` section records the **resolved** stream frame rather than the
+raw YAML: ``${T_max_comp}`` and the circuit expansion are already applied, so it
+holds the states the compressors and heat-circuit assignment actually saw. Two
+runs differing only in a pressure or a temperature therefore produce different
+fingerprints.
 
 **Structure:**
 

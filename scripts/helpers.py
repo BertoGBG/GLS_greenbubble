@@ -1823,11 +1823,16 @@ def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_
 def save_config(results_folder, c):
     """Write a structured config_run.yaml fingerprint of the current run.
 
-    Sections follow the source-file hierarchy:
-      config      — merged config.default.yaml + config.yaml
-      n_config    — merged n_config.default.yaml + n_config.yaml (keyed by component)
-      n_options   — options: section of n_config (keyed by option name)
-      plots_config — merged plots_config.default.yaml
+    Sections follow the source-file hierarchy::
+
+        config       merged config.default.yaml + config.yaml
+        n_config     merged n_config.default.yaml + n_config.yaml (by component)
+        n_options    options: section of n_config (by option name)
+        p_config     merged p_config.default.yaml + p_config.yaml -- the globals
+                     and the RESOLVED stream frame (${...} already substituted,
+                     circuits already expanded), i.e. the states the run actually
+                     used rather than the text that produced them
+        plots_config merged plots_config.default.yaml
 
     NaN values within n_config / n_options rows are omitted so only
     parameters that are actually set appear.
@@ -1878,6 +1883,19 @@ def save_config(results_folder, c):
         for opt, row in c.n_options.iterrows()
     }
 
+    # ── p_config (globals + resolved stream states, NaN dropped) ──────────────
+    # The RESOLVED frame is recorded, not the raw YAML: "${T_max_comp}" and the
+    # circuit expansion are already applied, so this is what the compressors and
+    # heat-circuit assignment actually saw. Without it two runs differing only in
+    # a pressure or a temperature produce identical fingerprints.
+    p_config_section = {
+        "globals": _to_basic(c.p_globals),
+        "streams": {
+            name: _drop_nan(_to_basic(row.to_dict()))
+            for name, row in c.p_streams.iterrows()
+        },
+    }
+
     # ── plots_config ──────────────────────────────────────────────────────────
     plots_section = _to_basic(c.plt_config)
 
@@ -1885,6 +1903,7 @@ def save_config(results_folder, c):
         "config":       config_section,
         "n_config":     n_config_section,
         "n_options":    n_options_section,
+        "p_config":     p_config_section,
         "plots_config": plots_section,
     }
 
