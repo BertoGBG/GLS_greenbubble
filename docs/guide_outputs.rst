@@ -78,9 +78,18 @@ The network **topology diagrams** live in ``plots/``:
 ``config_run.yaml`` — the run fingerprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``config_run.yaml`` is the **single authoritative record** of every parameter
-used in a run.  It is the merged result of all three config-file pairs
-(default + user override) written to disk after the solve completes.
+``config_run.yaml`` records the parameters used in a run: the merged result of
+the ``config``, ``n_config`` (including its ``options:`` section) and
+``plots_config`` pairs, default + user override, written to disk after the solve
+completes.
+
+.. warning::
+
+   It does **not** include ``p_config``. Stream states — fluids, temperatures,
+   pressures, heat circuits — are not part of the fingerprint, so two runs that
+   differ only in ``p_config`` are indistinguishable from this file. If you
+   change process states between runs, archive ``config/p_config.yaml``
+   alongside it.
 
 **Structure:**
 

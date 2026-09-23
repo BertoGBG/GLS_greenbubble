@@ -270,6 +270,8 @@ correct form rather than an omission.
 
 ---
 
+.. _technologies-compression:
+
 Compression and pressure levels
 --------------------------------
 

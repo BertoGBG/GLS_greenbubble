@@ -3,7 +3,7 @@
 Configuration
 =============
 
-GreenBubble is configured via three YAML files in the ``config/`` folder.
+GreenBubble is configured via four YAML files in the ``config/`` folder.
 Each file has a committed ``*.default.yaml`` base and an optional
 ``*.yaml`` user-override that is merged on top at runtime.
 See :ref:`guide-snakemake` for the full override workflow.
@@ -19,8 +19,17 @@ See :ref:`guide-snakemake` for the full override workflow.
    * - ``config/n_config.default.yaml``
      - Per-technology capacity bounds, ramp limits, brownfield initial capacities,
        and external market options (``options:`` section)
+   * - ``config/p_config.default.yaml``
+     - The physical state of every stream — fluid, temperature, pressure, LHV —
+       and the heat circuits. Documented separately in
+       :doc:`guide_process_streams`.
    * - ``config/plots_config.default.yaml``
      - Which components to export and plot after optimisation
+
+The split between ``n_config`` and ``p_config`` is deliberate: ``technology-data``
+and ``n_config`` carry **magnitudes** (MWh/MWh, t/MWh, EUR/kW), while ``p_config``
+carries **state** (fluid, T, P). A duty and the temperature it is delivered at
+therefore live in different files and are linked by reference, never duplicated.
 
 ----
 
@@ -554,6 +563,26 @@ re-activates ``committable=True`` for any technology that has it set in
 
 ``committable: true`` is incompatible with stochastic mode — the multi-scenario
 LP requires a pure LP (no binary variables).  See :ref:`guide-stochastic`.
+
+----
+
+p_config.default.yaml
+----------------------
+
+Declares the thermodynamic state of every stream and the pressurised heat
+circuits. It is what makes the compressor duties and the heat-circuit
+assignment physical rather than hardcoded — see
+:ref:`technologies-compression` for how the two connect.
+
+It is documented in full, with the one-bus-one-state rule and the recipe for
+adding a stream, in :doc:`guide_process_streams`. Overrides go in
+``config/p_config.yaml``.
+
+.. warning::
+
+   ``p_config`` is **not** captured in ``config_run.yaml``. Two runs whose
+   process states differ produce the same fingerprint, so record the file
+   yourself if you change it between runs.
 
 ----
 

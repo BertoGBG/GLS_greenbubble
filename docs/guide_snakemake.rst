@@ -13,7 +13,7 @@ of creating a scenario run.
 How the config system works
 ----------------------------
 
-GreenBubble uses **three configuration files**, each with a ``*.default.yaml``
+GreenBubble uses **four configuration files**, each with a ``*.default.yaml``
 version committed to the repository:
 
 .. list-table::
@@ -26,6 +26,9 @@ version committed to the repository:
      - Run settings: demands or price targets, technology flags, economics, solver
    * - ``config/n_config.default.yaml``
      - Per-technology capacity bounds, ramp limits, operational options
+   * - ``config/p_config.default.yaml``
+     - Physical state of every stream (fluid, temperature, pressure) and the
+       heat circuits — see :doc:`guide_process_streams`
    * - ``config/plots_config.default.yaml``
      - Which components to plot and export after optimisation
 
