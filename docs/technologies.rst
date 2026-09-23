@@ -248,6 +248,101 @@ correct form rather than an omission.
 
 ---
 
+Compression and pressure levels
+--------------------------------
+
+Every carrier in the model has a declared pressure, and a compressor exists
+wherever a plant needs its feed above the pressure of the header it draws from.
+The states live in ``p_config`` — see :doc:`guide_process_streams` — and the
+compressor duties are computed from them with CoolProp, not hardcoded.
+
+**Shared headers.** These are the conditions a carrier sits at between plants:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 12 12 42
+
+   * - Header
+     - Fluid
+     - P [bar]
+     - Note
+   * - ``H2 production``
+     - H₂
+     - 30
+     - The shared hydrogen header. AEC and PEMEC inject directly; DEA states
+       both "can deliver hydrogen at pressures as high as 30 bar".
+   * - ``H2 SOEC outlet``
+     - H₂
+     - 3.5
+     - SOEC alone delivers low-pressure and is lifted to the header by its own
+       compressor. Manufacturer figure (Topsoe); DEA gives no SOEC pressure.
+   * - ``H2 HP storage``
+     - H₂
+     - 150
+     - Buffer storage, filled from the 30 bar header.
+   * - ``biogas``
+     - biogas
+     - 1
+     - Leaves the digester at ambient.
+   * - ``CO2 biogas upgrading``
+     - CO₂
+     - 1
+     - Separated CO₂, ambient.
+   * - ``CO2 HP storage``
+     - CO₂
+     - 60
+     - Returned to consumers at 30 bar.
+   * - ``CO2 Liq storage``
+     - CO₂
+     - 16
+     - Liquefied, at −26 °C.
+   * - ``NG grid``
+     - CH₄
+     - 40
+     - External gas grid.
+
+**Plant inlets.** Each plant declares the pressure it needs. The gap between
+that and the header is what the compressor pays for:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 22 22 26
+
+   * - Plant
+     - Feed
+     - Needs [bar]
+     - Compressor
+   * - ``biomethanation``
+     - H₂
+     - 1
+     - none — the reactor is atmospheric
+   * - ``methanation``
+     - H₂, CO₂, biogas
+     - 20
+     - yes, on each feed
+   * - ``methanolisation``
+     - H₂, CO₂
+     - 80
+     - yes — DEA sheet 98 excludes feed compression
+   * - ``methanol from biogas``
+     - H₂, biogas
+     - taken as supplied
+     - none — DEA sheet 97 includes it, and reforming is atmospheric
+
+This is why the same carrier can reach two plants through different components:
+``biomethanation`` takes hydrogen straight off the header because it runs at
+ambient pressure, while ``methanolisation`` pays to lift the same hydrogen to
+80 bar. Tying the duty to a declared state rather than a constant is what keeps
+those two consistent.
+
+**Components.** ``H2 compressor``, ``CO2 compressor``, ``CH4 compressor`` and
+``biogas compressor`` are sized from the duty above; ``H2 pipe`` and
+``CO2 pipe`` carry a carrier between plants when ``symbiosis`` is on;
+``DH heat exchanger`` couples the plant to the district-heating circuit. All are
+configured in ``n_config`` like any other technology.
+
+---
+
 Storage  (``n_flags.storage``)
 --------------------------------
 
