@@ -118,6 +118,13 @@ plotting:
       field: p0
       selector: methanolisation
 
+    # Alternative methanol route (biogas + H2 via autothermal reforming).
+    # Rated on its H2 input, like 'methanolisation'.
+    - label: Methanol from biogas
+      kind: Link
+      field: p0
+      selector: methanol from biogas
+
     # 'meoh split' components. They exist only when options['meoh split'] is on;
     # build_capacity_compare_from_items keeps only selectors present in the network,
     # so these are harmless in monolithic runs.
