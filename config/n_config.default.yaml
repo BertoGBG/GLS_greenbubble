@@ -241,8 +241,17 @@ TES concrete El: # Store + electric charger (El3→heat) + heat discharger (heat
   min_max_hours_charge: 4      # min MWh per MW of electric charging power
   min_max_hours_discharge: 15  # min MWh per MW of heat discharge power
   standing loss: 0.02
-  # efficiency charge:    null  # override Concrete-charger eff (default: tech-data ≈0.99)
-  # efficiency discharge: null  # override Concrete-discharger eff (default: tech-data ≈0.43)
+  # efficiency charge:  override Concrete-charger eff (default: tech-data ≈0.99)
+  # Discharge efficiency is SET HERE rather than taken from technology-data.
+  # Concrete-discharger's 0.4343 is Viswanathan's ELECTRICAL discharge -- its row
+  # note reads "RTE assume 99% for charge and other for discharge", i.e. a
+  # power-to-power split through a steam cycle. This store discharges HEAT and has
+  # no power block, so that figure understates it.
+  # 0.65 gives a round trip of 0.99 x 0.65 = 0.64, matching the 63-65% observed
+  # annually for a RONDO brick heat battery in this same cluster
+  # (Dhar, MSc thesis, DTU Wind, April 2026), which measured 0.76 on discharge
+  # with a 1.2%/h self-discharge against this model's 2%/h.
+  efficiency discharge: 0.65
   expansion: false
 
 TES DH: # Store + bidirectional HX Link (Heat DH).

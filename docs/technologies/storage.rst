@@ -81,7 +81,7 @@ independently.
      - 0.99 (``Concrete-charger``)
    * - Discharge efficiency
      - 1.0 (same link)
-     - 0.4343 (``Concrete-discharger``) — see the note below
+     - **0.65**, set in ``n_config``
    * - Duration
      - ``min_max_hours`` 8
      - 4 h charge, 15 h discharge
@@ -95,22 +95,15 @@ Both draw their costs from the same three ``technology-data`` rows
 (``Concrete-store``, ``Concrete-charger``, ``Concrete-discharger``; Viswanathan
 2022 and Georgiou 2018).
 
-.. warning::
+.. note::
 
-   **``TES concrete``'s heat exchanger is priced as a power block.** Its single
-   link takes its capital cost from ``Concrete-discharger``, which is
-   725 192 EUR/MW on Georgiou's basis of *"80 % of capital costs of power
-   components for sensible thermal storage"* — i.e. the turbine-side equipment
-   for converting stored heat back to **electricity**. ``TES concrete``'s link
-   is a heat exchanger returning heat as heat, so this is likely a large
-   overestimate and makes the technology look more expensive than it is.
-
-   Its *efficiency* is handled correctly: it defaults to 1.0 rather than
-   inheriting ``Concrete-discharger``'s 0.4343, so no energy is lost on the
-   round trip. Only the capital cost is questionable.
-
-   Both stores ship with ``expansion: false``, so neither is built by default and
-   no current result depends on either figure.
+   ``TES concrete``'s heat exchanger takes its capital cost from
+   ``Concrete-discharger`` — 725 192 EUR/MW, which Georgiou gives as *"80 % of
+   capital costs of power components for sensible thermal storage"*, i.e.
+   turbine-side equipment for converting stored heat back to electricity. A
+   heat exchanger returning heat as heat is a simpler device, so this is likely
+   generous. Worth revisiting if you enable the store; both ship with
+   ``expansion: false`` and are not built by default.
 
 Electrically charged thermal storage (``TES concrete El``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -148,33 +141,25 @@ and discharge). Duration limits are set in ``n_config`` by
 ``min_max_hours_charge`` (4) and ``min_max_hours_discharge`` (15), with a 2 %
 standing loss.
 
-.. note::
+Round-trip efficiency
+---------------------
 
-   **On the discharge efficiency.** With no override in ``n_config``, the
-   discharger takes ``Concrete-discharger``'s efficiency of **0.4343**, giving a
-   round trip of 0.99 × 0.4343 ≈ **0.43** from electricity to ``Heat MT``, on top
-   of a 2 %/h standing loss.
+The charger takes ``Concrete-charger``'s efficiency of 0.99. The discharger does
+**not** use the catalogue value: ``efficiency discharge`` is set to **0.65** in
+``n_config``, giving a round trip of 0.99 × 0.65 = **0.64** from electricity to
+``Heat MT``, on top of a 2 %/h standing loss.
 
-   A real electrically-charged heat battery does lose substantially on discharge,
-   so a figure well below unity is the right *kind* of number: heat has to be
-   extracted through an air or steam loop at a useful temperature, not simply
-   handed over. For comparison, a study of a RONDO brick heat battery in this
-   same cluster [DHAR]_ measured a **discharge efficiency of 0.76** against an
-   electric boiler's 0.95, and an **observed annual round trip of 63–65 %** with
-   1.2 %/h self-discharge.
+The catalogue figure is deliberately overridden. ``Concrete-discharger``'s 0.4343
+is Viswanathan's **electrical** discharge — the row's own note reads *"RTE assume
+99% for charge and other for discharge"*, a power-to-power split through a steam
+cycle. This store has no power block: it returns heat as heat, so that figure
+understates it.
 
-   So 0.43 is not implausible in kind, but it is materially lower than a
-   comparable real device — and its provenance is worth knowing: Viswanathan's
-   row note reads *"RTE assume 99% for charge and other for discharge"*, which is
-   a **power-to-power** split through a steam cycle rather than a heat discharge.
-   Treat it as a conservative placeholder rather than a measured heat-side figure,
-   and revisit it against [DHAR]_ or a vendor datasheet before drawing
-   conclusions about this technology.
-
-   To change it, set ``efficiency discharge`` for ``TES concrete El`` in
-   ``n_config``; ``_eff`` uses that in preference to the catalogue value. Nothing
-   is affected today, since the technology ships with ``expansion: false`` and is
-   never built.
+0.65 is anchored to a measured device of the same class. A RONDO brick heat
+battery studied in this same cluster [DHAR]_ measured a discharge efficiency of
+0.76 against an electric boiler's 0.95, and an **observed annual round trip of
+63–65 %** with 1.2 %/h self-discharge. The model's 0.64 sits inside that band,
+with a slightly higher standing loss doing the rest of the work.
 
 .. [DHAR] P. Dhar, *Modelling optimal storage operation with limited foresight in
    an industrial cluster*, MSc thesis, DTU Department of Wind and Energy Systems,
