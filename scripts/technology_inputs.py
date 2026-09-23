@@ -166,7 +166,7 @@ def match_fluid_name_coolprop(fluid, mixture_db=None):
 
 def compress_multistage_with_Tcap(fluid_state, fluid_name: str,
                                   p_in_bar: float, p_out_bar: float,
-                                  T_in_C: float, T_max_C: float = 160,
+                                  T_in_C: float, T_max_C: float = 160,   # callers pass p_config globals.T_max_comp
                                   eta_s: float = 0.75, r_max: float = 2.5,
                                   T_cool_C: float = 50, T_split_C=None):
     """
@@ -577,7 +577,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pout,
             T_in_C=Tin,
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- Cooling after compression if requested
@@ -613,7 +614,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pst,
             T_in_C=Tin,
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- Cooling before storage
@@ -644,7 +646,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pout,
             T_in_C=Tin,
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- Cooling after compression if requested
@@ -675,7 +678,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=symbiosis_n.at[ST_stream, 'P'],
             T_in_C=cooling_after_main_comp['T_cool_C'],
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- final Cooling before storage ----
@@ -706,7 +710,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pout,
             T_in_C=Tin,
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- Cooling after compression if requested
@@ -743,7 +748,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pst,
             T_in_C=Tin,
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         # ---- final Cooling before storage ----
@@ -764,7 +770,8 @@ def compressor_calculation(comp_streams, symbiosis_n):
             p_out_bar=Pout,
             T_in_C=cooling_before_storage['T_cool_C'],
             T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-            T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+            T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+            T_max_C=T_max_comp,
         )
 
         extra_compression['specific_work_kWh_per_kg'] += extra_compression2['specific_work_kWh_per_kg'] - main_compression['specific_work_kWh_per_kg']
@@ -885,7 +892,8 @@ H2_comp_res = compress_multistage_with_Tcap(
     p_out_bar=Pout,
     T_in_C=Tin,
     T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-    T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+    T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+    T_max_C=T_max_comp,
 )
 
 ### main compression CO2:
@@ -905,7 +913,8 @@ CO2_comp_res = compress_multistage_with_Tcap(
     p_out_bar=Pout,
     T_in_C=Tin,
     T_cool_C=symbiosis_n.at['Heat LT min', 'T'],
-    T_split_C=symbiosis_n.at['Heat DH min', 'T']  # default to T_in
+    T_split_C=symbiosis_n.at['Heat DH min', 'T'],  # default to T_in
+    T_max_C=T_max_comp,
 )
 
 # ---- Update tech_inputs:

@@ -397,14 +397,31 @@ and outlet states from ``p_config``, applies pre-cooling if the feed arrives
 above the compressor inlet limit, handles the high-pressure storage cases, and
 returns electricity and heat per unit of throughput.
 
-.. note::
+``globals.T_max_comp`` in ``p_config`` is the single source of this limit. It
+does two jobs: it sets the **declared temperature** of streams downstream of a
+compressor (the ``${T_max_comp}`` references in the port states), and it is
+passed to ``compress_multistage_with_Tcap`` as the discharge cap, so the staging
+follows it. Lowering it adds stages and lowers the work, because more
+intercooling moves the machine closer to isothermal compression:
 
-   ``globals.T_max_comp`` in ``p_config`` sets the **declared temperature** of
-   streams downstream of a compressor (the ``${T_max_comp}`` references in the
-   port states). It is *not* passed to ``compress_multistage_with_Tcap``, which
-   uses its own default of 160 °C. The two agree today, so no result depends on
-   the difference — but changing the ``p_config`` value alone would move the
-   declared stream temperature without changing the staging.
+.. list-table::
+   :header-rows: 1
+   :widths: 30 25 45
+
+   * - ``T_max_comp``
+     - Stages
+     - Work [kWh/kg_H2]
+   * - 160 °C (default)
+     - 3
+     - 1.2212
+   * - 120 °C
+     - 5
+     - 1.1861
+   * - 90 °C
+     - 7
+     - 1.1505
+
+(hydrogen, 3.5 → 30 bar, 50 °C inlet — the SOEC lift).
 
 Aftercooling and the heat exchangers
 ------------------------------------
