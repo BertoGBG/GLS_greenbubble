@@ -27,6 +27,7 @@ multi-energy systems.
 
    design
    model_approach
+   model_anatomy
    technologies
    economics
    methods

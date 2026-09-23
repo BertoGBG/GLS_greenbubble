@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GreenBubble Model Anatomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#eceff4; --surface:#ffffff; --surface-2:#f5f7fa;
+  --ink:#14202c; --ink-2:#44586b; --ink-3:#7d8fa1;
+  --line:#d3dbe4; --line-2:#bcc8d4;
+  --el:#c9820f; --h2:#1668c4; --co2:#6b7a87; --gas:#8c610a; --heat:#d4552c; --meoh:#d0352a;
+  --ok:#2f7d4f; --off:#93a3b2;
+  --shadow:0 1px 2px rgba(20,32,44,.06),0 8px 24px -12px rgba(20,32,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#10161e; --surface:#182131; --surface-2:#1e2839;
+    --ink:#e7edf4; --ink-2:#a8b8c8; --ink-3:#71849a;
+    --line:#2b384c; --line-2:#3b4a61;
+    --el:#f0b44a; --h2:#5aa4f0; --co2:#94a6b5; --gas:#c08a33; --heat:#f0805a; --meoh:#f0645a;
+    --ok:#5cc184; --off:#5a6b7d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#10161e; --surface:#182131; --surface-2:#1e2839;
+  --ink:#e7edf4; --ink-2:#a8b8c8; --ink-3:#71849a;
+  --line:#2b384c; --line-2:#3b4a61;
+  --el:#f0b44a; --h2:#5aa4f0; --co2:#94a6b5; --gas:#c08a33; --heat:#f0805a; --meoh:#f0645a;
+  --ok:#5cc184; --off:#5a6b7d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px; margin:0 auto; padding-inline:20px; padding-block:40px 64px}
+header{margin-bottom:28px; max-width:70ch}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;
+}
+h1{
+  font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:clamp(28px,4.4vw,42px);
+  line-height:1.12; letter-spacing:-.018em; margin:0 0 12px; text-wrap:balance;
+}
+.lede{margin:0; color:var(--ink-2); font-size:17px; text-wrap:pretty}
+.lede b{color:var(--ink); font-weight:600}
+
+/* ---- controls ---- */
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:16px 18px; margin-bottom:18px;
+}
+.panel-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 16px; margin-bottom:14px}
+.panel-title{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2); margin:0}
+.hint{font-size:13px; color:var(--ink-3); margin:0}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 12px 6px 10px; border-radius:6px; cursor:pointer;
+  border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-2);
+  transition:background .14s,border-color .14s,color .14s;
+}
+.chip:hover{border-color:var(--ink-3)}
+.chip:focus-visible{outline:2px solid var(--h2); outline-offset:2px}
+.chip .dot{width:8px; height:8px; border-radius:50%; background:var(--off); flex:none}
+.chip[aria-pressed="true"]{background:var(--surface); border-color:var(--ink-3); color:var(--ink); font-weight:600}
+.chip[aria-pressed="true"] .dot{background:var(--ok)}
+.chip.spine[aria-pressed="true"]{border-color:var(--h2); box-shadow:inset 0 0 0 1px var(--h2)}
+.chip.spine[aria-pressed="true"] .dot{background:var(--h2)}
+.reset{margin-left:auto; font-family:"IBM Plex Sans",sans-serif; font-size:13px; background:none; border:none; color:var(--ink-3); cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:4px}
+.reset:hover{color:var(--ink)}
+.reset:focus-visible{outline:2px solid var(--h2); outline-offset:2px}
+
+/* ---- diagram ---- */
+.stage{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px; overflow-x:auto; box-shadow:var(--shadow)}
+svg.diagram{display:block; width:100%; min-width:900px; height:auto}
+.n-title{font-family:"IBM Plex Sans",sans-serif; font-size:13px; font-weight:600}
+.n-flag{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:500}
+.n-tech{font-family:"IBM Plex Mono",monospace; font-size:11px}
+.n-rail{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.03em}
+.n-ext{font-family:"IBM Plex Sans",sans-serif; font-size:12px; font-weight:500}
+.n-sub{font-family:"IBM Plex Mono",monospace; font-size:10px}
+.n-why{font-family:"IBM Plex Sans",sans-serif; font-size:10.5px; font-style:italic}
+.n-band{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.16em}
+
+/* ---- status ---- */
+.status{margin-top:16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
+.st{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--off); border-radius:8px; padding:12px 14px}
+.st.on{border-left-color:var(--ok)}
+.st.blocked{border-left-color:var(--heat)}
+.st h4{margin:0 0 4px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600}
+.st p{margin:0; font-size:12.5px; color:var(--ink-2); line-height:1.5}
+
+/* ---- prose ---- */
+.notes{margin-top:44px; display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:26px 34px; max-width:100%}
+.note h3{font-family:"IBM Plex Serif",Georgia,serif; font-size:18px; font-weight:600; margin:0 0 8px; letter-spacing:-.01em}
+.note p{margin:0 0 10px; color:var(--ink-2); font-size:14.5px}
+.note p:last-child{margin-bottom:0}
+code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--surface-2); border:1px solid var(--line); border-radius:4px; padding:1px 5px; color:var(--ink)}
+.rule{height:1px; background:var(--line); margin:40px 0 0}
+footer{margin-top:18px; font-size:12.5px; color:var(--ink-3)}
+footer code{font-size:.9em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:620px){.wrap{padding-block:28px 48px} .reset{margin-left:0}}
+</style>
+<style>html,body{margin:0;padding:0}</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">GreenBubble · PyPSA</p>
+  <h1>How the model is put together</h1>
+  <p class="lede">Five kinds of thing: <b>external grids</b> the site trades with, <b>agents</b> switched on by <code>n_flags</code>, <b>competing technologies</b> inside each agent, the <b>shared carrier rails</b>, and the <b>products</b> sold. The rails are <code>symbiosis</code> — switch it off and the agents become islands.</p>
+</header>
+
+<div class="panel">
+  <div class="panel-head">
+    <p class="panel-title">n_flags</p>
+    <p class="hint">Toggle an agent. Dependencies resolve with the same rules as <code>network_dependencies()</code>.</p>
+    <button class="reset" id="reset" type="button">Reset to defaults</button>
+  </div>
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="stage"><svg class="diagram" id="svg" viewBox="0 0 1180 786" role="img" aria-labelledby="svgtitle">
+  <title id="svgtitle">Model structure: external grids on the left, agents docked to shared carrier rails, products on the right</title>
+</svg></div>
+
+<div class="status" id="status"></div>
+
+<div class="rule"></div>
+<div class="notes">
+  <div class="note">
+    <h3>Agents are plants, not carriers</h3>
+    <p>Each <code>n_flags</code> entry switches on one builder in <code>prepare_network.py</code> — <code>add_biogas()</code>, <code>add_electrolysis()</code>, and so on. An agent owns its own plant-local buses and its own components.</p>
+    <p>Turning one off removes its whole block. The rest of the model still solves: every builder has to leave a feasible network whether or not the others ran.</p>
+  </div>
+  <div class="note">
+    <h3>Inside an agent, technologies compete</h3>
+    <p>An agent is not one machine. <code>electrolysis</code> offers three ways to make hydrogen — <code>AEC</code>, <code>PEMEC</code>, <code>SOEC</code> — with different costs, efficiencies and outlet pressures. The optimiser sizes whichever it wants, including none.</p>
+    <p>The same holds for methanol, where <code>methanolisation</code> and <code>methanol from biogas</code> feed one collection bus by two different chemistries, and for heat, where four boilers and a heat pump bid against each other.</p>
+  </div>
+  <div class="note">
+    <h3>Symbiosis is the rails</h3>
+    <p><code>symbiosis</code> builds the shared distribution buses: electricity, hydrogen, CO₂, biogas and the three heat circuits. Without it each agent can still talk to the external grids, but not to its neighbours.</p>
+    <p>Two agents cannot exist without it at all. <code>meoh</code> needs hydrogen from the electrolyser and CO₂ from the upgrader; <code>methanation</code> needs the same. Both check for <code>electrolysis</code>, <code>biogas</code> <em>and</em> <code>symbiosis</code> before building anything.</p>
+  </div>
+  <div class="note">
+    <h3>Why renewables need a customer</h3>
+    <p><code>renewables</code> is the one agent gated on demand rather than supply: it only builds when <code>symbiosis</code> is on <em>and</em> at least one of <code>electrolysis</code>, <code>biogas</code>, <code>meoh</code> or <code>methanation</code> is active.</p>
+    <p>Without that guard a wind farm with nothing to serve would simply sell into the grid without limit, and the model would answer a question nobody asked.</p>
+  </div>
+</div>
+
+<footer>Structure read from <code>config/config.default.yaml</code>, <code>config/n_config.default.yaml</code> and <code>network_dependencies()</code>. Colours follow the project's own <code>carrier_colors</code>.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var SVGNS="http://www.w3.org/2000/svg";
+
+  var DEFAULTS={biogas:true,central_heat:true,renewables:true,electrolysis:true,meoh:true,methanation:true,symbiosis:true,storage:true};
+  var state=Object.assign({},DEFAULTS);
+
+  // rails = the shared carrier buses that `symbiosis` builds
+  var RAILS=[
+    {id:"el",  label:"El3  ·  electricity",      color:"var(--el)"},
+    {id:"h2",  label:"H2 distribution",          color:"var(--h2)"},
+    {id:"co2", label:"CO2 distribution",         color:"var(--co2)"},
+    {id:"gas", label:"biogas  ·  CH4",           color:"var(--gas)"},
+    {id:"heat",label:"Heat MT · DH · LT",        color:"var(--heat)"}
+  ];
+
+  var AGENTS=[
+    {id:"renewables", row:"top", label:"Renewables", techs:["onwind","solar","grid connection"], rails:["el"]},
+    {id:"electrolysis", row:"top", label:"Electrolysis", techs:["AEC","PEMEC","SOEC"], rails:["el","h2","heat"],
+     note:"three competing routes"},
+    {id:"central_heat", row:"top", label:"Central heat", techs:["biomass boiler","NG boiler","El boiler","heat pump","pyrolysis"], rails:["el","heat","gas"]},
+    {id:"biogas", row:"bot", label:"Biogas", techs:["biogas","biogas upgrading","biogas storage","biogas engine","dewatering"], rails:["gas","co2","el","heat"]},
+    {id:"methanation", row:"bot", label:"Methanation", techs:["biomethanation","biomethanation CO2","methanation biogas","methanation CO2"], rails:["h2","co2","gas","heat"],
+     note:"four competing routes"},
+    {id:"meoh", row:"bot", label:"Methanol", techs:["methanolisation","methanol from biogas","·  or  ·","methanol synthesis","methanol distillation"], rails:["h2","co2","gas","el","heat"],
+     note:"two routes, or the split"},
+    {id:"storage", row:"bot", label:"Storage", techs:["battery","H2 HP storage","CO2 HP / Liq","TES DH","TES concrete"], rails:["el","h2","co2","heat"]}
+  ];
+
+  var EXTERNAL=[
+    {label:"DK1 spot market",  sub:"buy / sell",     rail:"el"},
+    {label:"Natural gas grid", sub:"buy / sell",     rail:"gas"},
+    {label:"Biomass markets",  sub:"pellets · chips",rail:"gas"},
+    {label:"District heating", sub:"heat off-take",  rail:"heat"},
+    {label:"Ambient",          sub:"heat sink",      rail:"heat"}
+  ];
+
+  var PRODUCTS=[
+    {label:"Hydrogen",  sub:"demand_H2",   rail:"h2",  color:"var(--h2)"},
+    {label:"Methane",   sub:"demand_CH4",  rail:"gas", color:"var(--gas)"},
+    {label:"Methanol",  sub:"demand_meoh", rail:"gas", color:"var(--meoh)"}
+  ];
+
+  // ---- the real dependency rules, from network_dependencies() ----
+  function resolve(s){
+    var r={}, why={};
+    r.biogas=s.biogas;
+    r.symbiosis=s.symbiosis;
+    r.storage=s.storage;
+    r.central_heat=s.central_heat;
+
+    var users=s.electrolysis||s.biogas||s.meoh||s.methanation;
+    r.renewables=!!(s.renewables&&s.symbiosis&&users);
+    if(s.renewables&&!r.renewables){
+      why.renewables=!s.symbiosis?"needs symbiosis":"needs a consumer on site";
+    }
+    // electrolysis: gated on RFNBO / renewables. Defaults shown (limit: unlimited).
+    r.electrolysis=!!s.electrolysis;
+
+    r.meoh=!!(s.meoh&&s.electrolysis&&s.biogas&&s.symbiosis);
+    if(s.meoh&&!r.meoh) why.meoh=missing(s,["electrolysis","biogas","symbiosis"]);
+
+    r.methanation=!!(s.methanation&&s.electrolysis&&s.biogas&&s.symbiosis);
+    if(s.methanation&&!r.methanation) why.methanation=missing(s,["electrolysis","biogas","symbiosis"]);
+
+    return {on:r, why:why};
+  }
+  function missing(s,keys){
+    var m=keys.filter(function(k){return !s[k];});
+    return "needs "+m.join(" + ");
+  }
+
+  // ---- geometry ----
+  var X0=190, X1=1002;                 // agent band
+  var RAIL_X0=156, RAIL_X1=1032;       // rails run wider than the agent band
+  var RAIL_TOP=392, RAIL_GAP=25;
+  var TOP_Y=92,  TOP_H=252;
+  var BOT_Y=534, BOT_H=222;
+
+  function railY(id){
+    for(var i=0;i<RAILS.length;i++) if(RAILS[i].id===id) return RAIL_TOP+i*RAIL_GAP;
+    return RAIL_TOP;
+  }
+  function lay(row){
+    var list=AGENTS.filter(function(a){return a.row===row;});
+    var n=list.length, gap=16, total=X1-X0;
+    var w=(total-gap*(n-1))/n;
+    list.forEach(function(a,i){ a._x=X0+i*(w+gap); a._w=w; });
+    return list;
+  }
+
+  function el(tag,attrs,text){
+    var e=document.createElementNS(SVGNS,tag);
+    for(var k in attrs) if(attrs[k]!==null&&attrs[k]!==undefined) e.setAttribute(k,attrs[k]);
+    if(text!==undefined) e.textContent=text;
+    return e;
+  }
+
+  function render(){
+    var res=resolve(state), on=res.on, why=res.why;
+    var svg=document.getElementById("svg");
+    while(svg.childNodes.length>1) svg.removeChild(svg.lastChild);
+
+    var symb=state.symbiosis;
+    var gRail=el("g",{}), gLink=el("g",{}), gNode=el("g",{});
+
+    // ---------- band labels ----------
+    gNode.appendChild(el("text",{x:20,y:44,class:"n-band",fill:"var(--ink-3)"},"EXTERNAL"));
+    gNode.appendChild(el("text",{x:X0,y:44,class:"n-band",fill:"var(--ink-3)"},"AGENTS  ·  n_flags"));
+    gNode.appendChild(el("text",{x:1046,y:44,class:"n-band",fill:"var(--ink-3)"},"PRODUCTS"));
+
+    // ---------- rails ----------
+    RAILS.forEach(function(r){
+      var y=railY(r.id);
+      if(symb){
+        gRail.appendChild(el("line",{x1:RAIL_X0,y1:y,x2:RAIL_X1,y2:y,stroke:r.color,"stroke-width":3,"stroke-linecap":"round",opacity:.95}));
+      }else{
+        // severed: short stubs at each end, a wide gap in the middle
+        gRail.appendChild(el("line",{x1:RAIL_X0,y1:y,x2:RAIL_X0+40,y2:y,stroke:r.color,"stroke-width":3,"stroke-linecap":"round",opacity:.32,"stroke-dasharray":"1 6"}));
+        gRail.appendChild(el("line",{x1:RAIL_X1-40,y1:y,x2:RAIL_X1,y2:y,stroke:r.color,"stroke-width":3,"stroke-linecap":"round",opacity:.32,"stroke-dasharray":"1 6"}));
+      }
+      gRail.appendChild(el("text",{x:150,y:y-6,class:"n-rail","text-anchor":"end",fill:symb?r.color:"var(--off)"},r.label));
+    });
+
+    if(!symb){
+      var w=360, cx=(X0+X1)/2;
+      gRail.appendChild(el("rect",{x:cx-w/2,y:RAIL_TOP-16,width:w,height:RAILS.length*RAIL_GAP+6,rx:7,
+        fill:"var(--surface)",stroke:"var(--heat)","stroke-width":1.5,"stroke-dasharray":"5 4",opacity:.97}));
+      gRail.appendChild(el("text",{x:cx,y:RAIL_TOP+22,class:"n-title","text-anchor":"middle",fill:"var(--heat)"},"symbiosis is off"));
+      gRail.appendChild(el("text",{x:cx,y:RAIL_TOP+42,class:"n-why","text-anchor":"middle",fill:"var(--ink-2)"},"no shared buses — each agent stands alone"));
+    }
+
+    // ---------- external (stacked clear above the rail-label column) ----------
+    EXTERNAL.forEach(function(e,i){
+      var y=92+i*52, h=42, x=20, w=130;
+      gNode.appendChild(el("rect",{x:x,y:y,width:w,height:h,rx:6,fill:"var(--surface-2)",stroke:"var(--line-2)"}));
+      gNode.appendChild(el("text",{x:x+11,y:y+18,class:"n-ext",fill:"var(--ink)"},e.label));
+      gNode.appendChild(el("text",{x:x+11,y:y+32,class:"n-sub",fill:"var(--ink-3)"},e.sub));
+      var ry=railY(e.rail);
+      gLink.appendChild(el("path",{d:"M"+(x+w)+" "+(y+h/2)+" H"+(RAIL_X0-4)+" V"+ry,
+        fill:"none",stroke:"var(--line-2)","stroke-width":1.4,opacity:symb?.85:.35}));
+    });
+
+    // ---------- products ----------
+    PRODUCTS.forEach(function(p,i){
+      var y=150+i*74, h=52, x=1046, w=118;
+      gNode.appendChild(el("rect",{x:x,y:y,width:w,height:h,rx:6,fill:"var(--surface-2)",stroke:"var(--line-2)"}));
+      gNode.appendChild(el("rect",{x:x,y:y,width:3.5,height:h,rx:2,fill:p.color}));
+      gNode.appendChild(el("text",{x:x+13,y:y+22,class:"n-ext",fill:"var(--ink)"},p.label));
+      gNode.appendChild(el("text",{x:x+13,y:y+38,class:"n-sub",fill:"var(--ink-3)"},p.sub));
+      var ry=railY(p.rail);
+      gLink.appendChild(el("path",{d:"M"+RAIL_X1+" "+ry+" H"+(x-10)+" V"+(y+h/2)+" H"+x,
+        fill:"none",stroke:"var(--line-2)","stroke-width":1.4,opacity:symb?.85:.35}));
+    });
+
+    // ---------- agents ----------
+    ["top","bot"].forEach(function(row){
+      var list=lay(row);
+      var isTop=row==="top";
+      var by=isTop?TOP_Y:BOT_Y, bh=isTop?TOP_H:BOT_H;
+      list.forEach(function(a){
+        var active=on[a.id], requested=state[a.id];
+        var dim=!active;
+        var stroke=active?"var(--line-2)":"var(--line)";
+        var fill=active?"var(--surface)":"var(--surface-2)";
+
+        // stubs to rails
+        if(active){
+          a.rails.forEach(function(rid){
+            var ry=railY(rid), rc=RAILS.filter(function(r){return r.id===rid;})[0].color;
+            var sx=a._x+a._w*0.5;
+            var y0=isTop?(by+bh):by;
+            if(symb){
+              gLink.appendChild(el("line",{x1:sx,y1:y0,x2:sx,y2:ry,stroke:rc,"stroke-width":2,opacity:.5}));
+              gLink.appendChild(el("circle",{cx:sx,cy:ry,r:3.4,fill:rc}));
+            }
+          });
+        }
+
+        var g=el("g",{opacity:dim?.5:1});
+        g.appendChild(el("rect",{x:a._x,y:by,width:a._w,height:bh,rx:8,fill:fill,stroke:stroke,"stroke-width":active?1.4:1,
+          "stroke-dasharray":active?null:"4 4"}));
+        // header strip
+        g.appendChild(el("rect",{x:a._x,y:by,width:a._w,height:38,rx:8,fill:active?"var(--surface-2)":"none"}));
+        g.appendChild(el("rect",{x:a._x,y:by+30,width:a._w,height:8,fill:active?"var(--surface-2)":"none"}));
+        g.appendChild(el("line",{x1:a._x,y1:by+38,x2:a._x+a._w,y2:by+38,stroke:stroke,"stroke-width":1}));
+        g.appendChild(el("text",{x:a._x+13,y:by+18,class:"n-title",fill:"var(--ink)"},a.label));
+        g.appendChild(el("text",{x:a._x+13,y:by+32,class:"n-flag",fill:active?"var(--ok)":"var(--off)"},a.id));
+
+        if(active){
+          a.techs.forEach(function(t,i){
+            var ty=by+60+i*21;
+            if(t.charAt(0)==="·"){
+              g.appendChild(el("text",{x:a._x+13,y:ty,class:"n-sub",fill:"var(--ink-3)"},t));
+            }else{
+              g.appendChild(el("circle",{cx:a._x+18,cy:ty-4,r:2.6,fill:"var(--ink-3)"}));
+              g.appendChild(el("text",{x:a._x+28,y:ty,class:"n-tech",fill:"var(--ink-2)"},t));
+            }
+          });
+          if(a.note){
+            g.appendChild(el("text",{x:a._x+13,y:by+bh-13,class:"n-why",fill:"var(--ink-3)"},a.note));
+          }
+        }else{
+          var msg=requested?(why[a.id]||"off"):"switched off";
+          g.appendChild(el("text",{x:a._x+13,y:by+66,class:"n-why",fill:requested?"var(--heat)":"var(--off)"},
+            requested?"blocked":"off"));
+          if(requested){
+            wrapText(g,msg,a._x+13,by+84,a._w-26);
+          }
+        }
+        gNode.appendChild(g);
+      });
+    });
+
+    svg.appendChild(gRail); svg.appendChild(gLink); svg.appendChild(gNode);
+    renderStatus(res);
+  }
+
+  function wrapText(g,msg,x,y,maxw){
+    var words=msg.split(" "), line="", ln=0;
+    var per=Math.max(6,Math.floor(maxw/6.0));
+    words.forEach(function(w){
+      if((line+" "+w).trim().length>per){
+        g.appendChild(el("text",{x:x,y:y+ln*14,class:"n-why",fill:"var(--ink-2)"},line.trim()));
+        line=w; ln++;
+      } else line+=" "+w;
+    });
+    if(line.trim()) g.appendChild(el("text",{x:x,y:y+ln*14,class:"n-why",fill:"var(--ink-2)"},line.trim()));
+  }
+
+  function renderStatus(res){
+    var box=document.getElementById("status");
+    box.innerHTML="";
+    var items=[];
+    var nOn=AGENTS.filter(function(a){return res.on[a.id];}).length;
+    var techCount=AGENTS.reduce(function(s,a){return s+(res.on[a.id]?a.techs.filter(function(t){return t.charAt(0)!=="·";}).length:0);},0);
+
+    items.push({cls:state.symbiosis?"on":"blocked",h:"symbiosis",
+      p:state.symbiosis?"Shared buses built. Agents exchange electricity, H₂, CO₂, gas and heat directly.":
+        "No shared buses. Each agent trades only with the external grids, and meoh and methanation cannot build at all."});
+    items.push({cls:"on",h:nOn+" of "+AGENTS.length+" agents active",
+      p:techCount+" technologies available to the optimiser. It sizes any subset, including none."});
+
+    Object.keys(res.why).forEach(function(k){
+      items.push({cls:"blocked",h:k+"  ✕",p:"Requested, but "+res.why[k]+". The builder returns an empty set and the network stays feasible."});
+    });
+
+    items.forEach(function(it){
+      var d=document.createElement("div");
+      d.className="st "+it.cls;
+      var h=document.createElement("h4"); h.textContent=it.h;
+      var p=document.createElement("p"); p.textContent=it.p;
+      d.appendChild(h); d.appendChild(p); box.appendChild(d);
+    });
+  }
+
+  // ---- chips ----
+  var ORDER=["symbiosis","biogas","renewables","electrolysis","meoh","methanation","central_heat","storage"];
+  function buildChips(){
+    var c=document.getElementById("chips");
+    c.innerHTML="";
+    ORDER.forEach(function(k){
+      var b=document.createElement("button");
+      b.type="button"; b.id="chip-"+k;
+      b.className="chip"+(k==="symbiosis"?" spine":"");
+      b.setAttribute("aria-pressed",String(!!state[k]));
+      var dot=document.createElement("span"); dot.className="dot";
+      b.appendChild(dot);
+      b.appendChild(document.createTextNode(k));
+      b.addEventListener("click",function(){
+        state[k]=!state[k];
+        b.setAttribute("aria-pressed",String(state[k]));
+        render();
+      });
+      c.appendChild(b);
+    });
+  }
+  document.getElementById("reset").addEventListener("click",function(){
+    state=Object.assign({},DEFAULTS);
+    ORDER.forEach(function(k){
+      var b=document.getElementById("chip-"+k);
+      if(b) b.setAttribute("aria-pressed",String(!!state[k]));
+    });
+    render();
+  });
+
+  buildChips();
+  render();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  function report(){
+    try{
+      var h = Math.ceil(document.documentElement.getBoundingClientRect().height) + 8;
+      if (window.parent && window.parent !== window)
+        window.parent.postMessage({gbAnatomyHeight: h}, "*");
+    }catch(e){}
+  }
+  window.addEventListener("load", report);
+  window.addEventListener("resize", report);
+  if (window.ResizeObserver) new ResizeObserver(report).observe(document.body);
+  document.addEventListener("click", function(){ setTimeout(report, 60); });
+})();
+</script>
+</body>
+</html>
