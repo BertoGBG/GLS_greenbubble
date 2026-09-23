@@ -604,8 +604,9 @@ Each entry of ``capacity_items`` describes one plotted component:
      - Variable to extract: ``p`` / ``p0`` (power), ``e`` (energy or mass in a
        store), ``state_of_charge`` (for a ``StorageUnit``).
    * - ``selector``
-     - Substring matched against component names.  **All** matching components
-       are aggregated into the one panel.
+     - The component's **exact** name, or a list of exact names.  The matching
+       ``EXI_`` brownfield component is picked up automatically, so
+       ``selector: biogas`` also collects ``EXI_biogas``.
    * - ``signed``
      - Optional.  ``true`` keeps the sign of a bidirectional link (used by the
        TES heat exchangers) instead of taking the magnitude.
@@ -627,7 +628,7 @@ Each entry of ``capacity_items`` describes one plotted component:
 
 .. warning::
 
-   ``selector`` is a plain substring match, so a short selector can silently
-   swallow other components — ``biogas`` also matches ``biogas upgrading``.
-   A technology missing from ``capacity_items`` is simply absent from the
-   plots; nothing warns you.
+   Because the match is exact, a technology whose name is not listed in
+   ``capacity_items`` is simply absent from the plots.  Nothing warns you —
+   the run succeeds and the panel is just missing.  Add an entry whenever you
+   add a technology.
