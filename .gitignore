@@ -9,6 +9,7 @@ __pycache__/
 config/config.yaml
 config/n_config.yaml
 config/plots_config.yaml
+config/p_config.yaml
 
 # Outputs
 outputs/
@@ -21,3 +22,6 @@ resources/
 
 # Claude Code project instructions (local only)
 CLAUDE.md
+
+# JetBrains per-developer IDE state (open tabs, recent paths, window layout)
+.idea/workspace.xml

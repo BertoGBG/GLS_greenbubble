@@ -15,25 +15,27 @@ outputs_folder: outputs/single_analysis
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-targets
 targets:
-  driver: demand            # demand | price
-  demand_H2:   200000       # MWh/y
-  demand_CH4:  350000       # MWh/y
-  demand_meoh:   9000       # MWh/y
-  price_H2:      120        # €/MWh  (price mode only)
-  price_bioCH4:  200        # €/MWh  (price mode only; or 'NG_based')
-  price_meoh:    200        # €/MWh  (price mode only)
-  CH4_demand_mode:    flat  # flat | profile | bins_flat | bins_profile
-  CH4_bins:            1
+  driver:           demand        # demand | price
+  demand_H2:        200000        # MWh/y
+  demand_CH4:       350000        # MWh/y
+  demand_meoh:      9000          # MWh/y
+  price_H2:         120           # €/MWh  (price mode only)
+  price_CH4:        80            # €/MWh  (price mode only; or 'NG_based')
+  premium_bioCH4:   40            # €/MWh  (incentive for biomethane ontop of CH4 price)
+  premium_eCH4:     120           # €/MWh  (incentive for e-methane ontop of CH4 price)
+  price_meoh:       200           # €/MWh  (price mode only)
+  CH4_demand_mode:  flat          # flat | profile | bins_flat | bins_profile
+  CH4_bins:         1
   CH4_flexibility:  0.00
-  CH4_profile:       null   # null = built-in NG_DK profile
-  H2_demand_mode:    profile
-  H2_bins:           12
-  H2_flexibility:    0.2
-  H2_profile:  data/common/NG_demand_DK_profile.csv
-  MeOH_demand_mode:  bins_profile
-  MeOH_bins:          2
-  MeOH_flexibility:  0.5
-  MeOH_profile: data/common/NG_demand_DK_profile.csv
+  CH4_profile:      null          # null = built-in NG_DK profile
+  H2_demand_mode:   profile
+  H2_bins:          12
+  H2_flexibility:   0.2
+  H2_profile:       data/common/NG_demand_DK_profile.csv
+  MeOH_demand_mode: bins_profile
+  MeOH_bins:        2
+  MeOH_flexibility: 0.5
+  MeOH_profile:     data/common/NG_demand_DK_profile.csv
   demand_store_buffer: 0.5
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-nflags

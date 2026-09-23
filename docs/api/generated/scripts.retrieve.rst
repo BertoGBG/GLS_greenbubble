@@ -1,4 +1,4 @@
-﻿scripts.retrieve
+scripts.retrieve
 ================
 
 .. automodule:: scripts.retrieve

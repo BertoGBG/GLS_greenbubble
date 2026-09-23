@@ -279,17 +279,17 @@ def build_demands_TS(targets_dict: dict) -> dict:
     Returns
     -------
     dict
-        Keys: ``"bioCH4"``, ``"bioCH4_e_nom_max"``, ``"H2"``,
+        Keys: ``"CH4"``, ``"CH4_e_nom_max"``, ``"H2"``,
         ``"H2_e_nom_max"``, ``"meoh"``, ``"meoh_e_nom_max"``, ``"NG_DK"``.
     """
     snapshots     = p.hours_in_period
     store_buffer  = float(targets_dict.get("demand_store_buffer", 0.0))
 
-    # ── bioCH4 ────────────────────────────────────────────────────────────────
+    # ── CH4 ────────────────────────────────────────────────────────────────
     CH4_mode = targets_dict.get("CH4_demand_mode", "bins_flat")
     CH4_bins = int(targets_dict.get("CH4_bins", 1))
     CH4_flex = float(targets_dict.get("CH4_flexibility", 0.0))
-    bioCH4_demand, bioCH4_e_nom_max = build_product_demand_ts(
+    CH4_demand, CH4_e_nom_max = build_product_demand_ts(
         annual_demand        = targets_dict["demand_CH4"],
         mode                 = CH4_mode,
         snapshots            = snapshots,
@@ -297,7 +297,7 @@ def build_demands_TS(targets_dict: dict) -> dict:
         n_bins               = CH4_bins,
         flexibility_fraction = CH4_flex,
         store_buffer         = store_buffer,
-        col_name             = "bioCH4 demand MWh",
+        col_name             = "CH4 demand MWh",
     )
 
     # ── Methanol ──────────────────────────────────────────────────────────────
@@ -338,8 +338,8 @@ def build_demands_TS(targets_dict: dict) -> dict:
         NG_DK_h = None
 
     return {
-        "bioCH4":           bioCH4_demand,
-        "bioCH4_e_nom_max": bioCH4_e_nom_max,
+        "CH4":              CH4_demand,
+        "CH4_e_nom_max":    CH4_e_nom_max,
         "H2":               H2_input_demand,
         "H2_e_nom_max":     H2_e_nom_max,
         "meoh":             Methanol_demand,
@@ -1127,7 +1127,7 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
         * ``"max_RE_to_grid"`` — grid export fraction scalar
     """
 
-    # load the inputs form CSV files
+    # load the inputs from CSV files
     GL_inputs, GL_eff, Elspotprices, CO2_emiss_El, CF_wind, CF_solar, NG_price_year, DH_external_demand = load_input_data()
 
     '''Build all demands'''
@@ -1136,7 +1136,7 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
     NG_DK = demands['NG_DK']
 
     H2_input_demand   = demands['H2']
-    bioCH4_demand     = demands['bioCH4']
+    CH4_demand        = demands['CH4']
     Methanol_demand   = demands['meoh']
 
     inputs_dict = {
@@ -1144,8 +1144,8 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
         'GL_eff':                  GL_eff,
         'Elspotprices':            Elspotprices,
         'CO2_emiss_El':            CO2_emiss_El,
-        'bioCH4_demand':           bioCH4_demand,
-        'bioCH4_store_e_nom_max':  demands['bioCH4_e_nom_max'],
+        'CH4_demand':              CH4_demand,
+        'CH4_store_e_nom_max':     demands['CH4_e_nom_max'],
         'CF_wind':                 CF_wind,
         'CF_solar':                CF_solar,
         'NG_price_year':           NG_price_year,
@@ -1166,7 +1166,7 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
         prices = {
             "price_H2": targets_dict["price_H2"],
             "price_meoh": targets_dict["price_meoh"],
-            "price_bioCH4": targets_dict["price_bioCH4"],
+            "price_CH4": targets_dict["price_CH4"],
         }
 
         price_ts = {
@@ -1175,6 +1175,10 @@ def prepare_all_inputs(targets_dict: dict, CO2_cost: float,
             if isinstance(v, (int, float))
         }
         inputs_dict.update(price_ts)
+
+    # Premiums
+    inputs_dict['premium_bioCH4'] = float(targets_dict.get('premium_bioCH4', 0.0))
+    inputs_dict['premium_eCH4']   = float(targets_dict.get('premium_eCH4', 0.0))
 
     return inputs_dict
 

@@ -1399,7 +1399,7 @@ def _find_product_slot(links, lk, collection_buses):
     The main product is not always on bus1 — e.g. biomethanation and
     biomethanation CO2 output their main product via bus2 (bus1 is their
     carbon-source input). Detecting the slot by which bus is actually tagged,
-    rather than assuming a fixed bus number, makes this correct for bioCH4,
+    rather than assuming a fixed bus number, makes this correct for CH4,
     H2 and Methanol alike, and for any future product/bus layout.
     """
     for bus_col, eff_col in _PRODUCT_BUS_SLOTS:
@@ -1411,7 +1411,7 @@ def _find_product_slot(links, lk, collection_buses):
     return None
 
 
-def compute_lcop_by_technology(n, out_csv, out_plot):
+def compute_lcop_by_technology(n, out_csv, out_plot, capacity_th=0.0):
     """Compute LCOP, revenue, and annual profit for each technology injecting
     into a product collection bus (tagged is_product_bus=True).
 
@@ -1511,6 +1511,10 @@ def compute_lcop_by_technology(n, out_csv, out_plot):
     rows = []
     link_names = []
     for lk in product_links:
+        p_nom_opt = _capacity_opt(links.loc[lk], "p_nom")
+        if p_nom_opt is None or p_nom_opt < capacity_th:
+            continue
+
         capex = _get_stat(capex_s, lk)
         opex  = _get_stat(opex_s,  lk)
 
@@ -2289,16 +2293,16 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
     just tagged product-bus links.
 
     This matters because a shared external sale link (e.g. the single
-    bioCH4-collection-to-delivery link) is created **once**, by whichever
+    CH4-collection-to-delivery link) is created **once**, by whichever
     producing agent happens to build it first — if a *second* agent later
     also feeds the same collection bus (e.g. catalytic methanation
-    alongside biogas upgrading, both selling bioCH4), attributing revenue to
+    alongside biogas upgrading, both selling CH4), attributing revenue to
     "whichever component touches the external market" would silently credit
     all of it to the first agent. Per-component shadow-price revenue avoids
     this entirely: each producer earns revenue proportional to its **own**
     throughput at the bus's own price, and the shared sale/delivery link
     itself nets to ~zero (a pure pass-through) — confirmed empirically
-    (revenue - opex ≈ 0 to floating-point precision for the bioCH4/H2/
+    (revenue - opex ≈ 0 to floating-point precision for the CH4/H2/
     Methanol collection→delivery links in a real solved network). The same
     reasoning applies to any future carrier producible by more than one
     agent (electricity, if a biogas engine is enabled alongside grid export;
@@ -6078,7 +6082,7 @@ def component_revenue_split_long_per_scenario(
     flat sale price exceeding the internal shadow price because of a binding
     annual quota, a ratio constraint (max_RE_to_grid), etc. It's computed
     generically for every revenue-bearing link (opex < 0), not just tagged
-    product-collection links, so it applies equally to bioCH4/H2/Methanol
+    product-collection links, so it applies equally to CH4/H2/Methanol
     sales, electricity/DH exports, and CO2 credits — and correctly comes out
     as ~0 wherever there's no such decoupling (e.g. demand mode, or a sale
     link with no separate internal collection bus).
@@ -6437,6 +6441,7 @@ def run_plot_and_export(
         items_f = filter_items_by_capacity_threshold(
             n,
             items,
+            default_th=c.capacity_threshold_default, 
             include_exi=True,
             verbose=True,
         )
@@ -6456,7 +6461,7 @@ def run_plot_and_export(
             n,
             items,
             ws_networks=ws,
-            default_th=0.5,
+            default_th=c.capacity_threshold_default,
             sp_col="SP",
         )
         df_caps.to_csv(csv_folder / "opt_capacities_SP_vs_WP.csv")
@@ -6474,12 +6479,13 @@ def run_plot_and_export(
             ncols=3,
             price_links=[
                 {"label": "El pruchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
-                {"label": "El selling price", "name": "El3 bus_to_DK1", "ls": "-", "lw": 1.8},
+                {"label": "El selling price", "selector": "El3 bus_to_DK1", "ls": "-", "lw": 1.8},
                 {"label": "NG price", "selector": {"regex": r"_NG boiler$"}, "ls": "-", "lw": 1.8},
-                {"label": "NG selling price", "name": "bioCH4_to_delivery", "ls": "-", "lw": 1.8},
-                {"label": "DH selling price", "name": "DH_GL_to_DH_grid", "ls": "-", "lw": 1.8},
-                {"label": "Biochar selling price", "name": "biochar sequestration", "ls": "-", "lw": 1.8},
-                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq", "ls": "-", "lw": 1.8},
+                {"label": "bioCH4 selling price", "selector": "bioCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "eCH4 selling price", "selector": "eCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "DH selling price", "selector": "DH_GL_to_DH_grid", "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "selector": "biochar sequestration", "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "selector": "CO2 Liq seq", "ls": "-", "lw": 1.8},
             ],
             price_gens=[
                 {"label": "Pellets price", "selector": "pellets market", "ls": "-.", "lw": 1.8},
@@ -6563,7 +6569,7 @@ def run_plot_and_export(
 
         figure_heatmaps_compare_scenarios_actual(
             n,
-            items,
+            items_f,
             outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
             title="Operational heatmaps by scenario (actual values; capacity-normalized colors)",
             cmap_pos="viridis",  # sequential for >=0 series
@@ -6595,6 +6601,7 @@ def run_plot_and_export(
             n,
             out_csv=csv_folder / "lcop_by_technology.csv",
             out_plot=plot_folder / "lcop_by_technology.png",
+            capacity_th=c.capacity_threshold_default,
         )
 
     def step_lcop_kkt() -> None:
@@ -6718,7 +6725,11 @@ def run_plot_operational(
 
     def step_filter_items() -> None:
         items_f_holder["items_f"] = filter_items_by_capacity_threshold(
-            n, items, include_exi=True, verbose=True,
+            n,
+            items,
+            default_th=c.capacity_threshold_default,
+            include_exi=True,
+            verbose=True,
         )
 
     def step_inputs_ldc() -> None:
@@ -6728,12 +6739,13 @@ def run_plot_operational(
             ncols=3,
             price_links=[
                 {"label": "El purchase price", "selector": {"contains": "DK1_to_El_"}, "ls": "-", "lw": 1.8},
-                {"label": "El selling price",  "name": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
+                {"label": "El selling price",  "selector": "El3 bus_to_DK1",               "ls": "-", "lw": 1.8},
                 {"label": "NG price",          "selector": {"regex": r"_NG boiler$"},   "ls": "-", "lw": 1.8},
-                {"label": "NG selling price",  "name": "bioCH4_to_delivery",            "ls": "-", "lw": 1.8},
-                {"label": "DH selling price",  "name": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
-                {"label": "Biochar selling price", "name": "biochar sequestration",     "ls": "-", "lw": 1.8},
-                {"label": "CO2 (L) selling price", "name": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
+                {"label": "bioCH4 selling price", "selector": "bioCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "eCH4 selling price", "selector": "eCH4_collection_to_delivery", "ls": "-", "lw": 1.8},
+                {"label": "DH selling price",  "selector": "DH_GL_to_DH_grid",             "ls": "-", "lw": 1.8},
+                {"label": "Biochar selling price", "selector": "biochar sequestration",     "ls": "-", "lw": 1.8},
+                {"label": "CO2 (L) selling price", "selector": "CO2 Liq seq",              "ls": "-", "lw": 1.8},
             ],
             price_gens=[
                 {"label": "Pellets price",  "selector": "pellets market",       "ls": "-.", "lw": 1.8},
@@ -6816,7 +6828,7 @@ def run_plot_operational(
 
         figure_heatmaps_compare_scenarios_actual(
             n,
-            items,
+            items_f,
             outpath=plot_folder / "Operation_heat_maps_by_scenario.png",
             title="Operational heatmaps — rolling horizon (actual values)",
             cmap_pos="viridis",
@@ -6832,6 +6844,7 @@ def run_plot_operational(
             n,
             out_csv=csv_folder / "lcop_by_technology.csv",
             out_plot=plot_folder / "lcop_by_technology.png",
+            capacity_th=c.capacity_threshold_default,
         )
 
     def step_lcop_kkt() -> None:

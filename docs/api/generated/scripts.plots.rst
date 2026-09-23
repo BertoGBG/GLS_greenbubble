@@ -1,4 +1,4 @@
-﻿scripts.plots
+scripts.plots
 =============
 
 .. automodule:: scripts.plots

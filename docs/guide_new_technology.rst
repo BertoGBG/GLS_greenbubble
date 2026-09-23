@@ -212,6 +212,8 @@ Key Rules
      - Idempotent — safe even if another tech already created the bus
    * - Tag any shared bus via ``n.buses.loc[bus, "my_tag"]``
      - Lets ``add_symbiosis`` and other modules discover it without hardcoded names
+   * - Declare stream states in ``p_config``, not in the plant code
+     - Temperatures and pressures belong in :doc:`guide_process_streams`; a bus holds exactly one state
    * - Return ``(n, new_components)`` or ``(n, empty)`` — never raise
      - Every ``add_`` function must leave the network in a feasible state
 

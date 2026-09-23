@@ -1,0 +1,257 @@
+# SPDX-License-Identifier: MIT
+# =====================================================================
+# p_config -- PROCESS configuration: the physical state of every stream
+# in the model, separate from the techno-economic data (technology-data
+# / tech_inputs) and from the network component config (n_config).
+#
+# Division of labour, deliberately:
+#   technology-data / tech_inputs  ->  MAGNITUDES  (MWh/MWh, t/MWh, EUR/kW)
+#   p_config (this file)           ->  STATE       (fluid, T, P, LHV)
+# A duty and its temperature therefore live in different files and are
+# linked by reference, never duplicated -- duplicated numbers drift.
+#
+# Each stream carries up to three blocks:
+#   state:  physical condition        -- fluid, T [C], P [bar(a)]
+#   energy: energy content            -- LHV [MWh/t], moisture [-]
+#   model:  PyPSA topology            -- carrier, buses
+# A future heat-integration / pinch module reads `state` (and, later, a
+# `process_streams` section) and never needs to know what a bus is.
+#
+# "${...}" references resolve against `globals` below; lhv.biogas is DERIVED
+# from globals.mixtures.biogas at load time and is referenceable the same way.
+#
+# Overrides go in config/p_config.yaml (gitignored), deep-merged on top.
+# =====================================================================
+
+globals:
+  T_max_comp: 160    # maximum discharge temperature for all compressors [C]
+  T_ambient:  20    # [C]
+
+  lhv:              # [MWh/t]
+    ch4:     13.9
+    h2:      33.33
+    meoh:    5.54
+    pellets: 4.027777777777778     # straw pellets at `moisture` 13%
+    chips:   2.3     # moist biomass at `moisture`
+    # biogas: DERIVED at load time from mixtures.biogas (mass-weighted CH4 fraction)
+
+  # Minimum approach temperature for heat exchange [K].
+  # DECLARED, NOT YET CONSUMED -- see "Declared but not consumed" in
+  # docs/guide_process_streams.rst. Nothing reads this today; it changes no results.
+  #
+  # Pinch convention: a hot stream cannot heat a cold stream to its own temperature,
+  # so duties are allocated on SHIFTED temperatures -- hot streams shifted DOWN by
+  # dT_min/2, cold streams shifted UP by dT_min/2. Store the full dT_min here and
+  # derive the half-shift; storing the half invites someone to halve it twice.
+  # At 10 K the shift is 5 K each way, so a 160 C hot stream and a 150 C cold stream
+  # both sit at 155 C shifted and are exactly pinched.
+  dT_min: 10
+
+  mixtures:         # mole fractions; CoolProp names
+    biogas:
+      Methane:       0.65
+      CarbonDioxide: 0.35
+
+# ---------------------------------------------------------------------
+# circuits -- the pressurised heat-transfer loops of the plant.
+#
+# PRESSURE IS THE INPUT. It must keep the circuit liquid at its operating top
+# temperature, with margin: water at exactly P_sat is at its boiling point, which
+# is not how a pumped loop runs. The loader checks T_max <= T_sat(P) - margin and
+# fails the build otherwise. (Before this block existed, MT declared 180 C at
+# 10 bar and 140 C at 3 bar -- both AT or BELOW saturation, i.e. flashing.)
+#
+#   T_min : the FLOOR of the band -- the lowest temperature at which heat is still
+#           useful to this circuit. This is what the compressor split reads.
+#   T_max : the design operating top. Use the literal `saturation` to derive
+#           T_sat(P) instead -- for the steam circuits to come, which DO run at
+#           saturation. Omit entirely if the circuit has no declared top.
+#   P     : bar(a). Sub-100 C loops are set by pump and static head, not boiling:
+#           real DH distribution runs 6-10 bar (PN16), transmission up to 16-25.
+#
+# Floors must descend with at least globals.dT_min between consecutive circuits.
+# Each circuit generates the flat "<name> min" / "<name> max" streams used
+# throughout the model.
+# ---------------------------------------------------------------------
+circuits:
+  "Heat MT":
+    fluid: "Water"
+    P: 12          # T_sat = 188.0 C, so 180 C operates with 8 K margin
+    T_min: 140
+    T_max: 180
+    carrier: "Heat"
+    buses: ["Heat MT", "Heat MT storage"]
+  "Heat DH":
+    fluid: "Water"
+    P: 6           # pump/static head, not saturation; T_sat = 158.8 C
+    T_min: 90      # district-heating supply temperature (design/contractual)
+    carrier: "Heat"
+    buses: ["Heat DH", "DH grid", "Heat DH storage"]
+  "Heat LT":
+    fluid: "Water"
+    P: 3           # T_sat = 133.5 C
+    T_min: 50
+    carrier: "Heat"
+    buses: ["Heat LT"]
+
+# ---------------------------------------------------------------------
+# shared -- states that belong to the NETWORK, not to any one process:
+# distribution headers, heat tiers, storage conditions, external markets and
+# the normal-condition reference states used for density calculations.
+#
+# A process port inherits from one of these with `from:` and overrides only
+# what its unit operation changes (almost always just T and P, downstream of
+# a compressor). Inheriting rather than restating is what makes two processes
+# on the same bus agree by construction instead of by someone keeping two
+# copies in step.
+# ---------------------------------------------------------------------
+shared:
+  "Ambient":
+    state: {fluid: "Air", T: "${T_ambient}", P: 1}
+    model: {carrier: "Heat", buses: ["Heat amb"]}
+  "H2 normal":
+    state: {fluid: "H2", T: 0, P: 1}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: []}
+  "CO2 normal":
+    state: {fluid: "CO2", T: 0, P: 1}
+    energy: {LHV: 0}
+    model: {carrier: "CO2", buses: []}
+  "CH4 normal":
+    state: {fluid: "CH4", T: 0, P: 1}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: []}
+  "NG grid":
+    state: {fluid: "CH4", T: "${T_ambient}", P: 40}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: ["NG"]}
+  "H2 production":
+    state: {fluid: "H2", T: 50, P: 30}
+    energy: {LHV: "${lhv.h2}"}
+    # "H2 collection" is the shared 30 bar hydrogen header: AEC and PEMEC inject into it
+    # directly (DEA: both "can deliver hydrogen at pressures as high as 30 bar"), SOEC is
+    # lifted into it by a compressor, and every consumer draws from it. It was previously
+    # undeclared, which left its pressure unknown to the compressor calculations.
+    model: {carrier: "H2", buses: ["H2", "H2 collection", "H2 distribution", "H2 delivery"]}
+  # SOEC delivers at low pressure, unlike AEC and PEMEC. DEA's water-electrolysis
+  # chapter says "both AEC and PEMEC technology can deliver hydrogen at pressures as
+  # high as 30 bar" and pointedly does NOT include SOEC in that sentence, which is why
+  # 'H2 production' above (30 bar) cannot also describe SOEC.
+  #
+  # SOEC delivers at LOW pressure, unlike AEC and PEMEC, so it cannot share the 30 bar
+  # "H2 production" state above. prepare_network gives it this bus and a compressor up to
+  # the 30 bar header; without that it would receive 30 bar hydrogen for free.
+  #
+  # P = 3.5 bar -- the Topsoe SOEC electrolyser's delivery pressure. MANUFACTURER FIGURE,
+  # not DEA: the catalogue gives no SOEC pressure anywhere. Its Table 3 ("State-of-the-art
+  # characteristics of different electrolysis technologies") has no pressure row at all,
+  # and the SOEC section characterises the technology only by temperature (550-850 C),
+  # efficiency, materials and stack lifetime. DEA does state 30 bar for PEMEC ("a
+  # relatively high output pressure of ca. 30 bar"), groups AEC with it ("both AEC and
+  # PEMEC ... as high as 30 bar"), and pointedly leaves SOEC out of that sentence -- which
+  # is consistent with a low-pressure device but is an argument from omission, not a
+  # citation. Revisit if a DEA figure appears.
+  #
+  # The compressor duty is sensitive to this value (H2, 50 C, to the 30 bar header):
+  #     3.5 -> 30 bar   1.2212 kWh/kg_H2   3.66% of the H2 LHV   3 stages   <- in use
+  #     1.0 -> 30 bar   1.9281 kWh/kg_H2   5.78%                 5 stages
+  # i.e. the Topsoe figure is 37% cheaper than a near-atmospheric assumption.
+  #
+  # Consistency check available from DEA: it says the electrolyser datasheets EXCLUDE
+  # compression ("if a compressor for delivering high pressure hydrogen (>30 bar) is
+  # required, on top of the base system") and that compressing to 50 bar "could add about
+  # 20-40% to the ... CAPEX shown in the data sheets". So a compressor annualised cost far
+  # outside that band, scaled for the lower lift, would indicate a duty error.
+  "H2 SOEC outlet":
+    state: {fluid: "H2", T: 50, P: 3.5}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 SOEC LP"]}
+
+  "H2 HP storage":
+    state: {fluid: "H2", T: "${T_ambient}", P: 150}
+    energy: {LHV: "${lhv.h2}"}
+    model: {carrier: "H2", buses: ["H2 HP storage"], bus_suffix: "H2 HP storage"}
+  "CO2 biogas upgrading":
+    state: {fluid: "CO2", T: 50, P: 1}
+    model: {carrier: "CO2", buses: ["CO2 sep", "CO2 distribution", "CO2 to biomethanation"]}
+  "biogas":
+    state: {fluid: "biogas", T: 50, P: 1}
+    energy: {LHV: "${lhv.biogas}"}
+    model: {carrier: "gas", buses: ["biogas", "biogas to biomethanation"]}
+  "CH4":
+    state: {fluid: "CH4", T: 50, P: 1}
+    energy: {LHV: "${lhv.ch4}"}
+    model: {carrier: "gas", buses: ["CH4", "biomethane", "bio methane", "bio CH4"]}
+  "meoh":
+    state: {fluid: "Methanol", T: 50, P: 1}
+    energy: {LHV: "${lhv.meoh}"}
+    model: {carrier: "Methanol", buses: ["Methanol"]}
+  "CO2 HP storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 60}
+    model: {carrier: "CO2", buses: ["CO2 HP storage"], bus_suffix: "CO2 HP storage"}
+  "CO2 from HP storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 30}
+    model: {carrier: "CO2"}
+  "CO2 from Liq storage":
+    state: {fluid: "CO2", T: "${T_ambient}", P: 16}
+    model: {carrier: "CO2"}
+  "CO2 Liq storage":
+    state: {fluid: "CO2", T: -26, P: 16}
+    model: {carrier: "CO2", buses: ["CO2 Liq sequestration", "CO2 Liq storage"]}
+  "pellets":
+    state: {fluid: "pellets", T: "${T_ambient}"}
+    energy: {LHV: "${lhv.pellets}", moisture: 0.13}
+    model: {carrier: "pellets", buses: ["pellets"]}
+  "chips":
+    state: {fluid: "pellets", T: "${T_ambient}"}
+    energy: {LHV: "${lhv.chips}", moisture: 0.5}
+    model: {carrier: "moist biomass", buses: ["moist biomass"]}
+
+# ---------------------------------------------------------------------
+# processes -- ports of each unit operation, keyed by the port ROLE the
+# code uses ('H2 in', 'CO2 in', 'product bus'...), so this mirrors the
+# *_buses frames in prepare_network.py.
+#
+#   stream:  legacy flat name, still the index of symbiosis_n. Step 2 of the
+#            migration removes it, once prepare_network.py looks ports up by
+#            (process, role) instead of by flat name.
+#   from:    inherit fluid / LHV / carrier from a shared state.
+#            `from` NEVER inherits `buses` -- a bus belongs to exactly one
+#            state, and inheriting bus lists is how you would silently create
+#            the two-processes-one-bus conflict.
+#   state:   overrides, typically the compressor discharge condition.
+# ---------------------------------------------------------------------
+processes:
+  biomethanation:
+    "H2 in":
+      stream: "H2 to biomethanation"
+      from: "shared:H2 production"
+      state: {T: "${T_ambient}", P: 1}
+      model: {buses: ["H2 to biomethanation"]}
+  methanation:
+    "CO2 in":
+      stream: "CO2 to methanation"
+      from: "shared:CO2 biogas upgrading"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["CO2 to methanation"]}
+    "H2 in":
+      stream: "H2 to methanation"
+      from: "shared:H2 production"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["H2 to methanation"]}
+    "biogas in":
+      stream: "biogas to methanation"
+      from: "shared:biogas"
+      state: {T: "${T_max_comp}", P: 20}
+      model: {buses: ["biogas to methanation"]}
+  methanolisation:
+    "CO2 in":
+      stream: "CO2 to methanolisation"
+      from: "shared:CO2 biogas upgrading"
+      state: {T: "${T_max_comp}", P: 80}
+      model: {buses: ["CO2 to methanolisation", "CO2 to meoh"]}
+    "H2 in":
+      stream: "H2 to methanolisation"
+      from: "shared:H2 production"
+      state: {T: "${T_max_comp}", P: 80}
+      model: {buses: ["H2 to methanolisation"]}

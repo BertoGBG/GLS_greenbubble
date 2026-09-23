@@ -124,14 +124,20 @@ def _exi_capital_cost(tech_name: str, config_key: str, tech_costs: pd.DataFrame,
 # Maps carrier names that differ from their tech_costs index entry.
 _CARRIER_TO_TECH: dict[str, str] = {
     "wind":            "onwind",
-    "grid connection": "electricity grid connection",
+    "grid connection": "distribution grid reinforcement",
 }
 # Maps component names (including EXI_ variants) that differ from their tech_costs entry.
 _NAME_TO_TECH: dict[str, str] = {
     "onshorewind":      "onwind",
     "EXI_onshorewind":  "onwind",
-    "El3_to_DK1":       "electricity grid connection",
-    "EXI_El3_to_DK1":   "electricity grid connection",
+    # 'meoh split' intermediate tank. Its component name is not a tech_costs row and
+    # its carrier is 'crude MeOH', so neither the base-name nor the carrier rule
+    # matches -- without this it stays unmapped and its CAPEX/FOM drop out of the
+    # payback, LCOP and full-component exports.
+    "crude MeOH store":     "methanol storage",
+    "EXI_crude MeOH store": "methanol storage",
+    "El3_to_DK1":       "distribution grid reinforcement",
+    "EXI_El3_to_DK1":   "distribution grid reinforcement",
 }
 # Electrolysis techs are looked up in tech_costs with a size suffix
 # ("AEC large"/"AEC small") that isn't part of the component name.
@@ -158,7 +164,7 @@ _FLUID_HP_STORAGE_TECH = {
 }
 _INFRA_NAME_PATTERNS = [
     # add_local_el_connections(): link name "DK1_to_{local_EL_bus}"
-    (re.compile(r"^DK1_to_El_.+$"), "electricity grid connection"),
+    (re.compile(r"^DK1_to_El_.+$"), "distribution grid reinforcement"),
     # add_local_heat_connections(): link name "{heat_bus}_{plant_name}_to_symb" / "_from_symb"
     (re.compile(r"^.+_(?:to|from)_symb$"), "DH heat exchanger"),
 ]
@@ -293,6 +299,32 @@ def network_dependencies(n_flags, ):
     return n_flags_OK
 
 
+def stream_for_bus(bus_name, symbiosis_n=None):
+    """Which p_config stream describes this bus?
+
+    Exact bus name first, then a declared `model.bus_suffix` (plant-local buses are
+    created with a runtime prefix, so the config cannot enumerate them).
+
+    This is the single place that answers "what state is on this bus". The mapping
+    lives here, in the code that invents the bus names -- p_config only catalogues
+    the states themselves.
+    """
+    if symbiosis_n is None:
+        from scripts.technology_inputs import symbiosis_n as _s
+        symbiosis_n = _s
+    if bus_name is None or not isinstance(bus_name, str):
+        return None
+    if "buses" in symbiosis_n.columns:
+        for prop_name, buses in symbiosis_n["buses"].items():
+            if isinstance(buses, list) and bus_name in buses:
+                return prop_name
+    if "bus_suffix" in symbiosis_n.columns:
+        for prop_name, sfx in symbiosis_n["bus_suffix"].items():
+            if isinstance(sfx, str) and sfx and bus_name.endswith(sfx):
+                return prop_name
+    return None
+
+
 def add_requirements_buses(n, bus_dict, symbiosis_n=None):
     """
     Ensure carriers exist, then add any missing buses with the specified attributes.
@@ -348,13 +380,24 @@ def add_requirements_buses(n, bus_dict, symbiosis_n=None):
                         print(f"⚠️ Warning: Bus '{b}' appears in multiple symbiosis_n rows: "
                               f"{bus_to_property[b]} and {prop_name}")
 
-        # Helper: function to resolve special suffix mapping
+        # Suffix rules come from p_config (`model.bus_suffix`), not from hardcoded
+        # names here. Plant-local buses are created with a prefix at runtime --
+        # 'meoh H2 HP storage', 'methanation H2 HP storage' -- so the config cannot
+        # enumerate them; it declares the suffix and this matches on it.
+        suffix_to_property = {}
+        if "bus_suffix" in symbiosis_n.columns:
+            for prop_name, sfx in symbiosis_n["bus_suffix"].items():
+                if isinstance(sfx, str) and sfx:
+                    suffix_to_property[sfx] = prop_name
+
         def resolve_property_name(bus_name):
-            if bus_name.endswith("CO2 HP storage"):
-                return bus_to_property.get("CO2 HP storage")
-            elif bus_name.endswith("H2 HP storage"):
-                return bus_to_property.get("H2 HP storage")
-            return bus_to_property.get(bus_name)
+            hit = bus_to_property.get(bus_name)
+            if hit is not None:
+                return hit
+            for sfx, prop_name in suffix_to_property.items():
+                if bus_name.endswith(sfx):
+                    return prop_name
+            return None
 
         # Assign properties
         for b in bus_list:
@@ -662,7 +705,7 @@ def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carr
         p_nom=capacity,
         p_nom_max=n_config.at['grid connection', 'max capacity'],  # module-level global
         capital_cost=capital_cost,
-        lifetime=tech_costs.at["electricity grid connection", "lifetime"],
+        lifetime=tech_costs.at["distribution grid reinforcement", "lifetime"],
         marginal_cost=en_market_prices["el_grid_sell_price"],
     )
 
@@ -700,6 +743,15 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
 
         # ensure local_bus
         ensure_bus(n, local_bus, carrier="Heat", unit="MW")
+        # A plant-local heat bus is the same physical state as the shared tier it
+        # hangs off -- 'Heat MT_methanolisation' IS 'Heat MT min'. p_config cannot
+        # name these (they are generated per plant at runtime), so the mapping is
+        # made here, where the name is invented.
+        _tier_stream = stream_for_bus(b)
+        if _tier_stream is not None:
+            if "properties" not in n.buses.columns:
+                n.buses["properties"] = None
+            n.buses.at[local_bus, "properties"] = _tier_stream
         new_buses.append(local_bus)
 
         if n_flags.get("symbiosis", False):
@@ -799,22 +851,56 @@ def add_local_el_connections(n, local_EL_bus, inputs_dict, n_flags, tech_costs, 
     # --- Local electricity bus ---
     ensure_bus(n, local_EL_bus, carrier="El", unit="MW")
 
-    # --- Grid connection link (DK1 → local bus) ---
-    link_name1 = f"DK1_to_{local_EL_bus}"
-    if link_name1 not in n.links.index:
-        cap_cost = tech_costs.at["electricity grid connection", "fixed"]
+    # --- Shared, capital-costed import connection (ElDK1 bus -> ElDK1 buy bus) ---
+    # Every agent's branch link below draws from this one bus/link instead of each
+    # independently paying its own "distribution grid reinforcement" capex -- see
+    # build_network()'s grid-connection consolidation step and
+    # add_grid_connection_shared_capacity_constraint (helpers.py), which ties this
+    # link's p_nom to the export link's (El3_to_DK1) p_nom so only one physical
+    # connection capacity is ever paid for, whenever both sides exist for a given
+    # n_flags configuration.
+    shared_import_bus = "ElDK1 buy bus"
+    shared_import_link = "DK1_to_ElDK1_buy"
+    ensure_bus(n, shared_import_bus, carrier="El", unit="MW")
+    if shared_import_link not in n.links.index:
+        shared_cap_cost = tech_costs.at["distribution grid reinforcement", "fixed"]
         if n_config is not None:
-            cap_cost *= n_config.at["grid connection", "cost factor"]
+            shared_cap_cost *= n_config.at["grid connection", "cost factor"]
 
         n.add(
             "Link",
-            link_name1,
+            shared_import_link,
             bus0="ElDK1 bus",
+            bus1=shared_import_bus,
+            efficiency=1.0,
+            capital_cost=float(shared_cap_cost),
+            p_nom_extendable=True,
+            lifetime=tech_costs.at["distribution grid reinforcement", "lifetime"],
+        )
+
+    # --- Per-agent branch (ElDK1 buy bus -> local bus) ---
+    # capital_cost=loop_tol (not literally 0): the shared link above is now the
+    # only thing that pays real grid-connection capex, but a genuinely free
+    # extendable p_nom is a degenerate variable to an interior-point solver --
+    # with nothing to minimise, it can park p_nom_opt at an arbitrary, huge
+    # value (observed: ~3e6 MW on a real solve) since dispatch is bounded
+    # elsewhere anyway and cost is unaffected either way. loop_tol is the same
+    # trick already used a few lines below for the symbiosis link, for exactly
+    # this reason ("tiny cost prevents IPM assigning spurious capacity") --
+    # economically negligible, just enough to keep p_nom_opt meaningful when
+    # reported. Each branch still gets its own marginal_cost below, so
+    # per-agent purchase-cost (VOM) reporting is completely unaffected.
+    link_name1 = f"DK1_to_{local_EL_bus}"
+    if link_name1 not in n.links.index:
+        n.add(
+            "Link",
+            link_name1,
+            bus0=shared_import_bus,
             bus1=local_EL_bus,
             efficiency=1.0,
-            capital_cost=float(cap_cost),
+            capital_cost=loop_tol,
             p_nom_extendable=True,
-            lifetime = tech_costs.at["electricity grid connection", "lifetime"],
+            lifetime = tech_costs.at["distribution grid reinforcement", "lifetime"],
         )
 
     # --- Assign time-dependent marginal cost  ---
@@ -873,10 +959,10 @@ def add_local_boilers(n, local_EL_bus, local_heat_bus, name,
 
     # --- Reference plant efficiencies and capacities ---
     η_ref = abs(n.links.at[name, heat_efficiency_plant])
-    η_ref3 = abs(n.links.at[name, 'efficiency3'])
+    #η_ref3 = abs(n.links.at[name, 'efficiency3'])
 
     capacity_boiler = capacity * η_ref
-    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref3
+    p_nom_max_boiler = n_config.at[name, 'max capacity'] * η_ref
 
     # --- Natural gas boiler ---
     n.add("Link",
@@ -1315,11 +1401,22 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
     #            'storage capacity' : 0, # from plant call:  storage initial capacity
     #            'compressor expansion' :   0, # from plant call: compressor expansion
     #            'storage expansion' : 0, #H2 from plant call: storage expansion
+    #            'cost multiplier' : 1.0, # optional CAPEX scaling, see below
     # }
 
 
     # --- Snapshot network state ---
     n0_dict = get_network_status(n)
+
+    # Optional per-call CAPEX multiplier. Defaults to 1.0, so every existing caller is
+    # unaffected. Used by 'methanol from biogas' to cover the OXYGEN store and its
+    # compressor without modelling an O2 bus: at 150 bar O2 is 210 kg/m3 against H2's
+    # 11.4, so although the ATR needs 5.8x the MASS of O2 per MWh_H2 it occupies only
+    # 0.31x the VOLUME; and compression work per kg scales with 1/M, giving 0.36x the
+    # duty. Vessel factor 1.31, compressor factor 1.36 -- ~1.35 covers both.
+    # CAVEAT: CAPEX only. The O2 compressor's ELECTRICITY (~0.36x the H2 storage
+    # compressor's) is NOT represented.
+    _cost_mult = float(comp_dict.get('cost multiplier', 1.0))
 
     def _is_blank(x):
         return (x is None) or (isinstance(x, float) and np.isnan(x)) or (isinstance(x, str) and x.strip() == "")
@@ -1494,7 +1591,7 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
         # gets correct capital and marginal cost for the compressor depending on the fluid
 
         if fluid in ('Hydrogen', 'H2'):
-            capital_cost = tech_costs.at["hydrogen storage compressor", "fixed"] * n_config.at['H2 HP storage', "cost factor"]
+            capital_cost = tech_costs.at["hydrogen storage compressor", "fixed"] * n_config.at['H2 HP storage', "cost factor"] * _cost_mult
             marginal_cost = tech_costs.at["hydrogen storage compressor", "VOM"] * n_config.at['H2 HP storage', "cost factor"]
             lifetime =  tech_costs.at["hydrogen storage compressor", "lifetime"]
 
@@ -1528,7 +1625,7 @@ def add_compressor_and_storage(n, n_flags, tech_costs, n_config, comp_dict):
         if fluid in ("Hydrogen", "H2"):
             capital_cost = (
                     tech_costs.at["hydrogen storage tank type 1", "fixed"]
-                    * n_config.at["H2 HP storage", "cost factor"]
+                    * n_config.at["H2 HP storage", "cost factor"] * _cost_mult
             )
             marginal_cost = (
                     tech_costs.at["hydrogen storage tank type 1", "VOM"]
@@ -2152,7 +2249,7 @@ def add_heat_pump(n, n_flags, inputs_dict, tech_costs):
 
 
 def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
-    """Add exogenous energy demands / selling links (bioCH4, H2, Methanol) and corresponding delivery/storage links.
+    """Add exogenous energy demands / selling links (CH4, H2, Methanol) and corresponding delivery/storage links.
 
     INPUTS
     plant : str  — matches the technology key used in the plant-adding section
@@ -2172,8 +2269,8 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
         """Return (bus_list, demand_ts, price_ts, e_product).
 
         bus_list always has two elements:
-          [0] product collection bus   e.g. "bioCH4 collection"  ← tagged for discovery
-          [1] delivery/demand bus      e.g. "bioCH4 delivery"
+          [0] product collection bus   e.g. "CH4 collection"  ← tagged for discovery
+          [1] delivery/demand bus      e.g. "CH4 delivery"
 
         All plants producing the same product inject directly into the shared [0]
         collection bus (bus1 of the plant multilink).  The collection-to-delivery
@@ -2188,19 +2285,29 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
             p_H2   = clean_series(inputs_dict["price_H2"], n)
             p_meoh = clean_series(inputs_dict["price_meoh"], n)
 
-            if "price_bioCH4" in inputs_dict:
-                p_bioCH4 = clean_series(inputs_dict["price_bioCH4"], n)
+            if "price_CH4" in inputs_dict:
+                p_CH4 = clean_series(inputs_dict["price_CH4"], n)
             else:
                 en_market_prices = en_market_prices_w_CO2(inputs_dict, tech_costs, n_options)
-                p_bioCH4 = en_market_prices["bioCH4_grid_sell_price"].reindex(n.snapshots).ffill()
+                p_CH4 = en_market_prices["CH4_grid_sell_price"].reindex(n.snapshots).ffill()
 
             weights = n.snapshot_weightings["objective"]
 
-            if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
-                demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
+            # Premiums as incentives for e/bio-methane
+            premium_bioCH4 = float(inputs_dict.get('premium_bioCH4', 0.0))
+            premium_eCH4   = float(inputs_dict.get('premium_eCH4', 0.0))
+
+            if "biogas" in plant.lower():
+                bus_list  = ["bioCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
                 e_product = float((demand_ts * weights).sum())
-                price_ts  = p_bioCH4
+                price_ts  = p_CH4 - premium_bioCH4   # price_ts already negative
+
+            if "methanation" in plant.lower():
+                bus_list  = ["eCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
+                e_product = float((demand_ts * weights).sum())
+                price_ts  = p_CH4 - premium_eCH4
 
             if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
@@ -2215,9 +2322,12 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 price_ts  = p_meoh
 
         elif driver == "demand":
-            if any(k in plant.lower() for k in ["biogas", "methanation"]):
-                bus_list  = ["bioCH4 collection", "bioCH4 delivery"]
-                demand_ts = clean_series(inputs_dict["bioCH4_demand"], n)
+            if "biogas" in plant.lower():
+                bus_list  = ["bioCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
+            if "methanation" in plant.lower():
+                bus_list  = ["eCH4 collection", "CH4 delivery"]
+                demand_ts = clean_series(inputs_dict["CH4_demand"], n)
             if any(k in plant.lower() for k in ["electrolysis", "aec", "pemec", "soec"]):
                 bus_list  = ["H2 collection", "H2 delivery"]
                 demand_ts = clean_series(inputs_dict["H2_input_demand"], n)
@@ -2272,12 +2382,14 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     marginal_cost=0.0,
                 )
 
-            if product not in n.loads.index:
-                n.add("Load", product, bus=bus_list[1], carrier=carrier)
-                n.loads_t.p_set[product] = demand_ts.reindex(n.snapshots)
+            load_name = bus_list[1] # create only one
+            if load_name not in n.loads.index:
+                n.add("Load", load_name, bus=bus_list[1], carrier=carrier)
+                n.loads_t.p_set[load_name] = demand_ts.reindex(n.snapshots)
 
-                # Delivery store: sized by inputs_dict; None or 0 → rigid demand (no store)
-                _store_key = f"{product}_store_e_nom_max"
+                # Delivery store: sized by inputs_dict; None or 0 => rigid demand (no store)
+                product_key = bus_list[1].replace(" delivery", "")   # "CH4", "H2", "Methanol"
+                _store_key = f"{product_key}_store_e_nom_max"
                 store_e_nom_max = inputs_dict.get(_store_key, float("inf"))
                 if store_e_nom_max is not None and store_e_nom_max > 0:
                     store_kwargs = dict(
@@ -2287,7 +2399,7 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                     )
                     if store_e_nom_max != float("inf"):
                         store_kwargs["e_nom_max"] = store_e_nom_max
-                    n.add("Store", f"{product} delivery", **store_kwargs)
+                    n.add("Store", f"{bus_list[1]} store", **store_kwargs)
 
         elif driver == "price":
             lk_ext = f"{product}_collection_to_delivery"
@@ -2303,13 +2415,15 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
                 )
                 n.links_t.marginal_cost[lk_ext] = price_ts.reindex(n.snapshots)
 
-                # tag for stochastic scenario creation
                 n.links.loc[lk_ext, "is_product_sale"] = True
                 n.links.loc[lk_ext, "product"]         = product
 
+            # Create one single store for all CH4 products
+            store_name = f"{bus_list[1]} store"
+            if store_name not in n.stores.index:
                 n.add(
                     "Store",
-                    f"{product} delivery",
+                    store_name,
                     bus=bus_list[1],
                     e_nom_extendable=True,
                     e_cyclic=False,
@@ -2327,10 +2441,15 @@ def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
     if bus_list is None:
         raise ValueError(f"Could not determine product for plant='{plant}' (driver={driver}).")
     # ==============================================================
-    # 1. BIOCH4
+    # 1. bioCH4 / eCH4
     # ==============================================================
-    if any(k in plant.lower() for k in ["biogas", "methanation"]):
-        n = add_targets_per_product(n, driver = driver, product = 'bioCH4', carrier = 'gas', unit = 'MW', bus_list = bus_list, demand_ts = demand_ts, price_ts = price_ts, e_product = e_product)
+    if "biogas" in plant.lower():
+        n = add_targets_per_product(n, driver=driver, product='bioCH4', carrier='gas', unit='MW',
+                                    bus_list=bus_list, demand_ts=demand_ts, price_ts=price_ts, e_product=e_product)
+
+    elif "methanation" in plant.lower():
+        n = add_targets_per_product(n, driver=driver, product='eCH4', carrier='gas', unit='MW',
+                                    bus_list=bus_list, demand_ts=demand_ts, price_ts=price_ts, e_product=e_product)
 
     # ==============================================================
     # 2. HYDROGEN
@@ -2428,9 +2547,9 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   efficiency4=GL_eff.loc["DM digestate", "SkiveBiogas"],
                   lifetime = tech_costs.at['biogas','lifetime'],
                   p_nom_extendable = expansion,
-                  p_nom = capacity ,
+                  p_nom = capacity,
                   p_nom_max = n_config.at['biogas', 'max capacity'],
-                  capital_cost = capital_cost )
+                  capital_cost = capital_cost)
             return n
 
         def add_biogas_storage_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier):
@@ -2507,7 +2626,8 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   p_nom_max = n_config.at['biogas upgrading', 'max capacity'],
                   lifetime = tech_costs.at['biogas upgrading', 'lifetime'],
                   capital_cost= capital_cost,
-                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM'])
+                  marginal_cost=tech_costs.at['biogas upgrading', 'VOM']
+                  )
 
             # existing or additional NG boiler
             capacity_boiler = np.abs(capacity * n.links.at[prefix + 'biogas upgrading', 'efficiency3'] / tech_costs.at['gas boiler steam', 'efficiency']) * 1.01 # lock the capacity to the biogas upgrading,
@@ -2673,12 +2793,13 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
         if t in exp_to_add:
             capital_cost = tech_costs.at['biogas engine', 'fixed'] * n_config.at[t, 'cost factor']
             n = add_biogas_engine_cap_exp(n, prefix='', capital_cost=capital_cost, capacity=0, expansion=True, carrier=t)
+
         # add grid connections for both cases
         if t in cap_to_add + exp_to_add:
             # add connection to the external grid (based on "add_local_el_connections")
             gc_init = n_config.at['grid connection', 'initial capacity']
             if gc_init > 0:
-                _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
+                _exi_cc = _exi_capital_cost('distribution grid reinforcement', 'grid connection', tech_costs)
                 n = add_grid_connection_cap_exp(
                     n, 'EXI_El3_to_DK1', _exi_cc, gc_init, False,
                     carrier='grid connection',
@@ -2686,7 +2807,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                     tech_costs=tech_costs,
                 )
             if n_config.at['grid connection', 'expansion']:
-                cost = (tech_costs.at['electricity grid connection', 'fixed']
+                cost = (tech_costs.at['distribution grid reinforcement', 'fixed']
                         * n_config.at['grid connection', 'cost factor'])
                 n = add_grid_connection_cap_exp(
                     n, 'El3_to_DK1', cost, 0, True,
@@ -2808,10 +2929,10 @@ def add_renewables(n, n_flags, inputs_dict, tech_costs):
 
     if 'grid connection' in cap_to_add:
         cap = n_config.at['grid connection', 'initial capacity']
-        _exi_cc = _exi_capital_cost('electricity grid connection', 'grid connection', tech_costs)
+        _exi_cc = _exi_capital_cost('distribution grid reinforcement', 'grid connection', tech_costs)
         n = add_grid_connection_cap_exp(n, 'EXI_El3_to_DK1', _exi_cc, cap, False, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
     if 'grid connection' in exp_to_add:
-        cost = tech_costs.at['electricity grid connection', 'fixed'] * n_config.at['grid connection', 'cost factor']
+        cost = tech_costs.at['distribution grid reinforcement', 'fixed'] * n_config.at['grid connection', 'cost factor']
         n = add_grid_connection_cap_exp(n, 'El3_to_DK1', cost, 0, True, carrier = t, en_market_prices=en_market_prices, tech_costs=tech_costs)
 
     # ----------------------------------------------------------------------
@@ -2928,12 +3049,22 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         return n
 
     def add_SOEC_cap_exp(n, product_bus, prefix, capital_cost, capacity, expansion, carrier, tech_name):
-
+        # SOEC delivers at LOW pressure, unlike AEC and PEMEC. DEA's water-electrolysis
+        # chapter names only AEC and PEMEC as able to "deliver hydrogen at pressures as
+        # high as 30 bar", which is the pressure the shared 'H2 collection' bus carries.
+        # So SOEC injects into its own LP bus and a compressor lifts it to the header;
+        # without this it would receive 30 bar hydrogen for free, worth 1.93 kWh/kg_H2
+        # (5.8% of the hydrogen LHV) that it never paid for.
+        #
+        # The LP pressure lives in p_config ("H2 SOEC outlet") and is NOT a sourced
+        # number -- see the warning there.
         n = add_requirements_buses(n, {
-            'bus_list': ['El3'],
-            'carrier_list': ['El'],
-            'unit_list': ['MW'],
+            'bus_list': ['El3', 'H2 SOEC LP'],
+            'carrier_list': ['El', 'H2'],
+            'unit_list': ['MW', 'MW'],
         }, symbiosis_n)
+        soec_lp_bus = 'H2 SOEC LP'
+        header_bus = product_bus          # 'H2 collection', 30 bar
 
         # ---------- Add local heat connections (SOEC consumes heat, drawn from Heat MT)
         heat_bus_dict = {'Heat MT': -1}  # process needs heat input
@@ -2945,7 +3076,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
         n.add("Link",
               name=name,
               bus0=local_EL_bus,
-              bus1=product_bus,
+              bus1=soec_lp_bus,          # LP outlet, lifted to the header by the compressor below
               carrier = carrier,
               bus2=new_heat_buses[0],  # Heat MT input
               efficiency=tech_costs.at[tech_name, 'efficiency'],
@@ -2961,6 +3092,28 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               ramp_limit_up=n_config.at['SOEC', 'ramp limit up'],
               ramp_limit_down=n_config.at['SOEC', 'ramp limit down']
               )
+
+        # ---------------------------------------------------------------
+        # Lift SOEC's low-pressure hydrogen to the shared 30 bar header.
+        # No storage here (ST bus blank) -- this is a pass-through compressor,
+        # not a buffer. Heat DH/LT are the aftercooling sinks, as for every
+        # other compressor in the model.
+        # ---------------------------------------------------------------
+        n, _soec_heat = add_local_heat_connections(n, {'Heat DH': 1, 'Heat LT': 1},
+                                                   'SOEC', n_flags, tech_costs, n_config)
+        n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
+            'plant': 'SOEC',
+            'local EL bus': local_EL_bus,
+            'Heat DH bus': _soec_heat[0],
+            'Heat LT bus': _soec_heat[1],
+            'IN bus':  soec_lp_bus,
+            'OUT bus': header_bus,
+            'ST bus':  '',
+            'compressor capacity': capacity,
+            'storage capacity': 0,
+            'compressor expansion': expansion,
+            'storage expansion': False,
+        })
 
         # ---------------------------------------------------------------
         # Local fallback heat source (NG + electric boiler) for SOEC's Heat
@@ -3099,7 +3252,11 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             bus5=meoh_buses.at['Heat DH', 'methanolisation'],
             efficiency=  1 / tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency2= - tech_costs.at["methanolisation", "carbondioxide-input"] / tech_costs.at["methanolisation", "hydrogen-input"],
-            efficiency3= - 0.1 * tech_costs.at["methanolisation", "electricity-input"] / tech_costs.at["methanolisation", "hydrogen-input"], # input data include compression
+            # DEA sheet 98 reports this EXCLUDING compression of the H2 and CO2 feeds,
+            # which GreenBubble models as separate components. Replaces a hardcoded
+            # 0.1x factor on the DECHEMA electricity-input (0.271), which was a fudge
+            # approximating the same thing.
+            efficiency3= - tech_costs.at["methanolisation", "electricity-input-no-compression"] / tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency4= - tech_costs.at["methanolisation", "heat-input"]/tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency5= tech_costs.at["methanolisation", "heat-output"]/tech_costs.at["methanolisation", "hydrogen-input"],
             p_nom_extendable=expansion,
@@ -3171,19 +3328,164 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     # Add plant depending on tech status
     # ----------------------------------------------------------------------
 
+    def add_methanol_synthesis_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """H2 + CO2 -> crude methanol (methanol/water mixture), releasing reactor heat at MT.
+
+        Basis: bus0 = H2, as for 'methanolisation', so capacity is in MW_H2 and the
+        coefficients are divided by hydrogen-input. Unlike the aggregate unit this link
+        is a heat SOURCE: the reactor duty that DEA nets out internally is made explicit
+        on the Heat MT bus, where the distillation reboiler can bid for it.
+        """
+        name = f"{prefix}methanol synthesis"
+        n.add(
+            "Link",
+            name=name,
+            carrier=carrier,
+            bus0=meoh_buses.at['H2 in bus', 'methanol synthesis'],
+            bus1=meoh_buses.at['crude MeOH bus', 'methanol synthesis'],
+            bus2=meoh_buses.at['CO2 in bus', 'methanol synthesis'],
+            bus3=meoh_buses.at['local EL bus', 'methanol synthesis'],
+            bus4=meoh_buses.at['Heat MT', 'methanol synthesis'],
+            efficiency=  1 / tech_costs.at["methanol synthesis", "hydrogen-input"],
+            efficiency2= - tech_costs.at["methanol synthesis", "carbondioxide-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"],
+            efficiency3= - tech_costs.at["methanol synthesis", "electricity-input"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # DEA basis, no compression (see technology_inputs)
+            efficiency4= tech_costs.at["methanol synthesis", "heat-output"] / tech_costs.at["methanol synthesis", "hydrogen-input"], # reactor heat, PRODUCED
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            lifetime=tech_costs.at["methanol synthesis", "lifetime"],
+            p_nom_max=n_config.at["methanol synthesis", "max capacity"],
+            capital_cost=capital_cost,
+            committable=(n_config.at["methanol synthesis", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanol synthesis", "min load"],
+            ramp_limit_up=n_config.at['methanol synthesis', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanol synthesis', 'ramp limit down'],
+            )
+        return n, meoh_buses
+
+    def add_methanol_distillation_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """Crude methanol -> AA-grade methanol, consuming reboiler heat at MT and rejecting condenser heat to LT.
+
+        Basis: bus0 = crude MeOH, so capacity is in MW_MeOH contained. No methanol is
+        lost (the step sets purity, not yield); the separated water is not wired to a bus.
+        """
+        name = f"{prefix}methanol distillation"
+        n.add(
+            "Link",
+            name=name,
+            carrier=carrier,
+            bus0=meoh_buses.at['crude MeOH bus', 'methanol distillation'],
+            bus1=meoh_buses.at['product bus', 'methanol distillation'],
+            bus2=meoh_buses.at['Heat MT', 'methanol distillation'],
+            bus3=meoh_buses.at['local EL bus', 'methanol distillation'],
+            bus4=meoh_buses.at['Heat LT', 'methanol distillation'],
+            efficiency=  1.0,                                                            # purity step, no MeOH lost
+            # Gross reboiler duty is DERIVED, never transcribed: Q_reb = net steam + Q_rxn.
+            # This makes (Q_reb - Q_rxn) == methanolisation heat-input an invariant of the
+            # code, so the split cannot silently drift from the aggregate it decomposes.
+            efficiency2= - (tech_costs.at["methanolisation", "heat-input"]
+                            + tech_costs.at["methanol synthesis", "heat-output"]),         # reboiler, CONSUMED
+            efficiency3= - tech_costs.at["methanol distillation", "electricity-input"], # DEA basis, no compression (see technology_inputs)
+            efficiency4= tech_costs.at["methanol distillation", "heat-output"],           # condenser -> LT (53 C, [OLI] Section E)
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            lifetime=tech_costs.at["methanol distillation", "lifetime"],
+            p_nom_max=n_config.at["methanol distillation", "max capacity"],
+            capital_cost=capital_cost,
+            committable=(n_config.at["methanol distillation", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanol distillation", "min load"],
+            ramp_limit_up=n_config.at['methanol distillation', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanol distillation', 'ramp limit down'],
+            )
+        return n, meoh_buses
+
+    def add_methanol_from_biogas_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """Biogas + H2 -> methanol via tri-reforming, an ALTERNATIVE to 'methanolisation'.
+
+        DEA v15 sheet 97 "Methanol from biogas and hydrogen": biogas is reformed in an
+        autothermal reformer (oxygen oxidises CH4 and CO to supply the reforming heat),
+        then the syngas is hydrogenated to methanol. Carbon comes from the biogas itself
+        rather than from separated CO2, so this route needs 2.6x LESS hydrogen per MWh of
+        methanol than 'methanolisation' -- but it consumes biomethane that could be sold.
+        Which wins is exactly what the optimiser is being asked.
+
+        Basis: bus0 = H2, and technology-data already stores this technology per MWh_H2,
+        so no division by hydrogen-input is needed here (unlike 'methanolisation').
+
+        OXYGEN IS NOT WIRED. The ATR needs 0.1729 t_O2/MWh_H2 while the electrolysis that
+        supplies the hydrogen co-produces 0.2381 t (7.936 kg O2 per kg H2) -- 138% coverage,
+        so oxygen never binds on a site with its own electrolyser and is treated as free.
+        Water output is likewise not wired, as for 'methanolisation'.
+
+        NO H2 COMPRESSOR, AND THAT IS DELIBERATE -- do not "fix" it by adding one.
+        This link draws H2 straight from 'H2 distribution', whereas 'methanolisation' draws
+        from its own compressed 'H2 to methanolisation' bus. The two are booked differently
+        because their DEA battery limits differ:
+          - sheet 98 (methanolisation) EXCLUDES feed compression, which is why
+            'electricity-input-no-compression' exists and why GreenBubble gives that plant
+            its own H2 and CO2 compressor components;
+          - sheet 97 (this route) INCLUDES "Compressors prior to reformer and methanol
+            reactor" in the CAPEX, and its 0.34 MWh/t electricity is the plant's own
+            consumption excluding only electrolysis (note D).
+        Adding a GreenBubble compressor here would double-count both the capital and the
+        electricity. Both routes do pay for compression; only the accounting differs.
+        """
+        name = f"{prefix}methanol from biogas"
+        n.add(
+            "Link",
+            name=name,
+            carrier=carrier,
+            bus0=meoh_buses.at['H2 in bus', 'methanol from biogas'],
+            bus1=meoh_buses.at['product bus', 'methanol from biogas'],
+            bus2=meoh_buses.at['biogas in bus', 'methanol from biogas'],
+            bus3=meoh_buses.at['local EL bus', 'methanol from biogas'],
+            bus4=meoh_buses.at['Heat MT', 'methanol from biogas'],
+            efficiency=  tech_costs.at["methanol from biogas", "methanol-output"],
+            efficiency2=-tech_costs.at["methanol from biogas", "biogas-input"],
+            efficiency3=-tech_costs.at["methanol from biogas", "electricity-input"],
+            efficiency4=-tech_costs.at["methanol from biogas", "heat-input"],
+            p_nom_extendable=expansion,
+            p_nom=capacity,
+            lifetime=tech_costs.at["methanol from biogas", "lifetime"],
+            p_nom_max=n_config.at["methanol from biogas", "max capacity"],
+            capital_cost=capital_cost,
+            marginal_cost=tech_costs.at["methanol from biogas", "VOM"],
+            committable=(n_config.at["methanol from biogas", "committable"] == True) and not expansion,
+            p_min_pu=n_config.at["methanol from biogas", "min load"],
+            ramp_limit_up=n_config.at['methanol from biogas', 'ramp limit up'],
+            ramp_limit_down=n_config.at['methanol from biogas', 'ramp limit down'],
+            )
+        return n, meoh_buses
+
+    def add_crude_meoh_storage_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
+        """Intermediate crude-methanol tank: the buffer that lets synthesis and distillation run apart."""
+        n.add('Store',
+              name=prefix + 'crude MeOH store',
+              bus=meoh_buses.at['crude MeOH bus', 'methanol synthesis'],
+              carrier=carrier,
+              e_nom_extendable=expansion,
+              e_nom=capacity,
+              e_nom_max=n_config.at['crude MeOH storage', 'max capacity'],
+              e_cyclic=True,
+              capital_cost=capital_cost,
+              )
+        return n, meoh_buses
+
     # check what technologies to add
-    techs = ["methanolisation"]
+    # 'meoh split' replaces the single methanolisation link with synthesis + distillation
+    meoh_split = bool(n_options.at['meoh split', 'enable']) if 'meoh split' in n_options.index else False
+    techs = (["methanol synthesis", "methanol distillation"] if meoh_split
+             else ["methanolisation", "methanol from biogas"])
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
     if cap_to_add or exp_to_add:
         # initialize methanation_buses with existing bus: wrabbing buses for all techs
-        idx = ['local EL bus','CO2 in bus', 'H2 in bus', 'product bus']
-        carriers= ['El',"CO2", "H2", "Methanol"]
-        units = ['MW', "t/h", "MW", "MW"]
+        idx = ['local EL bus','CO2 in bus', 'H2 in bus', 'biogas in bus', 'product bus']
+        carriers= ['El',"CO2", "H2", "gas", "Methanol"]
+        units = ['MW', "t/h", "MW", "MW", "MW"]
         # product bus left blank here — set per-tech by add_targets() below.
         # 'Methanol' was previously used as a placeholder, creating an orphan bus
         # because the actual link connects to 'Methanol collection' (set by add_targets).
-        buses_meoh = ['El_meoh', 'CO2 distribution', 'H2 distribution', '',]
+        buses_meoh = ['El_meoh', 'CO2 distribution', 'H2 distribution', 'biogas', '',]
         meoh_buses = pd.DataFrame(index =idx, columns=['meoh'] + techs, data = ''  )
         meoh_buses.loc[:,'meoh'] = buses_meoh
         meoh_buses.loc[:,'carrier'] = carriers
@@ -3207,6 +3509,13 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             meoh_buses.at['CO2 storage bus', 'carrier'] = ''
             meoh_buses.at['CO2 storage bus', 'unit'] = ''
 
+        # intermediate crude-methanol bus, only when the split is active
+        if meoh_split:
+            meoh_buses.at['crude MeOH bus', 'meoh'] = 'crude MeOH'
+            meoh_buses.at['crude MeOH bus', 'carrier'] = 'crude MeOH'
+            meoh_buses.at['crude MeOH bus', 'unit'] = 'MW'
+            ensure_carrier(n, 'crude MeOH')
+
         n, meoh_buses = set_plant_connection(n, buses = meoh_buses , tech ='meoh', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
     else:
@@ -3217,20 +3526,144 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
     # ----------------------------------------------------------------------
     # Add technologies
     # ----------------------------------------------------------------------
-    t = 'methanolisation'
-    n.add('Carrier', t)
-    n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
-                                 n_options=n_options, targets_dict=targets_dict)
-    meoh_buses.at['product bus', t] = product_bus
+    if not meoh_split:
+        t = 'methanolisation'
+        n.add('Carrier', t)
+        n, product_bus = add_targets(n, plant=t, inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                     n_options=n_options, targets_dict=targets_dict)
+        meoh_buses.at['product bus', t] = product_bus
 
-    if t in cap_to_add:
-        cap = n_config.at[t, "initial capacity"]
-        _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs) / tech_costs.at["methanolisation", "hydrogen-input"]
-        n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
+        if t in cap_to_add:
+            cap = n_config.at[t, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanolisation", t, tech_costs) / tech_costs.at["methanolisation", "hydrogen-input"]
+            n, meoh_buses = add_methanolisation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier= t, meoh_buses= meoh_buses)
 
-    if t in exp_to_add:
-        cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
-        n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
+        if t in exp_to_add:
+            cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
+            n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
+
+        # ---- ALTERNATIVE ROUTE: biogas + H2 -> methanol (tri-reforming) ----
+        b = 'methanol from biogas'
+        if b in cap_to_add or b in exp_to_add:
+            n.add('Carrier', b)
+            for _row in ['H2 in bus', 'biogas in bus', 'local EL bus']:
+                meoh_buses.at[_row, b] = meoh_buses.at[_row, 'meoh']
+            # Heat MT is consumed (net steam for syngas preheat and the reboiler, DEA note E;
+            # the sheet reports zero district-heat output). DH and LT are produced -- they are
+            # the H2 storage compressor's aftercooling, not the process's.
+            n, _b_heat = add_local_heat_connections(n, {'Heat MT': -1, 'Heat DH': 1, 'Heat LT': 1},
+                                                    'methanol from biogas',
+                                                    n_flags, tech_costs, n_config)
+            meoh_buses.at['Heat MT', b] = _b_heat[0]
+            meoh_buses.at['Heat DH', b] = _b_heat[1]
+            meoh_buses.at['Heat LT', b] = _b_heat[2]
+            # same product bus as methanolisation: add_targets keys on the plant name
+            n, _b_product = add_targets(n, plant='methanolisation', inputs_dict=inputs_dict,
+                                        tech_costs=tech_costs, n_options=n_options,
+                                        targets_dict=targets_dict)
+            meoh_buses.at['product bus', b] = _b_product
+
+            if b in cap_to_add:
+                # technology-data stores this technology per MWh_H2 already, and bus0 is H2,
+                # so there is no division by hydrogen-input as there is for methanolisation.
+                _exi_cc = _exi_capital_cost("methanol from biogas", b, tech_costs)
+                n, meoh_buses = add_methanol_from_biogas_cap_exp(
+                    n, "EXI_", _exi_cc, n_config.at[b, "initial capacity"], False,
+                    carrier=b, meoh_buses=meoh_buses)
+            if b in exp_to_add:
+                cost = tech_costs.at["methanol from biogas", "fixed"] * n_config.at[b, "cost factor"]
+                n, meoh_buses = add_methanol_from_biogas_cap_exp(
+                    n, "", cost, 0, True, carrier=b, meoh_buses=meoh_buses)
+
+            # ---- H2 buffer, on the 30 bar side ----
+            # DEA's battery limits include the plant's own feed compressors but NOT storage,
+            # so a buffer here is additional rather than double-counted. IN and OUT are the
+            # same 30 bar bus: the store compresses 30 -> 150 to fill and throttles back on
+            # return, which add_compressor_and_storage handles from the bus states. Without
+            # this the route could not time-shift hydrogen at all, while 'methanolisation'
+            # can through its own store -- an asymmetry that penalised this route.
+            # The 1.35 multiplier stands in for the OXYGEN store and its compressor; see the
+            # note in add_compressor_and_storage.
+            if n_config.at['H2 HP storage', 'expansion']:
+                # The storage bus must EXIST before add_compressor_and_storage is called --
+                # it checks for it but does not create it. The name must end in
+                # "H2 HP storage" so p_config's bus_suffix rule gives it the 150 bar state.
+                meoh_buses.at['H2 storage bus', b] = 'mfb H2 HP storage'
+                _st = meoh_buses.loc[:, b]
+                _m = _st.notna() & _st.astype(str).str.strip().ne("")
+                n = add_requirements_buses(n, {
+                    "bus_list":     _st.loc[_m].tolist(),
+                    "carrier_list": meoh_buses.loc[:, "carrier"].loc[_m].tolist(),
+                    "unit_list":    meoh_buses.loc[:, "unit"].loc[_m].tolist(),
+                }, symbiosis_n)
+                n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
+                    'plant': 'methanol from biogas',
+                    'local EL bus': meoh_buses.at['local EL bus', b],
+                    'Heat DH bus': meoh_buses.at['Heat DH', b],
+                    'Heat LT bus': meoh_buses.at['Heat LT', b],
+                    'IN bus':  meoh_buses.at['H2 in bus', b],
+                    'OUT bus': meoh_buses.at['H2 in bus', b],
+                    'ST bus':  'mfb H2 HP storage',
+                    'compressor capacity': 0,
+                    'storage capacity': 0,
+                    'compressor expansion': True,
+                    'storage expansion': True,
+                    'cost multiplier': 1.35,
+                })
+
+    else:
+        # Heat buses, shared by both halves. Heat MT is bidirectional (0) here, unlike the
+        # monolithic unit's -1: with the split the plant both supplies MT (reactor) and
+        # draws it (reboiler), and the net may go either way hour to hour.
+        _meoh_heat_directions = {'Heat MT': 0,
+                                 'Heat DH': 1,
+                                 'Heat LT': 1}
+        n, _meoh_heat_buses = add_local_heat_connections(n, _meoh_heat_directions, 'methanolisation',
+                                                         n_flags, tech_costs, n_config)
+        for _col in ['meoh', 'methanol synthesis', 'methanol distillation']:
+            meoh_buses.loc['Heat MT', _col] = _meoh_heat_buses[0]
+            meoh_buses.loc['Heat DH', _col] = _meoh_heat_buses[1]
+            meoh_buses.loc['Heat LT', _col] = _meoh_heat_buses[2]
+
+        # ---- synthesis: H2 + CO2 -> crude MeOH (+ reactor heat to MT) ----
+        t = 'methanol synthesis'
+        n.add('Carrier', t)
+        for _row in ['H2 in bus', 'CO2 in bus', 'local EL bus', 'crude MeOH bus']:
+            meoh_buses.at[_row, t] = meoh_buses.at[_row, 'meoh']
+
+        # ---- distillation: crude MeOH -> product (the sellable methanol) ----
+        d = 'methanol distillation'
+        n.add('Carrier', d)
+        meoh_buses.at['crude MeOH bus', d] = meoh_buses.at['crude MeOH bus', 'meoh']
+        meoh_buses.at['local EL bus', d] = meoh_buses.at['local EL bus', 'meoh']
+        n, product_bus = add_targets(n, plant='methanolisation', inputs_dict=inputs_dict, tech_costs=tech_costs,
+                                     n_options=n_options, targets_dict=targets_dict)
+        meoh_buses.at['product bus', d] = product_bus
+
+        if t in cap_to_add:
+            cap = n_config.at[t, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanol synthesis", t, tech_costs) / tech_costs.at["methanol synthesis", "hydrogen-input"]
+            n, meoh_buses = add_methanol_synthesis_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier=t, meoh_buses=meoh_buses)
+        if t in exp_to_add:
+            cost = tech_costs.at["methanol synthesis", "fixed"] / tech_costs.at["methanol synthesis", "hydrogen-input"] * n_config.at[t, "cost factor"]
+            n, meoh_buses = add_methanol_synthesis_cap_exp(n, "", cost, 0, True, carrier=t, meoh_buses=meoh_buses)
+
+        if d in cap_to_add:
+            cap = n_config.at[d, "initial capacity"]
+            _exi_cc = _exi_capital_cost("methanol distillation", d, tech_costs)
+            n, meoh_buses = add_methanol_distillation_cap_exp(n, "EXI_", _exi_cc, cap, False, carrier=d, meoh_buses=meoh_buses)
+        if d in exp_to_add:
+            cost = tech_costs.at["methanol distillation", "fixed"] * n_config.at[d, "cost factor"]
+            n, meoh_buses = add_methanol_distillation_cap_exp(n, "", cost, 0, True, carrier=d, meoh_buses=meoh_buses)
+
+        # ---- intermediate crude-methanol tank ----
+        st = 'crude MeOH storage'
+        if n_config.at[st, 'expansion'] or n_config.at[st, 'initial capacity'] > 0:
+            n.add('Carrier', 'crude MeOH')
+            n, meoh_buses = add_crude_meoh_storage_cap_exp(
+                n, "", tech_costs.at['methanol storage', 'fixed'] if 'methanol storage' in tech_costs.index else 0.0,
+                n_config.at[st, 'initial capacity'], bool(n_config.at[st, 'expansion']),
+                carrier='crude MeOH', meoh_buses=meoh_buses)
 
     new_components = log_new_components(n, n0_dict)
 
@@ -3262,9 +3695,13 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         methanation_buses.at['local EL bus', 'biomethanation'] = methanation_buses.at['local EL bus', 'methanation']
         methanation_buses.at['H2 storage bus', 'biomethanation'] = methanation_buses.at['H2 storage bus', 'methanation']
 
-
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='biomethanation', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
+
+        # bioCH4 collection infrastructure is created unconditionally by add_biogas()
+        # (a hard dependency of methanation via network_dependencies), so only the
+        # bus reference is needed here.
+        methanation_buses.at['product bus 2', 'biomethanation'] = 'bioCH4 collection'
 
         # add Heat  bus
         meth_heat_directions = {'Heat DH': 1,  # for compressor
@@ -3287,10 +3724,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             carrier = carrier,
             bus0=methanation_buses.at['H2 in bus', 'biomethanation'],
             bus1=methanation_buses.at['biogas in bus', 'biomethanation'],
-            bus2=methanation_buses.at['product bus', 'biomethanation'],
+            bus2=methanation_buses.at['product bus', 'biomethanation'], #eCH4
+            bus4=methanation_buses.at['product bus 2', 'biomethanation'], #bioCH4
             bus3=methanation_buses.at['local EL bus', 'biomethanation'],
             efficiency=-tech_costs.at["biomethanation", "biogas-input"],
-            efficiency2=tech_costs.at["biomethanation", "methane-output"],
+            efficiency2=tech_costs.at["biomethanation", "methane-output"] - tech_costs.at["biomethanation", "biogas-input"], #eCH4
+            efficiency4=tech_costs.at["biomethanation", "biogas-input"], #bioCH4
             efficiency3=-tech_costs.at["biomethanation", "electricity-input"],
             p_nom=capacity,
             lifetime=tech_costs.at["biomethanation", "lifetime"],
@@ -3423,6 +3862,11 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         # check that the buses are actually existing
         n, methanation_buses = set_plant_connection(n, buses = methanation_buses , tech ='methanation biogas', inputs_dict =inputs_dict, n_flags =n_flags, tech_costs=tech_costs)
 
+        # bioCH4 collection infrastructure is created unconditionally by add_biogas()
+        # (a hard dependency of methanation via network_dependencies), so only the
+        # bus reference is needed here.
+        methanation_buses.at['product bus 2', 'methanation biogas'] = 'bioCH4 collection'
+
         # add Heat MT bus
         meth_heat_directions = {'Heat MT': 1,
                                 'Heat DH': 1, # for compressor
@@ -3449,10 +3893,12 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['biogas in bus', 'methanation biogas'],
             bus3=methanation_buses.at['local EL bus', 'methanation biogas'],
             bus4=methanation_buses.at['Heat MT', 'methanation biogas'],
-            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
+            bus5=methanation_buses.at['product bus 2', 'methanation biogas'], #bioCH4
+            efficiency= tech_costs.at["methanation biogas","methane-output"] - tech_costs.at["methanation biogas","biogas-input"], #eCH4
             efficiency2=-tech_costs.at["methanation biogas","biogas-input"],
             efficiency3=-tech_costs.at["methanation biogas","electricity-input"] ,
             efficiency4=tech_costs.at["methanation biogas","heat-output"],
+            efficiency5=tech_costs.at["methanation biogas","biogas-input"], #bioCH4
             lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom=capacity,
             p_nom_extendable=expansion,
@@ -3504,6 +3950,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
     def add_cat_methanation_CO2_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, methanation_buses):
 
         # update methanation_buses
+        # costs are scaled form methantion biogas ( as small biogas dedicated plants, but efficiencies are taken form large scale methanation (Sabatier) reactors)
         # NOTE: 'product bus' is intentionally NOT copied from 'methanation' here — see add_biomethanation_biogas_cap_exp.
         methanation_buses.at['H2 in bus', 'methanation CO2'] = methanation_buses.at['H2 in bus', 'methanation']
         methanation_buses.at['CO2 in bus', 'methanation CO2'] = 'CO2 to methanation'
@@ -3563,10 +4010,10 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             bus2=methanation_buses.at['CO2 in bus', 'methanation CO2'],
             bus3=methanation_buses.at['local EL bus', 'methanation CO2'],
             bus4=methanation_buses.at['Heat MT', 'methanation CO2'],
-            efficiency= tech_costs.at["methanation biogas","hydrogen-input"],
-            efficiency2= - CO2_input,
-            efficiency3= - tech_costs.at["methanation biogas","electricity-input"] ,
-            efficiency4= tech_costs.at["methanation biogas","heat-output"],
+            efficiency= 1/tech_costs.at["methanation","hydrogen-input"],
+            efficiency2= - tech_costs.at["methanation","carbondioxide-input"]/tech_costs.at["methanation","hydrogen-input"],
+            efficiency3= - tech_costs.at["methanation biogas","electricity-input"] * vol_ratio,
+            efficiency4= tech_costs.at["methanation biogas","heat-output"] * vol_ratio,
             lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom_extendable= expansion,
             p_nom= capacity,
@@ -4316,6 +4763,58 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
     # 4. Apply system-wide constraints
     # ---------------------------------------------------------
     define_total_supply_constraints(network, network.snapshots, component='Generator')
+
+    # ---------------------------------------------------------
+    # 4b. Consolidate shared grid-connection capital cost
+    # ---------------------------------------------------------
+    # DK1_to_ElDK1_buy (import, added in add_local_el_connections) and El3_to_DK1
+    # (export, added in add_biogas/add_renewables) both represent capacity on what
+    # is physically one shared site grid connection. If both exist for this
+    # n_flags configuration, zero the export link's own capital_cost (the import
+    # link stays the sole payer -- arbitrary choice of anchor, since
+    # add_grid_connection_shared_capacity_constraint in helpers.py forces their
+    # p_nom to be equal anyway) and flag the network so that constraint gets
+    # added at solve time, and so snakemake_plot.py's post-processing step knows
+    # to reallocate the shared cost back onto individual links for reporting. If
+    # only one side exists (e.g. a pure-import site with no export capability, or
+    # a fully self-sufficient renewables site that never buys from the grid),
+    # there's nothing to share -- leave that link's own cost untouched, exactly
+    # as before this change.
+    _shared_import_link = "DK1_to_ElDK1_buy"
+    _export_link = "El3_to_DK1"
+    _both_grid_sides_exist = (
+        _shared_import_link in network.links.index and _export_link in network.links.index
+    )
+    network.meta = getattr(network, "meta", {}) or {}
+    if _both_grid_sides_exist:
+        network.links.at[_export_link, "capital_cost"] = 0.0
+        network.meta["consolidated_grid_connection"] = True
+    else:
+        network.meta["consolidated_grid_connection"] = False
+
+    # Fix agent allocation for the site-wide grid-connection components: they're
+    # not meaningfully "owned" by whichever add_XXX() happened to run first and
+    # create them via add_link_if_new's dedup (currently always add_biogas, an
+    # accident of call order) -- prefer "renewables" as the natural owner of
+    # grid import/export economics, falling back to "biogas" only if renewables
+    # isn't active.
+    _grid_components = [
+        c for c in (_shared_import_link, _export_link, "EXI_" + _export_link)
+        if c in network.links.index
+    ]
+    if _grid_components:
+        _target_comp = comp_renewables if n_flags.get("renewables", False) else comp_biogas
+        for _comp_dict in (comp_biogas, comp_renewables):
+            _comp_dict.setdefault("links", [])
+            if _comp_dict is _target_comp:
+                continue
+            for _c in _grid_components:
+                if _c in _comp_dict["links"]:
+                    _comp_dict["links"].remove(_c)
+        _target_comp.setdefault("links", [])
+        for _c in _grid_components:
+            if _c not in _target_comp["links"]:
+                _target_comp["links"].append(_c)
 
     # ---------------------------------------------------------
     # 5. Collect all component logs

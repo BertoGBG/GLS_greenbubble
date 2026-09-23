@@ -53,6 +53,9 @@ carrier_colors:
 
   # Methanol
   methanolisation:       "#f44336"  # red
+  methanol synthesis:    "#e57373"  # light red
+  methanol distillation: "#b71c1c"  # dark red
+  crude MeOH:            "#ff8a65"  # orange, intermediate
 
   # Battery / electrical storage
   battery:               "#1565c0"  # dark blue
@@ -72,6 +75,7 @@ carrier_colors:
   El boiler:             "#0288d1"  # dark blue (shared with El boiler above)
 
 plotting:
+  capacity_threshold_default: 0.1 #1e-3 #unified filter threshold
   capacity_items:
 
     - label: Wind
@@ -113,6 +117,24 @@ plotting:
       kind: Link
       field: p0
       selector: methanolisation
+
+    # 'meoh split' components. They exist only when options['meoh split'] is on;
+    # build_capacity_compare_from_items keeps only selectors present in the network,
+    # so these are harmless in monolithic runs.
+    - label: Methanol synthesis
+      kind: Link
+      field: p0
+      selector: methanol synthesis
+
+    - label: Methanol distillation
+      kind: Link
+      field: p0
+      selector: methanol distillation
+
+    - label: Crude MeOH Store
+      kind: Store
+      field: e
+      selector: crude MeOH store
 
     - label: biomethanation CO2
       kind: Link
@@ -223,7 +245,9 @@ plotting:
     - H2 delivery
     - H2 distribution
     - bioCH4 collection
-    - bioCH4 delivery
+    - eCH4 collection
+    - CH4 delivery
+    - crude MeOH
     - Methanol collection
     - Methanol delivery
     - Heat MT

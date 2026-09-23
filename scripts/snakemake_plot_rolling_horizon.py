@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pypsa
-from scripts.helpers import create_folder_if_not_exists
+from scripts.helpers import create_folder_if_not_exists, load_run_config, apply_run_config_overrides
 from scripts.plots import run_plot_and_export, run_plot_rh_comparison
 from scripts import config as c
 
@@ -25,6 +25,12 @@ n_rh = pypsa.Network(snakemake.input.network)
 n_pf = pypsa.Network(snakemake.input.network_pf)
 
 results_folder = Path(snakemake.input.network).parent.parent
+
+# Describe this network using the config that actually produced it, not
+# whatever config.yaml/n_config.yaml currently say -- see snakemake_plot.py
+# for the full rationale (same config-drift issue applies to RH reruns).
+c = apply_run_config_overrides(c, load_run_config(str(results_folder)))
+
 plot_folder    = create_folder_if_not_exists(str(results_folder), "plots_rh")
 csv_folder     = create_folder_if_not_exists(str(results_folder), "csv_rh")
 
