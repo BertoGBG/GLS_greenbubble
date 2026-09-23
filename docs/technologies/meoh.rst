@@ -111,6 +111,3 @@ correct form rather than an omission.
    K. Ooms, *Design, implementation and piloting of an integrated hydrogen- and
    oxygen-added process for conversion of biogas to methanol*, Sustainable Energy
    & Fuels, 2025. https://doi.org/10.1039/d5se00691k
-
-
-.. _technologies-compression:
