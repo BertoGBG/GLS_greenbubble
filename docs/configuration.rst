@@ -457,6 +457,66 @@ built in 2022, no new capacity allowed:
      construction_year: 2022
      remaining_investment_fraction: 0.4
 
+.. _config-options:
+
+options — markets and optional features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``options:`` block sits alongside the technology entries in
+``n_config.yaml``.  It does not change the network topology (that is what
+``n_flags`` does) — it opens or closes external markets and switches optional
+features on.  Loaded as ``c.n_options``.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 18 54
+
+   * - Option
+     - Default
+     - Meaning
+   * - ``meoh split``
+     - ``enable: false``
+     - Split ``methanolisation`` into ``methanol synthesis`` + ``methanol
+       distillation`` with a crude-methanol tank between them, so reactor and
+       column can run at different times.  See :doc:`meoh_split`.
+   * - ``pellets market``
+     - ``enable: true``, ``price: 60``
+     - Purchase of wood pellets for the biomass boiler or the dryer.
+       ``max capacity`` caps the annual volume.
+   * - ``moist biomass market``
+     - ``enable: false``, ``price: 40``, ``max capacity: 20000``
+     - Purchase of wet biomass (e.g. wood chips).
+   * - ``Dig biomass``
+     - ``price: 0``, ``max capacity: .inf``
+     - Digestible biomass (manure + co-substrates) fed to the biogas plant.
+       Priced at zero by default, i.e. own supply.
+   * - ``DH``
+     - ``enable: false``, ``price: 70``, ``peak capacity: 60``
+     - Sale of surplus heat to the district heating grid.  ``load multiplier``
+       scales the demand profile; ``price profile`` can replace the flat price
+       with a time series.  Off by default — several heat results change when
+       it is enabled.
+   * - ``biochar credits``
+     - ``enable: false``
+     - Revenue from CO₂ sequestration via biochar.
+   * - ``CO2 Liq credits``
+     - ``enable: false``, ``efficiency: 0.95``
+     - Revenue from liquefied CO₂ sequestration.
+   * - ``symbiosis El transformer``
+     - ``expansion: true``
+     - Lets the optimiser size the transformer joining the internal and
+       external grids.
+
+.. code-block:: yaml
+
+   # config/n_config.yaml  (user override)
+   options:
+     DH:
+       enable: true
+       price: 85
+     meoh split:
+       enable: true
+
 .. _config-committable:
 
 Committable components
@@ -500,8 +560,74 @@ LP requires a pure LP (no binary variables).  See :ref:`guide-stochastic`.
 plots_config.default.yaml
 --------------------------
 
-.. note::
-   Full documentation coming soon. See inline comments in ``config/plots_config.default.yaml``.
+Controls what the plotting step extracts and draws.  It has two top-level
+blocks, ``carrier_colors`` and ``plotting``.
 
-Defines which network components are extracted and plotted after optimisation,
-including capacity thresholds and the list of internal buses for shadow price plots.
+``carrier_colors``
+^^^^^^^^^^^^^^^^^^
+
+One colour per carrier name, used across all plots so a carrier keeps the same
+colour everywhere.  Add an entry when you add a carrier, or it falls back to a
+default colour.
+
+``plotting``
+^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Key
+     - Meaning
+   * - ``capacity_threshold_default``
+     - Capacities below this (MW) are treated as not built and dropped from
+       plots and tables.  Default ``0.1``.
+   * - ``capacity_items``
+     - The list of panels in the capacity and dispatch plots (see below).
+   * - ``bus_list_mp``
+     - Buses whose shadow (marginal) prices are reported.
+
+Each entry of ``capacity_items`` describes one plotted component:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Field
+     - Description
+   * - ``label``
+     - Display name used in plots and tables.
+   * - ``kind``
+     - PyPSA component type: ``Generator``, ``Link``, ``Store`` or
+       ``StorageUnit``.
+   * - ``field``
+     - Variable to extract: ``p`` / ``p0`` (power), ``e`` (energy or mass in a
+       store), ``state_of_charge`` (for a ``StorageUnit``).
+   * - ``selector``
+     - Substring matched against component names.  **All** matching components
+       are aggregated into the one panel.
+   * - ``signed``
+     - Optional.  ``true`` keeps the sign of a bidirectional link (used by the
+       TES heat exchangers) instead of taking the magnitude.
+
+.. code-block:: yaml
+
+   plotting:
+     capacity_threshold_default: 0.1
+     capacity_items:
+       - label: SOEC
+         kind: Link
+         field: p0
+         selector: SOEC
+       - label: TES DH HX
+         kind: Link
+         field: p0
+         selector: TES DH HX
+         signed: true
+
+.. warning::
+
+   ``selector`` is a plain substring match, so a short selector can silently
+   swallow other components — ``biogas`` also matches ``biogas upgrading``.
+   A technology missing from ``capacity_items`` is simply absent from the
+   plots; nothing warns you.

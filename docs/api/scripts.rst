@@ -1,3 +1,5 @@
+:orphan:
+
 .. _api-scripts:
 
 Scripts API

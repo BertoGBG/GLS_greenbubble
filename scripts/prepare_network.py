@@ -62,7 +62,7 @@ def _n_config_val(key: str, param: str, default):
 
 def _exi_capital_cost(tech_name: str, config_key: str, tech_costs: pd.DataFrame,
                        pre_annualized_cc: float | None = None) -> float:
-    """Annualised capital charge [EUR/MW/year] for an EXI_ (brownfield) component.
+    """Annualised capital charge [EUR/MW/year] for an ``EXI_`` (brownfield) component.
 
     Parameters
     ----------
@@ -1095,13 +1095,16 @@ def add_external_grids(network, inputs_dict, n_options):
 def mass_energy_balance_drying(initial_moisture: float = symbiosis_n.at['chips','moisture'],
                                final_moisture: float = symbiosis_n.at['pellets','moisture'], heat_drying: float = 1,
                                el_drying: float = 0.025):
-    """function that calculates the water removed and the head demand from a biomass drying process, given the initial and final moisture
-    inputs: - initial moisture (kg_H2O/kg_tot)
-            - final moisture (kg_H2O/kg_tot)
-            - heat for drying including, heat recovery and losses (MWh/tH2O)
-            - el for drying including fans
-    outputs:
-            - moisture eveaporated : # t H2O remove / t DM
+    """Water removed and heat demand of a biomass drying process, given the initial and final moisture.
+
+    ::
+
+        inputs: - initial moisture (kg_H2O/kg_tot)
+                - final moisture (kg_H2O/kg_tot)
+                - heat for drying including, heat recovery and losses (MWh/tH2O)
+                - el for drying including fans
+        outputs:
+                - moisture evaporated : # t H2O removed / t DM
             - heat-input : # MW_th/ tDM
             - electricity-input : # MW_e/ tDM
 
@@ -1932,7 +1935,7 @@ def add_battery(n, n_flags, inputs_dict, tech_costs, n_config):
 
 
 def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
-    """Thermal energy storage — all as Store + Links:
+    """Thermal energy storage — all as Store + Links::
 
       TES DH         : Store + bidirectional HX Link  (Heat DH ↔ TES DH bus)
       TES concrete   : Store + bidirectional HX Link  (Heat MT ↔ TES concrete bus)
@@ -2251,11 +2254,13 @@ def add_heat_pump(n, n_flags, inputs_dict, tech_costs):
 def add_targets(n, plant, inputs_dict, tech_costs, n_options, targets_dict):
     """Add exogenous energy demands / selling links (CH4, H2, Methanol) and corresponding delivery/storage links.
 
-    INPUTS
-    plant : str  — matches the technology key used in the plant-adding section
-    OUTPUTS
-    product_bus : str  — the collection bus for this product; used as bus1 in plant multilinks
-                         (plants inject directly into the collection bus)
+    ::
+
+        INPUTS
+        plant : str  — matches the technology key used in the plant-adding section
+        OUTPUTS
+        product_bus : str  — the collection bus for this product; used as bus1 in plant multilinks
+                             (plants inject directly into the collection bus)
     """
 
     # HELPERS
@@ -4719,7 +4724,7 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
         Parameter container with time series, constants, etc.
     costs_dir : str | None
         Directory containing ``costs_{year}.csv`` files for all TECH_DATA_YEARS.
-        Required to look up investment costs at ``construction_year`` for EXI_ components.
+        Required to look up investment costs at ``construction_year`` for ``EXI_`` components.
         If None, falls back to investment costs at ``year_investment``.
     USD_to_EUR : float | None
         Exchange rate used when loading construction-year costs.

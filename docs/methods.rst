@@ -135,21 +135,24 @@ See :ref:`guide-economic-analysis` for interpretation and post-processing.
 Shapley value cost allocation
 -------------------------------
 
-.. note::
-   Full documentation coming soon.
+.. warning::
+
+   **Not implemented.** This section describes a planned method, not something
+   the model currently does. There is no coalition enumeration and no Shapley
+   calculation in the code. For cost allocation that *does* work today, see
+   :ref:`economics-payback` and :ref:`guide-economic-analysis`.
 
 When multiple industrial partners share infrastructure (grid connection,
 storage, compression), the total system cost is lower than the sum of each
 partner building independently.  The **Shapley value** from cooperative game
 theory provides a fair allocation of these savings.
 
-GreenBubble computes the Shapley value by:
+The intended approach is:
 
-1. Enumerating all coalitions (subsets) of partners
-2. Running a separate optimisation for each coalition (with only the
-   corresponding ``n_flags`` active)
-3. Computing marginal contributions and averaging over all orderings
+1. Enumerate all coalitions (subsets) of partners
+2. Run a separate optimisation for each coalition, with only the
+   corresponding ``n_flags`` active
+3. Compute marginal contributions and average over all orderings
 
 The number of optimisation runs grows as :math:`2^N` in the number of
-partners *N*, so this is typically run for N ≤ 5.  Results are used to
-allocate shared infrastructure costs fairly among partners.
+partners *N*, so this would be practical only for N ≤ 5.

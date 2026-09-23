@@ -143,7 +143,7 @@ capital charge:
    a fully paid-off asset has ``remaining_investment_fraction = 0`` even
    if it still has many years of useful life ahead.
 
-   ``0`` (default) = sunk cost; the EXI_ component carries no annual CAPEX.
+   ``0`` (default) = sunk cost; the ``EXI_`` component carries no annual CAPEX.
    ``1`` = the full original investment is still outstanding.
 
 **Annual charge formula**

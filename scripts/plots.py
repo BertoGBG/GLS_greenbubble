@@ -2525,7 +2525,7 @@ def compute_srmc_by_technology(n, out_csv, out_plot):
 
     For technology s at snapshot t, with main product on whichever bus slot
     is tagged as a product collection bus (not always bus1 — see
-    _find_product_slot):
+    _find_product_slot)::
 
         SRMC_{s,t} = [ λ_{bus0,t}  −  Σ_{k≠main} η_k · λ_{bus_k,t}  +  VOM_{s,t} ]  /  η_main
 
@@ -2536,9 +2536,11 @@ def compute_srmc_by_technology(n, out_csv, out_plot):
 
     Saved outputs
     -------------
-    CSV  : long-form table  (snapshot, link, product, SRMC_EUR_per_MWh, dispatch_MW,
-                              π_product_bus, in_merit)
-    Plot : one subplot per product — SRMC time series per technology + product shadow price.
+    ::
+
+        CSV  : long-form table  (snapshot, link, product, SRMC_EUR_per_MWh, dispatch_MW,
+                                 π_product_bus, in_merit)
+        Plot : one subplot per product — SRMC time series per technology + product shadow price.
     """
     import warnings as _warn
 
@@ -3737,13 +3739,14 @@ def plot_utilization_ldc_by_scenario(
     items = [{"label","kind","field","selector"}, ...]
     Adds an optional final panel: stochastic weighted LDC (scenario_prob × snapshot weights).
     Requires helper functions already in the codebase:
-      - _scenario_list_from_tcols
-      - _available_names_from_tcols
-      - _match_names_exact_exi
-      - _nominal_from_component_table
-      - _series_from_mi_cols
-      - _ldc (simple unweighted LDC)
-      - _weighted_ldc (weighted LDC returning xq,yq)
+
+    - _scenario_list_from_tcols
+    - _available_names_from_tcols
+    - _match_names_exact_exi
+    - _nominal_from_component_table
+    - _series_from_mi_cols
+    - _ldc (simple unweighted LDC)
+    - _weighted_ldc (weighted LDC returning xq,yq)
     """
 
     # ---- snapshot weights (for stochastic)
@@ -5669,8 +5672,10 @@ def plot_total_system_cost_stacked(
 # Agent aggregation (CGT)
 def allocation_dict_to_df(n_allocation, kinds=("links","generators","stores","loads","buses","storage_units")):
     """
-    Converts allocation dict:
-      {agent: {"links":[...], "generators":[...], ...}}
+    Converts allocation dict::
+
+        {agent: {"links":[...], "generators":[...], ...}}
+
     into a DataFrame with columns: kind, name, agent
     """
     rows = []
@@ -5890,6 +5895,7 @@ def component_opex_long_per_scenario(
     Compute conditional (per-scenario) OPEX by component *name* for Generators and Links.
 
     Key behavior:
+
     - Uses snapshot weights (objective) but NOT scenario probabilities.
     - Uses time-varying marginal_cost (generators_t.marginal_cost / links_t.marginal_cost) if available.
       Falls back to static marginal_cost otherwise.

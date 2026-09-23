@@ -120,11 +120,12 @@ def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
 
     Sets ``n.snapshots`` to the new year's time index (derived from the
     electricity price series) and overwrites:
-      - solar / wind capacity factors (``generators_t.p_max_pu``)
-      - electricity buy/sell prices, NG price, CH4 sale price
-        (``links_t.marginal_cost``)
-      - RFNBO hourly import constraint (``links_t.p_max_pu``)
-      - CO2 sequestration and biochar credits (``links_t.marginal_cost``)
+
+    - solar / wind capacity factors (``generators_t.p_max_pu``)
+    - electricity buy/sell prices, NG price, CH4 sale price
+      (``links_t.marginal_cost``)
+    - RFNBO hourly import constraint (``links_t.p_max_pu``)
+    - CO2 sequestration and biochar credits (``links_t.marginal_cost``)
 
     Static component data (capacities, efficiencies, topology) is untouched.
     Used by the cross-year rolling-horizon pipeline.

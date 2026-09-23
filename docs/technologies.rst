@@ -157,7 +157,61 @@ distillation`` with a crude-methanol tank between them, so the reactor and the
 column can run at different times.  Enable with ``options['meoh split']`` in
 ``n_config``; see :doc:`meoh_split`.
 
-An eSMR + methanol synthesis route is planned but not yet implemented.
+**Methanol from biogas** (``methanol from biogas``) is an *alternative* to
+``methanolisation``, not an addition to it: both produce into the same methanol
+collection bus, and the optimiser picks. Instead of feeding separated CO₂ and
+hydrogen to a synthesis reactor, raw biogas is reformed with oxygen in an
+autothermal reformer and the resulting syngas is hydrogenated.
+
+The carbon comes from the biogas itself, so the route needs **2.5x less
+hydrogen** per MWh of methanol (0.449 MWh_H2/MWh_MeOH against 1.138) — but it
+burns biomethane that could have been sold instead. Which one wins is exactly
+the trade-off the model is set up to answer.
+
+Costs and coefficients come from DEA sheet 97, "Methanol from biogas and
+hydrogen", and are stored per MWh of hydrogen:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 25 35
+
+   * - Quantity
+     - Value
+     - Unit
+   * - Methanol output
+     - 2.229
+     - MWh_MeOH / MWh_H2
+   * - Biogas input
+     - 1.6516
+     - MWh_biogas / MWh_H2
+   * - Electricity input
+     - 0.1371
+     - MWh_e / MWh_H2
+   * - Heat input (MT)
+     - 0.0617
+     - MWh_th / MWh_H2
+   * - Investment
+     - 6423.8
+     - EUR / kW_H2
+
+Two streams are deliberately **not** wired. Oxygen: the reformer needs
+0.1729 t_O2/MWh_H2 while the electrolysis feeding it co-produces 0.2381 t, so
+oxygen never binds on a site with its own electrolyser and is treated as free.
+Water output is left unwired for the same reason as in ``methanolisation``.
+
+This route also has **no separate H₂ compressor**, unlike ``methanolisation``.
+That is a difference in the DEA battery limits, not an oversight: sheet 97
+includes the reformer and reactor compressors in its CAPEX and electricity,
+while sheet 98 excludes feed compression (hence
+``electricity-input-no-compression`` and the separate compressor components on
+the other route). Both plants pay for compression; only the bookkeeping differs.
+
+.. note::
+
+   DEA costed the **oxygen-fired autothermal (tri-reforming)** configuration,
+   which is what is implemented. The electrically heated **eSMR** (bi-reforming)
+   variant described in the same DEA chapter has no cost data and is not
+   implemented.
 
 ---
 

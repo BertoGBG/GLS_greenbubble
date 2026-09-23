@@ -213,8 +213,10 @@ def annuity(n: float, r: float) -> float:
 
 def dict_to_costs_df(tech_inputs: dict, target_columns=None) -> pd.DataFrame:
     """
-    Convert a dict like:
-      {('technology','parameter'): {'value':..., 'unit':..., ...}, ...}
+    Convert a dict like::
+
+        {('technology','parameter'): {'value':..., 'unit':..., ...}, ...}
+
     into a MultiIndex DataFrame with index names ['technology','parameter'].
 
     Any missing target columns are added as NaN; extra keys are kept unless
@@ -287,8 +289,10 @@ def merge_EU_US_tech_costs(tech_costs_EU, tech_costs_US, dict_tech_US_EU):
 def merge_into_costs(costs: pd.DataFrame, tech_inputs: dict, currency_year=None) -> pd.DataFrame:
     """
     Convert tech_inputs to DF and merge into 'costs':
-      - overwrite existing rows for same (technology, parameter)
-      - append brand new rows
+
+    - overwrite existing rows for same (technology, parameter)
+    - append brand new rows
+
     Optionally set currency_year for all new/updated rows.
     """
     target_cols = list(costs.columns)  # ['value','unit','source','further description','currency_year']
@@ -2167,7 +2171,7 @@ def zero_small_capacities(n, threshold_mw):
     ----------
     n : pypsa.Network   (modified in place)
     threshold_mw : float
-        Components with |p_nom_opt| < threshold_mw are zeroed.  Pass 0 to skip.
+        Components with ``|p_nom_opt|`` < threshold_mw are zeroed.  Pass 0 to skip.
     """
     import pandas as pd
 

@@ -63,10 +63,34 @@ Technology Inputs
    :undoc-members:
    :show-inheritance:
 
+Process Streams
+---------------
+
+.. automodule:: scripts.heat_bands
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Stochastic Scenarios
 ---------------------
 
 .. automodule:: scripts.create_stoch_scenarios
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Plotting
+--------
+
+.. automodule:: scripts.plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Solver Profiles
+---------------
+
+.. automodule:: scripts.solver_profiles
    :members:
    :undoc-members:
    :show-inheritance:
@@ -80,9 +104,6 @@ Snakemake Wrappers
 .. automodule:: scripts.snakemake_preprocess
    :members:
 
-.. automodule:: scripts.snakemake_prepare_costs
-   :members:
-
 .. automodule:: scripts.snakemake_prepare_inputs
    :members:
 
@@ -93,4 +114,10 @@ Snakemake Wrappers
    :members:
 
 .. automodule:: scripts.snakemake_plot
+   :members:
+
+.. automodule:: scripts.snakemake_rolling_horizon
+   :members:
+
+.. automodule:: scripts.snakemake_plot_rolling_horizon
    :members:

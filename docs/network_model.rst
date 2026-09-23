@@ -170,7 +170,7 @@ rather than paying for import and export capacity separately:
   called from ``snakemake_plot.py`` after the network is solved) splits the
   shared link's total capex back onto the individual import/export links, in
   proportion to each link's share of flow at the year's peak-usage hour(s) —
-  see :ref:`payback-cost-allocation` in :doc:`economics` for the method. This
+  see :ref:`shared grid-connection capex <payback-cost-allocation>` in :doc:`economics` for the method. This
   is a reporting-only, in-memory step; it never touches the optimisation.
 
 

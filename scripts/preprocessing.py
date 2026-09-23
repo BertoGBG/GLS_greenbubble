@@ -160,10 +160,12 @@ def build_product_demand_ts(
     annual_demand : float
         Total demand over the full snapshot period (MWh or equivalent).
     mode : str
-        ``"flat"``         — constant MW every hour.
-        ``"profile"``      — continuous TS scaled to *annual_demand* via *profile_ts*.
-        ``"bins_flat"``    — zero except at *n_bins* endpoints; equal delivery per bin.
-        ``"bins_profile"`` — zero except at endpoints; delivery ∝ *profile_ts* integral
+        ::
+
+            "flat"         — constant MW every hour.
+            "profile"      — continuous TS scaled to annual_demand via profile_ts.
+            "bins_flat"    — zero except at n_bins endpoints; equal delivery per bin.
+            "bins_profile" — zero except at endpoints; delivery ∝ profile_ts integral
                              within each bin.
     snapshots : pandas.DatetimeIndex
         Network snapshot index (typically 8 760 hourly steps).
@@ -671,12 +673,14 @@ def retrieve_renewable_capacity_factors_with_fallback(
     Wrapper when inputs are ALWAYS LOCAL time for the location.
 
     Rule:
+
     - If start_local.date() >= 2025-01-01, do NOT call RN at all (RN would reject).
       Instead replay all hours from 2024 and shift forward.
     - If start_local.date() <= 2024-12-31, fetch that portion from RN (clamped),
       and replay the rest if needed.
 
     Output:
+
     - Complete hourly series on an expected UTC grid, then converted to out_timezone.
     """
     tzname = tf.timezone_at(lat=latitude, lng=longitude)

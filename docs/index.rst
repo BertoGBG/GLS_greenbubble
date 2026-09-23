@@ -66,6 +66,7 @@ multi-energy systems.
    :caption: Developer Reference
 
    workflow
+   rules
    guide_new_technology
    implementation
 
