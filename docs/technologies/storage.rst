@@ -33,15 +33,84 @@ Individual technologies can be disabled by setting ``expansion: false`` and
      - Liquefaction + insulated tank; e_nom and liquefaction capacity
        optimised separately
    * - TES concrete
-     - StorageUnit
-     - Concrete thermal store charged from ``Heat MT``; 10-hour duration;
-       standing losses
+     - Store + 1 Link
+     - Concrete store charged from ``Heat MT`` and discharged back to it;
+       8 hours; 2 %/h standing loss — see below
    * - TES concrete El
      - Store + 2 Links
-     - Concrete store charged **electrically**, discharging as heat — see below
+     - The same store charged **electrically** instead, discharging as heat;
+       4 h charge / 15 h discharge — see below
    * - TES district heating
-     - StorageUnit
-     - Hot-water buffer for DH; 50-hour duration
+     - Store + 1 Link
+     - Hot-water buffer for ``Heat DH``; 10 hours; 0.2 %/h standing loss
+
+.. note::
+
+   None of the thermal stores is a PyPSA ``StorageUnit``. Each is a ``Store``
+   plus one or two ``Link`` s, which is what allows charge and discharge to be
+   priced and limited separately. The duration figures are ``min_max_hours`` in
+   ``n_config``: the constraint is
+   :math:`P_{\text{nom,link}} \le E_{\text{nom,store}} / \text{hours}`, so the
+   number is the minimum time to fill or empty the store.
+
+The two concrete stores
+-----------------------
+
+``TES concrete`` and ``TES concrete El`` are the **same medium reached two
+different ways**, and they are separate ``n_config`` entries that can be enabled
+independently.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 39 39
+
+   * -
+     - ``TES concrete``
+     - ``TES concrete El``
+   * - Charged from
+     - ``Heat MT`` (heat)
+     - ``El3`` (electricity)
+   * - Discharged to
+     - ``Heat MT``
+     - ``Heat MT``
+   * - Components
+     - one bidirectional heat exchanger + store
+     - separate electric charger + heat discharger + store
+   * - Charge efficiency
+     - 1.0
+     - 0.99 (``Concrete-charger``)
+   * - Discharge efficiency
+     - 1.0 (same link)
+     - 0.4343 (``Concrete-discharger``) — see the note below
+   * - Duration
+     - ``min_max_hours`` 8
+     - 4 h charge, 15 h discharge
+
+Use ``TES concrete`` to shift *heat* in time — storing a reactor's surplus for a
+later steam demand. Use ``TES concrete El`` to turn *cheap electricity* into heat
+for later, which is a different economic proposition: it competes with the
+``El boiler`` plus a heat store, not with a heat buffer.
+
+Both draw their costs from the same three ``technology-data`` rows
+(``Concrete-store``, ``Concrete-charger``, ``Concrete-discharger``; Viswanathan
+2022 and Georgiou 2018).
+
+.. warning::
+
+   **``TES concrete``'s heat exchanger is priced as a power block.** Its single
+   link takes its capital cost from ``Concrete-discharger``, which is
+   725 192 EUR/MW on Georgiou's basis of *"80 % of capital costs of power
+   components for sensible thermal storage"* — i.e. the turbine-side equipment
+   for converting stored heat back to **electricity**. ``TES concrete``'s link
+   is a heat exchanger returning heat as heat, so this is likely a large
+   overestimate and makes the technology look more expensive than it is.
+
+   Its *efficiency* is handled correctly: it defaults to 1.0 rather than
+   inheriting ``Concrete-discharger``'s 0.4343, so no energy is lost on the
+   round trip. Only the capital cost is questionable.
+
+   Both stores ship with ``expansion: false``, so neither is built by default and
+   no current result depends on either figure.
 
 Electrically charged thermal storage (``TES concrete El``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -79,21 +148,37 @@ and discharge). Duration limits are set in ``n_config`` by
 ``min_max_hours_charge`` (4) and ``min_max_hours_discharge`` (15), with a 2 %
 standing loss.
 
-.. warning::
+.. note::
 
-   **The discharge efficiency is wrong for a heat discharge.** With no override
-   in ``n_config``, the discharger takes ``Concrete-discharger``'s efficiency of
-   **0.4343**, giving a round trip of 0.99 × 0.4343 ≈ **0.43** from electricity
-   to ``Heat MT``. That figure is Viswanathan's **electrical** discharge — its
-   own note reads "RTE assume 99% for charge and other for discharge", i.e. a
-   *power-to-power* round trip through a steam cycle. Returning the heat *as
-   heat*, through a heat exchanger, should be close to unity, so the model
-   currently discards about 57 % of the stored energy for no physical reason.
+   **On the discharge efficiency.** With no override in ``n_config``, the
+   discharger takes ``Concrete-discharger``'s efficiency of **0.4343**, giving a
+   round trip of 0.99 × 0.4343 ≈ **0.43** from electricity to ``Heat MT``, on top
+   of a 2 %/h standing loss.
 
-   Nothing is affected today: the technology ships with ``initial capacity: 0``
-   and ``expansion: false``, so it is never built. But it must be corrected
-   before enabling it — set ``efficiency discharge`` for ``TES concrete El`` in
-   ``n_config``, which ``_eff`` will use in preference to the catalogue value.
+   A real electrically-charged heat battery does lose substantially on discharge,
+   so a figure well below unity is the right *kind* of number: heat has to be
+   extracted through an air or steam loop at a useful temperature, not simply
+   handed over. For comparison, a study of a RONDO brick heat battery in this
+   same cluster [DHAR]_ measured a **discharge efficiency of 0.76** against an
+   electric boiler's 0.95, and an **observed annual round trip of 63–65 %** with
+   1.2 %/h self-discharge.
+
+   So 0.43 is not implausible in kind, but it is materially lower than a
+   comparable real device — and its provenance is worth knowing: Viswanathan's
+   row note reads *"RTE assume 99% for charge and other for discharge"*, which is
+   a **power-to-power** split through a steam cycle rather than a heat discharge.
+   Treat it as a conservative placeholder rather than a measured heat-side figure,
+   and revisit it against [DHAR]_ or a vendor datasheet before drawing
+   conclusions about this technology.
+
+   To change it, set ``efficiency discharge`` for ``TES concrete El`` in
+   ``n_config``; ``_eff`` uses that in preference to the catalogue value. Nothing
+   is affected today, since the technology ships with ``expansion: false`` and is
+   never built.
+
+.. [DHAR] P. Dhar, *Modelling optimal storage operation with limited foresight in
+   an industrial cluster*, MSc thesis, DTU Department of Wind and Energy Systems,
+   April 2026.
 
 .. note::
 
