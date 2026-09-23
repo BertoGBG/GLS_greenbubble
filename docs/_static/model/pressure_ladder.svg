@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="100%" role="img" aria-label="The pressure ladder: where each carrier sits and which compressor bridges the gap">
+<title>The pressure ladder: where each carrier sits and which compressor bridges the gap</title>
+<rect width="900" height="560" fill="#ffffff"/>
+<line x1="150" y1="80.0" x2="560" y2="80.0" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="84.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">150 bar</text>
+<circle cx="150" cy="80.0" r="4" fill="#1668c4"/>
+<text x="566" y="84.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">H2 HP storage</text>
+<line x1="150" y1="128.9" x2="560" y2="128.9" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="132.92740396883022" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">80 bar</text>
+<circle cx="150" cy="128.9" r="4" fill="#d0352a"/>
+<text x="566" y="132.92740396883022" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">methanolisation inlet</text>
+<line x1="150" y1="151.3" x2="560" y2="151.3" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="155.3189774262696" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">60 bar</text>
+<circle cx="150" cy="151.3" r="4" fill="#6b7a87"/>
+<text x="566" y="155.3189774262696" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">CO2 HP storage</text>
+<line x1="150" y1="205.3" x2="560" y2="205.3" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="209.26970114724963" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">30 bar</text>
+<circle cx="150" cy="205.3" r="4" fill="#1668c4"/>
+<text x="566" y="209.26970114724963" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">H2 distribution  (shared header)</text>
+<line x1="150" y1="236.8" x2="560" y2="236.8" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="240.82885141079032" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">20 bar</text>
+<circle cx="150" cy="236.8" r="4" fill="#4d7c2f"/>
+<text x="566" y="240.82885141079032" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">methanation inlet</text>
+<line x1="150" y1="254.2" x2="560" y2="254.2" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="258.19710511607985" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">16 bar</text>
+<circle cx="150" cy="254.2" r="4" fill="#6b7a87"/>
+<text x="566" y="258.19710511607985" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">CO2 liquid</text>
+<line x1="150" y1="372.5" x2="560" y2="372.5" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="376.49189393431675" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">3.5 bar</text>
+<circle cx="150" cy="372.5" r="4" fill="#1668c4"/>
+<text x="566" y="376.49189393431675" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">SOEC outlet</text>
+<line x1="150" y1="470.0" x2="560" y2="470.0" stroke="#d3dbe4" stroke-width="1" stroke-dasharray="3 4"/>
+<text x="142" y="474.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#44586b" text-anchor="end">1 bar</text>
+<circle cx="150" cy="470.0" r="4" fill="#8c610a"/>
+<text x="566" y="474.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">biogas · separated CO2 · ambient</text>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#7d8fa1"/></marker></defs>
+<line x1="196" y1="372.5" x2="196" y2="213.3" stroke="#1668c4" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="196" cy="372.5" r="3.2" fill="#1668c4"/>
+<text transform="translate(191,288.8807975407832) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">SOEC H2 compressor</text>
+<line x1="250" y1="205.3" x2="250" y2="88.0" stroke="#1668c4" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="250" cy="205.3" r="3.2" fill="#1668c4"/>
+<text transform="translate(245,142.63485057362482) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">H2 storage send comp</text>
+<line x1="304" y1="205.3" x2="304" y2="136.9" stroke="#d0352a" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="304" cy="205.3" r="3.2" fill="#d0352a"/>
+<text transform="translate(299,167.09855255803993) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">methanolisation H2 compressor</text>
+<line x1="358" y1="470.0" x2="358" y2="136.9" stroke="#6b7a87" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="358" cy="470.0" r="3.2" fill="#6b7a87"/>
+<text transform="translate(353,299.46370198441514) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">methanolisation CO2 compressor</text>
+<line x1="412" y1="470.0" x2="412" y2="244.8" stroke="#6b7a87" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="412" cy="470.0" r="3.2" fill="#6b7a87"/>
+<text transform="translate(407,353.41442570539516) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">methanation CO2 CO2 compressor</text>
+<line x1="466" y1="470.0" x2="466" y2="244.8" stroke="#8c610a" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>
+<circle cx="466" cy="470.0" r="3.2" fill="#8c610a"/>
+<text transform="translate(461,353.41442570539516) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" fill="#44586b" text-anchor="middle">methanation biogas biogas compressor</text>
+<text x="20" y="44" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">PRESSURE</text>
+<text x="566" y="44" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">WHAT SITS THERE</text>
+<text x="450" y="506" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="middle">Every arrow is one compressor, sized and dispatched by the optimiser. Each does a</text>
+<text x="450" y="524" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="middle">different lift, so none is redundant — and no compressor is centralised.</text>
+</svg>

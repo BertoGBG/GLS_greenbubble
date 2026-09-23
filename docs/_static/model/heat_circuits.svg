@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="100%" role="img" aria-label="The three heat circuits, their temperature floors, and one-way degradation">
+<title>The three heat circuits, their temperature floors, and one-way degradation</title>
+<rect width="900" height="470" fill="#ffffff"/>
+<rect x="150" y="92" width="470" height="72" rx="7" fill="#d4552c" opacity="0.13"/>
+<rect x="150" y="92" width="5" height="72" rx="2" fill="#d4552c"/>
+<text x="172" y="120" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="600" fill="#14202c" text-anchor="start">Heat MT</text>
+<text x="172" y="140" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">reboilers, reactor preheat</text>
+<text x="608" y="114" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="end">180 °C</text>
+<text x="608" y="152" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#d4552c" text-anchor="end">140 °C</text>
+<text x="640" y="152" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">floor</text>
+<text x="640" y="114" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start">12 bar</text>
+<path d="M700 150 L700 176" stroke="#7d8fa1" stroke-width="1.6" marker-end="url(#dn)"/>
+<rect x="150" y="184" width="470" height="72" rx="7" fill="#d97742" opacity="0.13"/>
+<rect x="150" y="184" width="5" height="72" rx="2" fill="#d97742"/>
+<text x="172" y="212" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="600" fill="#14202c" text-anchor="start">Heat DH</text>
+<text x="172" y="232" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">district heating, compressor aftercooling</text>
+<text x="608" y="206" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="end">140 °C</text>
+<text x="608" y="244" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#d97742" text-anchor="end">90 °C</text>
+<text x="640" y="244" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">floor</text>
+<text x="640" y="206" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start">6 bar</text>
+<path d="M700 242 L700 268" stroke="#7d8fa1" stroke-width="1.6" marker-end="url(#dn)"/>
+<rect x="150" y="276" width="470" height="72" rx="7" fill="#c79a5a" opacity="0.13"/>
+<rect x="150" y="276" width="5" height="72" rx="2" fill="#c79a5a"/>
+<text x="172" y="304" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="600" fill="#14202c" text-anchor="start">Heat LT</text>
+<text x="172" y="324" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">low-grade heat, cooling reject</text>
+<text x="608" y="298" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="end">90 °C</text>
+<text x="608" y="336" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#c79a5a" text-anchor="end">50 °C</text>
+<text x="640" y="336" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">floor</text>
+<text x="640" y="298" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start">3 bar</text>
+<defs><marker id="dn" markerWidth="8" markerHeight="8" refX="3" refY="6" orient="auto"><path d="M0,0 L3,6 L6,0 z" fill="#7d8fa1"/></marker></defs>
+<text x="716" y="200" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#44586b" text-anchor="start">heat degrades</text>
+<text x="716" y="216" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#44586b" text-anchor="start">downward only</text>
+<text x="150" y="68" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#44586b" text-anchor="start">A stream may serve any circuit whose floor it exceeds — never one above it.</text>
+<rect x="150" y="372" width="600" height="58" rx="7" fill="#f5f7fa" stroke="#bcc8d4" stroke-dasharray="4 4"/>
+<text x="166" y="394" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Fixed at three circuits</text>
+<text x="166" y="414" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#44586b" text-anchor="start">The temperatures are configurable in p_config; the number of circuits is not — the plant builders name these three.</text>
+</svg>

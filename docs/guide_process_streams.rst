@@ -79,7 +79,27 @@ throughout the model. Two checks run at load and fail the build:
   exactly at ``P_sat`` is at its boiling point, which is not how a pumped loop runs.
   Before this block existed, MT declared 180 °C at 10 bar (``P_sat`` = 10.03) and
   140 °C at 3 bar (``P_sat`` = 3.62) — both at or below saturation, i.e. flashing.
-* **cascade separation** — consecutive floors at least ``globals.dT_min`` apart.
+* **cascade separation** — consecutive floors at least ``globals.dT_min`` apart,
+  compared in **declaration order**. Circuits must therefore be declared
+  hottest-first. Declaring a hot circuit after a cold one fails this check with a
+  message about ``dT_min`` that does not mention ordering, which is misleading:
+  a 200 °C circuit written after a 50 °C one is rejected even though they are
+  150 K apart.
+
+.. important::
+
+   **The number of circuits is fixed at three.** Their temperatures and pressures
+   are configuration, but ``Heat MT``, ``Heat DH`` and ``Heat LT`` are named
+   directly by the plant builders, so the count is not.
+
+   Tested: adding a fourth circuit loads and builds, but nothing connects to it —
+   it becomes an orphan bus. Removing one fails the build outright with
+   ``KeyError: 'Heat DH min'``. A user override in ``p_config.yaml`` cannot even
+   reorder them, because the merge keeps existing keys in their original position.
+
+   ``scripts/heat_bands.py`` is already generic over any number of circuits and
+   does the right thing with four; wiring the plants through it is what would make
+   the count configurable.
 
 ``T_max: saturation`` derives ``T_sat(P)`` instead of validating against it. That is
 how a **steam** circuit will declare itself: steam does run at saturation, so pressure

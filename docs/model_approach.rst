@@ -239,27 +239,66 @@ On top of the standard PyPSA constraints listed in :doc:`design`, GreenBubble
 adds four of its own. They are built in ``scripts/helpers.py`` and added to the
 Linopy model before solving.
 
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
+Renewable export cap
+~~~~~~~~~~~~~~~~~~~~
 
-   * - Constraint
-     - What it enforces
-   * - ``add_max_RE_sales_constraint``
-     - Electricity exported to the grid ≤ ``max_RE_to_grid`` × total renewable
-       electricity consumed on site. Stops the model from becoming a wind farm
-       with a chemical plant attached.
-   * - ``add_grid_connection_shared_capacity_constraint``
-     - Import and export capacity are the same physical connection, so their
-       capacities are forced equal and paid for once. See
-       :ref:`grid-connection-capex`.
-   * - ``add_custom_constraints_stores``
-     - Power-to-energy ratios on stores: a charger's capacity is tied to the
-       store's size through ``min_max_hours``, so a battery cannot be given
-       unlimited power for free.
-   * - RFNBO compliance
-     - Optional additionality and temporal-correlation limits on grid
-       electricity used for electrolysis. See :ref:`methods-rfnbo`.
+.. math::
+
+   \sum_{t} w_t \, p_{\text{export},t}
+   \;\le\; \texttt{max\_RE\_to\_grid} \cdot \sum_{t} w_t \, p_{\text{RE consumed},t}
+
+**What it prevents.** A wind farm with a chemical plant attached. Without it the
+cheapest way to satisfy any product target is to over-build renewables and sell
+the surplus, and the model answers a question about electricity trading rather
+than about industrial symbiosis.
+
+Note that it binds on **annual energy, not hourly power**: the site may export
+freely in any single hour as long as the yearly total stays within the share.
+One constraint per scenario, built by ``add_max_RE_sales_constraint``.
+
+Shared grid-connection capacity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+   P_{\text{nom},\;\text{import}} \;=\; P_{\text{nom},\;\text{export}}
+
+**What it prevents.** Paying twice for one cable. Import and export are separate
+links in the model but one physical connection on site, so their capacities are
+tied and only one is given a capital cost.
+
+It is a single equality on the two capacity variables, not one per snapshot —
+each link's own PyPSA bound already caps its hourly flow once the capacities are
+equal. Built by ``add_grid_connection_shared_capacity_constraint``; the cost
+side is :ref:`grid-connection-capex`.
+
+Store power-to-energy ratio
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+
+   P_{\text{nom},\;\text{link}} \;-\; f \cdot E_{\text{nom},\;\text{store}} \;\le\; 0
+
+**What it prevents.** A store with free power. Left alone, the optimiser would
+give a battery a very large charger and a very small store, because the charger
+is cheap per MW and the store is what costs money — producing a device that can
+absorb enormous power for one minute.
+
+:math:`f` comes from ``min_max_hours`` in ``n_config``, so a value of 0.25
+means the charger cannot exceed a quarter of the store's energy capacity, i.e.
+at least four hours to fill. Built by ``add_custom_constraints_stores``.
+
+RFNBO compliance
+~~~~~~~~~~~~~~~~
+
+**What it prevents.** Hydrogen counted as renewable that was made from fossil
+electricity. The constraint restricts when grid electricity may feed the
+electrolysers — by price threshold, by hourly correlation with on-site
+renewables, or not at all — according to ``rfnbos_dict.limit``.
+
+This one changes the answer more than any other constraint in the list, and it
+is the one most worth stating in a results table. The variants and their
+formulations are in :ref:`methods-rfnbo`.
 
 ----
 
@@ -338,6 +377,14 @@ globally. Three parameters control it:
      - any
      - Existing capacity plus the option to expand.
 
+.. figure:: _static/model/brownfield_timeline.svg
+   :width: 100%
+   :alt: A time axis showing construction year, the catalogue year the investment is read from, and the rif-scaled annual charge
+
+   The investment cost is read at the asset's **own** construction year, then
+   scaled by ``rif``. A new build of the same technology is a separate component
+   charged at the investment year.
+
 Existing capacity is added as a separate component with an ``EXI_`` prefix, so
 it can be told apart from new build in every result. Its capital cost is looked
 up at its own ``construction_year`` rather than at the investment year, which
@@ -388,15 +435,25 @@ temperature band:
      - 3
      - Low-grade heat, and the floor that cooling duties reject to.
 
+.. figure:: _static/model/heat_circuits.svg
+   :width: 100%
+   :alt: Three stacked heat circuits with their temperature floors, and heat degrading downward only
+
+   The tiers are floors, and heat only ever moves down them.
+
 The tiers are **floors**: a stream may be delivered to any circuit whose minimum
-temperature it exceeds, so heat degrades downward but never upward. The number of
-circuits and their temperature bands are configuration, not code — add or retune
-them in ``p_config`` and the assignment follows.
+temperature it exceeds, so heat degrades downward but never upward. A reactor at
+160 °C can serve all three; a 60 °C cooling duty can serve only ``Heat LT``.
+
+Temperatures and pressures of the circuits are set in ``p_config``. **The number
+of circuits is fixed at three** — the plant builders name ``Heat MT``,
+``Heat DH`` and ``Heat LT`` directly, so adding or removing one is a code change,
+not a configuration change.
 
 The consequence to keep in mind when reading heat results: a duty is placed in
 one circuit by a single temperature cut, so a stream spanning two bands
 contributes wholly to one of them. ``scripts/heat_bands.py`` generalises this to
-contiguous bands, but the compressor code does not use it yet. See
+contiguous bands, but the plant code does not use it yet. See
 :doc:`guide_process_streams`.
 
 ----
@@ -409,6 +466,13 @@ Physics-based calculations
 Two quantities in the model are not catalogue numbers but calculated
 thermodynamics, using `CoolProp <http://www.coolprop.org/>`_ for real fluid
 properties.
+
+.. figure:: _static/model/pressure_ladder.svg
+   :width: 100%
+   :alt: A logarithmic pressure scale from 1 to 150 bar with each carrier level and the compressors bridging them
+
+   Each arrow is one compressor. Every lift is different, which is why none of
+   them is redundant.
 
 **Compressor duty.** Electricity and waste heat are computed stage by stage from
 the declared inlet and outlet states: isentropic work from enthalpy and entropy,

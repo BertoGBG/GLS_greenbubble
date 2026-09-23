@@ -178,8 +178,140 @@ def fig_agents():
              11.5, INK2, anchor="middle")
     return s + "</svg>\n"
 
+
+
+# ───────────────────────── FIG 4 : the pressure ladder ─────────────────────────
+def fig_pressure():
+    import math
+    W, H = 900, 560
+    s = head(W, H, "The pressure ladder: where each carrier sits and which compressor bridges the gap")
+    TOP, BOT = 80, 470
+    PMIN, PMAX = 1.0, 150.0
+    def y(P):
+        lo, hi = math.log10(PMIN), math.log10(PMAX)
+        return BOT - (math.log10(P) - lo) / (hi - lo) * (BOT - TOP)
+
+    levels = [(150, "H2 HP storage", C["h2"]), (80, "methanolisation inlet", C["meoh"]),
+              (60, "CO2 HP storage", C["co2"]), (30, "H2 distribution  (shared header)", C["h2"]),
+              (20, "methanation inlet", C["bio"]), (16, "CO2 liquid", C["co2"]),
+              (3.5, "SOEC outlet", C["h2"]), (1, "biogas · separated CO2 · ambient", C["gas"])]
+    for P, lab, col in levels:
+        yy = y(P)
+        s += f'<line x1="150" y1="{yy:.1f}" x2="560" y2="{yy:.1f}" stroke="{LINE}" stroke-width="1" stroke-dasharray="3 4"/>\n'
+        s += txt(142, yy + 4, f"{P:g} bar", 11, INK2, mono=True, weight="600", anchor="end")
+        s += f'<circle cx="150" cy="{yy:.1f}" r="4" fill="{col}"/>\n'
+        s += txt(566, yy + 4, lab, 11.5, INK2)
+
+    comps = [(3.5, 30, "SOEC H2 compressor", C["h2"], 196),
+             (30, 150, "H2 storage send comp", C["h2"], 250),
+             (30, 80, "methanolisation H2 compressor", C["meoh"], 304),
+             (1, 80, "methanolisation CO2 compressor", C["co2"], 358),
+             (1, 20, "methanation CO2 CO2 compressor", C["co2"], 412),
+             (1, 20, "methanation biogas biogas compressor", C["gas"], 466)]
+    s += ('<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">'
+          f'<path d="M0,0 L6,3 L0,6 z" fill="{INK3}"/></marker></defs>\n')
+    for p_in, p_out, lab, col, x in comps:
+        y0, y1 = y(p_in), y(p_out)
+        s += f'<line x1="{x}" y1="{y0:.1f}" x2="{x}" y2="{y1+8:.1f}" stroke="{col}" stroke-width="2.4" marker-end="url(#ah)" opacity="0.9"/>\n'
+        s += f'<circle cx="{x}" cy="{y0:.1f}" r="3.2" fill="{col}"/>\n'
+        s += (f'<text transform="translate({x-5},{(y0+y1)/2}) rotate(-90)" {MONO} font-size="9.5" '
+              f'fill="{INK2}" text-anchor="middle">{esc(lab)}</text>\n')
+    s += txt(20, 44, "PRESSURE", 11, INK3, mono=True, weight="600")
+    s += txt(566, 44, "WHAT SITS THERE", 11, INK3, mono=True, weight="600")
+    s += txt(450, 506, "Every arrow is one compressor, sized and dispatched by the optimiser. Each does a",
+             11.5, INK2, anchor="middle")
+    s += txt(450, 524, "different lift, so none is redundant \u2014 and no compressor is centralised.",
+             11.5, INK2, anchor="middle")
+    return s + "</svg>\n"
+
+
+# ───────────────────────── FIG 5 : the heat circuits ─────────────────────────
+def fig_heat():
+    W, H = 900, 470
+    s = head(W, H, "The three heat circuits, their temperature floors, and one-way degradation")
+    bands = [("Heat MT", 140, 180, 12, C["heat"], "reboilers, reactor preheat", 92),
+             ("Heat DH", 90, 140, 6, "#d97742", "district heating, compressor aftercooling", 184),
+             ("Heat LT", 50, 90, 3, "#c79a5a", "low-grade heat, cooling reject", 276)]
+    for name, tmin, tmax, P, col, role, yy in bands:
+        s += f'<rect x="150" y="{yy}" width="470" height="72" rx="7" fill="{col}" opacity="0.13"/>\n'
+        s += f'<rect x="150" y="{yy}" width="5" height="72" rx="2" fill="{col}"/>\n'
+        s += txt(172, yy + 28, name, 14, INK, weight="600", mono=True)
+        s += txt(172, yy + 48, role, 11.5, INK2)
+        s += txt(608, yy + 22, f"{tmax} \u00b0C", 11, INK3, mono=True, anchor="end")
+        s += txt(608, yy + 60, f"{tmin} \u00b0C", 12, col, mono=True, weight="600", anchor="end")
+        s += txt(640, yy + 60, "floor", 10, INK3, style="italic")
+        s += txt(640, yy + 22, f"{P} bar", 10, INK3, mono=True)
+        if yy < 276:
+            s += (f'<path d="M700 {yy+58} L700 {yy+84}" stroke="{INK3}" stroke-width="1.6" '
+                  f'marker-end="url(#dn)"/>\n')
+    s += ('<defs><marker id="dn" markerWidth="8" markerHeight="8" refX="3" refY="6" orient="auto">'
+          f'<path d="M0,0 L3,6 L6,0 z" fill="{INK3}"/></marker></defs>\n')
+    s += txt(716, 200, "heat degrades", 11, INK2)
+    s += txt(716, 216, "downward only", 11, INK2)
+    s += txt(150, 68, "A stream may serve any circuit whose floor it exceeds \u2014 never one above it.",
+             12, INK2)
+    s += (f'<rect x="150" y="372" width="600" height="58" rx="7" fill="{SURF2}" '
+          f'stroke="{LINE2}" stroke-dasharray="4 4"/>\n')
+    s += txt(166, 394, "Fixed at three circuits", 12, INK, weight="600")
+    s += txt(166, 414, "The temperatures are configurable in p_config; the number of circuits is not \u2014 "
+             "the plant builders name these three.", 11, INK2)
+    return s + "</svg>\n"
+
+
+# ──────────────────── FIG 6 : brownfield cost over time ────────────────────
+def fig_brownfield():
+    W, H = 900, 480
+    s = head(W, H, "How an existing asset is charged: cost looked up at its own construction year, scaled by rif")
+    X0, X1 = 110, 800
+    Y = 330
+    yr0, yr1 = 2018, 2056
+    def x(yr): return X0 + (yr - yr0) / (yr1 - yr0) * (X1 - X0)
+    s += f'<line x1="{X0}" y1="{Y}" x2="{X1}" y2="{Y}" stroke="{LINE2}" stroke-width="1.4"/>\n'
+    for yr in range(2020, 2056, 5):
+        s += f'<line x1="{x(yr):.1f}" y1="{Y}" x2="{x(yr):.1f}" y2="{Y+6}" stroke="{LINE2}"/>\n'
+        s += txt(x(yr), Y + 22, str(yr), 10, INK3, mono=True, anchor="middle")
+
+    CY, YI, LIFE = 2022, 2030, 25
+    # the asset's life
+    s += (f'<rect x="{x(CY):.1f}" y="{Y-56}" width="{x(CY+LIFE)-x(CY):.1f}" height="44" rx="6" '
+          f'fill="{C["h2"]}" opacity="0.12" stroke="{C["h2"]}" stroke-width="1.2"/>\n')
+    s += txt(x(CY) + 12, Y - 28, "EXI_ asset  \u00b7  technical lifetime 25 y", 11.5, INK, weight="600")
+    # markers
+    for yr, lab, col in [(CY, "construction_year", C["gas"]), (YI, "year_investment", GREEN)]:
+        s += f'<line x1="{x(yr):.1f}" y1="{Y-150}" x2="{x(yr):.1f}" y2="{Y+4}" stroke="{col}" stroke-width="1.6" stroke-dasharray="4 3"/>\n'
+        s += txt(x(yr), Y - 158, lab, 11, col, mono=True, weight="600", anchor="middle")
+    # catalogue lookup
+    s += (f'<rect x="{x(CY)-92:.1f}" y="{Y-238}" width="184" height="52" rx="6" fill="{SURF2}" '
+          f'stroke="{C["gas"]}" stroke-width="1.2"/>\n')
+    s += txt(x(CY), Y - 218, "costs_2022.csv", 11.5, INK, mono=True, weight="600", anchor="middle")
+    s += txt(x(CY), Y - 202, "investment read HERE", 10.5, INK2, anchor="middle")
+    s += (f'<path d="M{x(CY):.1f} {Y-186} L{x(CY):.1f} {Y-158}" stroke="{C["gas"]}" '
+          f'stroke-width="1.4" marker-end="url(#a2)"/>\n')
+    s += ('<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="3" refY="6" orient="auto">'
+          f'<path d="M0,0 L3,6 L6,0 z" fill="{C["gas"]}"/></marker></defs>\n')
+    # rif band
+    s += (f'<rect x="{x(YI):.1f}" y="{Y-120}" width="{x(YI+20)-x(YI):.1f}" height="26" rx="4" '
+          f'fill="{GREEN}" opacity="0.22" stroke="{GREEN}" stroke-width="1"/>\n')
+    s += txt(x(YI) + 10, Y - 102, "annual charge  =  rif \u00d7 I(2022) \u00d7 annuity", 11, INK, mono=True)
+    s += txt(x(YI) + 10, Y - 78, "rif = 0.4  \u2192  40 % of the original investment is still owed", 11, INK2)
+    s += txt(x(YI) + 10, Y - 62, "rif = 0     \u2192  sunk: no annual charge at all", 11, INK2)
+    # new build for contrast
+    s += (f'<rect x="{x(YI):.1f}" y="{Y+46}" width="{x(YI+25)-x(YI):.1f}" height="40" rx="6" '
+          f'fill="{SURF2}" stroke="{LINE2}" stroke-width="1.2"/>\n')
+    s += txt(x(YI) + 12, Y + 71, "new build  \u00b7  I(2030), full annuity", 11.5, INK2)
+    s += txt(20, 40, "A brownfield asset and a new build of the same technology are separate components,",
+             12, INK2)
+    s += txt(20, 58, "charged differently.", 12, INK2)
+    s += txt(450, 452, "If construction_year + lifetime falls short of the amortization period, the model warns:",
+             11, INK3, anchor="middle")
+    s += txt(450, 468, "re-investment would be needed inside the planning horizon.", 11, INK3, anchor="middle")
+    return s + "</svg>\n"
+
+
 os.makedirs(OUT, exist_ok=True)
-for name, fn in [("system_boundary", fig_bubble), ("symbiosis_on_off", fig_symbiosis), ("agents_technologies", fig_agents)]:
+for name, fn in [("system_boundary", fig_bubble), ("symbiosis_on_off", fig_symbiosis),
+                 ("agents_technologies", fig_agents), ("pressure_ladder", fig_pressure),
+                 ("heat_circuits", fig_heat), ("brownfield_timeline", fig_brownfield)]:
     p = os.path.join(OUT, name + ".svg")
     io.open(p, "w", encoding="utf-8").write(fn())
     print(f"  wrote {p}  ({os.path.getsize(p)} bytes)")
