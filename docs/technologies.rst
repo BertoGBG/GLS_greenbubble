@@ -335,11 +335,146 @@ ambient pressure, while ``methanolisation`` pays to lift the same hydrogen to
 80 bar. Tying the duty to a declared state rather than a constant is what keeps
 those two consistent.
 
-**Components.** ``H2 compressor``, ``CO2 compressor``, ``CH4 compressor`` and
-``biogas compressor`` are sized from the duty above; ``H2 pipe`` and
-``CO2 pipe`` carry a carrier between plants when ``symbiosis`` is on;
-``DH heat exchanger`` couples the plant to the district-heating circuit. All are
-configured in ``n_config`` like any other technology.
+How the compressor duty is calculated
+-------------------------------------
+
+Compressor electricity and waste heat are **not** catalogue numbers and not
+fixed ratios. They are computed from the thermodynamics of the actual fluid,
+between the actual inlet and outlet states, using
+`CoolProp <http://www.coolprop.org/>`_ for the property data. Pure fluids are
+looked up by name; biogas is handled as a real CH₄/CO₂ mixture built from
+``globals.mixtures.biogas``.
+
+The calculation lives in ``compress_multistage_with_Tcap``
+(``scripts/technology_inputs.py``). Per stage it is the textbook isentropic
+route:
+
+.. math::
+
+   w_s = h(p_\text{out}, s_\text{in}) - h_\text{in}, \qquad
+   w = \frac{w_s}{\eta_s}, \qquad
+   h_\text{out} = h_\text{in} + w
+
+with the discharge temperature read back from :math:`(p_\text{out},
+h_\text{out})`. Both enthalpies and the entropy come from CoolProp, so real-gas
+behaviour is included rather than assumed ideal.
+
+Staging is set by two limits, whichever binds first:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 14 56
+
+   * - Parameter
+     - Value
+     - Meaning
+   * - ``r_max``
+     - 2.5
+     - Maximum pressure ratio per stage. The stage count is
+       :math:`\lceil \log(p_\text{out}/p_\text{in}) / \log r_\text{max} \rceil`,
+       and the ratio is then shared equally between stages.
+   * - ``T_max_C``
+     - 160 °C
+     - Maximum discharge temperature. A stage is cut short if it would exceed
+       this, adding another stage instead.
+   * - ``eta_s``
+     - 0.75
+     - Isentropic efficiency.
+   * - motor efficiency
+     - 0.97
+     - Applied once to the summed shaft work.
+   * - intercooling
+     - to 50 °C
+     - Between stages, back down to the ``Heat LT`` floor.
+
+Because the duty is derived rather than tabulated, the same component gives
+different numbers for different fluids and lifts. Hydrogen from the SOEC outlet
+to the header (3.5 → 30 bar) needs 3 stages and 1.22 kWh/kg, which is 3.66 % of
+the hydrogen LHV; from 1 bar it would need 5 stages and 1.93 kWh/kg, 5.78 %.
+
+``compressor_calculation`` (same file) is the orchestrator: it reads the inlet
+and outlet states from ``p_config``, applies pre-cooling if the feed arrives
+above the compressor inlet limit, handles the high-pressure storage cases, and
+returns electricity and heat per unit of throughput.
+
+.. note::
+
+   ``globals.T_max_comp`` in ``p_config`` sets the **declared temperature** of
+   streams downstream of a compressor (the ``${T_max_comp}`` references in the
+   port states). It is *not* passed to ``compress_multistage_with_Tcap``, which
+   uses its own default of 160 °C. The two agree today, so no result depends on
+   the difference — but changing the ``p_config`` value alone would move the
+   declared stream temperature without changing the staging.
+
+Aftercooling and the heat exchangers
+------------------------------------
+
+Every stage rejects heat, and that heat is not thrown away: it is split by
+temperature and sold into the heat circuits. ``aftercomp_cool_duty``
+(``scripts/technology_inputs.py``) integrates the enthalpy drop at constant
+pressure and divides it at the ``Heat DH`` floor:
+
+- above the split → ``Heat DH`` (usable district heat)
+- below the split → ``Heat LT``
+
+Those two numbers become ``efficiency3`` and ``efficiency4`` on the compressor
+link, so the same PyPSA component buys electricity and sells both heat grades.
+``DH heat exchanger`` is the component that couples a plant's local heat bus to
+the shared circuit; its cost and efficiency come from ``technology-data`` like
+any other technology, and it is attached by ``add_local_heat_connections``
+(``scripts/prepare_network.py``).
+
+.. note::
+
+   The split is a single cut at one temperature, so a stream leaving a
+   compressor at 160 °C contributes its 160–140 °C slice to ``Heat DH`` even
+   though that slice is MT-grade. ``scripts/heat_bands.py`` generalises this to
+   contiguous temperature bands, but the compressor code does not use it yet.
+   See :doc:`guide_process_streams`.
+
+Where the compressors sit in the model
+--------------------------------------
+
+All of them are built by ``add_compressor_and_storage``
+(``scripts/prepare_network.py``), which supports two placements:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 34 44
+
+   * - Placement
+     - Component name
+     - Status
+   * - **Per plant**
+     - ``methanolisation H2 compressor``,
+       ``methanation biogas compressor``, ``SOEC`` …
+     - **What the model actually builds.** Every compressor belongs to the plant
+       that needs the lift, and is sized from that plant's throughput.
+   * - **Centralised**
+     - ``H2 compressor``, ``CO2 compressor``, …
+     - Supported by the code but **not currently used** — no caller requests it.
+       It would be one shared machine per fluid, sized from ``n_config``.
+
+The distinction is the ``plant`` key of the dict passed to
+``add_compressor_and_storage``: empty means centralised, a plant name means
+per-plant. Every call site today passes a name.
+
+This matters for reading results: there is no single "H2 compressor" row to look
+at. Compression shows up distributed across the plants — ``SOEC`` lifting to the
+header, ``methanolisation H2 compressor`` lifting to 80 bar, and so on — so the
+site's total compression cost is the sum of those, not one line item.
+
+The generic ``H2 compressor`` / ``CO2 compressor`` / ``CH4 compressor`` rows in
+``n_config`` are still doing work in the per-plant case: they carry the
+``expansion`` permission and the cost lookup that every per-plant instance
+inherits. The capacity, though, comes from the calling plant.
+
+All compressors are ordinary PyPSA links, so the optimiser sizes them and
+dispatches them hour by hour like any other component.
+
+**Other shared components.** ``H2 pipe`` and ``CO2 pipe`` carry a carrier
+between plants when ``symbiosis`` is on. All are configured in ``n_config`` like
+any other technology.
 
 ---
 
