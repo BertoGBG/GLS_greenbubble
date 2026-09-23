@@ -308,10 +308,85 @@ def fig_brownfield():
     return s + "</svg>\n"
 
 
+
+
+# ─────────────────── FIG 7 : the electrical grid interface ───────────────────
+def fig_grid():
+    W, H = 940, 640
+    s = head(W, H, "The electrical grid interface: one shared connection capacity, many branches")
+    BX = 214                                     # system boundary
+    s += (f'<line x1="{BX}" y1="60" x2="{BX}" y2="600" stroke="{GREEN}" '
+          f'stroke-width="2" stroke-dasharray="8 6"/>\n')
+    s += txt(BX + 8, 74, "system boundary", 10, GREEN, mono=True, weight="600")
+    s += txt(120, 52, "EXTERNAL", 10.5, INK3, mono=True, weight="600", anchor="middle")
+
+    # ---- import chain ----
+    s += box(24, 168, 168, 54, "DK1 spot market", "hourly price \u00b7 buy", accent=C["el"])
+    s += f'<line x1="192" y1="195" x2="252" y2="195" stroke="{C["el"]}" stroke-width="1.8"/>\n'
+    s += (f'<rect x="252" y="120" width="10" height="150" rx="4" fill="{C["el"]}" opacity="0.85"/>\n')
+    s += (f'<text transform="translate(246,195) rotate(-90)" {MONO} font-size="10" fill="{INK2}" '
+          f'text-anchor="middle">ElDK1 bus</text>\n')
+
+    # THE capex link
+    s += ('<defs><marker id="g1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">'
+          f'<path d="M0,0 L7,3 L0,6 z" fill="{C["el"]}"/></marker></defs>\n')
+    s += (f'<line x1="262" y1="195" x2="398" y2="195" stroke="{C["el"]}" stroke-width="5" '
+          f'marker-end="url(#g1)"/>\n')
+    s += (f'<rect x="266" y="132" width="132" height="42" rx="6" fill="{SURF}" stroke="{C["el"]}" '
+          f'stroke-width="1.6"/>\n')
+    s += txt(332, 148, "DK1_to_ElDK1_buy", 10, INK, mono=True, weight="600", anchor="middle")
+    s += txt(332, 165, "the only link with CAPEX", 9.5, C["el"], weight="600", anchor="middle")
+
+    # shared buy bus
+    s += (f'<rect x="404" y="110" width="10" height="290" rx="4" fill="{C["el"]}" opacity="0.85"/>\n')
+    s += (f'<text transform="translate(398,255) rotate(-90)" {MONO} font-size="10" fill="{INK2}" '
+          f'text-anchor="middle">ElDK1 buy bus</text>\n')
+
+    # per-agent branches
+    agents = [("El_biogas", 130), ("El_electrolysis", 200), ("El_meoh", 270), ("El_methanation", 340)]
+    for name, yy in agents:
+        s += (f'<line x1="414" y1="{yy}" x2="656" y2="{yy}" stroke="{LINE2}" stroke-width="1.5" '
+              f'marker-end="url(#g2)"/>\n')
+        s += box(660, yy - 19, 150, 38, name, fill=SURF)
+    s += ('<defs><marker id="g2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">'
+          f'<path d="M0,0 L6,3 L0,6 z" fill="{LINE2}"/></marker></defs>\n')
+    s += txt(420, 372, "DK1_to_El_<agent>  \u00b7  one per agent", 10, INK2, mono=True)
+    s += txt(420, 388, "no capital cost \u2014 each keeps its own purchase price + tariffs", 10, INK3)
+
+    # ---- export chain ----
+    s += box(660, 468, 150, 44, "El3", "on-site electricity", fill=SURF)
+    s += ('<defs><marker id="g3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">'
+          f'<path d="M0,0 L7,3 L0,6 z" fill="{C["h2"]}"/></marker></defs>\n')
+    s += (f'<line x1="656" y1="490" x2="200" y2="490" stroke="{C["h2"]}" stroke-width="3" '
+          f'marker-end="url(#g3)"/>\n')
+    s += (f'<rect x="392" y="504" width="220" height="40" rx="6" fill="{SURF}" stroke="{C["h2"]}" '
+          f'stroke-width="1.4"/>\n')
+    s += txt(502, 520, "El3_to_DK1", 10, INK, mono=True, weight="600", anchor="middle")
+    s += txt(502, 536, "CAPEX zeroed when both sides exist", 9.5, C["h2"], anchor="middle")
+    s += box(24, 468, 168, 44, "DK1 spot market", "spot price \u00b7 sell", accent=C["h2"])
+
+    # ---- the equality tie ----
+    s += (f'<path d="M332 176 L332 250 L502 250 L502 504" fill="none" stroke="{INK3}" '
+          f'stroke-width="1.3" stroke-dasharray="4 3"/>\n')
+    s += (f'<rect x="344" y="228" width="146" height="44" rx="6" fill="{SURF2}" stroke="{INK3}" '
+          f'stroke-width="1.2"/>\n')
+    s += txt(417, 246, "P_nom  =  P_nom", 11, INK, mono=True, weight="600", anchor="middle")
+    s += txt(417, 262, "one physical connection", 9.5, INK2, anchor="middle")
+
+    # ---- footnotes ----
+    s += (f'<rect x="24" y="566" width="892" height="56" rx="7" fill="{SURF2}" stroke="{LINE2}" '
+          f'stroke-dasharray="4 4"/>\n')
+    s += txt(38, 586, "Import and export are separate links but one cable, so their capacities are forced "
+             "equal and only one is charged.", 11, INK2)
+    s += txt(38, 604, "Branches carry a negligible cost rather than exactly zero \u2014 a free extendable "
+             "capacity is degenerate to the solver.", 11, INK3)
+    return s + "</svg>\n"
+
+
 os.makedirs(OUT, exist_ok=True)
 for name, fn in [("system_boundary", fig_bubble), ("symbiosis_on_off", fig_symbiosis),
                  ("agents_technologies", fig_agents), ("pressure_ladder", fig_pressure),
-                 ("heat_circuits", fig_heat), ("brownfield_timeline", fig_brownfield)]:
+                 ("heat_circuits", fig_heat), ("brownfield_timeline", fig_brownfield), ("grid_interface", fig_grid)]:
     p = os.path.join(OUT, name + ".svg")
     io.open(p, "w", encoding="utf-8").write(fn())
     print(f"  wrote {p}  ({os.path.getsize(p)} bytes)")

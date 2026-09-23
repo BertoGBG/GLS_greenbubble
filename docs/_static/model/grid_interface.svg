@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 640" width="100%" role="img" aria-label="The electrical grid interface: one shared connection capacity, many branches">
+<title>The electrical grid interface: one shared connection capacity, many branches</title>
+<rect width="940" height="640" fill="#ffffff"/>
+<line x1="214" y1="60" x2="214" y2="600" stroke="#2f7d4f" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="222" y="74" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#2f7d4f" text-anchor="start">system boundary</text>
+<text x="120" y="52" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#7d8fa1" text-anchor="middle">EXTERNAL</text>
+<rect x="24" y="168" width="168" height="54" rx="6" fill="#f5f7fa" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="24" y="168" width="3.5" height="54" rx="2" fill="#c9820f"/>
+<text x="36" y="188" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">DK1 spot market</text>
+<text x="36" y="203" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">hourly price · buy</text>
+<line x1="192" y1="195" x2="252" y2="195" stroke="#c9820f" stroke-width="1.8"/>
+<rect x="252" y="120" width="10" height="150" rx="4" fill="#c9820f" opacity="0.85"/>
+<text transform="translate(246,195) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#44586b" text-anchor="middle">ElDK1 bus</text>
+<defs><marker id="g1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#c9820f"/></marker></defs>
+<line x1="262" y1="195" x2="398" y2="195" stroke="#c9820f" stroke-width="5" marker-end="url(#g1)"/>
+<rect x="266" y="132" width="132" height="42" rx="6" fill="#ffffff" stroke="#c9820f" stroke-width="1.6"/>
+<text x="332" y="148" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#14202c" text-anchor="middle">DK1_to_ElDK1_buy</text>
+<text x="332" y="165" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="600" fill="#c9820f" text-anchor="middle">the only link with CAPEX</text>
+<rect x="404" y="110" width="10" height="290" rx="4" fill="#c9820f" opacity="0.85"/>
+<text transform="translate(398,255) rotate(-90)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#44586b" text-anchor="middle">ElDK1 buy bus</text>
+<line x1="414" y1="130" x2="656" y2="130" stroke="#bcc8d4" stroke-width="1.5" marker-end="url(#g2)"/>
+<rect x="660" y="111" width="150" height="38" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<text x="672" y="134.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">El_biogas</text>
+<line x1="414" y1="200" x2="656" y2="200" stroke="#bcc8d4" stroke-width="1.5" marker-end="url(#g2)"/>
+<rect x="660" y="181" width="150" height="38" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<text x="672" y="204.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">El_electrolysis</text>
+<line x1="414" y1="270" x2="656" y2="270" stroke="#bcc8d4" stroke-width="1.5" marker-end="url(#g2)"/>
+<rect x="660" y="251" width="150" height="38" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<text x="672" y="274.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">El_meoh</text>
+<line x1="414" y1="340" x2="656" y2="340" stroke="#bcc8d4" stroke-width="1.5" marker-end="url(#g2)"/>
+<rect x="660" y="321" width="150" height="38" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<text x="672" y="344.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">El_methanation</text>
+<defs><marker id="g2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#bcc8d4"/></marker></defs>
+<text x="420" y="372" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="400" fill="#44586b" text-anchor="start">DK1_to_El_&lt;agent&gt;  ·  one per agent</text>
+<text x="420" y="388" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#7d8fa1" text-anchor="start">no capital cost — each keeps its own purchase price + tariffs</text>
+<rect x="660" y="468" width="150" height="44" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<text x="672" y="488" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">El3</text>
+<text x="672" y="503" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">on-site electricity</text>
+<defs><marker id="g3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#1668c4"/></marker></defs>
+<line x1="656" y1="490" x2="200" y2="490" stroke="#1668c4" stroke-width="3" marker-end="url(#g3)"/>
+<rect x="392" y="504" width="220" height="40" rx="6" fill="#ffffff" stroke="#1668c4" stroke-width="1.4"/>
+<text x="502" y="520" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#14202c" text-anchor="middle">El3_to_DK1</text>
+<text x="502" y="536" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#1668c4" text-anchor="middle">CAPEX zeroed when both sides exist</text>
+<rect x="24" y="468" width="168" height="44" rx="6" fill="#f5f7fa" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="24" y="468" width="3.5" height="44" rx="2" fill="#1668c4"/>
+<text x="36" y="488" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">DK1 spot market</text>
+<text x="36" y="503" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">spot price · sell</text>
+<path d="M332 176 L332 250 L502 250 L502 504" fill="none" stroke="#7d8fa1" stroke-width="1.3" stroke-dasharray="4 3"/>
+<rect x="344" y="228" width="146" height="44" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.2"/>
+<text x="417" y="246" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#14202c" text-anchor="middle">P_nom  =  P_nom</text>
+<text x="417" y="262" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#44586b" text-anchor="middle">one physical connection</text>
+<rect x="24" y="566" width="892" height="56" rx="7" fill="#f5f7fa" stroke="#bcc8d4" stroke-dasharray="4 4"/>
+<text x="38" y="586" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#44586b" text-anchor="start">Import and export are separate links but one cable, so their capacities are forced equal and only one is charged.</text>
+<text x="38" y="604" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="start">Branches carry a negligible cost rather than exactly zero — a free extendable capacity is degenerate to the solver.</text>
+</svg>

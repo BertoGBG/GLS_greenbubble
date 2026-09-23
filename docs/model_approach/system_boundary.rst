@@ -1,0 +1,98 @@
+.. SPDX-FileCopyrightText: Contributors to GreenBubble
+.. SPDX-License-Identifier: CC-BY-4.0
+
+.. _system-boundary:
+
+The system boundary
+===================
+
+Everything the model prices sits inside one boundary. Outside it are the markets
+and sinks the site trades with.
+
+.. figure:: /_static/model/system_boundary.svg
+   :width: 100%
+   :alt: The GreenBubble system boundary, with external interfaces crossing a dashed green line
+
+   The bubble and its interfaces. Only what is inside carries capital cost.
+
+The site meets the outside world at these interfaces:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 30 46
+
+   * - Interface
+     - Direction
+     - What it represents
+   * - Electricity
+     - buy and sell
+     - The DK1 spot market, at an hourly price series, with tariffs applied on
+       top and an export cap.
+   * - Natural gas
+     - buy and sell
+     - The gas grid: a purchase price for the boilers, and a sale route for
+       biomethane and e-methane at their own premiums.
+   * - Hydrogen
+     - sell
+     - Delivery to an off-taker, as an annual target or at a price.
+   * - Methanol
+     - sell
+     - As above, and the destination of both methanol routes.
+   * - District heating
+     - sell
+     - Surplus heat off-take, disabled by default (``options.DH``).
+   * - CO₂ liquid
+     - sell *(optional)*
+     - Liquefied CO₂ leaving for sequestration. When
+       ``options['CO2 Liq credits']`` is enabled it earns the **CO₂ tax value**
+       per tonne; 95 % of the liquefied stream counts as sequestered. Off by
+       default.
+   * - Biochar
+     - sell *(optional)*
+     - Carbon leaving as a solid. When ``options['biochar credits']`` is enabled
+       it earns the **CO₂ tax value** per tonne sequestered. Off by default —
+       see the note below on what "per tonne sequestered" means here.
+   * - Ambient heat
+     - sink
+     - Where heat too cold to be useful goes. Unpriced, unlimited.
+   * - Biomass markets
+     - buy
+     - Pellets, wood chips and digestible biomass.
+
+.. note::
+
+   **Both sequestration routes are paid at the CO₂ tax**, not at a separate
+   price: the credit is the value of the emission avoided, so it moves with
+   ``CO2_cost``. Both are **options**, off by default, and switching either on
+   can change which technologies are worth building.
+
+   The two are de-rated differently, and the difference is easy to misread.
+
+   For **liquid CO₂** the de-rating is in the model: the sequestration link has
+   an efficiency of 0.95, so 5 % of the liquefied stream earns nothing.
+
+   For **biochar** the de-rating is already in the data. DEA's slow-pyrolysis
+   sheet notes that *"only 70 % of carbon in biochar is assumed to be sequestered
+   when spread on soil"*, and expresses every figure **per tonne of CO₂
+   sequestered** rather than per tonne of biochar — ``biomass-input`` is
+   7.6748 MWh_biomass/t_CO₂ on that basis. So the model pays the full CO₂ price
+   on a quantity that has already had the 70 % applied to it. There is no 0.7
+   factor anywhere in GreenBubble, and adding one would count it twice.
+
+.. warning::
+
+   ``options['CO2 Liq credits'].efficiency`` is **not read**. The sequestration
+   link uses a hardcoded 0.95 and the configuration value is ignored (there is a
+   ``TODO`` at that line). Both are 0.95 today, so no result depends on it — but
+   editing the config value alone will not change anything.
+
+**Interfaces carry no capital cost.** There is no charge for the existence of a
+grid connection to the market, or of a pipeline to an off-taker. What enters the
+objective is only the *price of the carrier crossing the boundary* — electricity
+bought, methanol sold, gas purchased.
+
+This is a deliberate accounting choice, and it is what makes the results readable:
+the objective is the cost of the bubble, so a change in it is a change in
+something the project could actually build or operate. The one exception is
+internal: the on-site electrical connection has a real capacity and a real cost,
+because the site must size it — see :ref:`grid-connection-capex`.
