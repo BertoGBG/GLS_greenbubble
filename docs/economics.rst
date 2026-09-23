@@ -1,7 +1,7 @@
 .. _economics:
 
-Economic Assumptions
-=====================
+Economics
+=========
 
 This page documents how GreenBubble translates technology investment data into
 annual capital charges, how the discount rate is applied, and how brownfield
@@ -9,10 +9,15 @@ initial conditions are parameterised.
 
 ---
 
+Assumptions
+-----------
+
+Where the cost numbers come from and how they are converted into the annual charges the optimiser sees.
+
 .. _economics-technology-data:
 
 Technology-data source
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 Investment costs, fixed O&M rates, efficiencies, and technical lifetimes come
 from the `technology-data <https://github.com/BertoGBG/technology-data>`_
@@ -39,7 +44,7 @@ defined as ``("technology", "parameter")`` tuples in
 .. _economics-annuity:
 
 Capital cost annualisation
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The annual capital charge for a technology with investment cost *I*
 (EUR/MW), fixed O&M rate *f* (% of investment per year), and technical
@@ -84,7 +89,7 @@ may be implied; see :ref:`economics-brownfield`).
 .. _economics-discount-rate:
 
 Discount rate
--------------
+~~~~~~~~~~~~~
 
 ``discount_rate`` in ``config.yaml`` is a **real** rate — it excludes
 inflation.  All cost data are expressed in constant real EUR of a fixed
@@ -105,7 +110,7 @@ finance) to 10 % (private equity).  The default is 7 %.
 .. _economics-year-investment:
 
 year_investment
----------------
+~~~~~~~~~~~~~~~
 
 ``year_investment`` selects which year's cost CSV is used for **new**
 expandable capacity.  For example, ``year_investment: 2030`` loads
@@ -121,7 +126,7 @@ Available values: 2020, 2025, 2030, 2035, 2040, 2045, 2050.
 .. _economics-brownfield:
 
 Brownfield initial conditions
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When ``initial capacity > 0`` in ``n_config.yaml``, an existing (``EXI_``)
 component is added to the network.  Three parameters control its annual
@@ -209,7 +214,7 @@ With ``year_investment: 2030``, ``amortization_period: null``,
 .. _economics-real-costs:
 
 Real costs and currency
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 All monetary values in GreenBubble are expressed in **real EUR** of a fixed
 base year (the base year is inherited from the technology-data repository).
@@ -226,10 +231,15 @@ rate set in ``config.yaml``.
 
 ---
 
+Results
+-------
+
+What the solved network reports back, and how each figure is built from it.
+
 .. _economics-lcop:
 
 Levelized Cost of Product (LCOP) and shadow prices
----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 GreenBubble computes a per-technology Levelized Cost of Product (LCOP) for
 every plant injecting into a tagged product collection bus (bioCH4, H2,
@@ -326,7 +336,7 @@ order — is computed the same way but without amortised CAPEX
 .. _economics-payback:
 
 Payback time by agent
-----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Alongside per-technology LCOP, GreenBubble reports **payback time** and
 **capital cost coverage** aggregated by *agent* — the same ``n_flags``-based
@@ -391,7 +401,7 @@ revenue − opex total matches ``n.objective`` exactly, net of capex.
 
 **Shared grid-connection capex.** The import/export grid-connection links
 are consolidated onto one shared, capital-costed link at build time (see
-:ref:`grid-connection-capex` in :doc:`network_model`) so the LP only ever
+:ref:`grid-connection-capex` in :doc:`model_approach`) so the LP only ever
 pays for one physical connection capacity. For reporting,
 ``reallocate_grid_connection_capex`` (``scripts/helpers.py``, called from
 ``snakemake_plot.py`` right after a solved network is loaded) splits that

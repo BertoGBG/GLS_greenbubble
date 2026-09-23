@@ -27,6 +27,6 @@ config to copy, the command to launch it, and the plots it produces.
      - One investment decision across several price years, and the value of
        perfect information (EVPI).
 
-For the model itself rather than a run, see :doc:`network_model` and
+For the model itself rather than a run, see :doc:`design`, :doc:`model_approach` and
 :doc:`technologies`.  For reading results, see :doc:`guide_outputs` and
 :doc:`guide_economic_analysis`.

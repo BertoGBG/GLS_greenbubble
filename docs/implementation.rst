@@ -6,7 +6,7 @@ Implementation Details
 This section has been reorganised into three dedicated pages under
 **Model Description**:
 
-- :ref:`network-model` — PyPSA network topology, bus structure, LP formulation,
+- :ref:`design` — PyPSA data model, components used, basic constraints,
   brownfield/greenfield modelling
 - :ref:`technologies` — per-technology modelling details, PyPSA component types,
   operational constraints

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 520" width="100%" role="img" aria-label="Agents switched on by n_flags, and the competing technologies inside each">
+<title>Agents switched on by n_flags, and the competing technologies inside each</title>
+<rect width="980" height="520" fill="#ffffff"/>
+<rect x="16.0" y="56" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="16.0" y="56" width="225.0" height="4" rx="2" fill="#c9820f"/>
+<text x="29.0" y="82" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Renewables</text>
+<text x="29.0" y="98" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#c9820f" text-anchor="start">n_flags.renewables</text>
+<line x1="16.0" y1="108" x2="241.0" y2="108" stroke="#d3dbe4"/>
+<circle cx="34.0" cy="126" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="130" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">onwind</text>
+<circle cx="34.0" cy="147" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="151" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">solar</text>
+<circle cx="34.0" cy="168" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">grid connection</text>
+<text x="29.0" y="254" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">3 technologies compete</text>
+<rect x="257.0" y="56" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="257.0" y="56" width="225.0" height="4" rx="2" fill="#1668c4"/>
+<text x="270.0" y="82" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Electrolysis</text>
+<text x="270.0" y="98" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#1668c4" text-anchor="start">n_flags.electrolysis</text>
+<line x1="257.0" y1="108" x2="482.0" y2="108" stroke="#d3dbe4"/>
+<circle cx="275.0" cy="126" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="130" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">AEC</text>
+<circle cx="275.0" cy="147" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="151" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">PEMEC</text>
+<circle cx="275.0" cy="168" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">SOEC</text>
+<text x="270.0" y="254" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">3 technologies compete</text>
+<rect x="498.0" y="56" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="498.0" y="56" width="225.0" height="4" rx="2" fill="#d4552c"/>
+<text x="511.0" y="82" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Central heat</text>
+<text x="511.0" y="98" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#d4552c" text-anchor="start">n_flags.central_heat</text>
+<line x1="498.0" y1="108" x2="723.0" y2="108" stroke="#d3dbe4"/>
+<circle cx="516.0" cy="126" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="130" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biomass boiler</text>
+<circle cx="516.0" cy="147" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="151" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">NG boiler</text>
+<circle cx="516.0" cy="168" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">El boiler</text>
+<circle cx="516.0" cy="189" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="193" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">heat pump</text>
+<circle cx="516.0" cy="210" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="214" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">pyrolysis</text>
+<text x="511.0" y="254" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">5 technologies compete</text>
+<rect x="739.0" y="56" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="739.0" y="56" width="225.0" height="4" rx="2" fill="#8c610a"/>
+<text x="752.0" y="82" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Biogas</text>
+<text x="752.0" y="98" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#8c610a" text-anchor="start">n_flags.biogas</text>
+<line x1="739.0" y1="108" x2="964.0" y2="108" stroke="#d3dbe4"/>
+<circle cx="757.0" cy="126" r="2.4" fill="#7d8fa1"/>
+<text x="767.0" y="130" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biogas</text>
+<circle cx="757.0" cy="147" r="2.4" fill="#7d8fa1"/>
+<text x="767.0" y="151" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biogas upgrading</text>
+<circle cx="757.0" cy="168" r="2.4" fill="#7d8fa1"/>
+<text x="767.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biogas storage</text>
+<circle cx="757.0" cy="189" r="2.4" fill="#7d8fa1"/>
+<text x="767.0" y="193" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biogas engine</text>
+<circle cx="757.0" cy="210" r="2.4" fill="#7d8fa1"/>
+<text x="767.0" y="214" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">dewatering</text>
+<text x="752.0" y="254" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">5 technologies compete</text>
+<rect x="16.0" y="288" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="16.0" y="288" width="225.0" height="4" rx="2" fill="#4d7c2f"/>
+<text x="29.0" y="314" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Methanation</text>
+<text x="29.0" y="330" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#4d7c2f" text-anchor="start">n_flags.methanation</text>
+<line x1="16.0" y1="340" x2="241.0" y2="340" stroke="#d3dbe4"/>
+<circle cx="34.0" cy="358" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="362" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biomethanation</text>
+<circle cx="34.0" cy="379" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="383" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">biomethanation CO2</text>
+<circle cx="34.0" cy="400" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="404" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanation biogas</text>
+<circle cx="34.0" cy="421" r="2.4" fill="#7d8fa1"/>
+<text x="44.0" y="425" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanation CO2</text>
+<text x="29.0" y="486" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">4 technologies compete</text>
+<rect x="257.0" y="288" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="257.0" y="288" width="225.0" height="4" rx="2" fill="#d0352a"/>
+<text x="270.0" y="314" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Methanol</text>
+<text x="270.0" y="330" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#d0352a" text-anchor="start">n_flags.meoh</text>
+<line x1="257.0" y1="340" x2="482.0" y2="340" stroke="#d3dbe4"/>
+<circle cx="275.0" cy="358" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="362" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanolisation</text>
+<circle cx="275.0" cy="379" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="383" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanol from biogas</text>
+<text x="270.0" y="404" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start">— or the split —</text>
+<circle cx="275.0" cy="421" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="425" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanol synthesis</text>
+<circle cx="275.0" cy="442" r="2.4" fill="#7d8fa1"/>
+<text x="285.0" y="446" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">methanol distillation</text>
+<text x="270.0" y="486" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">4 technologies compete</text>
+<rect x="498.0" y="288" width="225.0" height="212" rx="8" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="498.0" y="288" width="225.0" height="4" rx="2" fill="#6b7a87"/>
+<text x="511.0" y="314" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#14202c" text-anchor="start">Storage</text>
+<text x="511.0" y="330" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#6b7a87" text-anchor="start">n_flags.storage</text>
+<line x1="498.0" y1="340" x2="723.0" y2="340" stroke="#d3dbe4"/>
+<circle cx="516.0" cy="358" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="362" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">battery</text>
+<circle cx="516.0" cy="379" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="383" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">H2 HP storage</text>
+<circle cx="516.0" cy="400" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="404" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">CO2 HP / Liq</text>
+<circle cx="516.0" cy="421" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="425" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">TES DH</text>
+<circle cx="516.0" cy="442" r="2.4" fill="#7d8fa1"/>
+<text x="526.0" y="446" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">TES concrete</text>
+<text x="511.0" y="486" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start" font-style="italic">5 technologies compete</text>
+<text x="16" y="32" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">AGENTS — each is one builder in prepare_network.py</text>
+<text x="490" y="504" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="middle">The optimiser sizes any subset of the technologies inside an active agent, including none.</text>
+</svg>

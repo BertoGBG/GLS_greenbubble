@@ -25,9 +25,9 @@ multi-energy systems.
    :maxdepth: 1
    :caption: Model Description
 
-   network_model
+   design
+   model_approach
    technologies
-   meoh_split
    economics
    methods
 
