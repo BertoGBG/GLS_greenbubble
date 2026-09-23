@@ -199,12 +199,40 @@ Two streams are deliberately **not** wired. Oxygen: the reformer needs
 oxygen never binds on a site with its own electrolyser and is treated as free.
 Water output is left unwired for the same reason as in ``methanolisation``.
 
-This route also has **no separate H₂ compressor**, unlike ``methanolisation``.
-That is a difference in the DEA battery limits, not an oversight: sheet 97
-includes the reformer and reactor compressors in its CAPEX and electricity,
-while sheet 98 excludes feed compression (hence
-``electricity-input-no-compression`` and the separate compressor components on
-the other route). Both plants pay for compression; only the bookkeeping differs.
+This route also has **no feed compressors at all**, unlike ``methanolisation``.
+Two independent reasons agree.
+
+*Physically*, there is nothing to compress at the battery limit. The pilot this
+route is based on reforms biogas at ambient pressure and compresses the
+**syngas** afterwards, once, with the hydrogen already mixed in [FRITSCH]_:
+
+   "we designed a system for simple, atmospheric conversion of biogas to SynGas
+   in a single-stage ATR-unit ... SynGas is cooled and compressed for subsequent
+   introduction into the MeOH-synthesis loop"
+
+The 20 bar quoted for that plant is the synthesis **loop** pressure, downstream
+of both feeds — and it is a pilot-scale ceiling rather than an optimum, set by
+the EU Pressure Equipment Directive on the basis of system gas volume.
+Industrial methanol loops run at 50-100 bar.
+
+*In the accounting*, DEA agrees: sheet 97 bundles "compressors prior to reformer
+and methanol reactor" into its CAPEX and its electricity, while sheet 98
+excludes feed compression (hence ``electricity-input-no-compression`` and the
+separate compressor components on the other route). Both plants pay for
+compression; only the bookkeeping differs. A GreenBubble compressor here would
+charge it twice.
+
+Because this plant creates no compressed bus of its own, it has no ``processes:``
+entry in ``p_config`` — see :doc:`guide_process_streams` for why that is the
+correct form rather than an omission.
+
+.. note::
+
+   **Known simplification.** Hydrogen is drawn from the shared 30 bar header
+   while the reference plant doses it at ambient, so this route pays for
+   compression it does not physically need. Left in place deliberately:
+   correcting it needs a low-pressure hydrogen tap, and it would only make the
+   route cheaper.
 
 .. note::
 
@@ -212,6 +240,11 @@ the other route). Both plants pay for compression; only the bookkeeping differs.
    which is what is implemented. The electrically heated **eSMR** (bi-reforming)
    variant described in the same DEA chapter has no cost data and is not
    implemented.
+
+.. [FRITSCH] C. Fritsch, J. Blankenstein, B. Bender, J. Dornseiffer, M. Haep and
+   K. Ooms, *Design, implementation and piloting of an integrated hydrogen- and
+   oxygen-added process for conversion of biogas to methanol*, Sustainable Energy
+   & Fuels, 2025. https://doi.org/10.1039/d5se00691k
 
 ---
 

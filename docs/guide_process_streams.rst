@@ -179,7 +179,17 @@ Follow :doc:`guide_new_technology` for the component itself. For its streams:
 4. **Declare ``buses:`` on the port**, listing the bus names the model will create.
    If two ports legitimately feed one bus, have both inherit the same shared state.
 
-5. **Run the tests**::
+5. **If the plant creates no bus of its own, add no entry at all.** A port exists to
+   name the *plant's own* bus — the compressed one between a shared header and the
+   plant. A plant that compresses nothing at its battery limit, taking every feed at
+   the shared state, has no such bus, and an entry without ``buses:`` fails
+   ``test_every_port_declares_its_own_buses``. Do not work around that by listing the
+   shared bus: two ``symbiosis_n`` rows would then claim it, the loader warns, and
+   which row supplies the bus's ``properties`` depends on ordering. Instead leave the
+   entry out and write a comment where it would have gone, saying why — that is what
+   ``methanol from biogas`` does.
+
+6. **Run the tests**::
 
        pytest tests/test_p_config.py
 

@@ -244,6 +244,47 @@ processes:
       from: "shared:biogas"
       state: {T: "${T_max_comp}", P: 20}
       model: {buses: ["biogas to methanation"]}
+  # Biogas + H2 -> methanol, via autothermal reforming (DEA sheet 97).
+  #
+  # Both feeds enter at their SHARED state -- this plant compresses nothing at its
+  # battery limit, so neither port overrides T or P, and neither claims a bus.
+  #
+  # Why no compressor. The pilot this route is based on reforms biogas at ambient
+  # pressure and compresses the SYNGAS afterwards, once, with the hydrogen already
+  # mixed in:
+  #   "we designed a system for simple, atmospheric conversion of biogas to SynGas
+  #    in a single-stage ATR-unit ... SynGas is cooled and compressed for subsequent
+  #    introduction into the MeOH-synthesis loop"                         [FRITSCH] p4
+  #   "H2 from water electrolysis will be supplied to the SynGas for adaption of
+  #    SynGas stoichiometry here ... The mixed gas is then compressed in a
+  #    three-stage piston compressor ... up to 25 bar system pressure"    [FRITSCH] p5
+  # The 20 bar in [FRITSCH] is the synthesis LOOP pressure, downstream of both feeds --
+  # and it is a pilot-scale ceiling, not an optimum: "System pressure is limited due
+  # to guidelines related to the Pressure Equipment Directive of the European Union
+  # (2014/68/EU)" (p5), with conversion "expected to be low compared to industrial
+  # applications" as a result (p11). Industrial loops run 50-100 bar.
+  #
+  # DEA agrees on the accounting: sheet 97 bundles "Compressors prior to reformer and
+  # methanol reactor" into its CAPEX and into its 0.1371 MWh_e/MWh_H2. A GreenBubble
+  # compressor here would charge that twice. Contrast 'methanolisation' below, whose
+  # sheet 98 EXCLUDES feed compression -- which is why THAT plant declares 80 bar
+  # ports and owns explicit H2 and CO2 compressors.
+  #
+  # KNOWN SIMPLIFICATION: H2 is drawn from the 30 bar header while [FRITSCH] doses it at
+  # ambient, so this route pays for compression it does not need. Left in place --
+  # correcting it means a low-pressure H2 tap and it would only make the route cheaper.
+  #
+  # [FRITSCH] Fritsch et al., Design, implementation and piloting of an integrated
+  #           hydrogen- and oxygen-added process for conversion of biogas to methanol,
+  #           Sustainable Energy & Fuels, 2025. doi:10.1039/d5se00691k
+  # NOTE: 'methanol from biogas' deliberately has NO entry here.
+  #
+  # A process entry exists to name the plant's OWN buses -- the compressed ones it
+  # creates between a shared header and itself (see the ports above, and the
+  # every-port-declares-its-own-buses rule in tests/test_p_config.py). This plant
+  # creates none: it takes biogas at the shared 1 bar state and H2 from the shared
+  # 30 bar header, and compresses nothing at its battery limit.
+  #
   methanolisation:
     "CO2 in":
       stream: "CO2 to methanolisation"
