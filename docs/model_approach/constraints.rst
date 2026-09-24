@@ -18,14 +18,16 @@ Renewable export cap
    \sum_{t} w_t \, p_{\text{export},t}
    \;\le\; \texttt{max\_RE\_to\_grid} \cdot \sum_{t} w_t \, p_{\text{RE consumed},t}
 
-**What it prevents.** A wind farm with a chemical plant attached. Without it the
-cheapest way to satisfy any product target is to over-build renewables and sell
-the surplus, and the model answers a question about electricity trading rather
-than about industrial symbiosis.
+Electricity exported to the grid is limited to a share of the renewable
+electricity consumed on site. ``max_RE_to_grid`` sets the share.
 
-Note that it binds on **annual energy, not hourly power**: the site may export
-freely in any single hour as long as the yearly total stays within the share.
-One constraint per scenario, built by ``add_max_RE_sales_constraint``.
+Without this limit, the cheapest way to meet a product target is often to build
+more wind and solar than the site needs and sell the surplus. The model would
+then describe an electricity trading business rather than an industrial cluster.
+
+The limit applies to annual energy, not to hourly power. The site may export any
+amount in a given hour, provided the yearly total stays within the share. The
+constraint is built by ``add_max_RE_sales_constraint``, once per scenario.
 
 Shared grid-connection capacity
 -------------------------------
@@ -34,14 +36,15 @@ Shared grid-connection capacity
 
    P_{\text{nom},\;\text{import}} \;=\; P_{\text{nom},\;\text{export}}
 
-**What it prevents.** Paying twice for one cable. Import and export are separate
-links in the model but one physical connection on site, so their capacities are
-tied and only one is given a capital cost.
+Import and export are two links in the model but one cable on site. Their
+capacities are therefore forced equal, and only one of them carries a capital
+cost. Without this, the site would pay for two connections where it needs one.
 
-It is a single equality on the two capacity variables, not one per snapshot —
-each link's own PyPSA bound already caps its hourly flow once the capacities are
-equal. Built by ``add_grid_connection_shared_capacity_constraint``; the cost
-side is :ref:`grid-connection-capex`.
+This is a single equality between the two capacity variables. No constraint per
+snapshot is needed, because each link's own PyPSA bound already limits its
+hourly flow once the capacities match. The constraint is built by
+``add_grid_connection_shared_capacity_constraint``. For how the cost is
+assigned, see :ref:`grid-connection-capex`.
 
 Store power-to-energy ratio
 ---------------------------
@@ -50,23 +53,25 @@ Store power-to-energy ratio
 
    P_{\text{nom},\;\text{link}} \;-\; f \cdot E_{\text{nom},\;\text{store}} \;\le\; 0
 
-**What it prevents.** A store with free power. Left alone, the optimiser would
-give a battery a very large charger and a very small store, because the charger
-is cheap per MW and the store is what costs money — producing a device that can
-absorb enormous power for one minute.
+A charger's power is limited by the size of the store it fills. Without this
+limit, the optimiser builds a large charger and a small store, because power
+capacity is cheap per MW and energy capacity is not. The result is a store that
+can absorb a great deal of power for a few minutes, which is not a device anyone
+would build.
 
-:math:`f` comes from ``min_max_hours`` in ``n_config``, so a value of 0.25
-means the charger cannot exceed a quarter of the store's energy capacity, i.e.
-at least four hours to fill. Built by ``add_custom_constraints_stores``.
+:math:`f` is derived from ``min_max_hours`` in ``n_config``. A value of 0.25
+allows a charger of at most a quarter of the store's energy capacity, so the
+store takes at least four hours to fill. The constraint is built by
+``add_custom_constraints_stores``.
 
 RFNBO compliance
 ----------------
 
-**What it prevents.** Hydrogen counted as renewable that was made from fossil
-electricity. The constraint restricts when grid electricity may feed the
-electrolysers — by price threshold, by hourly correlation with on-site
-renewables, or not at all — according to ``rfnbos_dict.limit``.
+Grid electricity may only feed the electrolysers under conditions set by
+``rfnbos_dict.limit``: below a price threshold, in hours correlated with on-site
+renewable generation, or without restriction. The purpose is to prevent hydrogen
+made from fossil electricity from counting as renewable.
 
-This one changes the answer more than any other constraint in the list, and it
-is the one most worth stating in a results table. The variants and their
-formulations are in :ref:`methods-rfnbo`.
+This constraint has a larger effect on results than the other three, so the
+setting used should be reported alongside them. The variants and their
+formulations are described in :ref:`methods-rfnbo`.

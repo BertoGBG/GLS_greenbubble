@@ -6,12 +6,12 @@
 Multi-energy representation
 ===========================
 
-GreenBubble represents an industrial cluster as a multi-energy network: several
-carriers modelled at once, with conversion between them as the object of study
-rather than an afterthought.
+GreenBubble models an industrial cluster as a multi-energy network. Seven
+carriers are represented at the same time, and conversion between them is what
+the model optimises.
 
-Each carrier has its own buses, and a plant that consumes one and produces
-another is a single multi-port link across them. The carriers are:
+Each carrier has its own buses. A plant that consumes one carrier and produces
+another is a single multi-port link between those buses.
 
 .. list-table::
    :header-rows: 1
@@ -42,7 +42,8 @@ another is a single multi-port link across them. The carriers are:
      - MW / t
      - Wet biomass, pellets and digestate through the drying and pyrolysis chain.
 
-Modelling heat as three circuits rather than one carrier is the choice that costs
-the most and buys the most. It means a reactor's waste heat can only serve a
-demand at or below its own temperature, which is the difference between a
-plausible integration figure and an optimistic one.
+Heat is modelled as three separate circuits instead of one carrier. A heat
+stream can therefore only serve a demand at or below its own temperature. This
+adds buses and constraints, but it prevents the model from using a reactor's
+low-grade waste heat to meet a high-temperature steam demand, which would
+overstate how much heat integration the site can achieve.
