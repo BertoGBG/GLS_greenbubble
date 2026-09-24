@@ -6,20 +6,20 @@
 Process integration
 ===================
 
-GreenBubble takes process integration further than a typical energy-system model,
-but not as far as a process simulator. It is worth being explicit about where the
-line sits.
+GreenBubble represents process integration in more detail than a typical
+energy-system model, but in less detail than a process simulator. This section
+states where the boundary falls.
 
-**What is represented.** Every stream in the model has a declared physical state
-— fluid, temperature, pressure — held in ``p_config`` and separate from the
-techno-economic magnitudes in ``technology-data``. Because a state is declared
-rather than assumed, a compressor's duty can be computed from its actual inlet
-and outlet conditions, and waste heat can only be delivered to a circuit it is
-hot enough to serve.
+**What is represented.** Every stream has a declared physical state: fluid,
+temperature and pressure. These are held in ``p_config``, separately from the
+techno-economic magnitudes in ``technology-data``. Because the state is declared
+rather than assumed, a compressor's duty is computed from its actual inlet and
+outlet conditions, and waste heat can only be delivered to a circuit it is hot
+enough to serve.
 
-**What is not.** Heat integration is *not* a heat-exchanger network. There is no
-pinch analysis and no matching of individual hot and cold streams. Instead heat
-is carried by a small number of pressurised hot-water circuits, each defined by a
+**What is not.** Heat integration is not a heat-exchanger network. There is no
+pinch analysis, and individual hot and cold streams are not matched to each other.
+Heat is instead carried by three pressurised hot-water circuits, each defined by a
 temperature band:
 
 .. list-table::

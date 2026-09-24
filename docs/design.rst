@@ -18,36 +18,37 @@ reference and worth reading first:
    (PyPSA v1.0.2 user guide). Component attributes are documented under
    `Components <https://docs.pypsa.org/v1.0.2/user-guide/components/>`_.
 
-Nothing below replaces those pages. Where GreenBubble departs from stock PyPSA —
-extra constraints, the process-state layer, the agent structure — that is
-described in :doc:`model_approach`.
+Nothing below replaces those pages. GreenBubble departs from stock PyPSA in three
+ways: extra constraints, a process-state layer, and the agent structure. All three
+are described in :doc:`model_approach`.
 
 ----
 
 Network
 -------
 
-A single ``pypsa.Network`` object holds everything: the components, their static
-attributes, and the time series attached to them. GreenBubble builds one network
-per run in ``build_network()`` (``scripts/prepare_network.py``), then hands it to
-Linopy to solve.
+A single ``pypsa.Network`` object holds the components, their static attributes
+and the time series attached to them. GreenBubble builds one network per run in
+``build_network()`` (``scripts/prepare_network.py``) and passes it to Linopy to
+solve.
 
-The network is the unit of everything downstream. It is written to disk as
-NetCDF (``*_PRE.nc`` before the solve, ``*_OPT.nc`` after), and every plot, CSV
-export and economic figure is derived from that file rather than recomputed.
+The network is also the unit of everything downstream. It is written to disk as
+NetCDF, once before the solve (``*_PRE.nc``) and once after (``*_OPT.nc``). Every
+plot, CSV export and economic figure is derived from that file rather than
+recomputed.
 
 Buses
 -----
 
-Buses are the fundamental nodes: every component attaches to one or more buses,
-and the model's only structural constraint is that **energy balances at every bus
-in every snapshot**. A bus in GreenBubble carries one energy carrier and, by
-project convention, one thermodynamic state — see :doc:`guide_process_streams`.
+Buses are the fundamental nodes of the network. Every component attaches to one
+or more buses, and energy balances at every bus in every snapshot. Each bus
+carries one energy carrier. By project convention it also carries one
+thermodynamic state, described in :doc:`guide_process_streams`.
 
-Buses are not geographic here. The model is a single site, so a bus represents a
-*header* or a *point in the process* rather than a location: ``H2 distribution``
-is the shared 30 bar hydrogen header, ``CO2 to methanolisation`` is that plant's
-own compressed inlet.
+Buses are not geographic in GreenBubble. The model represents a single site, so a
+bus is a header or a point in the process rather than a location. For example,
+``H2 distribution`` is the shared 30 bar hydrogen header, and
+``CO2 to methanolisation`` is that plant's own compressed inlet.
 
 Components
 ----------
@@ -113,24 +114,24 @@ consumes CO₂, electricity and medium-temperature heat:
          bus4=...,  # Heat MT       efficiency4 < 0  consumed
          bus5=...)  # Heat DH       efficiency5 > 0  produced
 
-One consequence runs through the whole model: **a plant's capacity is rated on
-whatever carrier sits on** ``bus0``. Methanolisation is sized in MW of hydrogen
-input, not methanol output, and its costs are rebased accordingly. This is why
-per-MW figures in ``technology-data`` sometimes need dividing by an input
-coefficient before they can be used — see :doc:`economics`.
+This has one consequence that runs through the whole model: **a plant's capacity
+is rated on the carrier at** ``bus0``. Methanolisation is sized in MW of hydrogen
+input, not in MW of methanol output, and its costs are rebased to that basis.
+Per-MW figures from ``technology-data`` therefore often have to be divided by an
+input coefficient before they can be used. See :doc:`economics`.
 
 Snapshots
 ---------
 
 Snapshots are the model's time index: 8 760 hourly steps for a full year by
 default, optionally clustered to a coarser resolution (see
-:doc:`guide_temporal_resolution`). Time-varying data — prices, capacity factors,
-demand profiles — is attached per snapshot.
+:doc:`guide_temporal_resolution`). Time-varying data is attached per snapshot:
+prices, capacity factors and demand profiles.
 
-``snapshot_weightings`` carries the hours each snapshot represents, so a
+``snapshot_weightings`` holds the number of hours each snapshot represents, so a
 clustered run still integrates to a full year. Every energy total and every cost
-in the objective is weighted by it; forgetting the weighting is the classic
-error when reading results by hand.
+in the objective is weighted by it. Results read directly from a solved network
+must be weighted the same way.
 
 .. note::
 
@@ -175,7 +176,7 @@ PyPSA's, documented under
    * - **Minimum load**
      - ``p(t) ≥ min_load · p_nom`` when a unit is online. With
        ``committable: true`` this becomes a binary on/off decision, which makes
-       the problem a MILP — see :ref:`config-committable`.
+       the problem a MILP. See :ref:`config-committable`.
 
 GreenBubble adds a small number of constraints of its own on top of these. They
 are listed in :doc:`model_approach`.
@@ -197,8 +198,8 @@ rate; revenues enter as negative marginal costs on the links that sell a
 carrier. The derivation and the cost conventions are in :doc:`economics`.
 
 Only what happens **inside the system boundary** is priced. Interfaces to the
-outside world carry no capital cost — buying and selling across them appears in
-the objective purely as the price of the carrier that crosses. That boundary is
+outside world carry no capital cost. Buying and selling across them appears in
+the objective only as the price of the carrier that crosses. That boundary is
 drawn explicitly in :doc:`model_approach`.
 
 Demand or price

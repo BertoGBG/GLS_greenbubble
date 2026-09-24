@@ -6,28 +6,29 @@
 Agents
 ======
 
-The model is organised into **agents**: broad categories of plant, each defined
-by a function rather than by a technology. They are switched on and off
-individually by the ``n_flags`` block in ``config.yaml``, and each corresponds to
-one builder function in ``scripts/prepare_network.py``.
+The model is organised into **agents**. An agent is a broad category of plant,
+defined by the function it performs rather than by a specific technology. Each
+agent is switched on or off by its entry in the ``n_flags`` block of
+``config.yaml``, and each corresponds to one builder function in
+``scripts/prepare_network.py``.
 
-An agent is the tier-1 object of the model. It is self-standing: it owns its
-plant-local buses and components, and it must leave the network feasible whether
-or not any other agent was built.
+An agent is self-standing. It owns its plant-local buses and components, and it
+must leave the network feasible whether or not any other agent was built.
 
 .. figure:: /_static/model/agents_technologies.svg
    :width: 100%
    :alt: The seven agents and the competing technologies inside each
 
    Each agent holds several technologies that perform the same function. The
-   optimiser sizes any subset, including none.
+   optimiser may build any subset of them, including none.
 
-**Inside an agent, technologies compete.** This is the point of the structure.
-``electrolysis`` is not "an electrolyser" — it offers alkaline, PEM and solid
-oxide, with different capital costs, efficiencies, and outlet pressures, all
-producing into the same hydrogen header. The optimiser picks. The same is true of
-methanol, where two different chemistries feed one collection bus, and of heat,
-where four boilers and a heat pump bid against each other hour by hour.
+**Technologies compete inside an agent.** The ``electrolysis`` agent does not
+represent one electrolyser. It offers alkaline, PEM and solid oxide, which differ
+in capital cost, efficiency and outlet pressure but all produce into the same
+hydrogen header. The optimiser chooses between them, and may build more than one.
+
+The same applies elsewhere. Two chemistries feed the methanol collection bus, and
+four boilers and a heat pump compete to supply heat in each hour.
 
 What each agent connects to
 ---------------------------
@@ -80,25 +81,26 @@ The technologies inside each agent are described in :doc:`/technologies`.
 Symbiosis is what makes it a hub
 --------------------------------
 
-The ``symbiosis`` flag builds the shared distribution buses — electricity,
-hydrogen, CO₂, biogas and the three heat circuits. Without it, every agent can
+The ``symbiosis`` flag builds the shared distribution buses for electricity,
+hydrogen, CO₂, biogas and the three heat circuits. Without it, each agent can
 still trade with the external interfaces, but not with its neighbours.
 
 .. figure:: /_static/model/symbiosis_on_off.svg
    :width: 100%
    :alt: The same agents with symbiosis on, sharing carrier buses, and off, standing alone
 
-   With ``symbiosis`` the plants form one hub; without it they are separate
-   projects that happen to share a site.
+   With ``symbiosis`` the plants form one hub. Without it they operate as
+   separate projects on the same site.
 
-Two agents cannot exist without it at all. ``meoh`` needs hydrogen from the
-electrolyser and CO₂ from the upgrader; ``methanation`` needs the same. Both
-check for ``electrolysis``, ``biogas`` **and** ``symbiosis`` before building
-anything, and return an empty component set if any is missing. ``renewables`` is
-gated differently — it needs ``symbiosis`` *and* at least one on-site consumer,
-so that a wind farm with no customer cannot be built purely to export.
+Two agents cannot be built without it. ``meoh`` needs hydrogen from the
+electrolyser and CO₂ from the upgrader, and ``methanation`` needs the same. Both
+check for ``electrolysis``, ``biogas`` and ``symbiosis`` before building
+anything, and return an empty set of components if any of the three is missing.
 
-**Any combination of flags is a valid run.** The dependency rules above resolve
-first, and a blocked agent simply contributes nothing; infeasibility, if it
-comes, comes from the targets and constraints rather than from the flag
-combination itself. The resolution logic is ``network_dependencies()``.
+``renewables`` is gated differently. It requires ``symbiosis`` and at least one
+on-site consumer, so that renewable capacity cannot be built purely to export.
+
+**Any combination of flags is a valid run.** The dependency rules resolve first,
+and a blocked agent contributes nothing. Infeasibility comes from the targets and
+constraints, not from the combination of flags. The rules are implemented in
+``network_dependencies()``.

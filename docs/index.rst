@@ -5,9 +5,9 @@ GreenBubble Documentation
 ==========================
 
 **GreenBubble is an open-source techno-economic optimisation model for Power-to-X
-industrial clusters** — co-located plants that share electricity, hydrogen, CO₂,
-biomethane, methanol and heat infrastructure. It co-optimises **capacity
-expansion** and **hourly dispatch** together, across a full year at 1-hour
+industrial clusters.** These are co-located plants that share electricity,
+hydrogen, CO₂, biomethane, methanol and heat infrastructure. The model optimises
+capacity expansion and hourly dispatch together, over a full year at 1-hour
 resolution, in a single linear programme.
 
 .. image:: front_image.png
@@ -15,18 +15,20 @@ resolution, in a single linear programme.
    :width: 100%
    :align: center
 
-The question it exists to answer is what the shared infrastructure is worth: how
-much cheaper it is to build these plants next to each other and let them trade
-directly than to build each one alone. Everything in the model follows from
-that — the carriers are modelled separately so a by-product of one plant can be
-a feedstock of the next, heat is three temperature circuits rather than one, and
-the connections between plants can be switched off to measure what they were
-contributing.
+The model answers one question: what is the shared infrastructure worth? That is,
+how much cheaper is it to build these plants together and let them trade directly
+than to build each one alone?
 
-The model is built on `PyPSA <https://docs.pypsa.org/latest/>`_, and was
-developed around `GreenLab Skive <https://www.greenlab.dk>`_, an
-agricultural-industrial park in Denmark integrating biogas, electrolysis,
-methanation and methanol synthesis. The methodology is described in:
+Three design choices follow from that question. Each carrier is modelled
+separately, so a by-product of one plant can be a feedstock of the next. Heat is
+divided into three temperature circuits instead of one, so waste heat can only
+serve demands it is hot enough to reach. And the connections between plants can
+be switched off, which is how the model measures what they contribute.
+
+The model is built on `PyPSA <https://docs.pypsa.org/latest/>`_. It was developed
+around `GreenLab Skive <https://www.greenlab.dk>`_, an agricultural-industrial
+park in Denmark that integrates biogas, electrolysis, methanation and methanol
+synthesis. The methodology is described in:
 
    *Optimizing hydrogen and e-methanol production through Power-to-X integration
    in biogas plants*, Energy Conversion and Management, 2024.
@@ -42,20 +44,18 @@ Where to start
    * - If you want to…
      - Go to
    * - **See what the model is**
-     - :doc:`model_anatomy` — an interactive diagram of the whole structure.
-       Switch parts of the site on and off and watch what depends on what. The
-       quickest way to understand the model without reading anything.
+     - :doc:`model_anatomy`. An interactive diagram of the whole structure.
+       Switch parts of the site on and off to see what depends on what.
    * - **Understand how it works**
-     - :doc:`design` for what it inherits from PyPSA, then
-       :doc:`model_approach` for the parts that are specific to GreenBubble —
-       the system boundary, the agents, process integration.
+     - :doc:`design` covers what the model inherits from PyPSA.
+       :doc:`model_approach` covers what is specific to GreenBubble: the system
+       boundary, the agents, and process integration.
    * - **Run it**
-     - :doc:`installation`, then :doc:`tutorial_1_greenfield` — one complete
-       run, solved twice: once against a fixed demand, once against a product
-       price.
+     - :doc:`installation`, then :doc:`tutorial_1_greenfield`. One complete run,
+       solved twice: once against a fixed demand, once against a product price.
    * - **Look something up**
      - :doc:`configuration` for every setting, :doc:`technologies` for every
-       technology, and :doc:`guide_outputs` for reading the results.
+       technology, :doc:`guide_outputs` for reading the results.
 
 .. toctree::
    :maxdepth: 1

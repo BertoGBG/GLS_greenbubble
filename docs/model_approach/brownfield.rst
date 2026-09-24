@@ -6,43 +6,44 @@
 Greenfield and brownfield
 =========================
 
-The two words describe what the optimiser is allowed to assume already exists.
+The two terms describe what the optimiser may assume already exists.
 
 A **greenfield** optimisation starts from an empty site. Every capacity is a free
-variable from zero, and the answer is the cost-optimal system as if nothing had
-ever been built. It is the right question for a feasibility study, or for
-comparing technologies on equal terms, because no incumbent gets a head start.
+variable starting at zero, and the result is the cost-optimal system as if nothing
+had been built before. This is the useful question for a feasibility study, or
+when comparing technologies on equal terms, because no technology starts with an
+advantage.
 
-A **brownfield** optimisation starts from a site that is already there. Some
-capacities are given, not chosen, and the optimiser decides what to add around
-them. The answer is no longer "what is the best system" but "what is the best
-next investment, given this" — and the two can differ sharply, because an
-existing asset changes what is worth building next to it.
+A **brownfield** optimisation starts from a site that already exists. Some
+capacities are fixed rather than chosen, and the optimiser decides what to add
+around them. The result answers a different question: not what the best system
+would be, but what the best next investment is. The two answers can differ
+considerably, because an existing asset changes what is worth building beside
+it.
 
 Why brownfield matters here
 ---------------------------
 
-GreenBubble exists to study industrial clusters, and real clusters are almost
-never empty. GreenLab Skive had a biogas plant before it had an electrolyser.
-The practical question such a site asks is not what it would build from scratch,
-but **what to expand or retrofit next** — and answering that requires the
-existing plant to be in the model, competing on its real terms.
+GreenBubble is used to study industrial clusters, and real clusters are rarely
+empty. GreenLab Skive had a biogas plant before it had an electrolyser. Such a
+site does not ask what it would build from scratch. It asks **what to expand or
+retrofit next**, and answering that requires the existing plant to be in the
+model on its real terms.
 
 Two things follow, and both matter for reading results:
 
-**An existing asset can be a whole plant or a single technology.** The
-granularity is per ``n_config`` entry, so an existing biogas plant, an existing
-boiler, or an existing compressor are all expressible, and a site can be
-part-existing and part-greenfield in any combination. Nothing forces the whole
-cluster into one mode.
+**An existing asset can be a whole plant or a single technology.** Existing
+capacity is set per ``n_config`` entry, so an existing biogas plant, boiler or
+compressor can each be represented. A site can be part existing and part
+greenfield in any combination; nothing forces the whole cluster into one mode.
 
-**An existing asset carries only the finance still outstanding.** This is the
-point that distinguishes a brownfield model from simply pinning a capacity. A
-plant built fifteen years ago and fully paid off should compete on its operating
-cost alone — its capital is sunk, and charging it again would make the model
-prefer to demolish and rebuild. A plant half-way through its loan should carry
-half. That fraction is ``remaining_investment_fraction``, and it is what lets an
-old asset and a new one be compared honestly in the same objective.
+**An existing asset carries only the finance still outstanding.** This is what
+distinguishes a brownfield model from simply fixing a capacity. A plant built
+fifteen years ago and fully paid off should compete on its operating cost alone,
+because its capital is already spent. Charging that capital again would make the
+model prefer to demolish and rebuild. A plant half way through its loan should
+carry half. The fraction still owed is ``remaining_investment_fraction``, and it
+allows an old asset and a new one to be compared in the same objective.
 
 Whether an asset already exists is therefore set **per technology** in
 ``n_config``, not globally. Three parameters control it:

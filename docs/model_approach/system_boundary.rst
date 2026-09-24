@@ -6,8 +6,8 @@
 The system boundary
 ===================
 
-Everything the model prices sits inside one boundary. Outside it are the markets
-and sinks the site trades with.
+The model prices everything inside one boundary. Outside it are the markets and
+sinks that the site trades with.
 
 .. figure:: /_static/model/system_boundary.svg
    :width: 100%
@@ -86,13 +86,15 @@ The site meets the outside world at these interfaces:
    ``TODO`` at that line). Both are 0.95 today, so no result depends on it — but
    editing the config value alone will not change anything.
 
-**Interfaces carry no capital cost.** There is no charge for the existence of a
-grid connection to the market, or of a pipeline to an off-taker. What enters the
-objective is only the *price of the carrier crossing the boundary* — electricity
+**Interfaces carry no capital cost.** The model does not charge for the existence
+of a grid connection to the market, or of a pipeline to an off-taker. Only the
+price of the carrier crossing the boundary enters the objective: electricity
 bought, methanol sold, gas purchased.
 
-This is a deliberate accounting choice, and it is what makes the results readable:
-the objective is the cost of the bubble, so a change in it is a change in
-something the project could actually build or operate. The one exception is
-internal: the on-site electrical connection has a real capacity and a real cost,
-because the site must size it — see :ref:`grid-connection-capex`.
+This is a deliberate accounting choice. It keeps the objective equal to the cost
+of the site itself, so any change in the objective corresponds to something the
+project could build or operate.
+
+There is one exception, and it is internal. The on-site electrical connection has
+a real capacity that the site must size and pay for. See
+:ref:`grid-connection-capex`.
