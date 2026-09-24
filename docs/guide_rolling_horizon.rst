@@ -316,11 +316,11 @@ function tries to select non-existent snapshots from the model variables.
 Adding a new custom constraint to the PF solve
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you add a new ``extra_functionality`` constraint to ``helpers.py`` for the
-capacity expansion run, you **must** also add it to ``_rh_extra_functionality``
-in ``scripts/snakemake_rolling_horizon.py``, passing ``snapshots=snapshots``
-(or an equivalent window-aware argument) so the constraint operates on the
-current window's snapshot set rather than the full network index.
+A new ``extra_functionality`` constraint added to ``helpers.py`` for the
+capacity expansion run **must** also be added to ``_rh_extra_functionality`` in
+``scripts/snakemake_rolling_horizon.py``. Pass ``snapshots=snapshots``, or an
+equivalent window-aware argument, so that the constraint operates on the
+current window's snapshots rather than on the full network index.
 
 ---
 

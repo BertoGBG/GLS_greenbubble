@@ -243,13 +243,13 @@ Levelized Cost of Product (LCOP) and shadow prices
 
 GreenBubble computes a per-technology Levelized Cost of Product (LCOP) for
 every plant injecting into a tagged product collection bus (bioCH4, H2,
-Methanol, ...). The method is the same one used for Levelized Cost of CDR
-(LCCDR) in the `pypsa-eur fork's CDR checks
-<https://github.com/BertoGBG/pypsa-eur/blob/pypsa-eur_AA/scripts/check_CDRs_pipeline.py>`_:
-annualised CAPEX, plus snapshot-weighted VOM, plus the snapshot-weighted net
-cost of every other input/output flow (feedstocks costed positive,
-by-products/credits costed negative) priced at each bus's own nodal shadow
-price, all divided by annual main-product output. Only the natural output
+Methanol, ...). The method is the same one used for Levelized Cost of CDR in the `pypsa-eur
+fork's CDR checks
+<https://github.com/BertoGBG/pypsa-eur/blob/pypsa-eur_AA/scripts/check_CDRs_pipeline.py>`_.
+Three terms are summed: annualised CAPEX, snapshot-weighted VOM, and the
+snapshot-weighted net cost of every other input and output flow. Feedstocks
+count positive and by-products or credits count negative, each priced at its
+own bus's nodal shadow price. The sum is divided by annual main-product output. Only the natural output
 unit differs (EUR/tCO2 there vs. EUR/MWh here).
 
 **Cost-based LCOP** (``compute_lcop_by_technology`` in ``scripts/plots.py``),
@@ -370,12 +370,11 @@ charge):
 **Why per-component shadow prices, not a shared link's own opex.** A
 shared external sale link (e.g. the single bioCH4 collection→delivery
 link) is built **once**, by whichever producing agent's constructor runs
-first in ``prepare_network.py``. If a second agent later also feeds the
-same collection bus (catalytic methanation alongside biogas upgrading,
-both selling bioCH4), naively crediting "whichever component touches the
-external market" would attribute *all* of that revenue to the first
-agent — silently wrong the moment more than one agent produces the same
-carrier. Per-component shadow-price revenue avoids this: each producer
+first in ``prepare_network.py``. A second agent may later feed the same collection bus, as catalytic methanation
+does alongside biogas upgrading when both sell bioCH4. Crediting whichever
+component touches the external market would then attribute all of that revenue
+to the first agent. That is silently wrong as soon as more than one agent
+produces the same carrier. Per-component shadow-price revenue avoids this: each producer
 earns revenue proportional to its **own** throughput at the bus's own
 price, and the shared delivery link itself nets to ~zero (a pure
 pass-through) — confirmed empirically to floating-point precision on a
@@ -452,18 +451,17 @@ only needs to recover, the residual fraction. The reported payback time would
 therefore be inflated, possibly beyond the asset's technical lifetime, even
 though the model is recovering only what is still owed.
 
-**Capital cost coverage and the "priced at own margin" condition.** A
-continuously-sized (extendable) technology is built by the LP right up to
-the point where its cash flow equals its own annualised capital charge —
-the optimizer's first-order condition for a technology at an interior
-optimum, not a failure of the technology or the model. Define the
-*effective amortization period* :math:`L^{\text{eff}}_i` as
-``amortization_period`` if set, else the technology's own technical
-lifetime (the same substitution ``helpers.read_costs()`` makes for
-``capital_cost`` itself; see :ref:`economics-annuity`), and the **pure**
-capital-recovery annuity (deliberately excluding FOM, since ``cash_flow``
-above is already net of FOM — comparing it against a FOM-inclusive target
-would double-count FOM):
+**Capital cost coverage and the "priced at own margin" condition.** The LP
+builds an extendable technology up to the point where its cash flow equals its
+own annualised capital charge. This is the optimiser's first-order condition
+for a technology at an interior optimum. It is not a failure of the technology
+or of the model. Define the *effective amortization period* :math:`L^{\text{eff}}_i` as
+``amortization_period`` if set, and otherwise the technology's own technical
+lifetime. This is the same substitution ``helpers.read_costs()`` makes for
+``capital_cost`` itself; see :ref:`economics-annuity`. Define also the pure
+capital-recovery annuity, which deliberately excludes FOM: ``cash_flow`` above
+is already net of FOM, so comparing it against a FOM-inclusive target would
+count FOM twice.
 
 .. math::
 
@@ -494,11 +492,10 @@ gives :math:`r \cdot I / CF = r / \text{annuity}(r, L^{\text{eff}}) = 1 -
 (1+r)^{-L^{\text{eff}}}`, and therefore :math:`N = L^{\text{eff}}`
 **exactly**, a technology priced at its own margin pays back, on a
 discounted basis, in precisely its own effective amortization period, as
-it should. But the formula is extremely sensitive right at that point: a
-coverage shortfall of even a fraction of a percent (well within
-dispatch/rounding noise) sends :math:`N` rocketing toward infinity, even
-though nothing economically meaningful changed, the discounted-payback
-*metric* has a knife-edge exactly where the *economics* are most benign.
+it should. The formula is very sensitive at exactly that point. A coverage shortfall of a
+fraction of a percent, well within dispatch and rounding noise, sends :math:`N`
+toward infinity even though nothing economically meaningful has changed. The
+metric has a knife-edge precisely where the economics are most benign.
 When coverage falls within ``MARGIN_TOLERANCE`` of 100 %, GreenBubble
 reports discounted payback as exactly :math:`L^{\text{eff}}_a` (flagged
 ``priced at own margin = True`` in the CSV, marked with ``*`` in the
@@ -532,12 +529,11 @@ i.e. coverage would stay below 100 % even given infinite time).
 - Tutorial 2 (:ref:`tutorial-2-brownfield`, ``amortization_period: 10``):
   ``biogas`` — mostly sunk brownfield capacity (30 % residual) — shows
   1107 % coverage and a 0.7-year payback: the small residual annuity is
-  trivially cleared. ``electrolysis`` — pure greenfield, fully
-  expandable — shows only 26 % coverage and an infinite discounted
-  payback, *not* because it is mis-sized, but because its optimal size is
-  driven by the value it creates for **other** agents (its hydrogen makes
-  additional biomethanation profitable) rather than by its own standalone
-  economics, a genuine cross-subsidy the LP is happy to pay for at the
-  system level, invisible if you only look at electrolysis's own books.
+  trivially cleared. ``electrolysis``, which is pure greenfield and fully expandable, shows only 26
+  % coverage and an infinite discounted payback. It is not mis-sized. Its
+  optimal size is set by the value it creates for other agents, because its
+  hydrogen makes additional biomethanation profitable. This is a cross-subsidy
+  that the LP is willing to pay at the system level, and it is invisible if
+  only electrolysis's own books are examined.
   See :ref:`guide-economic-analysis` for how to read this pattern in
   practice, and the full figure in :ref:`tutorial-2-brownfield`.

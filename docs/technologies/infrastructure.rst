@@ -276,10 +276,10 @@ leaves the same header for two plants at two pressures — 20 bar for methanatio
 without over-compressing one feed. The per-plant split is what the pressure
 ladder requires, not an oversight.
 
-Where several plants *do* want the same lift, they share one component rather
-than building two: the biomethanation, methanation-biogas and methanation-CO₂
-builders all pass the same ``methanation`` label for their hydrogen, the
-component name collides deliberately, and a guard skips anything already in the
+Where several plants do want the same lift, they share one component rather
+than building two. The biomethanation, methanation-biogas and methanation-CO₂
+builders all pass the same ``methanation`` label for their hydrogen, so the
+component name collides deliberately and a guard skips anything already in the
 network. (For that particular case no compressor is built at all — methanation
 takes hydrogen at 20 bar from a 30 bar header, which is a reduction, so
 ``compressor_calculation`` returns its "not needed" case.)

@@ -24,10 +24,10 @@ ways GreenBubble can be driven:
   much* of each product to make to maximise profit.
 
 In both cases every investment must **pay back within 10 years**
-(``amortization_period: 10``) and only **biological methanation**
-(*biomethanation* of biogas and of CO₂) is available, the catalytic (Sabatier)
-routes are switched off, so we can watch the competition between
-**biomethanation** and **biogas upgrading** for supplying the biomethane demand.
+(``amortization_period: 10``). Only **biological methanation** is available, of
+biogas and of CO₂; the catalytic Sabatier routes are switched off. This leaves
+**biomethanation** and **biogas upgrading** competing to supply the biomethane
+demand.
 
 .. contents:: On this page
    :local:

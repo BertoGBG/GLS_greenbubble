@@ -65,11 +65,11 @@ legally liable for the tax:
   relative to the reference year.
 - **Natural gas**: the historical commodity price carries no combustion
   tax: under ETS/carbon-tax rules that liability sits with the combusting
-  plant (the boiler), not the gas supplier. The **full** ``CO2_cost`` is
-  therefore added to the NG purchase price (boilers) and to the bioCH4 sale
-  price (see ``price_bioCH4: 'NG_based'`` below, modelled as the NG spot
-  price plus the CO₂ tax a buyer avoids by using biomethane) —
-  ``CO2_cost_ref_year`` is not netted out for gas.
+  plant (the boiler), not the gas supplier. The **full** ``CO2_cost`` is therefore added to the NG purchase price for the
+  boilers, and to the bioCH4 sale price. The latter is modelled as the NG spot
+  price plus the CO₂ tax a buyer avoids by using biomethane; see
+  ``price_bioCH4: 'NG_based'`` below. ``CO2_cost_ref_year`` is not netted out
+  for gas.
 
 .. code-block:: yaml
 

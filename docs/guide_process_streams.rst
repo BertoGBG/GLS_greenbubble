@@ -273,10 +273,10 @@ those two streams in source; the config now owns it.
 Declared but not consumed
 -------------------------
 
-Some fields exist for work that has not landed yet. **No code reads them and they change
-no results.** They are listed here because an unread field is not free — ``Heat MT max``
-sat in the table unread and was twice mistaken for a binding constraint when reasoning
-about what could feed the MT bus.
+Some fields exist for work that has not landed yet. **No code reads them and they change no results.** They are listed here because
+an unread field is not free. ``Heat MT max`` sat in the table unread, and was
+twice mistaken for a binding constraint when reasoning about what could feed
+the MT bus.
 
 .. list-table::
    :header-rows: 1

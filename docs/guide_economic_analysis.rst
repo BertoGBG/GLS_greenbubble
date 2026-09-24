@@ -356,12 +356,12 @@ A practical diagnostic workflow:
 Payback and capital cost coverage by agent
 --------------------------------------------
 
-While LCOP asks "what does this one technology cost to run", payback asks a
-plant-level question: "does everything a given agent owns — digester,
-upgrading, storage, shared infrastructure — collectively earn back what was
-put into it, and how fast." See :ref:`economics-payback` for the full
-theory (formulas, the KKT cash-flow computation, the brownfield investment
-scaling, and the "priced at own margin" derivation). This section covers
+LCOP asks what one technology costs to run. Payback asks a plant-level
+question: does everything a given agent owns, including its digester,
+upgrading, storage and shared infrastructure, collectively earn back what was
+invested in it, and how quickly? See :ref:`economics-payback` for the formulas,
+the KKT cash-flow computation, the brownfield investment scaling, and the
+"priced at own margin" derivation. This section covers
 how to read the output.
 
 ``csv/payback_by_agent.csv``
@@ -436,11 +436,11 @@ how to read the output.
       with hydrogen it doesn't itself get paid full value for — see the
       reading below.
 
-**How to read a low-coverage agent that isn't a brownfield asset.** If an
-agent shows low coverage despite being freely, continuously sized by the
-optimiser (no forced brownfield floor, no hard capacity minimum), check
-whether it's a genuine underperformer or a **cross-subsidy**: does its
-product feed another agent that shows unusually *high* coverage? If so,
+**How to read a low-coverage agent that is not a brownfield asset.** An agent
+may show low coverage even though the optimiser sized it freely, with no
+brownfield floor and no hard capacity minimum. Check whether it is a genuine
+underperformer or a cross-subsidy: does its product feed another agent whose
+coverage is unusually high? If so,
 the low-coverage agent is paying for value that shows up on someone else's
 books, a legitimate system-level trade-off, not a modelling error. The
 ``electrolysis`` case in Tutorial 2 above is exactly this: its hydrogen
