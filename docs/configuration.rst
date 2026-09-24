@@ -510,7 +510,8 @@ features on.  Loaded as ``c.n_options``.
      - Revenue from CO₂ sequestration via biochar.
    * - ``CO2 Liq credits``
      - ``enable: false``, ``efficiency: 0.95``
-     - Revenue from liquefied CO₂ sequestration.
+     - Revenue from liquefied CO₂ sequestration. ``efficiency`` is the share
+       of the liquid CO₂ stream that counts as sequestered and earns the credit.
    * - ``symbiosis El transformer``
      - ``expansion: true``
      - Lets the optimiser size the transformer joining the internal and

@@ -1281,8 +1281,11 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
 
             n = add_requirements_buses(n, bus_dict, symbiosis_n)
 
-            # CO2 credits for sequestration of from liquefied CO2
-            co2_credits = pd.Series(float(inputs_dict["CO2 cost"]), index=n.snapshots)
+            # CO2 credits for sequestration of liquefied CO2. marginal_cost acts on p0
+            # (liquid CO2 leaving the site), so the credit is scaled by the efficiency
+            # to pay only for the share that is actually sequestered.
+            seq_eff = float(n_options.at['CO2 Liq credits','efficiency'])
+            co2_credits = seq_eff * pd.Series(float(inputs_dict["CO2 cost"]), index=n.snapshots)
             c = 'CO2 Liq'
             ensure_carrier(n, c)
 
@@ -1291,7 +1294,7 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
                   carrier=c,
                   bus0=co2_liq_bus,
                   bus1=bus_seq,
-                  efficiency=0.95, # n_options.at['CO2 Liq credits','efficiency'], # TODO
+                  efficiency=seq_eff,
                   p_nom_extendable=True,
                   marginal_cost= -1 *  co2_credits,
                   )

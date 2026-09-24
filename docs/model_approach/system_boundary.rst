@@ -45,7 +45,8 @@ The site meets the outside world at these interfaces:
      - sell *(optional)*
      - Liquefied CO₂ leaving for sequestration. When
        ``options['CO2 Liq credits']`` is enabled it earns the **CO₂ tax value**
-       per tonne; 95 % of the liquefied stream counts as sequestered. Off by
+       per tonne sequestered. The sequestered share is
+       ``options['CO2 Liq credits'].efficiency`` (0.95 by default). Off by
        default.
    * - Biochar
      - sell *(optional)*
@@ -68,8 +69,11 @@ The site meets the outside world at these interfaces:
 
    The two are de-rated differently, and the difference is easy to misread.
 
-   For **liquid CO₂** the de-rating is in the model: the sequestration link has
-   an efficiency of 0.95, so 5 % of the liquefied stream earns nothing.
+   For **liquid CO₂** the de-rating is in the model. The sequestration link has
+   the efficiency set in ``options['CO2 Liq credits'].efficiency`` (0.95 by
+   default, an assumption that includes boil-off). The credit is paid per tonne
+   of liquid CO₂ leaving the site, multiplied by this efficiency. With the
+   default, 5 % of the liquefied stream earns nothing.
 
    For **biochar** the de-rating is already in the data. DEA's slow-pyrolysis
    sheet notes that *"only 70 % of carbon in biochar is assumed to be sequestered
@@ -78,13 +82,6 @@ The site meets the outside world at these interfaces:
    7.6748 MWh_biomass/t_CO₂ on that basis. So the model pays the full CO₂ price
    on a quantity that has already had the 70 % applied to it. There is no 0.7
    factor anywhere in GreenBubble, and adding one would count it twice.
-
-.. warning::
-
-   ``options['CO2 Liq credits'].efficiency`` is **not read**. The sequestration
-   link uses a hardcoded 0.95 and the configuration value is ignored (there is a
-   ``TODO`` at that line). Both are 0.95 today, so no result depends on it — but
-   editing the config value alone will not change anything.
 
 **Interfaces carry no capital cost.** The model does not charge for the existence
 of a grid connection to the market, or of a pipeline to an off-taker. Only the

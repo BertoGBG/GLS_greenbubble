@@ -183,7 +183,7 @@ def patch_timeseries(n, inputs_dict, tech_costs, CO2_cost):
         n.links_t.p_max_pu[lk] = p_max_pu_rfnbos.reindex(n.snapshots).astype(float)
 
     # Patch credits (CO2-cost dependent, not year-dependent per se)
-    co2_credits = -1 * c.n_options.at["CO2 Liq credits", "enable"] * pd.Series(float(CO2_cost), index=n.snapshots)
+    co2_credits = -1 * c.n_options.at["CO2 Liq credits", "enable"] * float(c.n_options.at["CO2 Liq credits", "efficiency"]) * pd.Series(float(CO2_cost), index=n.snapshots)
     for lk in co2_liq_links:
         n.links_t.marginal_cost[lk] = co2_credits
 
@@ -257,7 +257,7 @@ def create_scenarios(n, scenarios, CO2_cost_s, CO2_cost_ref_year_s, n_flags_OK, 
             n.links_t.p_max_pu.loc[:, (s, lk)] = p_max_pu_rfnbos.reindex(n.snapshots)
 
         # Credits
-        co2_credits = -1 * c.n_options.at["CO2 Liq credits", "enable"] * pd.Series(float(CO2_cost_s[s]), index=n.snapshots)
+        co2_credits = -1 * c.n_options.at["CO2 Liq credits", "enable"] * float(c.n_options.at["CO2 Liq credits", "efficiency"]) * pd.Series(float(CO2_cost_s[s]), index=n.snapshots)
         for lk in co2_liq_links:
             n.links_t.marginal_cost.loc[:, (s, lk)] = co2_credits
 
