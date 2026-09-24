@@ -35,7 +35,7 @@ each one (possibly to zero).  Each is a ``Link`` from the shared local
      - 0.6651
 
 ``SOEC`` is the structurally different one.  Being a high-temperature process it
-*imports* heat — its ``efficiency2`` is negative, drawing from ``Heat MT`` — and in
+*imports* heat — its ``efficiency2`` is negative, drawing from ``Heat MT``, and in
 exchange converts electricity to hydrogen far more efficiently than the two
 low-temperature routes.  Whether that trade is worth making depends on what else on
 the site wants MT heat, which is exactly the kind of question the symbiosis network

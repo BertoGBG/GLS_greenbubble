@@ -57,13 +57,13 @@ Short label appended to the output folder name. Keep it concise.
 CO₂ pricing is applied differently per energy carrier, reflecting who is
 legally liable for the tax:
 
-- **Electricity** — the historical spot price already reflects whatever
+- **Electricity**: the historical spot price already reflects whatever
   carbon price was prevailing in the market at the time (passed through by
   the price-setting fossil generator). Only the *delta*
   ``CO2_cost - CO2_cost_ref_year`` is added, scaled by the grid's hourly
-  emission intensity — i.e. only the extra cost of the scenario's CO₂ price
+  emission intensity, i.e. only the extra cost of the scenario's CO₂ price
   relative to the reference year.
-- **Natural gas** — the historical commodity price carries no combustion
+- **Natural gas**: the historical commodity price carries no combustion
   tax: under ETS/carbon-tax rules that liability sits with the combusting
   plant (the boiler), not the gas supplier. The **full** ``CO2_cost`` is
   therefore added to the NG purchase price (boilers) and to the bioCH4 sale
@@ -192,7 +192,7 @@ Enables multi-scenario stochastic optimisation.
        '2022': 100
        ...
      CO2_cost_ref_year_s: # per-scenario CO₂ cost already embedded in the
-                           # historical electricity price — see :ref:`config-co2-pricing`
+                           # historical electricity price; see :ref:`config-co2-pricing`
        '2022': 0
        ...
      EVPI: true           # compute Expected Value of Perfect Information
@@ -204,7 +204,7 @@ automatically disabled when ``stochastic: false``.
 
 .. important::
    ``scenarios``, ``CO2_cost_s`` and ``CO2_cost_ref_year_s`` are replaced
-   **wholesale** when overridden in ``config.yaml`` — not deep-merged
+   **wholesale** when overridden in ``config.yaml``, not deep-merged
    key-by-key like the rest of the config (see ``_REPLACE_WHOLESALE_KEYS``
    in ``scripts/config.py``). If you override any of them, give the
    **complete** set of years you want (probabilities summing to 1); leftover
@@ -543,7 +543,7 @@ binary dispatch) for a technology.
 **Current GreenBubble behaviour**
 
 In ``prepare_network.py``, ``committable`` is only activated when
-``expansion: false`` — i.e. for fixed-capacity brownfield assets.  When a
+``expansion: false``, i.e. for fixed-capacity brownfield assets.  When a
 technology is extendable (``expansion: true``), the capacity expansion solve
 runs as a pure LP regardless of the ``committable`` flag.
 
@@ -561,7 +561,7 @@ re-activates ``committable=True`` for any technology that has it set in
 
 **Stochastic mode**
 
-``committable: true`` is incompatible with stochastic mode — the multi-scenario
+``committable: true`` is incompatible with stochastic mode, the multi-scenario
 LP requires a pure LP (no binary variables).  See :ref:`guide-stochastic`.
 
 ----
@@ -579,7 +579,7 @@ adding a stream, in :doc:`guide_process_streams`. Overrides go in
 ``config/p_config.yaml``.
 
 ``p_config`` is captured in ``config_run.yaml`` under its own section, as the
-resolved stream frame — so a run that changes a pressure or a temperature is
+resolved stream frame, so a run that changes a pressure or a temperature is
 distinguishable from one that does not. See :doc:`guide_outputs`.
 
 ----

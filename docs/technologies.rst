@@ -6,8 +6,8 @@
 Technologies
 ============
 
-Every technology in the model belongs to one **agent** — the broad category of
-plant it performs its function within — and each agent is switched on by its
+Every technology in the model belongs to one **agent**, the broad category of
+plant it performs its function within, and each agent is switched on by its
 ``n_flags`` entry. The agent structure and what it means for the model is in
 :doc:`model_approach`; this section is the catalogue.
 

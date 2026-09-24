@@ -17,10 +17,10 @@ Output naming structure
 GreenBubble uses a **hybrid naming scheme** that separates the *folder* from
 the *file names* inside it:
 
-- **Folder** — just ``run_name`` from ``config.yaml``.  Short by design to
+- **Folder**: just ``run_name`` from ``config.yaml``.  Short by design to
   stay within Windows' 260-character path limit.
 
-- **File names** inside — a long descriptive prefix that encodes the full
+- **File names** inside, a long descriptive prefix that encodes the full
   configuration detail::
 
      {flags}CO2_{co2}_{tD|tP}_H2_{h2}_MeOH_{meoh}_CH4_{ch4}_{year}_El_{el}_{DET|STC}_{res}_{run_name}
@@ -35,7 +35,7 @@ the *file names* inside it:
   name prefix.
 
 Multiple configurations sharing the same ``run_name`` (different years, modes,
-or flag sets) coexist in the same folder — the descriptive file names
+or flag sets) coexist in the same folder, the descriptive file names
 distinguish them. The complete configuration is also captured in
 ``networks/config_run.yaml`` (see :ref:`outputs-config-run`).
 
@@ -54,7 +54,7 @@ have a CSV twin; they are described together below.
 
 .. _outputs-networks:
 
-``networks/`` — the solved model
+``networks/``, the solved model
 --------------------------------
 
 ================================  ====================================================
@@ -62,20 +62,20 @@ File                              Contents
 ================================  ====================================================
 ``<name>_OPT.nc``                 The solved PyPSA network (capacities, dispatch, duals).
                                   Re-load with ``pypsa.Network(path)`` for custom analysis.
-``config_run.yaml``               **Run fingerprint** — the complete merged configuration
+``config_run.yaml``               **Run fingerprint**, the complete merged configuration
                                   used for this run (see :ref:`outputs-config-run`).
 ``network_comp_allocation.pkl``   Mapping of components to technology agents (internal use).
 ================================  ====================================================
 
 The network **topology diagrams** live in ``plots/``:
 
-- ``<name>_PRE.svg`` — the network *before* solving (all candidate components).
-- ``<name>_OPT.svg`` — the *optimal* network (only built components, sized).
+- ``<name>_PRE.svg``, the network *before* solving (all candidate components).
+- ``<name>_OPT.svg``, the *optimal* network (only built components, sized).
 - ``*.dot`` — Graphviz source for the SVGs.
 
 .. _outputs-config-run:
 
-``config_run.yaml`` — the run fingerprint
+``config_run.yaml``, the run fingerprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``config_run.yaml`` is the **single authoritative record** of every parameter
@@ -140,15 +140,15 @@ fingerprints.
 
 **How to use it:**
 
-- **Reproduce a run** — copy ``config:`` back to ``config/config.yaml`` and
+- **Reproduce a run**: copy ``config:`` back to ``config/config.yaml`` and
   ``n_config:`` + ``n_options:`` back to ``config/n_config.yaml`` (keep only
   keys that differ from the defaults).
-- **Compare runs** — diff two ``config_run.yaml`` files to see exactly what
+- **Compare runs**: diff two ``config_run.yaml`` files to see exactly what
   changed between scenarios.
-- **Audit brownfield settings** — ``n_config`` entries with ``initial capacity > 0``
+- **Audit brownfield settings**: ``n_config`` entries with ``initial capacity > 0``
   and ``expansion: false`` are the fixed brownfield assets; ``remaining_investment_fraction``
   tells you how much residual CAPEX was charged.
-- **Check solver** — the ``optimization`` block records which solver and profile
+- **Check solver**: the ``optimization`` block records which solver and profile
   were actually used.
 
 ---
@@ -162,7 +162,7 @@ Capacities — *what gets built*
   technology. In stochastic runs it contrasts the single shared design (**SP**,
   stochastic program) against the per-scenario **WS** (wait-and-see) optima.
 - **CSV** ``optimal_capacities.csv`` — capacity, fixed cost (€/y), unit and energy
-  capacity per component; ``opt_capacities_SP_vs_WP.csv`` — the SP-vs-WS table
+  capacity per component; ``opt_capacities_SP_vs_WP.csv``, the SP-vs-WS table
   behind the plot.
 
 ---
@@ -176,7 +176,7 @@ Operation — *how it runs*
   each technology (how hard each asset works).
 - **Plot** ``Operation_heat_maps_by_scenario.png`` — hour-of-day × day-of-year
   dispatch heat maps, revealing daily and seasonal operating patterns.
-- **Plot** ``CF_operation_heat_maps_by_scenario.png`` — the same as heat maps but
+- **Plot** ``CF_operation_heat_maps_by_scenario.png``, the same as heat maps but
   normalised to capacity factor.
 - **CSV** the underlying time series are in ``full_component_table.csv`` and the
   network ``.nc``.
@@ -202,7 +202,7 @@ Internal-market shadow prices
 The dual of each carrier's nodal balance is its **shadow price** (€/MWh) — the
 marginal value of that energy/material inside the plant.
 
-- **Plot** ``shd_prices_mean_bar.png`` — the **energy-weighted mean** shadow price
+- **Plot** ``shd_prices_mean_bar.png``, the **energy-weighted mean** shadow price
   per internal bus (the headline "what is H₂/CO₂/heat worth here" number).
 - **CSV** ``shadow_prices_mean.csv`` — columns ``bus``,
   ``energy weighted mean (EUR/MWh)`` (the data behind that bar chart).
@@ -223,7 +223,7 @@ marginal value of that energy/material inside the plant.
 SRMC & merit order
 ------------------
 
-- **Plot** ``srmc_by_technology.png`` — the **short-run marginal cost** time
+- **Plot** ``srmc_by_technology.png``, the **short-run marginal cost** time
   series per producing technology vs the product shadow price; where SRMC ≤ price
   the unit is *in merit* and runs.
 - **CSV** ``srmc_by_technology.csv`` — per snapshot & link:
@@ -238,7 +238,7 @@ System cost & levelised cost
 ----------------------------
 
 - **Plot** ``TSC_by_carrier.png`` — **total system cost** split by carrier /
-  technology (annualised CAPEX + OPEX); ``TSC_by_agents.png`` — the same split by
+  technology (annualised CAPEX + OPEX); ``TSC_by_agents.png``, the same split by
   plant *agent*.
 - **CSV** ``TSC_by_carrier.csv`` / ``TSC_by_agent.csv`` — columns ``scenario``,
   ``group``, ``capex``, ``opex``, ``total``, ``probability``.
@@ -246,10 +246,10 @@ System cost & levelised cost
   **levelised cost of production** per product, broken into CAPEX, OPEX, indirect
   OPEX, by-product revenue, annual production and annual profit.
   ``lcop_kkt_by_technology.csv`` is the dual/KKT cross-check (zero-profit
-  condition — see :ref:`guide-economic-analysis`).
+  condition; see :ref:`guide-economic-analysis`).
 - **CSV** ``pypsa_statistics.csv`` — PyPSA's standard statistics (optimal/installed
   capacity, supply, capacity factor, CAPEX, OPEX, revenue, market value).
-- **CSV** ``cost_assumptions.csv`` — the techno-economic inputs actually used.
+- **CSV** ``cost_assumptions.csv``, the techno-economic inputs actually used.
 
 ---
 

@@ -54,7 +54,7 @@ temperature it exceeds, so heat degrades downward but never upward. A reactor at
 160 °C can serve all three; a 60 °C cooling duty can serve only ``Heat LT``.
 
 Temperatures and pressures of the circuits are set in ``p_config``. **The number
-of circuits is fixed at three** — the plant builders name ``Heat MT``,
+of circuits is fixed at three**, the plant builders name ``Heat MT``,
 ``Heat DH`` and ``Heat LT`` directly, so adding or removing one is a code change,
 not a configuration change.
 

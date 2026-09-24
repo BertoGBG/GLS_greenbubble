@@ -62,7 +62,7 @@ Runs once per scenario year. With ``-j4``, all years are downloaded in parallel.
 
 - Output: ``data/Inputs_{year}/.preprocessed`` (marker file)
 - Script: ``scripts/snakemake_preprocess.py``
-- Wildcard: ``{year}`` — see :ref:`wildcards`
+- Wildcard: ``{year}``; see :ref:`wildcards`
 
 .. note::
 

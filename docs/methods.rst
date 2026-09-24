@@ -26,11 +26,11 @@ capacity decisions are feasible and optimal across all scenarios.
 
 **Formulation**
 
-- **First stage** — capacity variables (``p_nom``) are shared across all
+- **First stage**: capacity variables (``p_nom``) are shared across all
   scenarios; they represent investment decisions made before uncertainty resolves.
-- **Second stage** — dispatch variables (``p(t)``) are scenario-specific;
+- **Second stage**: dispatch variables (``p(t)``) are scenario-specific;
   the optimiser can dispatch differently in each scenario year.
-- **Objective** — minimise expected total cost:
+- **Objective**: minimise expected total cost:
   :math:`\sum_s \pi_s \cdot C_s(x, y_s)`, where :math:`\pi_s` is the
   probability of scenario *s*, *x* are first-stage capacity decisions, and
   *y_s* are second-stage dispatch decisions.
@@ -50,7 +50,7 @@ for each scenario individually (perfect-information runs).  The
 A large EVPI indicates that the uncertainty in scenario realisations
 strongly influences the optimal design.
 
-**Configuration** — see :ref:`config-stochastic` for all parameters.
+**Configuration**; see :ref:`config-stochastic` for all parameters.
 
 ---
 
@@ -89,7 +89,7 @@ GreenBubble implements two constraint modes, controlled by ``rfnbos_dict.limit``
      - Constraint applied
    * - ``price``
      - Electrolysis can only operate when the electricity spot price is below
-       ``price_threshold`` (€/MWh) — a proxy for high-renewable-share hours
+       ``price_threshold`` (€/MWh), a proxy for high-renewable-share hours
    * - ``emissions``
      - Electrolysis is restricted to hours when the grid emission intensity
        is below ``emission_threshold`` (tCO₂/MWh) — direct temporal correlation

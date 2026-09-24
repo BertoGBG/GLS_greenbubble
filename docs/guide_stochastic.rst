@@ -36,7 +36,7 @@ Enable stochastic mode in ``config/config.yaml``:
        '2024': 100
        '2025': 120
      CO2_cost_ref_year_s:  # CO₂ cost already embedded in the historical
-                            # electricity price — see :ref:`config-co2-pricing`
+                            # electricity price; see :ref:`config-co2-pricing`
        '2022': 0
        '2023': 0
        '2024': 0
@@ -109,7 +109,7 @@ Limitations
   to ``null`` in ``n_config.yaml`` for every ramp-limited technology enabled
   in a stochastic run (see ``tutorials/4_stochastic/n_config.yaml``).
 - **Temporal resampling** with stochastic mode issues a warning (scenarios are
-  resampled independently — see :ref:`guide-temporal-resolution`).
+  resampled independently; see :ref:`guide-temporal-resolution`).
 
 ---
 

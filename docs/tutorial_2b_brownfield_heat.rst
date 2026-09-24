@@ -15,7 +15,7 @@ The setup adds three heat-side technologies to the existing plant:
 
 * **Heat pump** — upgrades low-temperature electrolyser waste heat (30–60 °C)
   to district-heating supply temperature (≈ 70–90 °C).
-* **District-heating water-tank storage (TES DH)** — a thermal buffer that
+* **District-heating water-tank storage (TES DH)**, a thermal buffer that
   decouples heat production from DH demand, allowing the plant to exploit cheap
   electricity hours without oversizing the DH connection.
 * **DH connection** — sells heat to the district-heating grid at a fixed price
@@ -117,7 +117,7 @@ small sanitary-water base load in summer.
      (2.7 MW) because the 100 MW fixed electrolyser creates large and variable
      electricity demand spikes that the battery smooths against the renewable
      profile.
-   - **District heating revenue ≈ €20.9 M/y** — the largest single revenue
+   - **District heating revenue ≈ €20.9 M/y**: the largest single revenue
      stream after biomethane, reflecting the high DH price (100 €/MWh) and the
      222 GWh/y annual supply.
    - The high H₂ shadow price (340 €/MWh at H₂ delivery) reflects the cost

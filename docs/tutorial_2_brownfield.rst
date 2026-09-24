@@ -35,19 +35,19 @@ A technology's investment mode is set by three ``n_config`` keys:
    * - 0
      - true
      - 0
-     - **Greenfield** — built from scratch (Tutorial 1)
+     - **Greenfield**: built from scratch (Tutorial 1)
    * - >0
      - false
      - 0
-     - **Brownfield, sunk** — fixed size, no capital charge
+     - **Brownfield, sunk**: fixed size, no capital charge
    * - >0
      - false
      - >0
-     - **Brownfield, residual** — fixed size, *partial* capital charge
+     - **Brownfield, residual**: fixed size, *partial* capital charge
    * - >0
      - true
      - any
-     - **Mixed** — existing block + expandable new capacity
+     - **Mixed**: existing block + expandable new capacity
 
 ``rif`` = ``remaining_investment_fraction``: the share of the *original*
 investment still being paid off. The annual charge is
@@ -129,7 +129,7 @@ are described once in :ref:`guide-outputs` and read as in
      where the upgrading-vs-biomethanation *competition* turns into a *mix*.
    - **District heating** adds value to waste heat: the DH bus shadow price clears
      at ≈ 25 €/MWh and biomethanation/heat-exchanger links export heat to it.
-   - Net profit ≈ **€48.7 M/y** — the existing assets are largely sunk, so only
+   - Net profit ≈ **€48.7 M/y**, the existing assets are largely sunk, so only
      their residual CAPEX is charged rather than a full greenfield investment.
    - Electrolyser CF ≈ 0.68, biomethanation CF ≈ 0.92 (running near-constantly
      wherever H₂ is available), upgrading CF ≈ 0.80.
@@ -172,7 +172,7 @@ lifetime, which matters for how the payback numbers below should be read
      ``biogas`` (1107 % coverage, 0.7-year payback), ``symbiosis``
      (461 %, 1.7 y) and ``meoh`` (683 %, 1.1 y) all carry a small residual
      annuity — only 30 % of the original biogas/wind/solar investment is
-     still outstanding — so even modest cash flow clears it easily. This
+     still outstanding, so even modest cash flow clears it easily. This
      is the payback-side view of the same ``remaining_investment_fraction``
      mechanic from Section 1.
    - **``electrolysis`` is the interesting case**: pure greenfield, freely

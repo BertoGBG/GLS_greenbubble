@@ -150,7 +150,7 @@ The charger takes ``Concrete-charger``'s efficiency of 0.99. The discharger does
 ``Heat MT``, on top of a 2 %/h standing loss.
 
 The catalogue figure is deliberately overridden. ``Concrete-discharger``'s 0.4343
-is Viswanathan's **electrical** discharge — the row's own note reads *"RTE assume
+is Viswanathan's **electrical** discharge, the row's own note reads *"RTE assume
 99% for charge and other for discharge"*, a power-to-power split through a steam
 cycle. This store has no power block: it returns heat as heat, so that figure
 understates it.

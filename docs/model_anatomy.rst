@@ -11,7 +11,7 @@ operate. Toggle an ``n_flags`` entry and the diagram redraws: the shared carrier
 rails appear or are severed, agents grey out, and any agent blocked by a
 dependency says which one it is missing.
 
-The dependency rules are the real ones — the page runs the same logic as
+The dependency rules are the real ones, the page runs the same logic as
 ``network_dependencies()`` in ``scripts/prepare_network.py``. Three things are
 worth trying:
 
@@ -56,5 +56,5 @@ worth trying:
    they never block.
 
 For the static versions of these figures, and for everything the diagram does not
-show — the system boundary, the pressure ladder, the heat circuits — see
+show, the system boundary, the pressure ladder, the heat circuits — see
 :doc:`model_approach`.

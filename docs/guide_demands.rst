@@ -9,7 +9,7 @@ store** (delivery buffer) is added to the network.
 
 The demand system is configured entirely in ``config/config.yaml`` under the
 ``targets`` key.  Seasonal profiles for ``profile`` and ``bins_profile`` modes
-are loaded from ``data/common/`` — a year-agnostic folder separate from the
+are loaded from ``data/common/``, a year-agnostic folder separate from the
 per-year ``data/Inputs_{year}/`` directories.
 
 ----
@@ -129,7 +129,7 @@ The demand is shaped by the Danish natural-gas consumption seasonal profile
 
 The year is divided into ``n_bins`` equal time windows. At the **end** of each
 bin a single delivery of ``annual_demand / n_bins`` MWh is required. Between
-deliveries the demand is zero — the optimiser accumulates product in the
+deliveries the demand is zero, the optimiser accumulates product in the
 delivery buffer store and empties it at the bin endpoint.
 
 The delivery store ``e_nom_max`` is set to ``annual / n_bins`` (one bin's worth),
@@ -187,7 +187,7 @@ represents the seasonal shape of demand.  Profiles live in ``data/common/``
 Built-in default
 ^^^^^^^^^^^^^^^^
 
-``data/common/NG_demand_DK_profile.csv`` — the Danish natural-gas consumption
+``data/common/NG_demand_DK_profile.csv``, the Danish natural-gas consumption
 seasonal profile (daily data, winter-heavy).  It is seeded automatically the
 first time any year is preprocessed and does not need to be managed manually.
 
@@ -227,7 +227,7 @@ The store represents a product tank or pipeline buffer:
 
 - ``e_cyclic = True`` — start-of-year SOC equals end-of-year SOC (annual
   balance enforced).
-- ``e_nom_extendable = True`` — the optimiser sizes the tank up to ``e_nom_max``.
+- ``e_nom_extendable = True``, the optimiser sizes the tank up to ``e_nom_max``.
 - Marginal cost is zero (no cost to hold product in the buffer).
 
 ----
@@ -282,7 +282,7 @@ expansion run. In rolling horizon (RH) the store is kept **non-cyclic**
 (``e_cyclic = False``) so each window starts from the SOC carried over from
 the previous window rather than an arbitrary optimised value.
 
-The store capacity is left at the optimised value — the RH solver can use the
+The store capacity is left at the optimised value, the RH solver can use the
 same buffer to absorb hourly variability within each window.
 
 Bins modes (annual, n_bins = 1)

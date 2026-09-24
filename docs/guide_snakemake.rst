@@ -28,7 +28,7 @@ version committed to the repository:
      - Per-technology capacity bounds, ramp limits, operational options
    * - ``config/p_config.default.yaml``
      - Physical state of every stream (fluid, temperature, pressure) and the
-       heat circuits — see :doc:`guide_process_streams`
+       heat circuits; see :doc:`guide_process_streams`
    * - ``config/plots_config.default.yaml``
      - Which components to plot and export after optimisation
 
@@ -75,7 +75,7 @@ If no ``config/config.yaml`` exists, the model runs with the committed defaults.
 
 Outputs land in ``outputs/single_analysis/{run_name}/``
 (e.g. ``my_scenario/``). Files inside carry the full configuration detail in
-their names — see :ref:`wildcards` for the format. The full configuration is
+their names; see :ref:`wildcards` for the format. The full configuration is
 also preserved in ``networks/config_run.yaml`` inside that folder.
 
 ---

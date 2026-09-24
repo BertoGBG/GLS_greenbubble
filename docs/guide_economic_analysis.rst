@@ -23,7 +23,7 @@ Network topology as a market
 GreenBubble is a linear PyPSA model.  Every **bus** is a commodity market
 at a specific location and quality level.  The **KKT multiplier** at a bus
 (``n.buses_t.marginal_price``) is the shadow price of the energy balance
-constraint there — the marginal value of one additional unit of that
+constraint there, the marginal value of one additional unit of that
 commodity at that time step.
 
 **Links** are technologies that convert commodities.  A multilink with
@@ -70,7 +70,7 @@ Every product (bioCH4, H2, Methanol) uses a two-bus structure:
      caps cumulative annual production.
 
 The shadow price at the collection bus (``λ_collection``) is determined at
-equilibrium by the marginal producer — the highest-cost technology that is
+equilibrium by the marginal producer, the highest-cost technology that is
 still dispatched.  Technologies with lower cost earn an *intra-marginal rent*.
 
 ---
@@ -179,9 +179,9 @@ market would pay for everything the technology produces there.
 Annual profit is the economic rent: what the market pays the technology for its
 product, minus every cost it incurs (capital, O&M, feedstocks net of by-products).
 
-- **annual profit ≈ 0** — the technology is the marginal (price-setting) producer.
-- **annual profit > 0** — intra-marginal rent; technology has lower cost than the price-setter.
-- **annual profit < 0** — technology is loss-making under current market conditions (possible for EXI\_ assets if market prices are low).
+- **annual profit ≈ 0**: the technology is the marginal (price-setting) producer.
+- **annual profit > 0**: intra-marginal rent; technology has lower cost than the price-setter.
+- **annual profit < 0**: technology is loss-making under current market conditions (possible for EXI\_ assets if market prices are low).
 
 .. note::
 
@@ -442,7 +442,7 @@ optimiser (no forced brownfield floor, no hard capacity minimum), check
 whether it's a genuine underperformer or a **cross-subsidy**: does its
 product feed another agent that shows unusually *high* coverage? If so,
 the low-coverage agent is paying for value that shows up on someone else's
-books — a legitimate system-level trade-off, not a modelling error. The
+books, a legitimate system-level trade-off, not a modelling error. The
 ``electrolysis`` case in Tutorial 2 above is exactly this: its hydrogen
 makes additional biomethanation capacity worthwhile, so part of its true
 value is invisible if you only look at its own payback. Confirm the
@@ -451,7 +451,7 @@ between the two agents.
 
 **How to read a "priced at own margin" agent.** Coverage ≈ 100 % is the
 *expected*, healthy signature of a continuously-sized (extendable)
-technology at its optimum — the LP builds exactly until marginal revenue
+technology at its optimum, the LP builds exactly until marginal revenue
 equals marginal annualised cost. It is not a red flag, and the payback
 plot marks it distinctly (amber, ``*``, pinned to the effective
 amortization period) precisely so it doesn't read as "broken" the way an

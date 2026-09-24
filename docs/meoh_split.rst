@@ -116,7 +116,7 @@ Where the numbers come from
        separately here) and their purge burner / Rankine cycle.
    * - X (synthesis heat-out)
      - 0.1288
-     - [OLI] Table S14, HE5 — the duty that measurably crosses the
+     - [OLI] Table S14, HE5, the duty that measurably crosses the
        synthesis/distillation boundary
    * - Condenser heat-out
      - 0.2562
@@ -151,7 +151,7 @@ Heat bus wiring
   leaves through the tier's ambient dump, so this cannot make the network
   infeasible. It matters only when DH off-take is switched on: with
   ``options['DH']['enable']`` false (the default) the sole sink on Heat DH is the
-  ambient dump, so DH and LT are economically identical — a demand-mode pair
+  ambient dump, so DH and LT are economically identical, a demand-mode pair
   before and after the change returned bit-identical objectives. With DH sales
   enabled, 53 °C heat can no longer be sold straight to the grid and reaching the
   90 °C supply needs the ``heat pump`` technology.
@@ -212,7 +212,7 @@ Known approximations
 * **Only 0.0772 of the 0.1288 synthesis export is genuinely MT-grade**; the balance
   is [OLI]'s HE5 stream at roughly 150 → 60 °C, so wiring it all to Heat MT is
   generous by about 40 % of that export.
-* **Electricity is split 50/50** between the two halves — an admission of
+* **Electricity is split 50/50** between the two halves, an admission of
   ignorance, not an estimate. Needs a flowsheet.
 * The reactor at 247.5 °C is above every heat band the model has.
 

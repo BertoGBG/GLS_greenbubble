@@ -77,7 +77,7 @@ route is based on reforms biogas at ambient pressure and compresses the
    introduction into the MeOH-synthesis loop"
 
 The 20 bar quoted for that plant is the synthesis **loop** pressure, downstream
-of both feeds — and it is a pilot-scale ceiling rather than an optimum, set by
+of both feeds, and it is a pilot-scale ceiling rather than an optimum, set by
 the EU Pressure Equipment Directive on the basis of system gas volume.
 Industrial methanol loops run at 50-100 bar.
 
@@ -89,7 +89,7 @@ compression; only the bookkeeping differs. A GreenBubble compressor here would
 charge it twice.
 
 Because this plant creates no compressed bus of its own, it has no ``processes:``
-entry in ``p_config`` — see :doc:`/guide_process_streams` for why that is the
+entry in ``p_config``; see :doc:`/guide_process_streams` for why that is the
 correct form rather than an omission.
 
 .. note::

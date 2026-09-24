@@ -24,7 +24,7 @@ modelled as a ``Link`` with electricity input.
 (biogas → electricity + heat) with minimum load and optional committable
 mode for dispatch-only runs.
 
-**Biomass belt dryer** — a hot-air belt dryer that takes wet biomass from about
+**Biomass belt dryer**, a hot-air belt dryer that takes wet biomass from about
 **50 % moisture down to 13 %**, so it can be used by a downstream thermal
 process. Drying is what makes wet biomass usable: at 50 % moisture roughly half
 the mass is water that would otherwise be evaporated inside the conversion

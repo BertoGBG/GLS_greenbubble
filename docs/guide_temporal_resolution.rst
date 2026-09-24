@@ -46,7 +46,7 @@ Then run as normal::
    snakemake -n          # verify 2 190 snapshots appear in the plan
    snakemake --cores 4
 
-Outputs land in the same folder as a full-resolution run — the folder name does
+Outputs land in the same folder as a full-resolution run, the folder name does
 not encode the resolution, so use a distinct ``run_name`` if you want to keep
 both results::
 

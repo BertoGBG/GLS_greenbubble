@@ -213,7 +213,7 @@ The RH solver automatically detects these annual point-load stores (>95% of
 throughput concentrated in a single timestep) and:
 
 1. **Redistributes** the demand to a flat hourly rate for the duration of the
-   RH run — the load shape changes but the annual total is preserved.
+   RH run, the load shape changes but the annual total is preserved.
 2. **Caps** the delivery store to ``2 × (annual / n_windows)`` MWh, preventing
    multi-window carry-over while keeping a one-window buffer.
 
@@ -272,7 +272,7 @@ of the bound is always conservative.
    Omitting this constraint from the RH solve causes the optimizer to export
    far more electricity to the grid than the PF solve (observed: 2.5× more
    annual export in an unconstrained RH run), making the RH total system cost
-   appear lower than PF.  This is an artefact — the system is "profiting" from
+   appear lower than PF.  This is an artefact, the system is "profiting" from
    unplanned grid exports rather than using the electricity for green fuel
    production.  The constraint must always be applied to both solves to ensure
    a fair comparison.

@@ -14,7 +14,7 @@ If you use GreenBubble in academic work, please cite:
 Related projects
 ----------------
 
-- `PyPSA <https://pypsa.readthedocs.io>`_ — the underlying energy system modelling framework
+- `PyPSA <https://pypsa.readthedocs.io>`_, the underlying energy system modelling framework
 - `PyPSA-Eur <https://pypsa-eur.readthedocs.io>`_ — European sector-coupled energy system model
 - `technology-data <https://technology-data.readthedocs.io>`_ — techno-economic cost database
-- `GreenLab Skive <https://www.greenlab.dk>`_ — the industrial park that inspired the model
+- `GreenLab Skive <https://www.greenlab.dk>`_, the industrial park that inspired the model

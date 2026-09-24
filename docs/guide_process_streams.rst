@@ -17,13 +17,13 @@ GreenBubble separates three kinds of input on purpose:
      - Holds
      - Example
    * - ``technology-data`` / ``tech_inputs``
-     - **Magnitudes** — how much
+     - **Magnitudes**: how much
      - ``heat-input: 0.1047 MWh_th/MWh_MeOH``
    * - ``config/p_config.default.yaml``
-     - **State** — at what condition
+     - **State**: at what condition
      - ``{fluid: Water, T: 180, P: 10}``
    * - ``config/n_config.default.yaml``
-     - **Network component config** — capacity, expansion, ramps
+     - **Network component config**: capacity, expansion, ramps
      - ``expansion: true``
 
 The split between the first two is not cosmetic. ``technology-data`` reports *net*
@@ -161,7 +161,7 @@ This has a physical reading, and it is the useful part:
      - What happens
    * - Same declared state
      - They genuinely mix
-     - Allowed — the normal case
+     - Allowed, the normal case
    * - Different state
      - A unit operation is missing
      - Build error
@@ -192,7 +192,7 @@ Follow :doc:`guide_new_technology` for the component itself. For its streams:
    role. Use the same role names the code uses (``H2 in``, ``CO2 in``, ``product bus``),
    because that is what makes the config readable next to ``prepare_network.py``.
 
-3. **Only add to ``shared:``** if the state genuinely belongs to the network — a new
+3. **Only add to ``shared:``** if the state genuinely belongs to the network, a new
    distribution header, storage condition or market. A state used by one process is
    a port, not a shared state.
 
@@ -200,7 +200,7 @@ Follow :doc:`guide_new_technology` for the component itself. For its streams:
    If two ports legitimately feed one bus, have both inherit the same shared state.
 
 5. **If the plant creates no bus of its own, add no entry at all.** A port exists to
-   name the *plant's own* bus — the compressed one between a shared header and the
+   name the *plant's own* bus, the compressed one between a shared header and the
    plant. A plant that compresses nothing at its battery limit, taking every feed at
    the shared state, has no such bus, and an entry without ``buses:`` fails
    ``test_every_port_declares_its_own_buses``. Do not work around that by listing the
@@ -260,7 +260,7 @@ Plant-prefixed buses
 --------------------
 
 Some buses are created with a runtime prefix — ``meoh H2 HP storage``,
-``methanation H2 HP storage`` — so ``p_config`` cannot enumerate them in ``buses:``.
+``methanation H2 HP storage``, so ``p_config`` cannot enumerate them in ``buses:``.
 The stream declares a suffix instead::
 
     "H2 HP storage":

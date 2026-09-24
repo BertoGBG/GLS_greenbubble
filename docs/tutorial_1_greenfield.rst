@@ -25,8 +25,8 @@ ways GreenBubble can be driven:
 
 In both cases every investment must **pay back within 10 years**
 (``amortization_period: 10``) and only **biological methanation**
-(*biomethanation* of biogas and of CO₂) is available — the catalytic (Sabatier)
-routes are switched off — so we can watch the competition between
+(*biomethanation* of biogas and of CO₂) is available, the catalytic (Sabatier)
+routes are switched off, so we can watch the competition between
 **biomethanation** and **biogas upgrading** for supplying the biomethane demand.
 
 .. contents:: On this page
@@ -138,7 +138,7 @@ revisit what changes. For the full map of the output folder and every file see
 :ref:`guide-outputs`. We read six figures in order; the numbers quoted are from
 the 3 h reference run.
 
-**(a) Inputs — the drivers** (:ref:`outputs-inputs`). Load-duration curves of
+**(a) Inputs, the drivers** (:ref:`outputs-inputs`). Load-duration curves of
 electricity price, gas price and wind/solar capacity factors set the economics:
 how often electricity is cheap decides how attractive electrolysis is.
 
@@ -155,7 +155,7 @@ the cheaper biomethane route within a 10-year payback window.
 .. figure:: /_static/tutorials/tut1_demand_Opt_capacities_SP_vs_WS.png
    :width: 95%
 
-.. admonition:: Biomethanation vs biogas upgrading — the key result
+.. admonition:: Biomethanation vs biogas upgrading, the key result
    :class: important
 
    Both routes deliver pipeline-grade biomethane: **upgrading** strips CO₂ out of
@@ -166,7 +166,7 @@ the cheaper biomethane route within a 10-year payback window.
    **At default costs with a 10-year payback, biogas upgrading wins outright:
    biomethanation is not built at all** (0 MW). The electrolyser that *is* built
    (52 MW) serves the H₂-to-grid and methanol demands, not methanation. So the
-   "competition" resolves decisively in favour of upgrading here — the extra CH₄
+   "competition" resolves decisively in favour of upgrading here, the extra CH₄
    from biomethanation does not pay back the H₂ + reactor cost within 10 years.
 
    To make biomethanation competitive: increase ``price_bioCH4``, lower
@@ -196,7 +196,7 @@ shows which units are *in merit* hour by hour.
 Net total **≈ €69.5 M/y**, dominated by the **biogas plant CAPEX**, then **wind**,
 **electrolysis** and **upgrading**, with a small grid-export revenue. In demand
 mode each product's LCOP equals its delivery shadow price (bioCH₄ 119, H₂ 130,
-MeOH 175 €/MWh) — the zero-profit signature of a cost-minimising solve.
+MeOH 175 €/MWh), the zero-profit signature of a cost-minimising solve.
 
 .. figure:: /_static/tutorials/tut1_demand_TSC_by_carrier.png
    :width: 95%
@@ -212,7 +212,7 @@ component with capacity, capacity factor, costs, production and revenue.
 
 Re-run with the price-driven config (Section 2): prices ``price_H2 = 120``,
 ``price_bioCH4 = 200``, ``price_meoh = 200`` €/MWh. Now production is optional
-and driven by profitability — the model maximises **profit** (net ≈ **€28.3 M/y**).
+and driven by profitability, the model maximises **profit** (net ≈ **€28.3 M/y**).
 
 .. figure:: /_static/tutorials/tut1_price_Opt_capacities_SP_vs_WS.png
    :width: 95%
@@ -222,14 +222,14 @@ and driven by profitability — the model maximises **profit** (net ≈ **€28.
 
    Compare each product's price against its break-even LCOP from the demand case:
 
-   - **Biomethane (price 200 ≫ LCOP 119)** — the big winner: produced up to its
+   - **Biomethane (price 200 ≫ LCOP 119)**: the big winner: produced up to its
      cap (350 GWh/y) entirely via **biogas upgrading (40 MW, flat)**. Even at this
      high price biomethanation is not built — upgrading remains the cheaper route,
      so the profit-maximiser never needs it.
-   - **Methanol (price 200 > LCOP 175)** — produced at its full cap (9 GWh/y); a
+   - **Methanol (price 200 > LCOP 175)**: produced at its full cap (9 GWh/y); a
      small electrolyser (2.9 MW), wind (12.6 MW) and solar (2.6 MW) are built
      essentially to feed methanol synthesis.
-   - **H₂ to grid (price 120 < LCOP 130)** — *not* profitable at the greenfield
+   - **H₂ to grid (price 120 < LCOP 130)**: *not* profitable at the greenfield
      cost, so very little is sold: the electrolyser is sized for methanol's H₂
      need only. This is the clearest "price reveals break-even" signal — raise
      ``price_H2`` above ~130 €/MWh and H₂-to-grid immediately becomes attractive.

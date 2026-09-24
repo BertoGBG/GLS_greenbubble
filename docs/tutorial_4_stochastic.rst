@@ -64,7 +64,7 @@ on its own prices and renewable profiles). Scenarios carry a probability
       ``null`` for electrolysis, methanolisation, biomethanation and
       biomethanation CO2. PyPSA cannot build ramp-limit constraints on a
       scenario network — confirmed on both 1.0.7 (pinned) and the latest
-      release (1.2.4) — and a value such as ``1`` still builds them — only
+      release (1.2.4), and a value such as ``1`` still builds them — only
       ``null`` disables them. See :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
@@ -146,7 +146,7 @@ The same fixed-capacity plant dispatches differently in each scenario:
      wait-and-see dispatch flexibility is what makes the stochastic design viable.
    - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with
      perfect foresight and quantify the **Expected Value of Perfect
-     Information** — the annual value of knowing next year's market in advance.
+     Information**, the annual value of knowing next year's market in advance.
 
 ---
 

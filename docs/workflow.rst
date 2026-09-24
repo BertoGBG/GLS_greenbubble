@@ -152,7 +152,7 @@ Output structure
        *.csv                   ← tabular results for further analysis
 
 The ``{network_name}`` encodes all key scenario parameters (flags, CO₂ cost,
-targets, year, run name) — see :ref:`wildcards` for the full format.
+targets, year, run name); see :ref:`wildcards` for the full format.
 
 ---
 

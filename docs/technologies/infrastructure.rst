@@ -9,7 +9,7 @@ Compression, heat exchange and shared infrastructure
 These components belong to no single agent: compressors and pipes are built
 wherever a plant needs them, and the grid connection and external markets are
 the site's interfaces. Their duties are computed from physics rather than read
-from a catalogue — see :ref:`physics-based`.
+from a catalogue; see :ref:`physics-based`.
 
 .. _technologies-compression:
 
@@ -19,7 +19,7 @@ Compression and pressure levels
 
 Every carrier in the model has a declared pressure, and a compressor exists
 wherever a plant needs its feed above the pressure of the header it draws from.
-The states live in ``p_config`` — see :doc:`/guide_process_streams` — and the
+The states live in ``p_config``; see :doc:`/guide_process_streams`, and the
 compressor duties are computed from them with CoolProp, not hardcoded.
 
 **Shared headers.** These are the conditions a carrier sits at between plants:
@@ -81,7 +81,7 @@ that and the header is what the compressor pays for:
    * - ``biomethanation``
      - H₂
      - 1
-     - none — the reactor is atmospheric
+     - none, the reactor is atmospheric
    * - ``methanation``
      - H₂, CO₂, biogas
      - 20
@@ -188,7 +188,7 @@ intercooling moves the machine closer to isothermal compression:
      - 7
      - 1.1505
 
-(hydrogen, 3.5 → 30 bar, 50 °C inlet — the SOEC lift).
+(hydrogen, 3.5 → 30 bar, 50 °C inlet, the SOEC lift).
 
 Aftercooling and the heat exchangers
 ------------------------------------
@@ -247,7 +247,7 @@ per-plant. Every call site today passes a name.
 
 This matters for reading results: there is no single "H2 compressor" row to look
 at. Compression shows up distributed across the plants — ``SOEC`` lifting to the
-header, ``methanolisation H2 compressor`` lifting to 80 bar, and so on — so the
+header, ``methanolisation H2 compressor`` lifting to 80 bar, and so on, so the
 site's total compression cost is the sum of those, not one line item.
 
 **Per-plant does not mean duplicated.** A greenfield build with methanation and
@@ -272,7 +272,7 @@ both methanol routes active contains exactly these feed compressors:
 
 Each one performs a **different** lift, so none is redundant. Carbon dioxide
 leaves the same header for two plants at two pressures — 20 bar for methanation,
-80 bar for methanolisation — and a single shared machine could not serve both
+80 bar for methanolisation, and a single shared machine could not serve both
 without over-compressing one feed. The per-plant split is what the pressure
 ladder requires, not an oversight.
 
@@ -321,10 +321,10 @@ External markets
 
 Configured under the ``options:`` section of ``n_config.default.yaml``:
 
-- **Pellets market** — biomass pellet purchase at a fixed price; optional
+- **Pellets market**: biomass pellet purchase at a fixed price; optional
   capacity cap
-- **Moist biomass market** — co-substrate purchase for biogas plant
-- **Biochar credits** — revenue credit for biochar sequestration from
+- **Moist biomass market**: co-substrate purchase for biogas plant
+- **Biochar credits**: revenue credit for biochar sequestration from
   pyrolysis
-- **CO₂ Liq credits** — revenue credit for liquefied CO₂ export
-- **District heating** — heat sale to external DH grid (``options.DH``)
+- **CO₂ Liq credits**: revenue credit for liquefied CO₂ export
+- **District heating**: heat sale to external DH grid (``options.DH``)

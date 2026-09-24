@@ -18,7 +18,7 @@ Each sector of the GreenBubble network is built by a top-level function:
    add_methanation()     add_central_heat_MT()  add_symbiosis()
 
 These are called in sequence by ``build_network()``.  Each function must work
-independently — the optimisation problem must be feasible whether or not the
+independently, the optimisation problem must be feasible whether or not the
 other functions run.
 
 ---
