@@ -274,6 +274,72 @@ def is_eu_or_us(lat: float, lon: float) -> str:
         return "OTHER"
 
 
+# ISO country code -> ENTSO-E zone, for single-zone countries without shapes in entsoe-py
+_SINGLE_ZONE_COUNTRIES = {
+    "GB": "GB", "IE": "IE_SEM", "AL": "AL", "BA": "BA", "CY": "CY", "MT": "MT",
+    "ME": "ME", "MK": "MK", "XK": "XK", "MD": "MD", "UA": "UA", "TR": "TR",
+}
+
+
+def find_bidding_zone(lat: float, lon: float, year: int, max_distance_km: float = 20.0):
+    """Find the ENTSO-E bidding zone of a location for a given year.
+
+    Uses the bidding-zone shapes shipped with ``entsoe-py``, loaded with
+    :func:`entsoe.geo.utils.load_zones`. That function selects the Italian
+    zone shapes valid before 2021 when ``year < 2021``. ``IT_CALA`` did not
+    exist before 2021 and is excluded for those years.
+
+    The zone closest to the point is returned, so coastal sites that fall just
+    outside the simplified shapes are still assigned. Distances are measured
+    in EPSG:3035 (metres). Countries with a single zone and no shape in
+    ``entsoe-py`` (GB, Ireland, the western Balkans, ...) are found from the
+    country code of the nearest place.
+
+    Parameters
+    ----------
+    lat : float
+        Latitude in decimal degrees.
+    lon : float
+        Longitude in decimal degrees.
+    year : int
+        Year of the market data. Selects the zone boundaries valid in that year.
+    max_distance_km : float
+        Largest accepted distance from the point to the nearest zone.
+
+    Returns
+    -------
+    str or None
+        ENTSO-E zone code, e.g. ``"DK_1"`` or ``"IT_NORD"``. ``None`` if no zone
+        lies within ``max_distance_km`` and the site is not in a single-zone
+        country listed in ``_SINGLE_ZONE_COUNTRIES`` (e.g. GB, Ireland).
+    """
+    import entsoe
+    import geopandas as gpd
+    from shapely.geometry import Point
+    from entsoe.geo.utils import load_zones
+
+    geo_dir = Path(entsoe.__file__).parent / "geo" / "geojson"
+    zones = sorted(f.stem for f in geo_dir.glob("*.geojson") if not f.stem.endswith("_2020"))
+    if year < 2021:
+        zones = [z for z in zones if z != "IT_CALA"]
+
+    shapes = load_zones(zones, pd.Timestamp(f"{year}-01-01")).to_crs(3035)
+    point = gpd.GeoSeries([Point(lon, lat)], crs=4326).to_crs(3035).iloc[0]
+    distance_km = shapes.distance(point) / 1000
+
+    zone = distance_km.idxmin()
+    if distance_km[zone] <= max_distance_km:
+        # load_zones indexes the pre-2021 Italian shapes as e.g. "IT_CNOR_2020"
+        return zone.removesuffix("_2020")
+
+    # No shape nearby: entsoe-py ships no shapes for single-zone countries such as
+    # GB or Ireland. Fall back to the country of the nearest place.
+    place = rg.search((lat, lon), mode=1)[0]
+    if place["cc"] == "GB" and place["admin1"] == "Northern Ireland":
+        return "IE_SEM"  # Northern Ireland is in the all-island Single Electricity Market
+    return _SINGLE_ZONE_COUNTRIES.get(place["cc"])
+
+
 def merge_EU_US_tech_costs(tech_costs_EU, tech_costs_US, dict_tech_US_EU):
     tech_costs = tech_costs_EU.copy()
     key_list=[]

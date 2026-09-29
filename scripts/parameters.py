@@ -21,7 +21,8 @@ import os
 
 from pathlib import Path
 from scripts.config import En_price_year, year_investment, latitude, longitude, EUR_to_DKK
-from scripts.helpers import build_snapshots, is_eu_or_us
+from scripts.config import bidding_zone as _bidding_zone_cfg
+from scripts.helpers import build_snapshots, is_eu_or_us, find_bidding_zone
 
 
 def _load_dotenv(path: str = ".env") -> None:
@@ -79,10 +80,16 @@ ref_col_name = 'ref col'
 ref_df = pd.DataFrame(index=hours_in_period, columns=[ref_col_name])
 ref_df[ref_col_name] = 0
 
-'''set area to DK1 (for data pre-processing, where applicable)'''
-filter_area = r'filter={"PriceArea":"DK1"}'  # for energidata
-price_area = 'DK1'
-bidding_zone = 'DK_1'  # for entsoe
+'''Market area of the site (for data pre-processing, where applicable)'''
+# ENTSO-E bidding zone, e.g. 'DK_1'. 'auto' derives it from the site location and the
+# energy year (zone boundaries change over time). None if the site is outside the zones
+# known to entsoe-py; set bidding_zone in config.yaml in that case.
+if _bidding_zone_cfg == 'auto':
+    bidding_zone = find_bidding_zone(latitude, longitude, En_price_year)
+else:
+    bidding_zone = _bidding_zone_cfg
+price_area = bidding_zone.replace('_', '') if bidding_zone else None  # energidataservice PriceArea, e.g. 'DK1'
+filter_area = r'filter={"PriceArea":"%s"}' % price_area  # for energidata
 currency = 'EUR'        # currency for el spot price column (SpotPriceEUR)
 
 ''' District heating external demand '''

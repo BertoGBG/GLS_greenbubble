@@ -58,5 +58,6 @@ dependencies:
   - pip
   - pip:
       - entsoe-py
+      - geojson-rewind  # needed by entsoe.geo (bidding zone lookup)
       - pypsatopo
       - snakemake>=9

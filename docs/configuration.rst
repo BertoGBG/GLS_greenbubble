@@ -79,6 +79,27 @@ legally liable for the tax:
 
    latitude:  56.566     # Skive, Denmark (used for renewable CF retrieval)
    longitude:  9.033
+   bidding_zone: auto    # ENTSO-E bidding zone, e.g. DK_1
+
+``bidding_zone`` sets the electricity market area used when downloading market
+data. With ``auto``, the zone is derived from ``latitude``, ``longitude`` and
+``En_price_year``. The lookup uses the bidding-zone shapes shipped with
+``entsoe-py``. It takes the nearest zone, so coastal sites just outside the
+simplified shapes are still assigned. Zone boundaries change over time: for
+years before 2021 the Italian zones follow the old borders, and ``IT_CALA`` does
+not exist.
+
+``entsoe-py`` has no shapes for single-zone countries such as GB, Ireland or
+Malta. If no zone lies within 20 km, the country of the nearest place is used
+instead: GB gives ``GB``, Ireland and Northern Ireland give ``IE_SEM``. If that
+also fails, e.g. far offshore or in the US, the lookup returns nothing. Set the
+zone code by hand in that case.
+
+Finding the zone does not guarantee that ENTSO-E has data for it. GB day-ahead
+prices stop at the end of 2020 (Brexit), and Malta has none.
+
+The Energi Data Service downloads (spot prices, grid CO₂ intensity) use the same
+code without the underscore, e.g. ``DK1``. They cover Denmark only.
 
 .. code-block:: yaml
 

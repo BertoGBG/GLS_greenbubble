@@ -11,6 +11,7 @@ max_RE_to_grid:    0.3
 En_price_year:    2024
 latitude:        56.566
 longitude:        9.033
+bidding_zone:     auto   # ENTSO-E zone code (e.g. DK_1). auto = derived from latitude/longitude and En_price_year
 outputs_folder: outputs/single_analysis
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-targets

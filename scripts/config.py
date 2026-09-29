@@ -290,6 +290,7 @@ En_price_year            = _cfg["En_price_year"]
 
 latitude                 = _cfg["latitude"]
 longitude                = _cfg["longitude"]
+bidding_zone             = _cfg.get("bidding_zone", "auto")
 
 n_flags                  = dict(_cfg["n_flags"])
 n_flags_opt              = dict(_cfg["n_flags_opt"])
