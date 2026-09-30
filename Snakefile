@@ -93,6 +93,18 @@ if RH_ENABLED:
 if RH_ENABLED and RH_YEAR != YEAR:
     PREPROCESS_YEARS = sorted(set(list(PREPROCESS_YEARS) + [str(RH_YEAR)]))
 
+# Preprocessed market data live in a folder that depends on the site's bidding zone
+# (data/Inputs_{year} for DK_1, data/{zone}/Inputs_{year} otherwise). The marker file
+# sits in that folder, so moving the site to another zone triggers preprocessing.
+import sys as _sys
+_sys.path.insert(0, ".")
+from scripts import parameters as _params
+
+
+def preprocessed_marker(year):
+    year = int(year)
+    return f"{_params.input_data_folder(year, _params.market_zone(year))}/.preprocessed"
+
 onstart:
     # Check whether any technology-data CSV has changed since the last download.
     # If the git blob SHA differs from the cached value, delete the local file so

@@ -60,7 +60,7 @@ renewable capacity factors (wind, solar), and district heating demand.
 
 Runs once per scenario year. With ``-j4``, all years are downloaded in parallel.
 
-- Output: ``data/Inputs_{year}/.preprocessed`` (marker file)
+- Output: ``{folder}/.preprocessed`` (``data/Inputs_{year}`` for DK_1, ``data/{zone}/Inputs_{year}`` otherwise) (marker file)
 - Script: ``scripts/snakemake_preprocess.py``
 - Wildcard: ``{year}``; see :ref:`wildcards`
 
@@ -80,7 +80,7 @@ the ``inputs_dict`` passed to the network builder.
 Waits for **all** ``preprocess_inputs`` jobs to complete before running.
 Re-runs whenever ``config.default.yaml`` or ``config.yaml`` changes.
 
-- Input: ``data/Inputs_{year}/.preprocessed`` for all years in ``PREPROCESS_YEARS``; both config files
+- Input: ``{folder}/.preprocessed`` (``data/Inputs_{year}`` for DK_1, ``data/{zone}/Inputs_{year}`` otherwise) for all years in ``PREPROCESS_YEARS``; both config files
 - Output: ``resources/inputs_{year}.pkl``
 - Script: ``scripts/snakemake_prepare_inputs.py``
 

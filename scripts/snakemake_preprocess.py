@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.preprocessing import pre_processing_energy_data
 from scripts import config as c
 
-year = int(snakemake.wildcards.year)
+year = int(snakemake.wildcards.folder[-4:])  # folder = data/[zone/]Inputs_{year}
 
 # Read DH peak capacity from n_config (options.DH.peak capacity).
 # Falls back to parameters.DH_Skive_Capacity if the key is absent (e.g. old

@@ -16,9 +16,11 @@ This module contains two groups of functions:
   years and assembles the ``inputs_dict`` consumed by
   :func:`scripts.prepare_network.build_network`.
 
-All CSV outputs are written to ``data/Inputs_{year}/`` (EU locations) or
+All CSV outputs are written to ``data/Inputs_{year}/`` (DK_1 sites),
+``data/{zone}/Inputs_{year}/`` (other European bidding zones) or
 ``data/California/Inputs_{year}/`` (US locations), as determined by the
-project coordinates in ``config.yaml``.
+project coordinates in ``config.yaml`` (see
+:func:`scripts.parameters.input_data_folder`).
 
 .. note::
    Leap-year days (Feb 29) are dropped to keep all years on the same
@@ -536,6 +538,127 @@ def download_dk_day_ahead_prices(
     return out
 
 
+def download_ecb_exchange_rate(currency, start_date, end_date, timeout=60):
+    """Daily ECB reference rate, units of ``currency`` per EUR (e.g. GBP/EUR).
+
+    Source: ECB Data Portal (no API key). Rates exist on business days only.
+    """
+    url = f"https://data-api.ecb.europa.eu/service/data/EXR/D.{currency}.EUR.SP00.A"
+    r = requests.get(url, params={"startPeriod": start_date, "endPeriod": end_date, "format": "csvdata"},
+                     timeout=timeout)
+    r.raise_for_status()
+    df = pd.read_csv(StringIO(r.text), usecols=["TIME_PERIOD", "OBS_VALUE"])
+    return df.set_index(pd.to_datetime(df["TIME_PERIOD"]))["OBS_VALUE"].sort_index()
+
+
+def download_gb_day_ahead_prices(year, tz="Europe/London", timeout=60):
+    """GB wholesale electricity prices for one local calendar year, in EUR/MWh.
+
+    Source: Elexon BMRS Market Index Data (MID, provider APXMIDP), free and
+    without API key. ENTSO-E stopped publishing GB prices after 2020. MID is
+    half-hourly and in GBP; it is averaged to hourly and converted to EUR with
+    the daily ECB GBP/EUR rate of the local day.
+
+    The window is local 1 January 00:00 to local 1 January 00:00 of the next
+    year, so the first and last hours of the local year are included.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Column ``SpotPrice`` (EUR/MWh), indexed by tz-naive local time. DST
+        shows only in the labels (one hour skipped in spring, repeated in
+        autumn), as for :func:`download_dk_day_ahead_prices`.
+    """
+    start_utc = pd.Timestamp(f"{year}-01-01", tz=tz).tz_convert("UTC")
+    end_utc = pd.Timestamp(f"{year + 1}-01-01", tz=tz).tz_convert("UTC")
+
+    url = "https://data.elexon.co.uk/bmrs/api/v1/balancing/pricing/market-index"
+    parts, t0 = [], start_utc
+    while t0 < end_utc:
+        t1 = min(t0 + pd.Timedelta(days=6), end_utc)  # API accepts at most 7 days per request
+        r = requests.get(url, params={"from": t0.strftime("%Y-%m-%dT%H:%MZ"),
+                                      "to": t1.strftime("%Y-%m-%dT%H:%MZ"),
+                                      "dataProviders": "APXMIDP"}, timeout=timeout)
+        r.raise_for_status()
+        parts.append(pd.DataFrame(r.json()["data"]))
+        t0 = t1
+    mid = pd.concat(parts, ignore_index=True).drop_duplicates("startTime")
+    mid["startTime"] = pd.to_datetime(mid["startTime"], utc=True)
+    mid.loc[mid["volume"] <= 0, "price"] = np.nan  # no trades -> no price
+    price_gbp = mid.set_index("startTime")["price"].sort_index()
+
+    # hourly mean on a continuous UTC axis over the local year
+    hours_utc = pd.date_range(start_utc, end_utc, freq="1h", inclusive="left")
+    price_gbp = price_gbp.resample("1h").mean().reindex(hours_utc)
+    n_missing = int(price_gbp.isna().sum())
+    if n_missing > 0.05 * len(price_gbp):
+        raise RuntimeError(f"Elexon MID {year}: {n_missing} of {len(price_gbp)} hours missing.")
+    if n_missing:
+        print(f"[preprocess] Elexon MID {year}: interpolating {n_missing} missing hours.")
+        price_gbp = price_gbp.interpolate("time").ffill().bfill()
+
+    # GBP -> EUR with the ECB rate of the local day (weekends/holidays: last rate)
+    local = hours_utc.tz_convert(tz)
+    rate = download_ecb_exchange_rate("GBP", f"{year - 1}-12-01", f"{year}-12-31", timeout=timeout)
+    days = pd.date_range(rate.index.min(), local[-1].tz_localize(None).normalize(), freq="D")
+    rate = rate.reindex(days).ffill()
+    gbp_per_eur = rate.reindex(local.tz_localize(None).normalize()).to_numpy()
+
+    out = pd.DataFrame({"SpotPrice": price_gbp.to_numpy() / gbp_per_eur},
+                       index=local.tz_localize(None))
+    out.index.name = None
+    return out
+
+
+def download_gb_co2_intensity(year, tz="Europe/London", timeout=60):
+    """GB grid CO2 intensity for one local calendar year, in t/MWh.
+
+    Source: NESO Carbon Intensity API (national, Great Britain), free and
+    without API key, available from 2018. Values are half-hourly in gCO2/kWh;
+    the ``actual`` value is used, the ``forecast`` where ``actual`` is missing.
+    Half-hours are averaged to hourly.
+
+    The window and the index convention are the same as for
+    :func:`download_gb_day_ahead_prices`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Column ``CO2PerMWh`` (t/MWh), indexed by tz-naive local time.
+    """
+    start_utc = pd.Timestamp(f"{year}-01-01", tz=tz).tz_convert("UTC")
+    end_utc = pd.Timestamp(f"{year + 1}-01-01", tz=tz).tz_convert("UTC")
+
+    rows, t0 = [], start_utc
+    while t0 < end_utc:
+        t1 = min(t0 + pd.Timedelta(days=30), end_utc)  # API accepts at most 31 days per request
+        url = (f"https://api.carbonintensity.org.uk/intensity/"
+               f"{t0.strftime('%Y-%m-%dT%H:%MZ')}/{t1.strftime('%Y-%m-%dT%H:%MZ')}")
+        r = requests.get(url, headers={"Accept": "application/json"}, timeout=timeout)
+        r.raise_for_status()
+        for d in r.json()["data"]:
+            ci = d["intensity"]
+            rows.append((d["from"], ci["actual"] if ci["actual"] is not None else ci["forecast"]))
+        t0 = t1
+    ci = pd.DataFrame(rows, columns=["from", "gCO2_kWh"]).drop_duplicates("from")
+    ci = ci.set_index(pd.to_datetime(ci["from"], utc=True))["gCO2_kWh"].astype(float).sort_index()
+
+    # hourly mean on a continuous UTC axis over the local year
+    hours_utc = pd.date_range(start_utc, end_utc, freq="1h", inclusive="left")
+    ci = ci.resample("1h").mean().reindex(hours_utc)
+    n_missing = int(ci.isna().sum())
+    if n_missing > 0.05 * len(ci):
+        raise RuntimeError(f"Carbon Intensity API {year}: {n_missing} of {len(ci)} hours missing.")
+    if n_missing:
+        print(f"[preprocess] Carbon Intensity API {year}: interpolating {n_missing} missing hours.")
+        ci = ci.interpolate("time").ffill().bfill()
+
+    out = pd.DataFrame({"CO2PerMWh": ci.to_numpy() / 1000.0},  # g/kWh -> t/MWh
+                       index=hours_utc.tz_convert(tz).tz_localize(None))
+    out.index.name = None
+    return out
+
+
 
 tf = TimezoneFinder()
 
@@ -667,7 +790,7 @@ def retrieve_renewable_capacity_factors_with_fallback(
     latitude,
     longitude,
     dataset="merra2",
-    out_timezone="Europe/Copenhagen",
+    out_timezone=None,
 ):
     """
     Wrapper when inputs are ALWAYS LOCAL time for the location.
@@ -681,11 +804,14 @@ def retrieve_renewable_capacity_factors_with_fallback(
 
     Output:
 
-    - Complete hourly series on an expected UTC grid, then converted to out_timezone.
+    - Complete hourly series on an expected UTC grid, then converted to out_timezone
+      (default: the local time zone of the site).
     """
     tzname = tf.timezone_at(lat=latitude, lng=longitude)
     if tzname is None:
         raise ValueError(f"Could not determine timezone for lat={latitude}, lon={longitude}")
+    if out_timezone is None:
+        out_timezone = tzname
 
     # Inputs are LOCAL time
     start_local = pd.Timestamp(start_date)
@@ -797,7 +923,13 @@ def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None)
     CO₂ emission intensities, natural gas prices, district-heating demand)
     and from the Renewables.ninja API (wind and solar capacity factors), then
     writes all results as semicolon-delimited CSV files to
-    ``data/Inputs_{year}/`` (EU) or ``data/California/Inputs_{year}/`` (US).
+    the folder given by :func:`scripts.parameters.input_data_folder`.
+
+    Electricity prices come from Energi Data Service for DK_1/DK_2 and from
+    Elexon for GB. Grid CO₂ intensity comes from Energi Data Service for
+    DK_1/DK_2 and from the NESO Carbon Intensity API for GB; other zones raise
+    ``NotImplementedError`` unless the CSV is provided by hand.
+    All series cover the local calendar year of the bidding zone.
 
     A ``"HourDK"`` sorted, leap-year-stripped hourly index is enforced on all
     outputs so they align with the model snapshot index from
@@ -839,10 +971,8 @@ def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None)
     from scripts.helpers import build_snapshots, is_eu_or_us
     _year = int(year) if year is not None else En_price_year
     hours_in_period, _, _ = build_snapshots(_year)
-    if is_eu_or_us(p.latitude, p.longitude) == 'EU':
-        _folder = f'data/Inputs_{_year}'
-    else:
-        _folder = f'data/California/Inputs_{_year}'
+    _zone = p.market_zone(_year)  # can change between years (e.g. Italy 2021)
+    _folder = p.input_data_folder(_year, _zone)
     os.makedirs(_folder, exist_ok=True)
     El_price_input_file           = f'{_folder}/Elspotprices_input.csv'
     CO2emis_input_file            = f'{_folder}/CO2emis_input.csv'
@@ -856,12 +986,20 @@ def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None)
     start_date = dates[0].strftime("%Y-%m-%d")
     end_date = (dates[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    '''El spot prices DK1 - input DKK/MWh or EUR/MWh'''
-    if not Path(El_price_input_file).exists():
+    '''El spot prices - EUR/MWh, local time of the bidding zone'''
+    if not Path(El_price_input_file).exists() and _zone == 'GB':
+        Elspotprices = download_gb_day_ahead_prices(_year)
+        Elspotprices = remove_feb_29(Elspotprices)
+        Elspotprices.to_csv(El_price_input_file, sep=';')  # EUR/MWh
+    elif not Path(El_price_input_file).exists():
+        if _zone not in ('DK_1', 'DK_2'):
+            raise NotImplementedError(
+                f"No electricity price source for bidding zone {_zone!r}. "
+                f"Available: DK_1, DK_2 (Energi Data Service) and GB (Elexon).")
         Elspotprices_data = download_dk_day_ahead_prices(
             start_date=start_date,
             end_date=end_date,
-            price_area=p.price_area,
+            price_area=_zone.replace('_', ''),
             timeout=60,
             resolution="1h",  # "native" or "1h"
             how="mean")
@@ -877,15 +1015,23 @@ def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None)
     else:
         print(f"[preprocess] Skipping Elspotprices download — {El_price_input_file} already exists.")
 
-    '''CO2 emission from El Grid DK1'''
+    '''CO2 emission from El Grid (Energi Data Service for DK1/DK2, NESO for GB)'''
     # DeclarationEmissionHour was removed from the API; DeclarationGridEmission covers all years
-    if not Path(CO2emis_input_file).exists():
+    if not Path(CO2emis_input_file).exists() and _zone == 'GB':
+        CO2_emiss_El = download_gb_co2_intensity(_year)
+        CO2_emiss_El = remove_feb_29(CO2_emiss_El)
+        CO2_emiss_El.to_csv(CO2emis_input_file, sep=';')  # t/MWh
+    elif not Path(CO2emis_input_file).exists():
+        if _zone not in ('DK_1', 'DK_2'):
+            raise NotImplementedError(
+                f"No grid CO2 intensity source for bidding zone {_zone!r} (DK_1, DK_2, GB). "
+                f"Provide {CO2emis_input_file} by hand.")
         CO2emis_data = download_energidata(
             dataset_name='DeclarationGridEmission',
             start_date=start_date,
             end_date=end_date,
             sort_val="HourUTC asc",
-            price_area=p.price_area,
+            price_area=_zone.replace('_', ''),
             limit=0
         )
         # Grid the series on a continuous UTC hourly axis — the SAME convention used
@@ -916,6 +1062,9 @@ def pre_processing_energy_data(year: int = None, dh_peak_capacity: float = None)
     # NG prices depending on the year
     ''' NG prices prices in DKK/kWh or EUR/kWH'''
     if not Path(NG_price_year_input_file).exists():
+        if _zone not in ('DK_1', 'DK_2'):
+            print(f"[preprocess] WARNING: NG prices are the Danish / THE hub series; "
+                  f"used as a proxy for bidding zone {_zone}.")
         if _year <= 2022:
             # due to different structure of Energinet dataset for the year 2019 and 2022
             dataset_name = 'GasMonthlyNeutralPrice'

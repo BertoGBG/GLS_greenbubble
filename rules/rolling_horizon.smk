@@ -13,7 +13,7 @@ if _rh.get("enabled", False):
     _rh_year_raw = _rh.get("rh_year", None)
     _RH_YEAR = int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else YEAR
     _rh_extra_inputs = (
-        [f"data/Inputs_{_RH_YEAR}/.preprocessed"]
+        [preprocessed_marker(_RH_YEAR)]
         if _RH_YEAR != YEAR else []
     )
 

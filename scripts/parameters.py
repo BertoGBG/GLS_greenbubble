@@ -11,8 +11,9 @@ scripts.  It is imported as ``p`` throughout the codebase::
 
 .. note::
    File paths are derived from ``config.yaml`` (via :mod:`scripts.config`)
-   and the project location coordinates.  EU locations write to
-   ``data/Inputs_{year}/``; US/California locations write to
+   and the project location coordinates.  DK_1 sites write to
+   ``data/Inputs_{year}/``, other European bidding zones to
+   ``data/{zone}/Inputs_{year}/`` and US/California locations to
    ``data/California/Inputs_{year}/``.
 """
 
@@ -84,10 +85,14 @@ ref_df[ref_col_name] = 0
 # ENTSO-E bidding zone, e.g. 'DK_1'. 'auto' derives it from the site location and the
 # energy year (zone boundaries change over time). None if the site is outside the zones
 # known to entsoe-py; set bidding_zone in config.yaml in that case.
-if _bidding_zone_cfg == 'auto':
-    bidding_zone = find_bidding_zone(latitude, longitude, En_price_year)
-else:
-    bidding_zone = _bidding_zone_cfg
+def market_zone(year):
+    """Bidding zone of the site in ``year``: the config value, or the location lookup."""
+    if _bidding_zone_cfg == 'auto':
+        return find_bidding_zone(latitude, longitude, year)
+    return _bidding_zone_cfg
+
+
+bidding_zone = market_zone(En_price_year)
 price_area = bidding_zone.replace('_', '') if bidding_zone else None  # energidataservice PriceArea, e.g. 'DK1'
 filter_area = r'filter={"PriceArea":"%s"}' % price_area  # for energidata
 currency = 'EUR'        # currency for el spot price column (SpotPriceEUR)
@@ -103,10 +108,22 @@ DH_Tamb_max = 18  # maximum outdoor temp--> capacity Factor = 0
 # retrieve data from to these folder and files AND loads these csv files in the preprocessing for the network
 
 folder_model_inputs='data' # folder where csv files for model input are saved after the pre-processing
-if is_eu_or_us(latitude,longitude)  == 'EU':
-    folder_data= 'data/' + 'Inputs_' + str(En_price_year)
-elif is_eu_or_us(latitude,longitude)  == 'US':
-    folder_data= 'data/California/' + 'Inputs_' + str(En_price_year)
+
+
+def input_data_folder(year, zone):
+    """Folder of the market-data CSVs for ``year`` and bidding ``zone``.
+
+    DK_1 (the GLS default) keeps the committed ``data/Inputs_{year}``. Other
+    European zones get ``data/{zone}/Inputs_{year}``, so they never reuse DK_1 data.
+    """
+    if is_eu_or_us(latitude, longitude) == 'US':
+        return f'data/California/Inputs_{year}'
+    if zone in (None, 'DK_1'):
+        return f'data/Inputs_{year}'
+    return f'data/{zone}/Inputs_{year}'
+
+
+folder_data = input_data_folder(En_price_year, bidding_zone)
 
 os.makedirs(folder_data, exist_ok=True)  # Create the folder if it doesn't exist
 

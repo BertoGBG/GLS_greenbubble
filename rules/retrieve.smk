@@ -15,14 +15,16 @@ rule retrieve_tech_data:
 
 rule preprocess_inputs:
     """Download and preprocess energy-market input data for a given year.
+    {folder} is the input-data folder, e.g. data/Inputs_2024 or data/GB/Inputs_2024
+    (see preprocessed_marker in the Snakefile); the year is its last four digits.
     Called once per year (En_price_year + all stochastic scenario years).
     Re-trigger manually with --forcerun preprocess_inputs if data needs refreshing.
     """
     output:
-        done = "data/Inputs_{year}/.preprocessed",
+        done = "{folder}/.preprocessed",
     log:
-        "logs/preprocess_inputs_{year}.log",
+        "logs/preprocess_inputs_{folder}.log",
     wildcard_constraints:
-        year = r"\d{4}",
+        folder = r"data/(\w+/)?Inputs_\d{4}",
     script:
         "../scripts/snakemake_preprocess.py"

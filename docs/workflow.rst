@@ -65,7 +65,7 @@ Parameterised by the ``{year}`` wildcard; runs once per scenario year
 (main year + all stochastic scenario years).  In stochastic mode, multiple
 instances run in parallel.
 
-- **Output**: ``data/Inputs_{year}/.preprocessed``
+- **Output**: ``{folder}/.preprocessed`` (``data/Inputs_{year}`` for DK_1, ``data/{zone}/Inputs_{year}`` otherwise)
 - **Script**: ``scripts/snakemake_preprocess.py``
 - **Force refresh**: ``snakemake -j1 --forcerun preprocess_inputs``
 

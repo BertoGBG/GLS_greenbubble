@@ -9,7 +9,7 @@ rule prepare_inputs:
     Re-runs whenever config.default.yaml or the user override config.yaml changes.
     """
     input:
-        done       = expand("data/Inputs_{year}/.preprocessed", year=PREPROCESS_YEARS),
+        done       = [preprocessed_marker(y) for y in PREPROCESS_YEARS],
         config_def = "config/config.default.yaml",
         config_usr = [f for f in ["config/config.yaml"] if Path(f).exists()],
     output:

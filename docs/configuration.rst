@@ -98,8 +98,33 @@ zone code by hand in that case.
 Finding the zone does not guarantee that ENTSO-E has data for it. GB day-ahead
 prices stop at the end of 2020 (Brexit), and Malta has none.
 
-The Energi Data Service downloads (spot prices, grid CO₂ intensity) use the same
-code without the underscore, e.g. ``DK1``. They cover Denmark only.
+The zone decides the data source and the input folder:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 40 40
+
+   * - Zone
+     - Electricity price
+     - Grid CO₂ intensity
+   * - ``DK_1``, ``DK_2``
+     - Energi Data Service, hourly, EUR
+     - Energi Data Service
+   * - ``GB``
+     - Elexon BMRS Market Index (MID), half-hourly averaged to hourly,
+       GBP converted to EUR with the daily ECB rate. No API key.
+     - NESO Carbon Intensity API (national, Great Britain), half-hourly
+       averaged to hourly. No API key. Available from 2018.
+   * - other zones
+     - none yet
+     - none yet
+
+All series cover the local calendar year of the zone, from 1 January 00:00 to
+31 December 24:00 local time. The first and last hours of the year are
+therefore included. DST shows only in the time labels. ``DK_1`` data are stored
+in ``data/Inputs_{year}/``. Other zones use ``data/{zone}/Inputs_{year}/``, so
+they never reuse the Danish files. Natural gas prices are the Danish / THE hub
+series for every zone.
 
 .. code-block:: yaml
 

@@ -6,21 +6,26 @@ Wildcards
 Snakemake wildcards are placeholder values resolved at runtime to determine
 which files to build. GreenBubble currently uses the following wildcards.
 
-``{year}``
-----------
+``{folder}``
+------------
 
 **Used in:** ``preprocess_inputs``
 
-Represents an energy price year for which market data is downloaded and preprocessed.
+The input-data folder of one energy price year, for which market data is
+downloaded and preprocessed. The folder depends on the site's bidding zone:
+``data/Inputs_{year}`` for DK_1 and ``data/{zone}/Inputs_{year}`` for other
+zones. The year is taken from its last four digits.
 
-In deterministic mode, ``{year}`` resolves to ``En_price_year`` from ``config.yaml``.
-In stochastic mode, it resolves to each key in ``stochastic.scenarios``.
+In deterministic mode there is one folder, for ``En_price_year`` from
+``config.yaml``. In stochastic mode there is one per key in
+``stochastic.scenarios``. ``preprocessed_marker()`` in ``Snakefile`` builds the
+paths.
 
-**Example values:** ``2022``, ``2023``, ``2024``, ``2025``
+**Example values:** ``data/Inputs_2024``, ``data/GB/Inputs_2024``
 
-**Constraint:** ``\d{4}`` (exactly four digits)
+**Constraint:** ``data/(\w+/)?Inputs_\d{4}``
 
-**Output:** ``data/Inputs_{year}/.preprocessed``
+**Output:** ``{folder}/.preprocessed``
 
 ``{network}``
 -------------

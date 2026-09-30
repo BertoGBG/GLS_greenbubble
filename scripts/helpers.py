@@ -242,8 +242,9 @@ def is_eu_or_us(lat: float, lon: float) -> str:
     """Determine whether a geographic location is in the EU or the US.
 
     Uses reverse geocoding to look up the ISO country code and classifies
-    it as ``"EU"``, ``"US"``, or ``"OTHER"``.  The EU set covers all 27
-    member states.
+    it as ``"EU"``, ``"US"``, or ``"OTHER"``.  ``"EU"`` means a European site
+    that uses the European technology data: the 27 member states plus the
+    other European countries in the ENTSO-E area (GB, Norway, Switzerland, ...).
 
     Parameters
     ----------
@@ -255,13 +256,15 @@ def is_eu_or_us(lat: float, lon: float) -> str:
     Returns
     -------
     str
-        ``"EU"`` if the location is in an EU member state,
+        ``"EU"`` if the location is in Europe (see above),
         ``"US"`` if in the United States, or ``"OTHER"`` otherwise.
     """
     # small function to merge EU and US costs based on cordinares:
     EU_COUNTRIES = {
         "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
-        "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE"
+        "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+        # European, non-EU, in the ENTSO-E area
+        "GB", "NO", "CH", "IS", "LI", "RS", "BA", "ME", "MK", "AL", "XK", "MD",
     }
     res = rg.search((lat, lon), mode=1)[0]
     cc = res["cc"]   # ISO country code
