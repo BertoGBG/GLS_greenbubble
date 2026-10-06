@@ -118,25 +118,26 @@ are described once in :ref:`guide-outputs` and read as in
    Optimal capacities. The ``EXI_`` assets (biogas 62.85 t/h DM ≈ 30 MW CH₄,
    wind 52 MW, solar 30 MW) are fixed; everything else is sized around them.
 
-.. admonition:: The key change — biomethanation now competes
+.. admonition:: The key change: biomethanation now competes
    :class: important
 
-   - **Both biomethane routes are built**: biogas upgrading **22.9 MW** *and*
-     biomethanation **11.1 MW** (vs Tutorial 1, where biomethanation never built).
-     The reason is the **fixed, cheap existing renewables**: 52 MW wind + 30 MW
-     solar power a 24.5 MW new electrolyser whose H₂ makes extra biomethanation CH₄
-     worthwhile at ``price_bioCH4 = 200 €/MWh``. The brownfield context is exactly
-     where the upgrading-vs-biomethanation *competition* turns into a *mix*.
-   - **District heating** adds value to waste heat: the DH bus shadow price clears
-     at ≈ 25 €/MWh and biomethanation/heat-exchanger links export heat to it.
-   - Net profit ≈ **€48.7 M/y**, the existing assets are largely sunk, so only
+   - **Both biomethane routes are built**: biogas upgrading **23.9 MW** *and*
+     biomethanation **8.0 MW**. In Tutorial 1 with a fixed demand, only upgrading
+     was built. The reason is the **fixed, cheap existing renewables**: 52 MW wind
+     and 30 MW solar power a 20.8 MW new electrolyser. Its H₂ turns biogas CO₂
+     into extra CH₄, which sells at ``price_bioCH4 = 200 €/MWh``. The brownfield
+     context turns the upgrading-vs-biomethanation *competition* into a *mix*.
+   - **District heating** adds value to waste heat. The DH bus shadow price
+     clears at ≈ 24 €/MWh, and biomethanation and heat-exchanger links export
+     heat to it.
+   - Net profit ≈ **€25.4 M/y**. The existing assets are largely sunk, so only
      their residual CAPEX is charged rather than a full greenfield investment.
-   - Electrolyser CF ≈ 0.68, biomethanation CF ≈ 0.92 (running near-constantly
-     wherever H₂ is available), upgrading CF ≈ 0.80.
+   - Electrolyser CF ≈ 0.73, biomethanation CF ≈ 0.90 (running almost wherever
+     H₂ is available), upgrading CF ≈ 0.91.
 
-The process constraints shape *how* units run: the electrolyser ramps with cheap
-renewable hours (visible in the operation LDCs below), while upgrading acts as
-baseload because CO₂ supply is continuous.
+The process constraints shape *how* units run. The electrolyser follows cheap
+renewable periods (visible in the operation LDCs below), while upgrading acts as
+baseload because the biogas supply is continuous.
 
 .. figure:: /_static/tutorials/tut2_CF_operation_by_scenario.png
    :width: 95%
@@ -144,20 +145,20 @@ baseload because CO₂ supply is continuous.
 .. figure:: /_static/tutorials/tut2_shd_prices_mean_bar.png
    :width: 80%
 
-   Energy-weighted mean shadow prices at internal carrier buses. Biomethane
-   collection sits at ≈ 200 €/MWh (at its price target), H₂ collection
-   ≈ 134 €/MWh, and heat buses at 23–25 €/MWh.
+   Energy-weighted mean shadow prices at internal carrier buses. The e-methane
+   collection bus sits at 200 €/MWh, its sale price. H₂ collection clears at
+   ≈ 144 €/MWh and the heat buses at 23–24 €/MWh.
 
 ---
 
 5 · Payback by agent
 ---------------------
 
-Brownfield changes more than dispatch — it changes how fast each agent pays
-back what's actually still owed on it. This tutorial also sets
-``amortization_period: 10``, shorter than most technologies' true technical
-lifetime, which matters for how the payback numbers below should be read
-(see :ref:`economics-payback` for the full formulas).
+Brownfield changes more than dispatch. It changes how fast each agent pays back
+what is still owed on it. This tutorial also sets ``amortization_period: 10``,
+shorter than most technologies' technical lifetime. This matters for how the
+payback numbers below should be read (see :ref:`economics-payback` for the full
+formulas).
 
 .. figure:: /_static/tutorials/tut2_payback_by_agent.png
    :width: 95%
@@ -168,31 +169,26 @@ lifetime, which matters for how the payback numbers below should be read
 .. admonition:: Reading brownfield vs. cross-subsidised agents
    :class: important
 
-   - **Brownfield-heavy agents pay back fast, by construction**:
-     ``biogas`` (1107 % coverage, 0.7-year payback), ``symbiosis``
-     (461 %, 1.7 y) and ``meoh`` (683 %, 1.1 y) all carry a small residual
-     annuity — only 30 % of the original biogas/wind/solar investment is
-     still outstanding, so even modest cash flow clears it easily. This
-     is the payback-side view of the same ``remaining_investment_fraction``
-     mechanic from Section 1.
-   - **``electrolysis`` is the interesting case**: pure greenfield, freely
-     sized by the optimiser, yet only 26 % capital cost coverage and an
-     infinite discounted payback. This is *not* a sign it's mis-sized —
-     it's a **cross-subsidy**. Its hydrogen makes the extra biomethanation
-     capacity built alongside it (Section 4) worthwhile; part of the value
-     electrolysis creates shows up on ``methanation``'s books, not its
-     own. Checking a low-coverage, freely-sized agent against whichever
-     agent consumes its main product is the general diagnostic — see
-     :ref:`guide-economic-analysis`.
+   - **Brownfield-heavy agents pay back fast, by construction**: ``biogas``
+     (552 % coverage, 1.4-year discounted payback), ``renewables`` (211 %,
+     3.9 y) and ``symbiosis`` (756 %, 1.0 y). Only 30-50 % of the original
+     biogas, wind and solar investment is still outstanding, so modest cash flow
+     clears it easily. This is the payback-side view of the
+     ``remaining_investment_fraction`` mechanism from Section 1.
+   - **``electrolysis`` and ``methanation`` are the interesting pair**. Both are
+     greenfield and freely sized by the optimiser, yet coverage is only 77 % and
+     59 % (discounted payback 15 and 29 years). This is *not* a sign that they are
+     mis-sized. It is a **cross-subsidy**: their value shows up on other agents'
+     books. Electrolysis H₂ lets methanation turn biogas CO₂ into extra methane,
+     and the biogas agent earns on the larger CH₄ output. Checking a
+     low-coverage, freely sized agent against the agents around it is the
+     general diagnostic; see :ref:`guide-economic-analysis`.
    - **``amortization_period: 10`` sets the bar these agents are compared
-     against.** Coverage is cash flow ÷ *effective*-period annuity — here
-     10 years, not each technology's own 20–30-year technical lifetime
-     (still shown separately as the black tick / "technical lifetime"
-     column). A shorter amortization period demands faster capital
-     recovery, which is why even ``storage`` (87 % coverage) and
-     ``central_heat`` (66 %) — neither a loss, both simply short of fully
-     clearing a *steeper* annuity than their own physical lifetime would
-     imply — sit below 100 % here.
+     against.** Coverage is cash flow ÷ *effective*-period annuity: here 10 years,
+     not each technology's own 20-30-year technical lifetime. The technical
+     lifetime is still shown separately (black tick / "technical lifetime"
+     column). A shorter amortization period demands faster capital recovery.
+     This is why ``central_heat`` (45 %) sits below 100 % without being a loss.
 
 ---
 

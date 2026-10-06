@@ -31,4 +31,4 @@ targets:
 # Coarse temporal resolution so the tutorial solves quickly with HiGHS.
 clustering:
   temporal:
-    resolution: 3h
+    resolution: 8h

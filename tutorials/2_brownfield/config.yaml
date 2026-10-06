@@ -27,4 +27,4 @@ targets:
 
 clustering:
   temporal:
-    resolution: 3h
+    resolution: 8h

@@ -21,9 +21,12 @@ overwrites your own current overrides, so back them up first if needed).
 | `1_greenfield_demand` | 1.1 | demand | greenfield, biomethanation only, 10-y payback |
 | `1_greenfield_price`  | 1.2 | price  | same, price-driven (all three products) |
 | `2_brownfield`        | 2   | price  | existing biogas/wind/solar + residual cost, district heating |
-| `3_rolling_horizon`   | 3   | price  | dispatch-only on the Tutorial 2 network (run T2 first) |
+| `2_brownfield_heat`   | 2b  | demand | brownfield with heat pump, TES DH and DH sales; electrolysis fixed |
+| `3_rolling_horizon`   | 3   | demand | dispatch-only on the Tutorial 2b network (run `2_brownfield_heat` first) |
 | `4_stochastic`        | 4   | price  | brownfield across 3 scenarios (pure LP: no committable, ramp limits null) |
 
-All tutorials use `clustering.temporal.resolution: 3h` and the default HiGHS
-solver so they solve quickly. Tutorial 3 requires the solved Tutorial 2 network;
-set its `rolling_horizon.network_path` to match your Tutorial 2 output path.
+All tutorials use the default HiGHS solver (no licence needed) and a coarse
+temporal resolution so each solves in about five minutes on a laptop:
+`8h` for Tutorials 1-3 and `24h` for the stochastic Tutorial 4, which holds
+three years in one LP. Tutorial 3 requires the solved Tutorial 2b network;
+its `rolling_horizon.network_path` points at the default Tutorial 2b output path.

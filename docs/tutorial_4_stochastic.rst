@@ -68,7 +68,10 @@ on its own prices and renewable profiles). Scenarios carry a probability
       ``null`` disables them. See :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
-Temporal resolution is set to ``3h`` to keep solve time manageable.
+Temporal resolution is set to ``24h``. The stochastic LP holds all three years
+at once, and at 8 h HiGHS did not converge within two hours. At 24 h it solves
+in about four minutes. Daily snapshots cannot show within-day cycles, so
+batteries and short-term arbitrage are not represented in this tutorial.
 
 ---
 
@@ -76,74 +79,81 @@ Temporal resolution is set to ``3h`` to keep solve time manageable.
 -------------------------
 
 The three scenarios span very different market conditions (2022 = energy-crisis
-year; 2023/2024 = post-crisis normalization), with weights 10 % / 40 % / 50 %:
+year; 2023/2024 = post-crisis normalisation), with weights 10 % / 40 % / 50 %:
 
 .. figure:: /_static/tutorials/tut4_inputs_LDC_by_scenario.png
    :width: 95%
 
    Input duration curves for all three scenarios. **2022** was the European
-   energy-crisis year — elevated NG and biomethane prices made this by far the
-   most profitable scenario (€30.0 M/y net). **2023** and **2024** show post-crisis
-   normalization (€5.4 M/y and €3.5 M/y). The 90 % combined weight on 2023/2024
-   governs the final design.
+   energy-crisis year, with high gas and electricity prices. It is the most
+   profitable scenario (€29.2 M/y net). **2023** and **2024** follow with
+   €24.1 M/y and €23.5 M/y. The 90 % combined weight on 2023/2024 governs the
+   final design.
 
-The optimizer finds **one** investment that is robust across all three years:
+The optimiser finds **one** investment that is robust across all three years:
 
 .. figure:: /_static/tutorials/tut4_Opt_capacities_SP_vs_WS.png
    :width: 95%
 
-   Stochastic-programme (SP) optimal investments: **electrolyser 4.7 MW**,
-   **biogas upgrading 27.9 MW**, **biomethanation 1.8 MW**, battery 0.9 MWh.
-   Existing brownfield assets (52 MW wind, 30 MW solar, 62.85 t/h DM biogas
-   digester) carry over from Tutorial 2.
+   Stochastic-programme (SP) optimal investments: **biogas upgrading 28.7 MW**,
+   an **AEC electrolyser of 14.7 MW** and **biomethanation 6.6 MW**. Existing
+   brownfield assets (52 MW wind, 30 MW solar, 62.85 t/h DM biogas digester)
+   carry over from Tutorial 2.
 
-The expected cost breakdown reveals which revenue streams justify the design:
+The expected cost breakdown shows which revenue streams justify the design:
 
 .. figure:: /_static/tutorials/tut4_TSC_by_carrier.png
    :width: 95%
 
-   Expected total system cost (probability-weighted) by carrier/agent.
-   **Biomethane export (bioCH4)** dominates revenues at ≈ €18.1 M/y, followed
-   by district heating (€5.1 M/y) and methanol (€1.8 M/y). Fixed CAPEX
-   (€16.0 M/y, identical across scenarios) is largely the brownfield wind,
-   solar and biogas-digester assets. **Expected net profit: €6.9 M/y.**
+   Expected total system cost (probability-weighted) by carrier.
+   **Biomethane (bioCH4)** dominates revenues at ≈ €31.5 M/y, followed by
+   e-methane from biomethanation (€7.8 M/y) and district heating (€5.3 M/y).
+   Fixed CAPEX is €18.5 M/y in every scenario, mostly the brownfield biogas
+   digester, wind and solar. **Expected net profit: €24.3 M/y.**
 
 Shadow prices show the internal marginal value of each carrier:
 
 .. figure:: /_static/tutorials/tut4_shd_prices_mean_bar.png
    :width: 95%
 
-   Energy-weighted mean shadow prices and annual throughput. Biomethane
-   collection (€14.3/MWh) is the marginal cost of routing additional biogas
-   to upgrading. The negative H₂ delivery price (−€12.1/MWh) reflects
-   hydrogen's role as a consumed intermediate in biomethanation rather than
-   a delivered product.
+   Energy-weighted mean shadow prices and annual throughput, shown for the
+   first scenario (2022). E-methane collection sits at 200 €/MWh, its sale
+   price, and biomethane collection at 120 €/MWh. Electricity (El3) is
+   ≈ 106 €/MWh in the crisis year. Buses that carry no energy are marked
+   "no flow".
+
+.. note::
+
+   The stochastic objective is the probability-weighted sum of the scenario
+   costs, so PyPSA returns each scenario's bus duals multiplied by the scenario
+   weight. The plotting step divides them by the weight, so the charts and CSVs
+   show prices in EUR/MWh.
 
 The same fixed-capacity plant dispatches differently in each scenario:
 
 .. figure:: /_static/tutorials/tut4_CF_operation_by_scenario.png
    :width: 95%
 
-   Per-scenario utilization duration curves. Biogas upgrading runs near full
-   capacity year-round in all three scenarios. The small electrolyser (4.7 MW)
-   operates more intensively in 2022 (cheap/negative electricity hours) and
-   more selectively in 2023–2024.
+   Per-scenario utilisation duration curves. Biogas upgrading runs at
+   CF 0.84-0.87 in all three scenarios. The electrolyser runs *less* in 2022
+   (CF 0.67), when electricity is expensive, and more in 2023 and 2024
+   (CF 0.74-0.76).
 
 .. admonition:: Key results
    :class: important
 
-   - **Expected net profit: €6.9 M/y**
-     (0.10 × €30.0 M + 0.40 × €5.4 M + 0.50 × €3.5 M). The 2022 energy-crisis
-     scenario is far more profitable but carries only 10 % weight; the design
-     is governed by 2023–2024 conditions.
-   - The stochastic design is a **hedge**: biogas upgrading (27.9 MW) is
-     built fully because it earns robust revenue in all three years. The
-     electricity-sensitive electrolyser (4.7 MW) is small — sized to exploit
-     cheap-electricity hours without over-betting on any single price environment.
-     Biomethanation is minimal (1.8 MW) for the same reason.
-   - The **same capacity** runs very differently across years: the electrolyser
-     is used more aggressively in 2022, more selectively in 2023–2024. This
-     wait-and-see dispatch flexibility is what makes the stochastic design viable.
+   - **Expected net profit: €24.3 M/y**
+     (0.10 × €29.2 M + 0.40 × €24.1 M + 0.50 × €23.5 M). The 2022 crisis
+     scenario is the most profitable but carries only 10 % weight. The design
+     is governed by 2023-2024 conditions.
+   - The stochastic design is a **hedge**. Biogas upgrading (28.7 MW) earns
+     robust revenue in all three years. The electricity-sensitive electrolyser
+     (14.7 MW) and biomethanation (6.6 MW) are sized for the normal years,
+     without over-betting on any single price environment.
+   - The **same capacity** runs differently across years. The electrolyser
+     backs off when power is expensive (2022) and runs harder when it is cheap.
+     This wait-and-see dispatch flexibility is what makes one design work in
+     all three scenarios.
    - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with
      perfect foresight and quantify the **Expected Value of Perfect
      Information**, the annual value of knowing next year's market in advance.
