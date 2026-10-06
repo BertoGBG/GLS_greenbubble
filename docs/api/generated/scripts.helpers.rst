@@ -1,4 +1,4 @@
-scripts.helpers
+﻿scripts.helpers
 ===============
 
 .. automodule:: scripts.helpers
@@ -35,6 +35,7 @@ scripts.helpers
       export_network
       file_name_network
       filter_consuming_links_by_counterparty_bus
+      find_bidding_zone
       find_export_links
       is_eu_or_us
       load_run_config
@@ -49,5 +50,7 @@ scripts.helpers
       resample_network
       save_config
       save_network_comp_allocation
+      tighten_negligible_capacities
+      unscale_stochastic_duals
       zero_small_capacities
    

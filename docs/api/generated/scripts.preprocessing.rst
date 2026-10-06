@@ -1,4 +1,4 @@
-scripts.preprocessing
+﻿scripts.preprocessing
 =====================
 
 .. automodule:: scripts.preprocessing
@@ -12,7 +12,10 @@ scripts.preprocessing
       build_demands_TS
       build_product_demand_ts
       download_dk_day_ahead_prices
+      download_ecb_exchange_rate
       download_energidata
+      download_gb_co2_intensity
+      download_gb_day_ahead_prices
       load_input_data
       pre_processing_energy_data
       prepare_all_inputs

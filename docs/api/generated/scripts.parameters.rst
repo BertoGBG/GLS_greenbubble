@@ -1,4 +1,4 @@
-scripts.parameters
+﻿scripts.parameters
 ==================
 
 .. automodule:: scripts.parameters
@@ -17,4 +17,11 @@ scripts.parameters
       DH_Tamb_max
       DH_data_folder
       loop_tol
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      input_data_folder
+      market_zone
    
