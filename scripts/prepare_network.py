@@ -50,6 +50,12 @@ _USD_TO_EUR: float = 0.85
 _TECH_INPUTS: dict | None = None
 
 
+def _snapshot_step_hours(n):
+    """Length of one snapshot in hours. Uses the time difference, so it also
+    works at 24 h resolution, where both snapshots fall at 00:00."""
+    return (n.snapshots[1] - n.snapshots[0]) / pd.Timedelta(hours=1)
+
+
 def _n_config_val(key: str, param: str, default):
     """Safely read a value from the n_config DataFrame; return default if missing/NaN."""
     if key not in n_config.index:
@@ -1344,8 +1350,8 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
               efficiency=1,
               marginal_cost=loop_tol,
               p_nom_extendable=expansion,
-              p_nom = capacity * (n.snapshots[1].hour -  n.snapshots[0].hour), # ramp limit up and down set to 1
-              p_nom_max=n_config.at["CO2 Liq storage", "max capacity"] * (n.snapshots[1].hour -  n.snapshots[0].hour))
+              p_nom = capacity * _snapshot_step_hours(n), # ramp limit up and down set to 1
+              p_nom_max=n_config.at["CO2 Liq storage", "max capacity"] * _snapshot_step_hours(n))
 
         n.add("Link",
               prefix + "CO2 liquefaction",
@@ -1359,8 +1365,8 @@ def add_CO2_liquefaction(n, n_flags, inputs_dict, tech_costs, n_config, n_option
               p_nom_extendable=expansion,
               marginal_cost=loop_tol,
               lifetime = tech_costs.at["CO2 liquefaction small", 'lifetime'],
-              p_nom=capacity * (n.snapshots[1].hour -  n.snapshots[0].hour), # ramp limit up and down set to 1
-              p_nom_max=n_config.at["CO2 Liq storage", "max capacity"] * (n.snapshots[1].hour -  n.snapshots[0].hour))
+              p_nom=capacity * _snapshot_step_hours(n), # ramp limit up and down set to 1
+              p_nom_max=n_config.at["CO2 Liq storage", "max capacity"] * _snapshot_step_hours(n))
 
         add_CO2_liquid_sequestration(n, inputs_dict, n_options, bust_st )
 
