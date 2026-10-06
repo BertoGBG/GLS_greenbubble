@@ -2305,6 +2305,59 @@ def zero_small_capacities(n, threshold_mw):
               f"with {nom_opt} < {threshold_mw} MW → {list(small_idx)}")
 
 
+def tighten_negligible_capacities(n, cost_threshold=1e-3):
+    """Shrink negligible-cost extendable capacities to the flow they carry.
+
+    Connector branches and sinks carry zero or a negligible capital cost
+    (``loop_tol``), so the solver is indifferent to their size. An interior-point
+    solve without crossover can leave them at ~1e5-1e9 MW. Any analysis that
+    multiplies capacity by a catalogue investment (payback, reallocated grid
+    connection CAPEX) is then swamped. Setting ``*_nom_opt`` to the peak absolute
+    flow (store: peak energy) is the size the dispatch actually needs.
+
+    In-memory only, like :func:`zero_small_capacities`: call it before analysis,
+    not before export, because rolling horizon fixes capacities from the export.
+    """
+    for c_name, attr, ts_attr in [
+        ("generators", "p", "p"),
+        ("links",      "p", "p0"),
+        ("stores",     "e", "e"),
+    ]:
+        comp    = getattr(n, c_name)
+        nom_opt = f"{attr}_nom_opt"
+        nom_ext = f"{attr}_nom_extendable"
+        if comp.empty or nom_opt not in comp.columns or nom_ext not in comp.columns:
+            continue
+        cheap = comp[nom_ext].astype(bool) & (comp["capital_cost"].abs() <= cost_threshold)
+        flows = getattr(n, f"{c_name}_t").get(ts_attr)
+        if not cheap.any() or flows is None or flows.empty:
+            continue
+        idx  = comp.index[cheap].intersection(flows.columns)
+        peak = flows[idx].abs().max()
+        comp.loc[idx, nom_opt] = np.minimum(comp.loc[idx, nom_opt], peak)
+
+
+def unscale_stochastic_duals(n):
+    """Turn a stochastic network's bus duals back into prices, in place.
+
+    The stochastic objective is the probability-weighted sum of the scenario
+    costs, so each scenario's bus dual comes out as ``weight × price`` (e.g.
+    20 EUR/MWh for a 200 EUR/MWh product in a scenario of weight 0.1). Dividing
+    by the scenario weight restores the price in each scenario. No-op for a
+    deterministic network. Call once, after loading and before analysis.
+    """
+    mp = n.buses_t.marginal_price
+    if mp.empty or not isinstance(mp.columns, pd.MultiIndex):
+        return
+    sw = getattr(n, "scenario_weightings", None)
+    if sw is None or len(sw) == 0:
+        return
+    w = sw["weight"].astype(float)
+    w.index = w.index.astype(str)
+    scen = mp.columns.get_level_values("scenario").astype(str)
+    n.buses_t.marginal_price = mp.div(w.reindex(scen).to_numpy(), axis=1)
+
+
 def resample_network(n, resolution):
     """Resample all time-varying network data to a coarser time resolution.
 

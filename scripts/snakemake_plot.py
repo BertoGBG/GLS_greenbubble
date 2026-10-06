@@ -12,7 +12,7 @@ import pickle
 import pypsa
 from scripts.helpers import (
     create_folder_if_not_exists, zero_small_capacities,
-    load_run_config, apply_run_config_overrides,
+    tighten_negligible_capacities, unscale_stochastic_duals, load_run_config, apply_run_config_overrides,
     reallocate_grid_connection_capex,
 )
 from scripts.plots import run_plot_and_export
@@ -34,6 +34,13 @@ c = apply_run_config_overrides(c, load_run_config(results_folder))
 # capacity_threshold approach (add_brownfield.py) for single-period networks.
 _zero_th = float(c.optimization.get("zero_threshold_MW", 0.0))
 zero_small_capacities(n, _zero_th)
+
+# Free and loop_tol-cost connectors have arbitrary sizes in an interior-point
+# solution; report them at the flow they carry (in-memory only).
+tighten_negligible_capacities(n)
+
+# Stochastic duals are probability-weighted; restore per-scenario prices.
+unscale_stochastic_duals(n)
 
 # Reallocate the shared grid-connection link's capex onto the individual
 # import/export links it represents, for per-agent reporting -- no-op unless

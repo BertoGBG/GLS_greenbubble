@@ -1224,9 +1224,10 @@ def _energy_weighted_mean(n, bus_list):
     Weight = energy throughput at the bus each snapshot (q_t × snap_w_t), where
     q_t is the bus net injection. By the bus energy balance the total entering a
     bus equals the total leaving it each snapshot, so weighting by injection or by
-    exiting flow gives the same mean. Falls back to duration-weighted mean when a
-    bus has no measurable flow. (Single source of truth for the energy-weighted
-    mean used by both the CSV/bar chart and the violin overlay.)
+    exiting flow gives the same mean. A bus with no measurable flow gets NaN: its
+    dual is not unique, and an interior-point solve can return any value for it
+    (e.g. -4e8 EUR/MWh on a product capped at zero). (Single source of truth for
+    the energy-weighted mean used by both the CSV/bar chart and the violin overlay.)
 
     The second return value is the annual throughput (denominator) in MWh/y,
     useful as a second panel in the bar chart.
@@ -1254,10 +1255,7 @@ def _energy_weighted_mean(n, bus_list):
         denom = float(e_w.sum())
         throughputs[bus] = denom
 
-        if denom > 1e-6:
-            means[bus] = float((λ * e_w).sum() / denom)
-        else:
-            means[bus] = float((λ * snap_w).sum() / snap_w.sum())
+        means[bus] = float((λ * e_w).sum() / denom) if denom > 1e-6 else np.nan
 
     return means, throughputs
 
@@ -1267,7 +1265,7 @@ def export_shadow_prices_mean_csv(n, bus_list, out_path):
 
     Returns (means, throughputs) dicts — both keyed by bus name.
     Weight = energy injected into the bus at each snapshot (q_t × snap_w_t).
-    Falls back to duration-weighted mean when a bus receives no measurable flow.
+    A bus with no measurable flow is written as an empty value.
     """
     means, throughputs = _energy_weighted_mean(n, bus_list)
     rows = [
@@ -1327,12 +1325,13 @@ def plot_shadow_prices_mean_bar(means, out_path, title="Mean shadow prices (ener
     bars = ax.bar(range(len(buses)), values, color="#2196f3", edgecolor="white", linewidth=0.5)
 
     # value labels on top of bars
-    span = max(abs(v) for v in values) if values else 1.0
+    finite = [abs(v) for v in values if np.isfinite(v)]
+    span = max(finite) if finite else 1.0
     for bar, val in zip(bars, values):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + span * 0.01,
-            f"{val:.1f}",
+            (bar.get_height() if np.isfinite(val) else 0.0) + span * 0.01,
+            f"{val:.1f}" if np.isfinite(val) else "no flow",
             ha="center", va="bottom", fontsize=8,
         )
 
@@ -2382,6 +2381,10 @@ def compute_payback_by_agent(n, network_comp_allocation, tech_costs, comp_tech_m
             if series.empty:
                 continue
             for (comp_kind, comp_name), val in series.items():
+                # n.statistics returns NaN for some stores; one NaN would turn the
+                # agent's cash flow, and the TOTAL row, into an infinite payback.
+                if not np.isfinite(val):
+                    continue
                 agent = lookup.get((comp_kind, str(comp_name)), "Unallocated")
                 target[agent] = target.get(agent, 0.0) + float(val) * w
 
@@ -6951,12 +6954,8 @@ def run_plot_rh_comparison(
     # ── Steps ─────────────────────────────────────────────────────────────────
 
     def step_comparison_csv() -> None:
-        pf_df = costs_pf.droplevel("scenario").rename(
-            columns={"capex": "capex_pf", "opex": "opex_pf", "total": "total_pf"}
-        )
-        rh_df = costs_rh.droplevel("scenario").rename(
-            columns={"capex": "capex_rh", "opex": "opex_rh", "total": "total_rh"}
-        )
+        pf_df = costs_pf.droplevel("scenario").add_suffix("_pf")
+        rh_df = costs_rh.droplevel("scenario").add_suffix("_rh")
         merged = pf_df.join(rh_df, how="outer").fillna(0.0)
         merged["delta_opex"]  = merged["opex_rh"]  - merged["opex_pf"]
         merged["delta_total"] = merged["total_rh"] - merged["total_pf"]
