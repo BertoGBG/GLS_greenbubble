@@ -42,6 +42,13 @@ so there is no need to disable ``methanolisation`` by hand.
 Network structure
 -----------------
 
+.. figure:: /_static/model/meoh_split.svg
+   :width: 100%
+   :alt: The monolithic methanolisation link above, and below it the split into synthesis, a crude methanol store and distillation, with their heat connections
+
+   The split divides methanol production into three stages: production, storage
+   and distillation.
+
 .. list-table::
    :header-rows: 1
    :widths: 26 20 54

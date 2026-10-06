@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generate the three static model-structure SVGs for the docs."""
+"""Generate the static model-structure SVGs for the docs."""
 import io, os
 
 OUT = "docs/_static/model"
@@ -383,10 +383,87 @@ def fig_grid():
     return s + "</svg>\n"
 
 
+# ─────────────────── FIG 8 : methanol synthesis / distillation split ───────────────────
+def arrow(x1, y1, x2, y2, col, w=1.8, both=False):
+    """Straight horizontal or vertical arrow with a filled head at (x2, y2)."""
+    def tip(xa, ya, xb, yb):
+        if ya == yb:
+            d = 1 if xb > xa else -1
+            return f'{xb},{yb} {xb-7*d},{yb-4} {xb-7*d},{yb+4}'
+        d = 1 if yb > ya else -1
+        return f'{xb},{yb} {xb-4},{yb-7*d} {xb+4},{yb-7*d}'
+    s = f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{col}" stroke-width="{w}"/>\n'
+    s += f'<polygon points="{tip(x1, y1, x2, y2)}" fill="{col}"/>\n'
+    if both:
+        s += f'<polygon points="{tip(x2, y2, x1, y1)}" fill="{col}"/>\n'
+    return s
+
+def fig_meoh_split():
+    W, H = 920, 500
+    s = head(W, H, "Methanol: the monolithic link and its split into production, storage and distillation")
+    crude = "#e3877f"
+    inputs = [("H2", C["h2"]), ("CO2", C["co2"]), ("El", C["el"])]
+
+    def feed(y0):
+        t = ""
+        for i, (lab, col) in enumerate(inputs):
+            y = y0 + i * 18
+            t += txt(30, y + 4, lab, 10.5, col, mono=True, weight="600")
+            t += arrow(62, y, 148, y, col, w=1.6)
+        return t
+
+    # ---- panel A: monolithic ----
+    s += txt(16, 30, "MONOLITHIC  ·  options['meoh split'].enable: false  (default)", 11, INK3,
+             mono=True, weight="600")
+    s += f'<rect x="16" y="40" width="888" height="134" rx="10" fill="none" stroke="{LINE}"/>\n'
+    s += feed(88)
+    s += box(150, 76, 620, 60, "methanolisation", "one link, one dispatch variable: reactor and column run in lockstep",
+             accent=C["meoh"])
+    s += arrow(770, 106, 798, 106, C["meoh"])
+    s += box(800, 76, 92, 60, "Methanol", "product", accent=C["meoh"], fill=SURF)
+    s += arrow(460, 136, 460, 160, C["heat"], w=1.6)
+    s += txt(470, 158, "Heat MT (net)", 10, C["heat"], mono=True, weight="600")
+
+    # ---- panel B: split ----
+    s += txt(16, 206, "SPLIT  ·  options['meoh split'].enable: true", 11, INK3, mono=True, weight="600")
+    s += f'<rect x="16" y="216" width="888" height="236" rx="10" fill="none" stroke="{LINE}"/>\n'
+    for x, lab in [(240, "1 · PRODUCTION"), (460, "2 · STORAGE"), (680, "3 · DISTILLATION")]:
+        s += txt(x, 240, lab, 10.5, INK2, mono=True, weight="600", anchor="middle")
+    s += f'<line x1="355" y1="230" x2="355" y2="380" stroke="{LINE}" stroke-dasharray="3 4"/>\n'
+    s += f'<line x1="565" y1="230" x2="565" y2="380" stroke="{LINE}" stroke-dasharray="3 4"/>\n'
+    s += feed(272)
+    s += box(150, 258, 180, 60, "methanol synthesis", "Link · bus0 = H2", accent=C["meoh"])
+    s += box(590, 258, 180, 60, "methanol distillation", "Link · bus0 = crude MeOH", accent=C["meoh"])
+    # crude MeOH bus and its tank
+    s += arrow(330, 288, 588, 288, crude, w=2.6)
+    s += txt(460, 280, "crude MeOH bus  (64 wt% MeOH)", 10, crude, mono=True, weight="600", anchor="middle")
+    s += arrow(460, 291, 460, 326, crude, w=1.8, both=True)
+    s += box(385, 328, 150, 48, "crude MeOH store", "Store · e_cyclic", accent=crude, fill=SURF)
+    s += arrow(770, 288, 798, 288, C["meoh"])
+    s += box(800, 258, 92, 60, "Methanol", "product", accent=C["meoh"], fill=SURF)
+    # heat tiers
+    for y, lab in [(400, "Heat MT"), (424, "Heat LT")]:
+        s += f'<line x1="150" y1="{y}" x2="790" y2="{y}" stroke="{C["heat"]}" stroke-width="2.2" opacity="0.85"/>\n'
+        s += txt(800, y + 4, lab, 10, C["heat"], mono=True, weight="600")
+    s += arrow(240, 318, 240, 398, C["heat"], w=1.6)
+    s += txt(248, 360, "reactor heat out", 9.5, INK3, mono=True)
+    s += arrow(640, 400, 640, 320, C["heat"], w=1.6)
+    s += txt(632, 360, "reboiler in", 9.5, INK3, mono=True, anchor="end")
+    s += arrow(720, 318, 720, 422, C["heat"], w=1.6)
+    s += txt(728, 360, "condenser out", 9.5, INK3, mono=True)
+
+    s += txt(460, 476, "The tank lets the reactor follow cheap electricity while the column runs on its own schedule.",
+             11.5, INK2, anchor="middle")
+    s += txt(460, 493, "With the store sized at zero the pair reproduces methanolisation exactly.",
+             11.5, INK3, anchor="middle")
+    return s + "</svg>\n"
+
+
 os.makedirs(OUT, exist_ok=True)
 for name, fn in [("system_boundary", fig_bubble), ("symbiosis_on_off", fig_symbiosis),
                  ("agents_technologies", fig_agents), ("pressure_ladder", fig_pressure),
-                 ("heat_circuits", fig_heat), ("brownfield_timeline", fig_brownfield), ("grid_interface", fig_grid)]:
+                 ("heat_circuits", fig_heat), ("brownfield_timeline", fig_brownfield), ("grid_interface", fig_grid),
+                 ("meoh_split", fig_meoh_split)]:
     p = os.path.join(OUT, name + ".svg")
     io.open(p, "w", encoding="utf-8").write(fn())
     print(f"  wrote {p}  ({os.path.getsize(p)} bytes)")

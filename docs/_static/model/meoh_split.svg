@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 500" width="100%" role="img" aria-label="Methanol: the monolithic link and its split into production, storage and distillation">
+<title>Methanol: the monolithic link and its split into production, storage and distillation</title>
+<rect width="920" height="500" fill="#ffffff"/>
+<text x="16" y="30" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">MONOLITHIC  ·  options['meoh split'].enable: false  (default)</text>
+<rect x="16" y="40" width="888" height="134" rx="10" fill="none" stroke="#d3dbe4"/>
+<text x="30" y="92" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#1668c4" text-anchor="start">H2</text>
+<line x1="62" y1="88" x2="148" y2="88" stroke="#1668c4" stroke-width="1.6"/>
+<polygon points="148,88 141,84 141,92" fill="#1668c4"/>
+<text x="30" y="110" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#6b7a87" text-anchor="start">CO2</text>
+<line x1="62" y1="106" x2="148" y2="106" stroke="#6b7a87" stroke-width="1.6"/>
+<polygon points="148,106 141,102 141,110" fill="#6b7a87"/>
+<text x="30" y="128" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#c9820f" text-anchor="start">El</text>
+<line x1="62" y1="124" x2="148" y2="124" stroke="#c9820f" stroke-width="1.6"/>
+<polygon points="148,124 141,120 141,128" fill="#c9820f"/>
+<rect x="150" y="76" width="620" height="60" rx="6" fill="#f5f7fa" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="150" y="76" width="3.5" height="60" rx="2" fill="#d0352a"/>
+<text x="162" y="96" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">methanolisation</text>
+<text x="162" y="111" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">one link, one dispatch variable: reactor and column run in lockstep</text>
+<line x1="770" y1="106" x2="798" y2="106" stroke="#d0352a" stroke-width="1.8"/>
+<polygon points="798,106 791,102 791,110" fill="#d0352a"/>
+<rect x="800" y="76" width="92" height="60" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="800" y="76" width="3.5" height="60" rx="2" fill="#d0352a"/>
+<text x="812" y="96" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">Methanol</text>
+<text x="812" y="111" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">product</text>
+<line x1="460" y1="136" x2="460" y2="160" stroke="#d4552c" stroke-width="1.6"/>
+<polygon points="460,160 456,153 464,153" fill="#d4552c"/>
+<text x="470" y="158" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#d4552c" text-anchor="start">Heat MT (net)</text>
+<text x="16" y="206" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">SPLIT  ·  options['meoh split'].enable: true</text>
+<rect x="16" y="216" width="888" height="236" rx="10" fill="none" stroke="#d3dbe4"/>
+<text x="240" y="240" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#44586b" text-anchor="middle">1 · PRODUCTION</text>
+<text x="460" y="240" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#44586b" text-anchor="middle">2 · STORAGE</text>
+<text x="680" y="240" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#44586b" text-anchor="middle">3 · DISTILLATION</text>
+<line x1="355" y1="230" x2="355" y2="380" stroke="#d3dbe4" stroke-dasharray="3 4"/>
+<line x1="565" y1="230" x2="565" y2="380" stroke="#d3dbe4" stroke-dasharray="3 4"/>
+<text x="30" y="276" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#1668c4" text-anchor="start">H2</text>
+<line x1="62" y1="272" x2="148" y2="272" stroke="#1668c4" stroke-width="1.6"/>
+<polygon points="148,272 141,268 141,276" fill="#1668c4"/>
+<text x="30" y="294" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#6b7a87" text-anchor="start">CO2</text>
+<line x1="62" y1="290" x2="148" y2="290" stroke="#6b7a87" stroke-width="1.6"/>
+<polygon points="148,290 141,286 141,294" fill="#6b7a87"/>
+<text x="30" y="312" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#c9820f" text-anchor="start">El</text>
+<line x1="62" y1="308" x2="148" y2="308" stroke="#c9820f" stroke-width="1.6"/>
+<polygon points="148,308 141,304 141,312" fill="#c9820f"/>
+<rect x="150" y="258" width="180" height="60" rx="6" fill="#f5f7fa" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="150" y="258" width="3.5" height="60" rx="2" fill="#d0352a"/>
+<text x="162" y="278" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">methanol synthesis</text>
+<text x="162" y="293" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">Link · bus0 = H2</text>
+<rect x="590" y="258" width="180" height="60" rx="6" fill="#f5f7fa" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="590" y="258" width="3.5" height="60" rx="2" fill="#d0352a"/>
+<text x="602" y="278" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">methanol distillation</text>
+<text x="602" y="293" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">Link · bus0 = crude MeOH</text>
+<line x1="330" y1="288" x2="588" y2="288" stroke="#e3877f" stroke-width="2.6"/>
+<polygon points="588,288 581,284 581,292" fill="#e3877f"/>
+<text x="460" y="280" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#e3877f" text-anchor="middle">crude MeOH bus  (64 wt% MeOH)</text>
+<line x1="460" y1="291" x2="460" y2="326" stroke="#e3877f" stroke-width="1.8"/>
+<polygon points="460,326 456,319 464,319" fill="#e3877f"/>
+<polygon points="460,291 456,298 464,298" fill="#e3877f"/>
+<rect x="385" y="328" width="150" height="48" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="385" y="328" width="3.5" height="48" rx="2" fill="#e3877f"/>
+<text x="397" y="348" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">crude MeOH store</text>
+<text x="397" y="363" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">Store · e_cyclic</text>
+<line x1="770" y1="288" x2="798" y2="288" stroke="#d0352a" stroke-width="1.8"/>
+<polygon points="798,288 791,284 791,292" fill="#d0352a"/>
+<rect x="800" y="258" width="92" height="60" rx="6" fill="#ffffff" stroke="#bcc8d4" stroke-width="1.2"/>
+<rect x="800" y="258" width="3.5" height="60" rx="2" fill="#d0352a"/>
+<text x="812" y="278" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14202c">Methanol</text>
+<text x="812" y="293" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" fill="#7d8fa1">product</text>
+<line x1="150" y1="400" x2="790" y2="400" stroke="#d4552c" stroke-width="2.2" opacity="0.85"/>
+<text x="800" y="404" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#d4552c" text-anchor="start">Heat MT</text>
+<line x1="150" y1="424" x2="790" y2="424" stroke="#d4552c" stroke-width="2.2" opacity="0.85"/>
+<text x="800" y="428" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10" font-weight="600" fill="#d4552c" text-anchor="start">Heat LT</text>
+<line x1="240" y1="318" x2="240" y2="398" stroke="#d4552c" stroke-width="1.6"/>
+<polygon points="240,398 236,391 244,391" fill="#d4552c"/>
+<text x="248" y="360" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start">reactor heat out</text>
+<line x1="640" y1="400" x2="640" y2="320" stroke="#d4552c" stroke-width="1.6"/>
+<polygon points="640,320 636,327 644,327" fill="#d4552c"/>
+<text x="632" y="360" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="end">reboiler in</text>
+<line x1="720" y1="318" x2="720" y2="422" stroke="#d4552c" stroke-width="1.6"/>
+<polygon points="720,422 716,415 724,415" fill="#d4552c"/>
+<text x="728" y="360" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" font-weight="400" fill="#7d8fa1" text-anchor="start">condenser out</text>
+<text x="460" y="476" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="middle">The tank lets the reactor follow cheap electricity while the column runs on its own schedule.</text>
+<text x="460" y="493" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#7d8fa1" text-anchor="middle">With the store sized at zero the pair reproduces methanolisation exactly.</text>
+</svg>
