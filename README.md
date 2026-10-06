@@ -60,10 +60,9 @@ GreenBubble is designed to be extensible. The following are examples of technolo
 git clone https://github.com/BertoGBG/GLS_greenbubble.git
 cd GLS_greenbubble
 
-# Create environment — shown for macOS Apple Silicon; see docs for other platforms
+# Create environment — shown for macOS Apple Silicon; use the envs/ file for your platform
 conda config --add channels conda-forge && conda config --set channel_priority strict
-conda install -n base -c conda-forge conda-lock
-conda-lock install -n greenbubble-pypsa107 --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+conda env create -f envs/environment-osx-arm64.yaml
 conda activate greenbubble-pypsa107
 
 # Copy and fill in API tokens (required for data retrieval)

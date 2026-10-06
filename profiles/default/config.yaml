@@ -1,15 +1,16 @@
-# Workflow profile, loaded automatically by Snakemake (>= 8).
+# Workflow profile, loaded automatically by Snakemake (>= 8) on every run.
 #
-# drop-metadata: Snakemake normally writes one file per output into
-# .snakemake/metadata/, named after the base64-encoded output path. Our long
-# descriptive file names make those names exceed OneDrive's path limit, which
-# blocks OneDrive syncing. Dropping the metadata avoids this. Reruns are still
-# triggered by file modification times; changes to params/code alone no longer
-# trigger a rerun, so use --forcerun when needed.
-drop-metadata: true
-
-# scheduler-ilp-solver: Snakemake's default job scheduler solves a small MILP
-# through PuLP, which uses its bundled CBC binary. That binary is Intel-only on
-# macOS and fails on Apple Silicon without Rosetta ("Bad CPU type in
-# executable"). HiGHS is installed through highspy on every platform.
-scheduler-ilp-solver: HiGHS
+# It keeps Snakemake's defaults so the workflow behaves the same on every
+# platform. Machine-specific settings belong in a personal profile outside the
+# repository (export SNAKEMAKE_PROFILE=~/.config/snakemake/greenbubble).
+# See "Troubleshooting" in docs/installation.rst for two common cases:
+#
+#   Apple Silicon without Rosetta ("Bad CPU type in executable"):
+#     scheduler-ilp-solver: HiGHS
+#
+#   Repository inside OneDrive/Dropbox (metadata file names exceed the path limit):
+#     persistence-backend: db
+#     persistence-backend-db-url: sqlite:///.snakemake/metadata.db
+#
+# Snakemake rejects a profile without any key, so the default is stated here.
+drop-metadata: false

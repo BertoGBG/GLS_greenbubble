@@ -23,36 +23,27 @@ Clone the repository::
 Create the environment
 ----------------------
 
-Two installation paths are available.
-
-**Option A — Locked environment (recommended)**
-
-Locked environments pin every package to an exact version, guaranteeing
-reproducibility across machines.
+Each platform has its own environment file in ``envs/``. It pins PyPSA and the
+solver interfaces and sets minimum versions for the rest.
 
 **1. Add conda-forge and enable strict channel priority** (once per machine)::
 
    conda config --add channels conda-forge
    conda config --set channel_priority strict
 
-**2. Install conda-lock** (once)::
-
-   conda install -n base -c conda-forge conda-lock
-   conda update conda
-
-**3. Create the environment from the lock file for your platform**::
+**2. Create the environment from the file for your platform**::
 
    # macOS Apple Silicon
-   conda-lock install -n greenbubble-pypsa107 --platform osx-arm64 envs/locks/conda-lock-osx-arm64.yml
+   conda env create -f envs/environment-osx-arm64.yaml
 
    # macOS Intel
-   conda-lock install -n greenbubble-pypsa107 --platform osx-64 envs/locks/conda-lock-osx-64.yml
+   conda env create -f envs/environment-osx-64.yaml
 
    # Linux
-   conda-lock install -n greenbubble-pypsa107 --platform linux-64 envs/locks/conda-lock-linux-64.yml
+   conda env create -f envs/environment-linux-64.yaml
 
    # Windows
-   conda-lock install -n greenbubble-pypsa107 --platform win-64 envs/locks/conda-lock-win-64.yml
+   conda env create -f envs/environment-win-64.yaml
 
 .. warning:: **For Windows users: enable long path support**
 
@@ -72,25 +63,13 @@ reproducibility across machines.
    Navigate to ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem``
    and set ``LongPathsEnabled`` to ``1``.
 
-   Restart your machine after applying either option.
+   Restart your machine after applying either option. Alternatively, store the
+   metadata in a single database file (see :ref:`installation-troubleshooting`).
 
-**4. Activate**::
+**3. Activate**::
 
    conda activate greenbubble-pypsa107
 
-
-**Option B — Unlocked environment (fallback)**
-
-Use this if the lock files are unavailable or the locked install fails on your
-platform. The unlocked file specifies minimum versions and lets conda resolve
-the exact packages itself, so results may vary slightly between machines.
-
-::
-
-   conda config --add channels conda-forge
-   conda config --set channel_priority strict
-   conda env create -f envs/environment-pypsa-1.0.7.yaml
-   conda activate greenbubble-pypsa107
 
 Solver setup
 ------------
@@ -103,8 +82,10 @@ Solver setup
 
 **HiGHS** (open-source, no licence needed)
 
-   HiGHS is included in the conda environment. Set ``optimization.solver: 'highs'``
-   in ``config/config.yaml`` (see :ref:`guide-snakemake`) to use it. Suitable for smaller or exploratory runs.
+   HiGHS is included in the conda environment and is the default solver
+   (``optimization.solver: 'highs'``). The tutorials use it and each solves in
+   minutes. It is suited to smaller or exploratory runs; full-year hourly runs
+   can take hours.
 
 
 Running the model
@@ -137,3 +118,63 @@ To re-download all years (stochastic mode)::
 
    rm -rf data/Inputs_20*/
    snakemake -j4
+
+
+.. _installation-troubleshooting:
+
+Troubleshooting
+---------------
+
+Snakemake reads the workflow profile ``profiles/default/config.yaml`` on every
+run. It keeps Snakemake's defaults so that the workflow behaves the same on
+every platform. The two cases below need extra settings on some machines. Put
+them in a **personal profile** outside the repository, so they never reach git.
+
+Create the folder ``~/.config/snakemake/greenbubble/`` with a ``config.yaml``
+holding the settings you need. Then point Snakemake at it in your shell start-up
+file (``~/.zshrc`` or ``~/.bashrc``)::
+
+   export SNAKEMAKE_PROFILE=~/.config/snakemake/greenbubble
+
+Snakemake then applies both profiles. The run log starts with
+``Using profiles ... and workflow specific profile profiles/default``.
+
+**"Bad CPU type in executable" on Apple Silicon (M1-M5 Macs)**
+
+Every real run stops at ``Select jobs to execute...`` with an error ending in
+``pulp/solverdir/cbc/osx/i64/cbc``. A dry run (``snakemake -n``) works, because
+it does not schedule jobs.
+
+Snakemake chooses which jobs to run in parallel by solving a small MILP through
+PuLP. PuLP's bundled CBC binary is built for Intel Macs. Without Rosetta it
+cannot run on Apple Silicon. Use HiGHS for the scheduler instead. It is already
+installed with the environment:
+
+.. code-block:: yaml
+
+   # ~/.config/snakemake/greenbubble/config.yaml
+   scheduler-ilp-solver: HiGHS
+
+Alternatively, install Rosetta (``softwareupdate --install-rosetta``) or pass
+``--scheduler greedy`` on the command line.
+
+**The repository is inside OneDrive, Dropbox or another synced folder**
+
+Snakemake stores one metadata file per output in ``.snakemake/metadata/``. Each
+file is named after the base64-encoded output path. GreenBubble's output names
+are long (see :ref:`wildcards`), so these names can exceed the path limit of the
+sync client, and syncing stops.
+
+Store the metadata in a single SQLite database instead:
+
+.. code-block:: yaml
+
+   # ~/.config/snakemake/greenbubble/config.yaml
+   persistence-backend: db
+   persistence-backend-db-url: sqlite:///.snakemake/metadata.db
+
+Snakemake still reruns a rule when its code, params or inputs change. Avoid this
+setting on cluster filesystems such as NFS, where SQLite file locking is
+unreliable. As a last resort, ``drop-metadata: true`` stops writing metadata
+altogether. Reruns are then decided by file times only, so changes to code or
+params need ``--forcerun``.
