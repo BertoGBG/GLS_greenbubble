@@ -25,3 +25,6 @@ CLAUDE.md
 
 # JetBrains per-developer IDE state (open tabs, recent paths, window layout)
 .idea/workspace.xml
+
+# Sphinx build output (built locally or by Read the Docs)
+docs/_build/
