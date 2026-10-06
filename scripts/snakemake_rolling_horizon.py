@@ -13,6 +13,8 @@ The solve_network (capacity expansion) rule is never triggered when this
 script is the target — Snakemake's DAG guarantees it.
 """
 from pathlib import Path
+import logging
+import numpy as np
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -29,7 +31,7 @@ rh_year   = rh["rh_year"]       # None → same year as En_price_year
 main_year = c.En_price_year
 
 print(f"[rolling_horizon] OPT network : {snakemake.input.network}")
-print(f"[rolling_horizon] horizon={horizon} h  overlap={overlap} h")
+print(f"[rolling_horizon] horizon={horizon}  overlap={overlap} snapshots")
 print(f"[rolling_horizon] main year={main_year}  rh_year={rh_year or 'same'}")
 
 
@@ -207,7 +209,19 @@ def fix_capacities(n):
             continue
 
         if opt_col in df.columns:
-            df.loc[ext_mask, nom_col] = df.loc[ext_mask, opt_col]
+            # Small headroom: a barrier solve without crossover can leave p_nom_opt
+            # a hair below the flow it carries (e.g. a flat demand link short by
+            # 7e-5 MW), which turns every RH window infeasible once it is fixed.
+            opt = df.loc[ext_mask, opt_col]
+            df.loc[ext_mask, nom_col] = (opt * (1 + 1e-6) + 1e-3).where(opt > 0, opt)
+            if comp == "stores":
+                # Free, non-cyclic stores are annual sink counters (CO2 vent,
+                # ambient heat, DH sales, ...): e_nom_opt is just the PF year's
+                # cumulative total. Capping RH at it makes the last windows
+                # infeasible once RH dispatch drifts above that total.
+                sink = ext_mask & (df["capital_cost"] == 0) & ~df["e_cyclic"].astype(bool)
+                df.loc[sink, nom_col] = np.inf
+                print(f"[rolling_horizon] left {sink.sum()} sink stores uncapped: {list(df.index[sink])}")
             print(f"[rolling_horizon] fixed {ext_mask.sum()} {comp} from {opt_col}")
         else:
             print(f"[rolling_horizon] {comp}: no {opt_col} — using existing {nom_col}")
@@ -307,6 +321,17 @@ if c.optimization["solver_profile"]:
 
 print(f"[rolling_horizon] solving with {solver}, {len(n.snapshots)} snapshots ...")
 
+# PyPSA only logs a warning when a window fails and carries on, so count the
+# failures and stop instead of exporting an empty dispatch.
+class _FailedWindows(logging.Handler):
+    count = 0
+    def emit(self, record):
+        if record.getMessage().startswith("Optimization failed"):
+            self.count += 1
+
+_failed = _FailedWindows(level=logging.WARNING)
+logging.getLogger("pypsa.optimization.abstract").addHandler(_failed)
+
 n.optimize.optimize_with_rolling_horizon(
     solver_name=solver,
     horizon=horizon,
@@ -314,6 +339,11 @@ n.optimize.optimize_with_rolling_horizon(
     solver_options=solver_opts,
 )
 
+if _failed.count:
+    raise RuntimeError(
+        f"[rolling_horizon] {_failed.count} window(s) failed to solve. "
+        "Check the solver log above for the infeasible window."
+    )
 print(f"[rolling_horizon] solve complete.")
 check_annual_balance(n)
 

@@ -126,7 +126,7 @@ clustering:
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-rolling-horizon
 rolling_horizon:
   enabled:      false
-  horizon:      168   # hours
-  overlap:       72   # hours
+  horizon:      168   # snapshots (hours only for a 1 h network)
+  overlap:       72   # snapshots
   network_path: ''    # REQUIRED when enabled
   rh_year:      2024

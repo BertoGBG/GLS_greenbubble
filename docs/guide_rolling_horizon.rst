@@ -26,10 +26,11 @@ How it works
    factors, electricity and gas prices, RFNBO constraints, product sale prices)
    are replaced with data from ``rh_year``.
 4. A rolling horizon dispatch solve is run: the year is split into overlapping
-   windows of ``horizon`` hours, each solved sequentially with ``overlap`` hours
-   of carry-over to avoid end-of-window artefacts.
-5. The result is saved as a NetCDF network file containing full hourly dispatch
-   time series.
+   windows of ``horizon`` snapshots, each solved sequentially with ``overlap``
+   snapshots of carry-over to avoid end-of-window artefacts. The loaded network
+   keeps its time resolution, so snapshots are hours only for an hourly network.
+5. The result is saved as a NetCDF network file containing the dispatch
+   time series at that resolution.
 
 ---
 
@@ -42,8 +43,8 @@ All settings live under the ``rolling_horizon`` key in ``config/config.yaml``:
 
    rolling_horizon:
      enabled: false          # set true to activate the RH pipeline
-     horizon: 168            # window size in hours (168 = 1 week)
-     overlap: 24             # overlap between consecutive windows in hours
+     horizon: 168            # window size in snapshots (168 = 1 week at 1 h)
+     overlap: 24             # overlap between consecutive windows in snapshots
      network_path: null      # REQUIRED: path to the .nc OPT network to load
      rh_year: null           # optional: dispatch year (defaults to En_price_year)
 
@@ -60,10 +61,11 @@ All settings live under the ``rolling_horizon`` key in ``config/config.yaml``:
        output instead of the standard plots.
    * - ``horizon``
      - int
-     - Rolling window size in hours. Typical values: 168 (week), 720 (month).
+     - Rolling window size in snapshots. At 1 h resolution, typical values are
+       168 (week) and 720 (month). At 3 h, 168 snapshots cover three weeks.
    * - ``overlap``
      - int
-     - Hours of overlap between consecutive windows. Reduces boundary
+     - Snapshots of overlap between consecutive windows. Reduces boundary
        artefacts. A value of 24 is usually sufficient.
    * - ``network_path``
      - string
