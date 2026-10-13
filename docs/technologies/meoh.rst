@@ -8,6 +8,15 @@ Methanol
 
 Agent: ``n_flags.meoh``. Consumes hydrogen, CO₂ and biogas from the shared buses and delivers methanol to the product store. Requires ``electrolysis``, ``biogas`` and ``symbiosis``. The optional synthesis/distillation split is described in :doc:`/meoh_split`.
 
+.. figure:: /_static/model/tech_meoh.svg
+   :width: 100%
+   :alt: meoh links and bus connections
+
+   Methanol routes and their bus connections. The dashed links replace ``methanolisation`` when the split is enabled. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 CO₂ hydrogenation to methanol (``methanolisation``): CO₂ + H₂ → MeOH + H₂O.
 Modelled as a multi-input ``Link`` with ramp limits (8 %/h) and minimum
 load (15 %).  Waste heat is recovered to the medium-temperature heat bus.

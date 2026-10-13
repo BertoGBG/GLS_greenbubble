@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 222" width="100%" role="img" aria-label="Renewables: links and their bus connections">
+<title>Renewables: links and their bus connections</title>
+<rect width="1180" height="222" fill="#ffffff"/>
+<text x="16.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">INPUT BUSES</text>
+<text x="450.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">LINKS  ·  port: efficiency per unit of bus0</text>
+<text x="1164.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="end">OUTPUT BUSES</text>
+<line x1="16" y1="44" x2="1164" y2="44" stroke="#d3dbe4"/>
+<path d="M306,101.0 C378.0,101.0 378.0,108.5 450,108.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="108.5" r="3" fill="#c9820f"/>
+<path d="M880,93.5 C805.0,93.5 805.0,108.5 730,108.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="108.5" r="3" fill="#c9820f"/>
+<rect x="450" y="70.0" width="280" height="47" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="89.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">El3_to_DK1</text>
+<rect x="16" y="70.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
+<rect x="16" y="70.0" width="5" height="62" rx="2" fill="#c9820f"/>
+<text x="30.0" y="90.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El3</text>
+<text x="30.0" y="105.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">generator: onshorewind</text>
+<text x="30.0" y="120.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">generator: solar</text>
+<rect x="880" y="77.5" width="284" height="32" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
+<rect x="1159" y="77.5" width="5" height="32" rx="2" fill="#c9820f"/>
+<text x="894.0" y="97.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">ElDK1 sell bus</text>
+<text x="460.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus0</text>
+<text x="720.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="end">1  bus1</text>
+<text x="16.0" y="200.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="start">Bus notes: ← fed from, → feeds, ↔ store or two-way link (connectors, compressors and storage links of this agent). Efficiencies are per unit of bus0; negative means consumed.</text>
+</svg>

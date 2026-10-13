@@ -8,6 +8,15 @@ Storage
 
 Agent: ``n_flags.storage``. Buffers electricity, hydrogen, CO₂ and heat on the shared buses. Every store is optional and sized by the optimiser.
 
+.. figure:: /_static/model/tech_storage.svg
+   :width: 100%
+   :alt: storage links and bus connections
+
+   Storage links of the ``storage`` agent and the buses they connect. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 All storage components are activated together by the ``storage`` flag.
 Individual technologies can be disabled by setting ``expansion: false`` and
 ``initial capacity: 0`` in ``n_config.default.yaml``.

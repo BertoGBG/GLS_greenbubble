@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 759" width="100%" role="img" aria-label="Methanol: links and their bus connections">
+<title>Methanol: links and their bus connections</title>
+<rect width="1180" height="759" fill="#ffffff"/>
+<text x="16.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">INPUT BUSES</text>
+<text x="450.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">LINKS  ·  port: efficiency per unit of bus0</text>
+<text x="1164.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="end">OUTPUT BUSES</text>
+<line x1="16" y1="44" x2="1164" y2="44" stroke="#d3dbe4"/>
+<path d="M306,387.0 C378.0,387.0 378.0,108.5 450,108.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="108.5" r="3" fill="#1668c4"/>
+<path d="M306,119.0 C378.0,119.0 378.0,125.5 450,125.5" fill="none" stroke="#1c7ed6" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="125.5" r="3" fill="#1c7ed6"/>
+<path d="M306,461.0 C378.0,461.0 378.0,142.5 450,142.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="142.5" r="3" fill="#c9820f"/>
+<path d="M306,170.5 C378.0,170.5 378.0,159.5 450,159.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="159.5" r="3" fill="#d4552c"/>
+<path d="M880,236.2 C805.0,236.2 805.0,108.5 730,108.5" fill="none" stroke="#e8590c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="108.5" r="3" fill="#e8590c"/>
+<path d="M306,239.0 C378.0,239.0 378.0,228.5 450,228.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="228.5" r="3" fill="#1668c4"/>
+<path d="M306,313.0 C378.0,313.0 378.0,245.5 450,245.5" fill="none" stroke="#7048e8" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="245.5" r="3" fill="#7048e8"/>
+<path d="M306,461.0 C378.0,461.0 378.0,262.5 450,262.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="262.5" r="3" fill="#c9820f"/>
+<path d="M306,527.5 C378.0,527.5 378.0,279.5 450,279.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="279.5" r="3" fill="#d4552c"/>
+<path d="M880,236.2 C805.0,236.2 805.0,228.5 730,228.5" fill="none" stroke="#e8590c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="228.5" r="3" fill="#e8590c"/>
+<path d="M880,302.7 C805.0,302.7 805.0,245.5 730,245.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="245.5" r="3" fill="#d4552c"/>
+<path d="M306,586.5 C378.0,586.5 378.0,348.5 450,348.5" fill="none" stroke="#e8590c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="348.5" r="3" fill="#e8590c"/>
+<path d="M306,527.5 C378.0,527.5 378.0,365.5 450,365.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="365.5" r="3" fill="#d4552c"/>
+<path d="M306,461.0 C378.0,461.0 378.0,382.5 450,382.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="382.5" r="3" fill="#c9820f"/>
+<path d="M880,236.2 C805.0,236.2 805.0,348.5 730,348.5" fill="none" stroke="#e8590c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="348.5" r="3" fill="#e8590c"/>
+<path d="M880,361.7 C805.0,361.7 805.0,365.5 730,365.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="365.5" r="3" fill="#d4552c"/>
+<path d="M306,387.0 C378.0,387.0 378.0,451.5 450,451.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="451.5" r="3" fill="#1668c4"/>
+<path d="M306,645.5 C378.0,645.5 378.0,468.5 450,468.5" fill="none" stroke="#7048e8" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="468.5" r="3" fill="#7048e8"/>
+<path d="M306,461.0 C378.0,461.0 378.0,485.5 450,485.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="485.5" r="3" fill="#c9820f"/>
+<path d="M880,453.5 C805.0,453.5 805.0,451.5 730,451.5" fill="none" stroke="#e8590c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="451.5" r="3" fill="#e8590c"/>
+<path d="M880,512.5 C805.0,512.5 805.0,468.5 730,468.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="468.5" r="3" fill="#d4552c"/>
+<rect x="450" y="70.0" width="280" height="98" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="89.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">methanol from biogas</text>
+<rect x="450" y="190.0" width="280" height="98" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="209.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">methanolisation</text>
+<rect x="450" y="310.0" width="280" height="81" rx="6" fill="#f5f7fa" stroke="#e8590c" stroke-width="1.6" stroke-dasharray="5 4"/>
+<text x="590.0" y="329.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">methanol distillation</text>
+<rect x="450" y="413.0" width="280" height="81" rx="6" fill="#f5f7fa" stroke="#e8590c" stroke-width="1.6" stroke-dasharray="5 4"/>
+<text x="590.0" y="432.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">methanol synthesis</text>
+<rect x="16" y="356.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#1668c4" stroke-width="1.3"/>
+<rect x="16" y="356.0" width="5" height="62" rx="2" fill="#1668c4"/>
+<text x="30.0" y="376.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">H2 distribution</text>
+<text x="30.0" y="391.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ mfb H2 HP storage</text>
+<text x="30.0" y="406.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ H2 to methanolisation (compressor)</text>
+<rect x="16" y="103.0" width="290" height="32" rx="5" fill="#ffffff" stroke="#1c7ed6" stroke-width="1.3"/>
+<rect x="16" y="103.0" width="5" height="32" rx="2" fill="#1c7ed6"/>
+<text x="30.0" y="123.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">biogas</text>
+<rect x="16" y="430.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
+<rect x="16" y="430.0" width="5" height="62" rx="2" fill="#c9820f"/>
+<text x="30.0" y="450.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El_meoh</text>
+<text x="30.0" y="465.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← El3</text>
+<text x="30.0" y="480.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← ElDK1 buy bus</text>
+<rect x="16" y="147.0" width="290" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="16" y="147.0" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="30.0" y="167.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_methanol from biogas</text>
+<text x="30.0" y="182.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<rect x="16" y="208.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#1668c4" stroke-width="1.3"/>
+<rect x="16" y="208.0" width="5" height="62" rx="2" fill="#1668c4"/>
+<text x="30.0" y="228.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">H2 to methanolisation</text>
+<text x="30.0" y="243.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ meoh H2 HP storage</text>
+<text x="30.0" y="258.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← H2 distribution (compressor)</text>
+<rect x="16" y="282.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
+<rect x="16" y="282.0" width="5" height="62" rx="2" fill="#7048e8"/>
+<text x="30.0" y="302.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 to methanolisation</text>
+<text x="30.0" y="317.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ meoh CO2 HP storage</text>
+<text x="30.0" y="332.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← CO2 distribution (compressor)</text>
+<rect x="16" y="504.0" width="290" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="16" y="504.0" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="30.0" y="524.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_methanolisation</text>
+<text x="30.0" y="539.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<rect x="16" y="563.0" width="290" height="47" rx="5" fill="#ffffff" stroke="#e8590c" stroke-width="1.3"/>
+<rect x="16" y="563.0" width="5" height="47" rx="2" fill="#e8590c"/>
+<text x="30.0" y="583.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">crude MeOH</text>
+<text x="30.0" y="598.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: crude MeOH store (split)</text>
+<rect x="16" y="622.0" width="290" height="47" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
+<rect x="16" y="622.0" width="5" height="47" rx="2" fill="#7048e8"/>
+<text x="30.0" y="642.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 distribution</text>
+<text x="30.0" y="657.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 to methanolisation (compressor)</text>
+<rect x="880" y="205.2" width="284" height="62" rx="5" fill="#ffffff" stroke="#e8590c" stroke-width="1.3"/>
+<rect x="1159" y="205.2" width="5" height="62" rx="2" fill="#e8590c"/>
+<text x="894.0" y="225.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Methanol collection</text>
+<text x="894.0" y="240.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#e8590c" text-anchor="start">competing: 3 technologies</text>
+<text x="894.0" y="255.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Methanol delivery</text>
+<rect x="880" y="279.2" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="1159" y="279.2" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="894.0" y="299.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat DH_methanolisation</text>
+<text x="894.0" y="314.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat DH ×0.95</text>
+<rect x="880" y="338.2" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="1159" y="338.2" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="894.0" y="358.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat LT_methanolisation</text>
+<text x="894.0" y="373.2" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat LT ×0.95</text>
+<rect x="880" y="430.0" width="284" height="47" rx="5" fill="#ffffff" stroke="#e8590c" stroke-width="1.3"/>
+<rect x="1159" y="430.0" width="5" height="47" rx="2" fill="#e8590c"/>
+<text x="894.0" y="450.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">crude MeOH</text>
+<text x="894.0" y="465.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: crude MeOH store (split)</text>
+<rect x="880" y="489.0" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="1159" y="489.0" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="894.0" y="509.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_methanolisation</text>
+<text x="894.0" y="524.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<text x="460.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="start">bus0</text>
+<text x="460.0" y="129.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1c7ed6" text-anchor="start">bus2  -1.65</text>
+<text x="460.0" y="146.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus3  -0.137</text>
+<text x="460.0" y="163.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="start">bus4  -0.0617</text>
+<text x="720.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#e8590c" text-anchor="end">2.23  bus1</text>
+<text x="460.0" y="232.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="start">bus0</text>
+<text x="460.0" y="249.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7048e8" text-anchor="start">bus2  -0.218</text>
+<text x="460.0" y="266.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus3  -0.0159</text>
+<text x="460.0" y="283.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="start">bus4  -0.092</text>
+<text x="720.0" y="232.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#e8590c" text-anchor="end">0.879  bus1</text>
+<text x="720.0" y="249.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="end">0.0879  bus5</text>
+<text x="460.0" y="352.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#e8590c" text-anchor="start">bus0</text>
+<text x="460.0" y="369.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="start">bus2  -0.233</text>
+<text x="460.0" y="386.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus3  -9.04e-03</text>
+<text x="720.0" y="352.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#e8590c" text-anchor="end">1  bus1</text>
+<text x="720.0" y="369.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="end">0.256  bus4</text>
+<text x="460.0" y="455.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="start">bus0</text>
+<text x="460.0" y="472.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7048e8" text-anchor="start">bus2  -0.218</text>
+<text x="460.0" y="489.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus3  -7.95e-03</text>
+<text x="720.0" y="455.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#e8590c" text-anchor="end">0.879  bus1</text>
+<text x="720.0" y="472.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="end">0.113  bus4</text>
+<text x="16.0" y="737.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="start">Bus notes: ← fed from, → feeds, ↔ store or two-way link (connectors, compressors and storage links of this agent). Efficiencies are per unit of bus0; negative means consumed.</text>
+<rect x="16" y="707" width="26" height="16" rx="4" fill="#f5f7fa" stroke="#e8590c" stroke-width="1.6" stroke-dasharray="5 4"/>
+<text x="50.0" y="719.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#44586b" text-anchor="start">Alternative to methanolisation, built when options['meoh split'].enable is true.</text>
+</svg>

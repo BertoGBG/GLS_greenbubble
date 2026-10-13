@@ -8,6 +8,15 @@ Heat system
 
 Agent: ``n_flags.central_heat``. Supplies the three heat circuits from several competing units, buying gas and biomass externally and optionally selling to district heating.
 
+.. figure:: /_static/model/tech_central_heat.svg
+   :width: 100%
+   :alt: central_heat links and bus connections
+
+   Heat units of the ``central_heat`` agent and the buses they connect. Four units compete for ``Heat MT``. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 Three heat buses represent temperature levels in the cluster:
 
 - **Heat MT** (medium temperature) — process waste heat, biomass boilers,

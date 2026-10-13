@@ -8,6 +8,15 @@ Biogas and biomass
 
 Agent: ``n_flags.biogas``. Buys biomass from the external markets, sells biomethane to the gas grid, and supplies raw biogas and separated CO₂ to the shared buses. It has no dependencies: it can run standalone.
 
+.. figure:: /_static/model/tech_biogas.svg
+   :width: 100%
+   :alt: biogas links and bus connections
+
+   Links of the ``biogas`` agent and the buses they connect. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 **Biogas plant** — modelled as a ``Generator`` producing raw biogas (CH₄
 equivalent) from digestible biomass inputs (manure, co-substrate).  Feedstock
 cost and availability are set in the ``options.Dig biomass`` block of

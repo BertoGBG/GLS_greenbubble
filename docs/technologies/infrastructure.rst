@@ -11,6 +11,15 @@ wherever a plant needs them, and the grid connection and external markets are
 the site's interfaces. Their duties are computed from physics rather than read
 from a catalogue; see :ref:`physics-based`.
 
+.. figure:: /_static/model/tech_symbiosis.svg
+   :width: 100%
+   :alt: symbiosis links and bus connections
+
+   Links of the ``symbiosis`` agent: the pipes and heat transfers that join the shared buses. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 .. _technologies-compression:
 
 Compression and pressure levels

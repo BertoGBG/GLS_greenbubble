@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 422" width="100%" role="img" aria-label="Electrolysis: links and their bus connections">
+<title>Electrolysis: links and their bus connections</title>
+<rect width="1180" height="422" fill="#ffffff"/>
+<text x="16.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">INPUT BUSES</text>
+<text x="450.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="start">LINKS  ·  port: efficiency per unit of bus0</text>
+<text x="1164.0" y="30.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7d8fa1" text-anchor="end">OUTPUT BUSES</text>
+<line x1="16" y1="44" x2="1164" y2="44" stroke="#d3dbe4"/>
+<path d="M306,188.0 C378.0,188.0 378.0,108.5 450,108.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="108.5" r="3" fill="#c9820f"/>
+<path d="M880,176.0 C805.0,176.0 805.0,108.5 730,108.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="108.5" r="3" fill="#1668c4"/>
+<path d="M880,102.0 C805.0,102.0 805.0,125.5 730,125.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="125.5" r="3" fill="#d4552c"/>
+<path d="M306,188.0 C378.0,188.0 378.0,194.5 450,194.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="194.5" r="3" fill="#c9820f"/>
+<path d="M880,176.0 C805.0,176.0 805.0,194.5 730,194.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="194.5" r="3" fill="#1668c4"/>
+<path d="M880,250.0 C805.0,250.0 805.0,211.5 730,211.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="211.5" r="3" fill="#d4552c"/>
+<path d="M306,188.0 C378.0,188.0 378.0,280.5 450,280.5" fill="none" stroke="#c9820f" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="280.5" r="3" fill="#c9820f"/>
+<path d="M306,274.0 C378.0,274.0 378.0,297.5 450,297.5" fill="none" stroke="#d4552c" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="450" cy="297.5" r="3" fill="#d4552c"/>
+<path d="M880,309.0 C805.0,309.0 805.0,280.5 730,280.5" fill="none" stroke="#1668c4" stroke-width="2" stroke-opacity=".75"/>
+<circle cx="730" cy="280.5" r="3" fill="#1668c4"/>
+<rect x="450" y="70.0" width="280" height="64" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="89.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">AEC</text>
+<rect x="450" y="156.0" width="280" height="64" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="175.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">PEMEC</text>
+<rect x="450" y="242.0" width="280" height="64" rx="6" fill="#f5f7fa" stroke="#7d8fa1" stroke-width="1.4"/>
+<text x="590.0" y="261.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#14202c" text-anchor="middle">SOEC</text>
+<rect x="16" y="157.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
+<rect x="16" y="157.0" width="5" height="62" rx="2" fill="#c9820f"/>
+<text x="30.0" y="177.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El_electrolysis</text>
+<text x="30.0" y="192.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← El3</text>
+<text x="30.0" y="207.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← ElDK1 buy bus</text>
+<rect x="16" y="250.5" width="290" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="16" y="250.5" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="30.0" y="270.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_SOEC</text>
+<text x="30.0" y="285.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<rect x="880" y="137.5" width="284" height="77" rx="5" fill="#ffffff" stroke="#1668c4" stroke-width="1.3"/>
+<rect x="1159" y="137.5" width="5" height="77" rx="2" fill="#1668c4"/>
+<text x="894.0" y="157.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">H2 collection</text>
+<text x="894.0" y="172.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#e8590c" text-anchor="start">competing: 2 technologies</text>
+<text x="894.0" y="187.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← H2 SOEC LP (compressor)</text>
+<text x="894.0" y="202.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ H2 delivery</text>
+<rect x="880" y="78.5" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="1159" y="78.5" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="894.0" y="98.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat LT_AEC</text>
+<text x="894.0" y="113.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat LT ×0.95</text>
+<rect x="880" y="226.5" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
+<rect x="1159" y="226.5" width="5" height="47" rx="2" fill="#d4552c"/>
+<text x="894.0" y="246.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat LT_PEMEC</text>
+<text x="894.0" y="261.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat LT ×0.95</text>
+<rect x="880" y="285.5" width="284" height="47" rx="5" fill="#ffffff" stroke="#1668c4" stroke-width="1.3"/>
+<rect x="1159" y="285.5" width="5" height="47" rx="2" fill="#1668c4"/>
+<text x="894.0" y="305.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">H2 SOEC LP</text>
+<text x="894.0" y="320.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ H2 collection (compressor)</text>
+<text x="460.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus0</text>
+<text x="720.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="end">0.496  bus1</text>
+<text x="720.0" y="129.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="end">0.223  bus2</text>
+<text x="460.0" y="198.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus0</text>
+<text x="720.0" y="198.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="end">0.465  bus1</text>
+<text x="720.0" y="215.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="end">0.265  bus2</text>
+<text x="460.0" y="284.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#c9820f" text-anchor="start">bus0</text>
+<text x="460.0" y="301.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#d4552c" text-anchor="start">bus2  -0.242</text>
+<text x="720.0" y="284.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#1668c4" text-anchor="end">0.665  bus1</text>
+<text x="16.0" y="400.0" font-family="IBM Plex Sans, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#7d8fa1" text-anchor="start">Bus notes: ← fed from, → feeds, ↔ store or two-way link (connectors, compressors and storage links of this agent). Efficiencies are per unit of bus0; negative means consumed.</text>
+</svg>

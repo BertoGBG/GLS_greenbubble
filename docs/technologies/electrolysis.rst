@@ -8,6 +8,15 @@ Electrolysis
 
 Agent: ``n_flags.electrolysis``. Draws electricity from the shared bus and the external market, produces into the shared hydrogen header, and rejects heat to the heat circuits. Hydrogen may be sold directly or consumed by ``meoh`` and ``methanation``.
 
+.. figure:: /_static/model/tech_electrolysis.svg
+   :width: 100%
+   :alt: electrolysis links and bus connections
+
+   Electrolysers and their bus connections. AEC and PEMEC compete for ``H2 collection``; SOEC reaches it through its compressor. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
+   Drawn from the network with every technology enabled.
+
+
 **Three** electrolyser technologies are modelled, and they compete: all three are
 offered to the optimiser whenever the ``electrolysis`` flag is on, and it sizes
 each one (possibly to zero).  Each is a ``Link`` from the shared local
