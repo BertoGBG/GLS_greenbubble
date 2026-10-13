@@ -4293,12 +4293,13 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
             bus1="Heat MT",
             bus2=local_EL_bus,
             bus3="biochar",
-            efficiency=tech_costs.at["biochar pyrolysis", "heat output"]
-            / tech_costs.at["biochar pyrolysis", "biomass input"],
-            efficiency2=-tech_costs.at["biochar pyrolysis", "electricity input"]
-            / tech_costs.at["biochar pyrolysis", "biomass input"],
-            efficiency3=1 / tech_costs.at["biochar pyrolysis", "biomass input"],
-            marginal_cost=tech_costs.at['biomass boiler', "VOM"],
+            efficiency=tech_costs.at["biochar pyrolysis", "heat-output"]
+            / tech_costs.at["biochar pyrolysis", "biomass-input"],
+            efficiency2=-tech_costs.at["biochar pyrolysis", "electricity-input"]
+            / tech_costs.at["biochar pyrolysis", "biomass-input"],
+            efficiency3=1 / tech_costs.at["biochar pyrolysis", "biomass-input"],
+            marginal_cost=tech_costs.at["biochar pyrolysis", "VOM"]
+            / tech_costs.at["biochar pyrolysis", "biomass-input"],
             lifetime = tech_costs.at["biochar pyrolysis", "lifetime"],
             p_nom_extendable=expansion,
             p_nom=capacity,
@@ -4317,12 +4318,12 @@ def add_central_heat_MT(n, n_flags, inputs_dict, tech_costs):
 
             if t in cap_to_add:
                 _exi_cc = (_exi_capital_cost("biochar pyrolysis", t, tech_costs)
-                           / tech_costs.at["biochar pyrolysis", "biomass input"])
+                           / tech_costs.at["biochar pyrolysis", "biomass-input"])
                 n = add_pyrolysis_cap_exp(n, "EXI_", _exi_cc, n_config.at["pyrolysis", "initial capacity"], False, carrier = t)
             if t in exp_to_add:
                 cost = (
                     tech_costs.at["biochar pyrolysis", "fixed"]
-                    / tech_costs.at["biochar pyrolysis", "biomass input"]
+                    / tech_costs.at["biochar pyrolysis", "biomass-input"]
                     * n_config.at["pyrolysis", "cost factor"]
                 )
                 n = add_pyrolysis_cap_exp(n, "", cost, 0, True, carrier = t)
