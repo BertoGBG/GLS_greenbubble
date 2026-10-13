@@ -72,6 +72,7 @@ Where to start
    design
    model_approach
    model_anatomy
+   carbon_balance
    technologies
    economics
    methods

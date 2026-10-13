@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GreenBubble Carbon Balance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#eceff4; --surface:#ffffff; --surface-2:#f5f7fa;
+  --ink:#14202c; --ink-2:#44586b; --ink-3:#7d8fa1;
+  --line:#d3dbe4; --line-2:#bcc8d4;
+  --h2:#1668c4; --co2:#7048e8; --gas:#1c7ed6; --heat:#d4552c; --meoh:#e8590c;
+  --bio:#2f9e44; --soil:#0c8599; --char:#343a40; --fossil:#495057; --air:#a5b4c3; --gap:#e03131;
+  --ok:#2f7d4f; --off:#93a3b2;
+  --shadow:0 1px 2px rgba(20,32,44,.06),0 8px 24px -12px rgba(20,32,44,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#10161e; --surface:#182131; --surface-2:#1e2839;
+    --ink:#e7edf4; --ink-2:#a8b8c8; --ink-3:#71849a;
+    --line:#2b384c; --line-2:#3b4a61;
+    --h2:#5aa4f0; --co2:#9775fa; --gas:#4dabf7; --heat:#f0805a; --meoh:#ff922b;
+    --bio:#51cf66; --soil:#3bc9db; --char:#ced4da; --fossil:#adb5bd; --air:#6b7a8f; --gap:#ff6b6b;
+    --ok:#5cc184; --off:#5a6b7d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#10161e; --surface:#182131; --surface-2:#1e2839;
+  --ink:#e7edf4; --ink-2:#a8b8c8; --ink-3:#71849a;
+  --line:#2b384c; --line-2:#3b4a61;
+  --h2:#5aa4f0; --co2:#9775fa; --gas:#4dabf7; --heat:#f0805a; --meoh:#ff922b;
+  --bio:#51cf66; --soil:#3bc9db; --char:#ced4da; --fossil:#adb5bd; --air:#6b7a8f; --gap:#ff6b6b;
+  --ok:#5cc184; --off:#5a6b7d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px; margin:0 auto; padding-inline:16px; padding-block:40px 64px}
+header{margin-bottom:24px; max-width:72ch}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 10px}
+h1{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:clamp(28px,4.4vw,42px);
+  line-height:1.12; letter-spacing:-.018em; margin:0 0 12px; text-wrap:balance}
+.lede{margin:0; color:var(--ink-2); font-size:17px; text-wrap:pretty}
+
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:0 18px}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:18px}
+.panel-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 16px; margin-bottom:12px}
+.panel-title{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink-2); margin:0}
+.hint{font-size:13px; color:var(--ink-3); margin:0}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:500; display:inline-flex; align-items:center;
+  gap:7px; padding:5px 11px 5px 9px; border-radius:6px; cursor:pointer; border:1px solid var(--line-2);
+  background:var(--surface-2); color:var(--ink-2); transition:background .14s,border-color .14s,color .14s}
+.chip:hover{border-color:var(--ink-3)}
+.chip:focus-visible,select:focus-visible,input:focus-visible,.reset:focus-visible{outline:2px solid var(--h2); outline-offset:2px}
+.chip .dot{width:8px; height:8px; border-radius:50%; background:var(--off); flex:none}
+.chip[aria-pressed="true"]{background:var(--surface); border-color:var(--ink-3); color:var(--ink); font-weight:600}
+.chip[aria-pressed="true"] .dot{background:var(--ok)}
+.chip.blocked[aria-pressed="true"] .dot{background:var(--heat)}
+.chip.blocked{color:var(--ink-3)}
+.sub{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-3); margin:12px 0 6px}
+.sub:first-child{margin-top:0}
+.msg{font-size:12.5px; color:var(--heat); margin:8px 0 0; min-height:1em}
+select{font:inherit; font-size:14px; padding:5px 8px; border-radius:6px; border:1px solid var(--line-2);
+  background:var(--surface-2); color:var(--ink); max-width:100%}
+.reset{margin-left:auto; font-size:13px; background:none; border:none; color:var(--ink-3); cursor:pointer;
+  text-decoration:underline; text-underline-offset:3px; padding:4px}
+.reset:hover{color:var(--ink)}
+
+.inputs{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px 18px}
+.field label{display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--ink-2)}
+.field label b{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--ink)}
+.field input[type=range]{width:100%; accent-color:var(--h2)}
+.field.off{opacity:.42}
+.split{margin-bottom:12px}
+.split:last-child{margin-bottom:0}
+.split h5{margin:0 0 4px; font-size:13px; font-weight:600}
+.bar{display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--surface-2); margin:2px 0 6px}
+.bar span{display:block; height:100%}
+.split .row{display:grid; grid-template-columns:minmax(120px,1fr) 2fr 48px; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2)}
+.split .row output{font-family:"IBM Plex Mono",monospace; text-align:right; color:var(--ink)}
+.split .row input{width:100%; accent-color:var(--h2)}
+.none{font-size:13px; color:var(--ink-3); margin:0}
+
+.stage{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; overflow-x:auto; box-shadow:var(--shadow)}
+svg.sankey{display:block; width:100%; min-width:860px; height:auto}
+.node-label{font-family:"IBM Plex Sans",sans-serif; font-size:12px; fill:var(--ink)}
+.node-value{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-3)}
+.empty{padding:40px; text-align:center; color:var(--ink-3)}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin-top:14px}
+.kpi{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--off); border-radius:8px; padding:10px 12px}
+.kpi h4{margin:0; font-size:12px; font-weight:500; color:var(--ink-2)}
+.kpi p{margin:2px 0 0; font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:600}
+.kpi small{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3)}
+
+table{width:100%; border-collapse:collapse; font-size:13px}
+th,td{text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+td.num{font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap}
+td.pos{color:var(--gap)}
+.tablewrap{overflow-x:auto}
+.notes{margin-top:36px; display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:22px 34px}
+.note h3{font-family:"IBM Plex Serif",Georgia,serif; font-size:18px; font-weight:600; margin:0 0 8px}
+.note p{margin:0 0 10px; color:var(--ink-2); font-size:14.5px}
+code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--surface-2); border:1px solid var(--line);
+  border-radius:4px; padding:1px 5px; color:var(--ink)}
+footer{margin-top:28px; font-size:12.5px; color:var(--ink-3)}
+body.mode-paths .flows-only{display:none}
+body.mode-flows .paths-only{display:none}
+.node-tag{font-family:"IBM Plex Mono",monospace; font-size:10px; fill:var(--ink-3)}
+.node-label,.node-value{paint-order:stroke; stroke:var(--surface); stroke-width:3px; stroke-linejoin:round}
+.box-name{font-family:"IBM Plex Sans",sans-serif; font-size:13.5px; font-weight:600; fill:var(--ink)}
+.box-tag{font-family:"IBM Plex Mono",monospace; font-size:11px; fill:var(--ink-2)}
+.box-gap{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; fill:var(--gap)}
+body.simple .full-only{display:none}
+body.embedded header{display:none}
+body.embedded .wrap{padding-top:16px}
+body:not(.simple) .simple-only{display:none}
+.vert .box-name{font-size:17px} .vert .box-tag,.vert .box-gap{font-size:13.5px}
+.halo{paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round}
+.legend{display:flex; flex-wrap:wrap; gap:6px 16px; margin:4px 4px 10px; font-size:12.5px; color:var(--ink-2)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:12px; height:12px; border-radius:3px; display:inline-block}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:620px){.wrap{padding-block:28px 48px} .split .row{grid-template-columns:1fr 1.4fr 44px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">GreenBubble · carbon balance</p>
+  <h1>Where the carbon goes</h1>
+  <p class="lede simple-only">Every route carbon can take through the model, from the sources on the
+  left to the products and the air on the right. Switch agents and technologies as in
+  <code>n_flags</code> and <code>n_config</code> to see which routes exist.</p>
+  <p class="lede full-only">Every route carbon can take through the model. Switch agents and technologies
+  as in <code>n_flags</code> and <code>n_config</code>. <b>Possible paths</b> shows the structure the
+  optimiser can choose from. <b>Annual flows</b> puts numbers on it, from a solved run or your own split.</p>
+</header>
+
+<section class="panel" aria-labelledby="p-preset">
+  <div class="panel-head">
+    <h2 class="panel-title full-only">View</h2>
+    <div class="chips full-only" id="mode" role="group" aria-label="View">
+      <button type="button" class="chip" data-mode="paths"><span class="dot"></span>Possible paths</button>
+      <button type="button" class="chip" data-mode="flows"><span class="dot"></span>Annual flows</button>
+    </div>
+    <h2 class="panel-title" id="p-preset">Start from</h2>
+    <select id="preset" aria-label="Preset"></select>
+    <p class="hint" id="preset-hint"></p>
+    <button class="reset" id="reset" type="button">Reset to preset</button>
+  </div>
+</section>
+
+<div class="grid2">
+  <section class="panel" aria-labelledby="p-flags">
+    <div class="panel-head"><h2 class="panel-title" id="p-flags">Agents · n_flags</h2></div>
+    <div class="chips" id="flags"></div>
+    <p class="msg" id="flag-msg" aria-live="polite"></p>
+  </section>
+  <section class="panel" aria-labelledby="p-tech">
+    <div class="panel-head"><h2 class="panel-title" id="p-tech">Technologies · n_config and options</h2></div>
+    <div id="techs"></div>
+  </section>
+</div>
+
+<div class="grid2 flows-only">
+  <section class="panel" aria-labelledby="p-in">
+    <div class="panel-head"><h2 class="panel-title" id="p-in">Annual inputs</h2></div>
+    <div class="inputs" id="inputs"></div>
+  </section>
+  <section class="panel" aria-labelledby="p-split">
+    <div class="panel-head"><h2 class="panel-title" id="p-split">Route split</h2>
+      <p class="hint">Shares among the routes that exist.</p></div>
+    <div id="splits"></div>
+  </section>
+</div>
+
+<p class="hint paths-only" id="paths-hint" style="margin:0 0 8px"></p>
+<div class="stage" id="stage" role="img" aria-label="Sankey diagram of carbon flows"></div>
+<div class="kpis flows-only" id="kpis"></div>
+
+<section class="panel flows-only full-only" style="margin-top:18px" aria-labelledby="p-close">
+  <div class="panel-head"><h2 class="panel-title" id="p-close">Carbon closure per process</h2>
+    <p class="hint">The model has no carbon balance constraint. Where its coefficients do not
+    conserve carbon, the process is outlined in red in the diagram.</p></div>
+  <div class="tablewrap"><table id="closure"></table></div>
+</section>
+
+<div class="notes simple-only">
+  <div class="note"><h3>How to read it</h3>
+    <p>Each box is a bus or a technology of the model. Each line is a route that carbon can take.
+    The diagram shows which routes exist, not how much carbon flows; the optimiser chooses among them.</p></div>
+  <div class="note"><h3>Sources and sinks</h3>
+    <p>Carbon enters with the digester feedstock, bought biomass and natural gas. It leaves as
+    biomethane, methanol, liquid CO₂, biochar, digestate to the fields, or CO₂ to the air.</p></div>
+  <div class="note"><h3>Outside the model</h3>
+    <p>Upstream emissions, such as field emissions, manure storage, transport and methane slip,
+    are not included.</p></div>
+</div>
+
+<div class="notes full-only">
+  <div class="note"><h3>How carbon is counted</h3>
+    <p>Only CO₂ and biochar buses carry tonnes in the network. Methane and methanol are in MWh,
+    biomass in MWh or t DM. Their carbon follows from the coefficients in the table below,
+    taken from the same technology-data year, workbook and stream properties as the network.</p>
+    <p>The biogas bus holds methane energy only. Its CO₂ share is implicit and appears when
+    biogas is upgraded, burned or converted.</p></div>
+  <div class="note"><h3>What is not in the model</h3>
+    <p>The digestate carbon fraction is an assumption of this page. The model tracks digestate
+    as dry matter only, and the feedstock carbon is set so the digester closes.</p>
+    <p>Upstream emissions (fields, manure storage, transport) and methane slip are outside the
+    system boundary.</p></div>
+  <div class="note"><h3>Presets</h3>
+    <p>Presets carry the annual flows of solved tutorial networks. Regenerate them with
+    <code>python docs/_static/model/generate_carbon_data.py</code>, optionally with
+    <code>--network NAME=path.nc</code> for your own run.</p></div>
+</div>
+
+<section class="panel full-only" style="margin-top:28px" aria-labelledby="p-coef">
+  <div class="panel-head"><h2 class="panel-title" id="p-coef">Coefficients</h2>
+    <p class="hint" id="coef-year"></p></div>
+  <div class="tablewrap"><table id="coef"></table></div>
+</section>
+
+<footer class="full-only">Generated data: <code>carbon_data.js</code>. Diagram drawn with d3-sankey.</footer>
+</div>
+
+<script src="carbon_data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+<script>
+(function(){
+"use strict";
+const D = window.GB_CARBON;
+const SIMPLE = !new URLSearchParams(location.search).has("full");   // ?full shows flows and carbon closure
+const K = Object.fromEntries(Object.entries(D.coef).map(([k, v]) => [k, v[0]]));
+
+// ---------------- configuration ----------------
+const FLAGS = [
+  ["biogas", "biogas"], ["electrolysis", "electrolysis"], ["meoh", "meoh"], ["methanation", "methanation"],
+  ["symbiosis", "symbiosis"], ["central_heat", "central_heat"], ["storage", "storage"],
+];
+const TECHS = [
+  ["Biogas agent", [["upgrading", "biogas upgrading"], ["engine", "biogas engine"], ["dewatering", "dewatering"]]],
+  ["meoh agent", [["methanolisation", "methanolisation"], ["meoh_split", "meoh split: synthesis + distillation"],
+                  ["esmr", "methanol from biogas"]]],
+  ["methanation agent", [["methBiogas", "methanation biogas"], ["biometh", "biomethanation"],
+                         ["methCO2", "methanation CO2"], ["biomethCO2", "biomethanation CO2"]]],
+  ["central_heat agent", [["dryer", "biomass belt dryer"], ["pyrolysis", "pyrolysis"], ["boiler", "biomass boiler"],
+                          ["ngboiler", "NG boiler"], ["pellets_market", "pellets market"], ["moist_market", "moist biomass market"]]],
+  ["storage agent", [["liq", "CO2 liquefaction"]]],
+  ["Credits", [["biochar_credits", "biochar credits"], ["liq_credits", "CO2 Liq credits"]]],
+];
+const INPUTS = [
+  ["biogas", "Biogas production", "GWh CH₄/yr", 0, 600, 1],
+  ["pellets", "Pellets bought", "GWh/yr", 0, 200, 1],
+  ["moist", "Moist biomass bought", "kt DM/yr", 0, 40, 0.5],
+  ["ng", "Natural gas to boilers", "GWh/yr", 0, 200, 1],
+  ["fdig", "Digestate carbon", "% C in DM", 20, 50, 1],
+];
+const SPLITS = {
+  biogas: ["Biogas", [["upgrading", "upgrading"], ["engine", "engine"], ["esmr", "methanol from biogas"],
+                      ["methBiogas", "methanation biogas"], ["biometh", "biomethanation"]]],
+  co2: ["Separated CO₂", [["vent", "vent to air"], ["dist", "CO₂ distribution"]]],
+  dist: ["CO₂ distribution", [["liq", "liquefaction"], ["meoh", "methanol"], ["methCO2", "methanation CO2"],
+                              ["biomethCO2", "biomethanation CO2"]]],
+  dig: ["Digestate", [["field", "to fields"], ["dewatering", "dewatering"]]],
+  pel: ["Pellets", [["boiler", "biomass boiler"], ["pyrolysis", "pyrolysis"]]],
+};
+
+// ---------------- state ----------------
+const BASE = {
+  flags: Object.assign({biogas: true, electrolysis: true, meoh: true, methanation: true, symbiosis: true, central_heat: true, storage: true}, D.flags || {}),
+  tech: Object.assign({}, D.enabled),
+  inputs: {biogas: 230, pellets: 20, moist: 0, ng: 5, fdig: 40},
+  biogas: {upgrading: 50, engine: 10, esmr: 10, methBiogas: 10, biometh: 20},
+  co2: {vent: 40, dist: 60}, dist: {liq: 40, meoh: 30, methCO2: 15, biomethCO2: 15},
+  dig: {field: 70, dewatering: 30}, pel: {boiler: 50, pyrolysis: 50},
+};
+const DEFAULT = "Default configuration";
+const PRESETS = {[DEFAULT]: BASE};
+for (const [name, p] of Object.entries(D.presets)) {
+  PRESETS[name] = {
+    flags: Object.assign({}, BASE.flags, pick(p.flags, Object.keys(BASE.flags))),
+    tech: Object.assign({}, D.enabled, p.enabled),
+    inputs: Object.assign({}, BASE.inputs, p.inputs),
+    biogas: p.biogas, co2: p.co2, dist: p.dist, dig: p.dig, pel: p.pel,
+  };
+}
+function pick(o, keys){ const r = {}; keys.forEach(k => { if (k in o) r[k] = o[k]; }); return r; }
+let S;
+function load(name){
+  S = JSON.parse(JSON.stringify(PRESETS[name]));
+  for (const g of Object.keys(SPLITS)) {            // shares as percentages
+    const tot = Object.values(S[g]).reduce((a, b) => a + b, 0);
+    for (const k of Object.keys(S[g])) S[g][k] = tot > 0 ? Math.round(100 * S[g][k] / tot) : 0;
+  }
+}
+
+// ---------------- dependencies (network_dependencies + builder gates) ----------------
+function effective(){
+  const f = S.flags, t = S.tech, why = [];
+  const bg = f.biogas, sym = f.symbiosis;
+  const meoh = f.meoh && f.electrolysis && bg && sym;
+  const meth = f.methanation && f.electrolysis && bg && sym;
+  const ch = f.central_heat && sym;
+  const stor = f.storage && sym && bg;
+  if (f.meoh && !meoh) why.push("meoh needs electrolysis, biogas and symbiosis.");
+  if (f.methanation && !meth) why.push("methanation needs electrolysis, biogas and symbiosis.");
+  if (f.central_heat && !ch) why.push("central_heat needs symbiosis.");
+  if (f.storage && !stor) why.push("CO2 liquefaction needs symbiosis and biogas.");
+  if (meoh && t.meoh_split && t.methanolisation) why.push("meoh split replaces methanolisation with synthesis and distillation.");
+  const r = {
+    upgrading: bg && t.upgrading, engine: bg && t.engine,
+    esmr: meoh && t.esmr, meohCO2: meoh && (t.methanolisation || t.meoh_split),
+    methBiogas: meth && t.methBiogas, biometh: meth && t.biometh,
+    methCO2: meth && t.methCO2, biomethCO2: meth && t.biomethCO2,
+    liq: stor && t.liq, dryer: ch && t.dryer, pyrolysis: ch && t.pyrolysis,
+    boiler: ch && t.boiler, ngboiler: ch && t.ngboiler,
+    pelMarket: ch && t.pellets_market && t.boiler, moistMarket: ch && t.moist_market,
+  };
+  r.dist = sym && r.upgrading && (r.liq || r.meohCO2 || r.methCO2 || r.biomethCO2);
+  r.dewatering = bg && t.dewatering && r.dryer;
+  if (bg && t.dewatering && !r.dryer) why.push("dewatering fibres need the belt dryer (central_heat).");
+  r.pelSink = r.boiler || r.pyrolysis;
+  if (t.pellets_market && ch && !t.boiler) why.push("the pellets market is only added with the biomass boiler.");
+  return {r, why, meoh, meth, ch, stor};
+}
+
+// ---------------- carbon flows ----------------
+function compute(){
+  const {r} = effective();
+  const N = {}, L = [], gaps = [];
+  const node = (id, name, col) => { N[id] = N[id] || {id, name, col}; return id; };
+  const link = (s, t, v) => { if (v > 1e-9) L.push({source: s, target: t, value: v}); };
+  const gap = (proc, label, cin, cout) => {          // cout - cin: >0 created, <0 lost
+    const g = cout - cin;
+    gaps.push({id: proc, proc: label, cin, cout, g});   // drawn as a marker on the process node
+  };
+  const share = (grp, keys) => {
+    const on = keys.filter(k => k[1]);
+    const tot = on.reduce((a, [k]) => a + (S[grp][k] || 0), 0);
+    const out = {};
+    keys.forEach(([k, ok]) => out[k] = !ok ? 0 : (tot > 0 ? (S[grp][k] || 0) / tot : 1 / on.length));
+    return out;
+  };
+  const kbg = K.k_gas + K.bg_co2;                    // tCO2 per MWh of biogas (CH4 + CO2)
+  const air = () => node("atmBio", "CO₂ to air, biogenic", "--air");
+
+  // biogas plant
+  const B = S.flags.biogas ? S.inputs.biogas : 0;   // GWh = 1000 MWh, so kt = GWh * t/MWh
+  let fibreC = 0, fibreDM = 0;
+  if (B > 0) {
+    const route = share("biogas", [["upgrading", r.upgrading], ["engine", r.engine], ["esmr", r.esmr],
+                                   ["methBiogas", r.methBiogas], ["biometh", r.biometh]]);
+    const anyRoute = Object.values(route).some(v => v > 0);
+    const Cbg = B * kbg, DM = B * K.bg_dig, Cdig = DM * S.inputs.fdig / 100 * 44 / 12;
+    node("feed", "Digester feedstock", "--bio");
+    node("biogas", "Biogas (CH₄ + CO₂)", "--gas"); node("dig", "Digestate", "--soil");
+    link("feed", "biogas", Cbg); link("feed", "dig", Cdig);
+    if (!anyRoute) { air(); link("biogas", "atmBio", Cbg); }   // no outlet: flared
+    const ch4 = () => node("pCH4", "Biomethane (bio + e-CH₄)", "--gas");
+    if (route.upgrading) {
+      const b = B * route.upgrading;
+      node("upg", "Upgrading", "--gas"); link("biogas", "upg", b * kbg);
+      ch4(); link("upg", "pCH4", b * K.k_gas);
+      node("co2sep", "Separated CO₂", "--co2"); link("upg", "co2sep", b * K.bg_co2);
+      const c = share("co2", [["vent", true], ["dist", r.dist]]);
+      const Csep = b * K.bg_co2;
+      air(); link("co2sep", "atmBio", Csep * c.vent);
+      if (c.dist > 0) {
+        const X = Csep * c.dist;
+        node("dist", "CO₂ distribution", "--co2"); link("co2sep", "dist", X);
+        const d = share("dist", [["liq", r.liq], ["meoh", r.meohCO2], ["methCO2", r.methCO2], ["biomethCO2", r.biomethCO2]]);
+        if (d.liq) {
+          const x = X * d.liq; node("liq", "CO₂ liquefaction", "--co2"); link("dist", "liq", x);
+          if (S.tech.liq_credits) {
+            node("pLiq", "Liquid CO₂, stored", "--char"); link("liq", "pLiq", x * K.liq_seq);
+            air(); link("liq", "atmBio", x * (1 - K.liq_seq));
+          } else { node("pLiq", "Liquid CO₂, sold", "--co2"); link("liq", "pLiq", x); }
+        }
+        if (d.meoh) {
+          const x = X * d.meoh, split = S.tech.meoh_split;
+          const lab = split ? "Methanol synthesis + distillation" : "Methanolisation";
+          node("meoh", lab, "--meoh"); link("dist", "meoh", x);
+          node("pMeOH", "Methanol", "--meoh");
+          const out = x * (split ? K.meohsyn_co2 : K.meoh_co2) * K.k_meoh;
+          link("meoh", "pMeOH", out); gap("meoh", lab, x, out);
+        }
+        if (d.methCO2) {
+          const x = X * d.methCO2, out = x * K.methco2_ch4 * K.k_gas;
+          node("methCO2", "Methanation CO₂", "--gas"); link("dist", "methCO2", x);
+          ch4(); link("methCO2", "pCH4", out); gap("methCO2", "Methanation CO₂", x, out);
+        }
+        if (d.biomethCO2) {
+          const x = X * d.biomethCO2, out = x * K.biomethco2_ch4 * K.k_gas;
+          node("biomethCO2", "Biomethanation CO₂", "--gas"); link("dist", "biomethCO2", x);
+          ch4(); link("biomethCO2", "pCH4", out); gap("biomethCO2", "Biomethanation CO₂", x, out);
+        }
+      }
+    }
+    if (route.engine) {
+      node("engine", "Biogas engine", "--gas"); link("biogas", "engine", B * route.engine * kbg);
+      air(); link("engine", "atmBio", B * route.engine * kbg);
+    }
+    const conv = (key, id, lab, perMWh, k, prod) => {
+      if (!route[key]) return;
+      const b = B * route[key], cin = b * kbg, out = b * perMWh * k;
+      node(id, lab, prod === "pMeOH" ? "--meoh" : "--gas"); link("biogas", id, cin);
+      if (prod === "pMeOH") node("pMeOH", "Methanol", "--meoh"); else ch4();
+      link(id, prod, out); gap(id, lab, cin, out);
+    };
+    conv("esmr", "esmr", "Methanol from biogas", K.esmr_meoh, K.k_meoh, "pMeOH");
+    conv("methBiogas", "methBiogas", "Methanation biogas", K.methbg_ch4, K.k_gas, "pCH4");
+    conv("biometh", "biometh", "Biomethanation", K.biometh_ch4, K.k_gas, "pCH4");
+
+    // digestate
+    const dg = share("dig", [["field", true], ["dewatering", r.dewatering]]);
+    node("field", "Digestate to fields", "--soil"); link("dig", "field", Cdig * dg.field);
+    if (dg.dewatering) {
+      const cin = Cdig * dg.dewatering;
+      node("dewat", "Dewatering", "--soil"); link("dig", "dewat", cin);
+      fibreC = cin * K.dewater_dm; fibreDM = DM * dg.dewatering * K.dewater_dm;
+      node("moist", "Moist biomass", "--soil"); link("dewat", "moist", fibreC);
+      link("dewat", "field", cin - fibreC);
+    }
+  }
+
+  // moist biomass -> belt dryer -> pellets
+  const mDM = r.moistMarket && r.dryer ? S.inputs.moist : 0;
+  let pelC = 0;
+  if (mDM > 0) { node("moistMkt", "Moist biomass, bought", "--bio"); node("moist", "Moist biomass", "--soil");
+                 link("moistMkt", "moist", mDM * K.k_moist); }
+  const dryDM = fibreDM + mDM;
+  if (dryDM > 0 && r.dryer) {
+    const cin = fibreC + mDM * K.k_moist, out = dryDM * K.dryer_mwh * K.k_bio;
+    node("dryer", "Belt dryer", "--soil"); link("moist", "dryer", cin);
+    node("pellets", "Pellets", "--soil"); link("dryer", "pellets", out);
+    gap("dryer", "Belt dryer", cin, out); pelC += out;
+  }
+  const mPel = r.pelMarket ? S.inputs.pellets : 0;
+  if (mPel > 0) { node("pelMkt", "Pellets, bought", "--bio"); node("pellets", "Pellets", "--soil");
+                  link("pelMkt", "pellets", mPel * K.k_bio); pelC += mPel * K.k_bio; }
+  if (pelC > 0) {
+    const p = share("pel", [["boiler", r.boiler], ["pyrolysis", r.pyrolysis]]);
+    if (!r.pelSink) { air(); link("pellets", "atmBio", pelC); }
+    if (p.boiler) { node("boiler", "Biomass boiler", "--soil"); link("pellets", "boiler", pelC * p.boiler);
+                    air(); link("boiler", "atmBio", pelC * p.boiler); }
+    if (p.pyrolysis) {
+      const cin = pelC * p.pyrolysis, char = cin / K.k_bio * K.pyro_char;
+      node("pyro", "Pyrolysis", "--char"); link("pellets", "pyro", cin);
+      node("pChar", S.tech.biochar_credits ? "Biochar, stored" : "Biochar, no credit", "--char");
+      link("pyro", "pChar", char); air(); link("pyro", "atmBio", cin - char);
+    }
+  }
+
+  // fossil natural gas
+  const ngOn = (r.ngboiler || r.upgrading) && S.inputs.ng > 0;
+  if (ngOn) {
+    const c = S.inputs.ng * K.k_gas;
+    node("ng", "Natural gas (fossil)", "--fossil"); node("ngb", "NG boilers", "--fossil");
+    node("atmFos", "CO₂ to air, fossil", "--fossil"); link("ng", "ngb", c); link("ngb", "atmFos", c);
+  }
+  return {nodes: Object.values(N), links: L, gaps};
+}
+
+// ---------------- rendering ----------------
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+
+function chip(label, on, cb, blocked){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip" + (blocked ? " blocked" : "");
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  b.innerHTML = '<span class="dot"></span>' + label;
+  b.addEventListener("click", cb);
+  return b;
+}
+function renderControls(){
+  const e = effective();
+  const fl = $("flags"); fl.innerHTML = "";
+  const blocked = {meoh: S.flags.meoh && !e.meoh, methanation: S.flags.methanation && !e.meth,
+                   central_heat: S.flags.central_heat && !e.ch, storage: S.flags.storage && !e.stor};
+  FLAGS.forEach(([k, lab]) => fl.appendChild(chip(lab, S.flags[k], () => { S.flags[k] = !S.flags[k]; update(); }, blocked[k])));
+  $("flag-msg").textContent = e.why.join(" ");
+  const tw = $("techs"); tw.innerHTML = "";
+  TECHS.forEach(([grp, items]) => {
+    const h = document.createElement("div"); h.className = "sub"; h.textContent = grp; tw.appendChild(h);
+    const c = document.createElement("div"); c.className = "chips";
+    items.forEach(([k, lab]) => c.appendChild(chip(lab, S.tech[k], () => { S.tech[k] = !S.tech[k]; update(); })));
+    tw.appendChild(c);
+  });
+  const iw = $("inputs"); iw.innerHTML = "";
+  const live = {biogas: S.flags.biogas, pellets: e.r.pelMarket, moist: e.r.moistMarket && e.r.dryer,
+                ng: e.r.ngboiler || e.r.upgrading, fdig: S.flags.biogas};
+  INPUTS.forEach(([k, lab, unit, min, max, step]) => {
+    const d = document.createElement("div"); d.className = "field" + (live[k] ? "" : " off");
+    const id = "in-" + k;
+    d.innerHTML = `<label for="${id}">${lab} <b><span>${S.inputs[k]}</span> ${unit}</b></label>` +
+      `<input type="range" id="${id}" min="${min}" max="${Math.max(max, S.inputs[k])}" step="${step}" value="${S.inputs[k]}">`;
+    const inp = d.querySelector("input"), out = d.querySelector("span");
+    inp.addEventListener("input", () => { S.inputs[k] = +inp.value; out.textContent = inp.value; draw(); });
+    iw.appendChild(d);
+  });
+  renderSplits(e.r);
+}
+function renderSplits(r){
+  const avail = {
+    biogas: {upgrading: r.upgrading, engine: r.engine, esmr: r.esmr, methBiogas: r.methBiogas, biometh: r.biometh},
+    co2: {vent: r.upgrading, dist: r.dist},
+    dist: {liq: r.liq, meoh: r.meohCO2, methCO2: r.methCO2, biomethCO2: r.biomethCO2},
+    dig: {field: S.flags.biogas, dewatering: r.dewatering},
+    pel: {boiler: r.boiler, pyrolysis: r.pyrolysis},
+  };
+  const w = $("splits"); w.innerHTML = "";
+  const palette = ["--gas", "--co2", "--meoh", "--bio", "--soil"];
+  let shown = 0;
+  for (const [g, [title, opts]] of Object.entries(SPLITS)) {
+    const on = opts.filter(([k]) => avail[g][k]);
+    if (on.length < 2 || (g === "dist" && !r.dist)) continue;
+    shown++;
+    const box = document.createElement("div"); box.className = "split";
+    box.innerHTML = `<h5>${title}</h5><div class="bar"></div>`;
+    const bar = box.querySelector(".bar");
+    const paint = () => {
+      const tot = on.reduce((a, [k]) => a + (S[g][k] || 0), 0) || 1;
+      bar.innerHTML = on.map(([k], i) => `<span style="width:${100 * (S[g][k] || 0) / tot}%;background:var(${palette[i % 5]})"></span>`).join("");
+      box.querySelectorAll("output").forEach(o => o.value = Math.round(100 * (S[g][o.dataset.k] || 0) / tot) + "%");
+    };
+    on.forEach(([k, lab]) => {
+      const row = document.createElement("div"); row.className = "row";
+      const id = `sp-${g}-${k}`;
+      row.innerHTML = `<label for="${id}">${lab}</label><input id="${id}" type="range" min="0" max="100" value="${S[g][k] || 0}"><output data-k="${k}"></output>`;
+      row.querySelector("input").addEventListener("input", ev => { S[g][k] = +ev.target.value; paint(); draw(); });
+      box.appendChild(row);
+    });
+    w.appendChild(box); paint();
+  }
+  if (!shown) w.innerHTML = '<p class="none">Every stream has a single route with this configuration.</p>';
+}
+
+function draw(){
+  if (MODE === "paths") return drawPaths();
+  const g = compute(), stage = $("stage");
+  stage.innerHTML = "";
+  if (!g.links.length) { stage.innerHTML = '<div class="empty">No carbon flows: switch on an agent with a carbon source.</div>'; kpis(g); closure(g); report(); return; }
+  if (!window.d3 || !d3.sankey) { stage.innerHTML = '<div class="empty">The diagram library could not be loaded.</div>'; kpis(g); closure(g); return; }
+  const W = 1180, H = Math.max(520, 40 * g.nodes.length);
+  const sk = d3.sankey().nodeId(d => d.id).nodeWidth(14).nodePadding(16).nodeSort(null)
+    .nodeAlign(d3.sankeyJustify).extent([[6, 10], [W - 6, H - 10]]);
+  const gapOf = Object.fromEntries(g.gaps.filter(x => Math.abs(x.g) > 1e-3 * x.cin).map(x => [x.id, x.g]));
+  const {nodes, links} = sk({nodes: g.nodes.map(d => Object.assign({}, d)), links: g.links.map(d => Object.assign({}, d))});
+  const svg = d3.select(stage).append("svg").attr("class", "sankey").attr("viewBox", `0 0 ${W} ${H}`);
+  svg.append("g").attr("fill", "none").selectAll("path").data(links).join("path")
+    .attr("d", d3.sankeyLinkHorizontal()).attr("stroke", d => css(d.source.col))
+    .attr("stroke-opacity", .32)
+    .attr("stroke-width", d => Math.max(1, d.width))
+    .append("title").text(d => `${d.source.name} → ${d.target.name}\n${fmt(d.value)} kt CO₂/yr`);
+  const nd = svg.append("g").selectAll("g").data(nodes).join("g");
+  nd.append("rect").attr("x", d => d.x0).attr("y", d => d.y0).attr("height", d => Math.max(1, d.y1 - d.y0))
+    .attr("width", d => d.x1 - d.x0).attr("rx", 2).attr("fill", d => css(d.col))
+    .attr("stroke", d => gapOf[d.id] ? css("--gap") : null).attr("stroke-width", 2.5)
+    .append("title").text(d => `${d.name}\n${fmt(d.value)} kt CO₂/yr`);
+  const right = d => d.x0 > W / 2;
+  const lab = nd.append("text").attr("x", d => right(d) ? d.x0 - 6 : d.x1 + 6)
+    .attr("y", d => (d.y0 + d.y1) / 2).attr("text-anchor", d => right(d) ? "end" : "start");
+  lab.append("tspan").attr("class", "node-label").attr("dy", "-0.15em").text(d => d.name);
+  lab.append("tspan").attr("class", "node-value").attr("x", d => right(d) ? d.x0 - 6 : d.x1 + 6).attr("dy", "1.2em")
+    .text(d => fmt(d.value) + " kt");
+  lab.filter(d => gapOf[d.id]).append("tspan").attr("class", "node-value").style("fill", css("--gap"))
+    .attr("x", d => right(d) ? d.x0 - 6 : d.x1 + 6).attr("dy", "1.2em")
+    .text(d => `${gapOf[d.id] > 0 ? "+" : "−"}${fmt(Math.abs(gapOf[d.id]))} kt not conserved`);
+  kpis(g); closure(g); report();
+}
+
+function kpis(g){
+  const into = id => g.links.filter(l => l.target === id).reduce((a, l) => a + l.value, 0);
+  const from = id => g.links.filter(l => l.source === id).reduce((a, l) => a + l.value, 0);
+  const has = id => g.nodes.some(n => n.id === id);
+  const stored = (S.tech.biochar_credits ? into("pChar") : 0) + (S.tech.liq_credits ? into("pLiq") : 0);
+  const items = [
+    ["Carbon in", ["feed", "moistMkt", "pelMkt", "ng"].reduce((a, id) => a + from(id), 0), "--bio"],
+    ["Biomethane", into("pCH4"), "--gas"], ["Methanol", into("pMeOH"), "--meoh"],
+    ["Liquid CO₂", into("pLiq"), "--co2"], ["Biochar", into("pChar"), "--char"],
+    ["Digestate to fields", into("field"), "--soil"],
+    ["To air, biogenic", into("atmBio"), "--air"], ["To air, fossil", into("atmFos"), "--fossil"],
+    ["Stored with credits", stored, "--ok"],
+    ["Not conserved (coefficients)", g.gaps.reduce((a, x) => a + x.g, 0), "--gap"],
+  ];
+  $("kpis").innerHTML = items.filter(([n, v], i) => i === 0 || Math.abs(v) > 1e-9 || n === "Stored with credits")
+    .map(([n, v, c]) => `<div class="kpi" style="border-left-color:var(${c})"><h4>${n}</h4><p>${fmt(Math.abs(v)) === "0.00" ? "0" : (v < 0 ? "−" : "") + fmt(Math.abs(v))}</p><small>kt CO₂/yr</small></div>`).join("");
+}
+function closure(g){
+  const rows = g.gaps.map(x => `<tr><td>${x.proc}</td><td class="num">${fmt(x.cin)}</td><td class="num">${fmt(x.cout)}</td>` +
+    `<td class="num ${Math.abs(x.g) > 1e-3 * Math.max(x.cin, 1e-9) ? "pos" : ""}">${x.g >= 0 ? "+" : "−"}${fmt(Math.abs(x.g))} (${(100 * x.g / x.cin).toFixed(1)} %)</td></tr>`);
+  $("closure").innerHTML = "<thead><tr><th>Process</th><th>C in</th><th>C out</th><th>Gap, kt CO₂/yr</th></tr></thead><tbody>" +
+    (rows.join("") || '<tr><td colspan="4">No conversion with a gap is active. Upgrading, engine, boilers and liquefaction close by construction.</td></tr>') + "</tbody>";
+}
+function coefTable(){
+  $("coef-year").textContent = `technology-data costs_${D.year_investment}.csv, as the network`;
+  $("coef").innerHTML = "<thead><tr><th>Key</th><th>Value</th><th>Unit</th><th>Source</th></tr></thead><tbody>" +
+    Object.entries(D.coef).map(([k, [v, u, s]]) => `<tr><td><code>${k}</code></td><td class="num">${(+v).toPrecision(4)}</td><td>${u}</td><td>${s}</td></tr>`).join("") +
+    `<tr><td><code>fdig</code></td><td class="num">slider</td><td>% C in DM</td><td>Assumption of this page, not in the model</td></tr></tbody>`;
+}
+
+
+// ---------------- possible paths (structure before optimisation) ----------------
+let MODE = "paths";
+const TAGS = {
+  feed: "Dig biomass market", biogas: "bus biogas", dig: "bus Digestate", upg: "biogas upgrading",
+  engine: "biogas engine", esmr: "methanol from biogas", methBiogas: "methanation biogas", biometh: "biomethanation",
+  co2sep: "bus CO2 sep", dist: "bus CO2 distribution", liq: "CO2 liquefaction", methCO2: "methanation CO2",
+  biomethCO2: "biomethanation CO2", dewat: "dewatering", moist: "bus moist biomass", moistMkt: "moist biomass market",
+  dryer: "biomass belt dryer", pellets: "bus pellets", pelMkt: "pellets market", boiler: "pellets boiler",
+  pyro: "pyrolysis", ng: "NG grid", ngb: "NG boiler, upgrading NG boiler", pCH4: "bioCH4 / eCH4 collection",
+  pMeOH: "Methanol collection", crude: "bus crude MeOH + store", meohDist: "methanol distillation", pLiq: "CO2 Liq storage / sequestration", pChar: "biochar sequestration",
+  field: "Digestate store", atmBio: "CO2 pure atm, combustion", atmFos: "combustion",
+};
+function ratios(){                                      // carbon out / carbon in, fixed by coefficients
+  const kbg = K.k_gas + K.bg_co2;
+  return {
+    esmr: K.esmr_meoh * K.k_meoh / kbg, methBiogas: K.methbg_ch4 * K.k_gas / kbg,
+    biometh: K.biometh_ch4 * K.k_gas / kbg, methCO2: K.methco2_ch4 * K.k_gas,
+    biomethCO2: K.biomethco2_ch4 * K.k_gas, dryer: K.dryer_mwh * K.k_bio / K.k_moist,
+    meoh: (S.tech.meoh_split ? K.meohsyn_co2 : K.meoh_co2) * K.k_meoh,
+  };
+}
+function paths(){
+  const {r} = effective(), N = {}, L = [];
+  const node = (id, name, col) => { N[id] = N[id] || {id, name, col}; };
+  const edge = (s, t) => L.push({source: s, target: t, value: 1});
+  const air = () => node("atmBio", "CO₂ to air, biogenic", "--air");
+  const ch4 = () => node("pCH4", "Biomethane (bio + e-CH₄)", "--gas");
+  const meohP = () => node("pMeOH", "Methanol", "--meoh");
+  if (S.flags.biogas) {
+    node("feed", "Digester feedstock", "--bio"); node("biogas", "Biogas (CH₄ + CO₂)", "--gas");
+    node("dig", "Digestate", "--soil"); edge("feed", "biogas"); edge("feed", "dig");
+    if (r.upgrading) {
+      node("upg", "Upgrading", "--gas"); edge("biogas", "upg"); ch4(); edge("upg", "pCH4");
+      node("co2sep", "Separated CO₂", "--co2"); edge("upg", "co2sep"); air(); edge("co2sep", "atmBio");
+      if (r.dist) {
+        node("dist", "CO₂ distribution", "--co2"); edge("co2sep", "dist");
+        if (r.liq) {
+          node("liq", "CO₂ liquefaction", "--co2"); edge("dist", "liq");
+          node("pLiq", S.tech.liq_credits ? "Liquid CO₂, stored" : "Liquid CO₂, sold", S.tech.liq_credits ? "--char" : "--co2");
+          edge("liq", "pLiq"); if (S.tech.liq_credits) { air(); edge("liq", "atmBio"); }
+        }
+        TAGS.meoh = S.tech.meoh_split ? "methanol synthesis" : "methanolisation";
+        if (r.meohCO2 && !S.tech.meoh_split) { node("meoh", "Methanolisation", "--meoh");
+                         edge("dist", "meoh"); meohP(); edge("meoh", "pMeOH"); }
+        if (r.meohCO2 && S.tech.meoh_split) {        // the split replaces methanolisation in the model
+          node("meoh", "Methanol synthesis", "--meoh"); node("crude", "Crude methanol", "--meoh");
+          node("meohDist", "Methanol distillation", "--meoh"); meohP();
+          edge("dist", "meoh"); edge("meoh", "crude"); edge("crude", "meohDist"); edge("meohDist", "pMeOH");
+        }
+        if (r.methCO2) { node("methCO2", "Methanation CO₂", "--gas"); edge("dist", "methCO2"); ch4(); edge("methCO2", "pCH4"); }
+        if (r.biomethCO2) { node("biomethCO2", "Biomethanation CO₂", "--gas"); edge("dist", "biomethCO2"); ch4(); edge("biomethCO2", "pCH4"); }
+      }
+    }
+    if (r.engine) { node("engine", "Biogas engine", "--gas"); edge("biogas", "engine"); air(); edge("engine", "atmBio"); }
+    if (r.esmr) { node("esmr", "Methanol from biogas", "--meoh"); edge("biogas", "esmr"); meohP(); edge("esmr", "pMeOH"); }
+    if (r.methBiogas) { node("methBiogas", "Methanation biogas", "--gas"); edge("biogas", "methBiogas"); ch4(); edge("methBiogas", "pCH4"); }
+    if (r.biometh) { node("biometh", "Biomethanation", "--gas"); edge("biogas", "biometh"); ch4(); edge("biometh", "pCH4"); }
+    node("field", "Digestate to fields", "--soil"); edge("dig", "field");
+    if (r.dewatering) {
+      node("dewat", "Dewatering", "--soil"); edge("dig", "dewat"); edge("dewat", "field");
+      node("moist", "Moist biomass", "--soil"); edge("dewat", "moist");
+    }
+  }
+  if (r.moistMarket && r.dryer) { node("moistMkt", "Moist biomass, bought", "--bio"); node("moist", "Moist biomass", "--soil"); edge("moistMkt", "moist"); }
+  const pelSrc = [];
+  if (N.moist && r.dryer) { node("dryer", "Belt dryer", "--soil"); edge("moist", "dryer"); pelSrc.push("dryer"); }
+  if (r.pelMarket) { node("pelMkt", "Pellets, bought", "--bio"); pelSrc.push("pelMkt"); }
+  if (pelSrc.length && r.pelSink) {
+    node("pellets", "Pellets", "--soil"); pelSrc.forEach(x => edge(x, "pellets"));
+    if (r.boiler) { node("boiler", "Biomass boiler", "--soil"); edge("pellets", "boiler"); air(); edge("boiler", "atmBio"); }
+    if (r.pyrolysis) {
+      node("pyro", "Pyrolysis", "--char"); edge("pellets", "pyro");
+      node("pChar", S.tech.biochar_credits ? "Biochar, stored" : "Biochar, no credit", "--char"); edge("pyro", "pChar");
+      air(); edge("pyro", "atmBio");
+    }
+  }
+  if (r.ngboiler || r.upgrading) {
+    node("ng", "Natural gas (fossil)", "--fossil"); node("ngb", "NG boilers", "--fossil");
+    node("atmFos", "CO₂ to air, fossil", "--fossil"); edge("ng", "ngb"); edge("ngb", "atmFos");
+  }
+  // count source-to-sink paths
+  const out = {}; L.forEach(l => (out[l.source] = out[l.source] || []).push(l.target));
+  const memo = {}; const count = id => memo[id] ?? (memo[id] = out[id] ? out[id].reduce((a, t) => a + count(t), 0) : 1);
+  const sources = Object.keys(N).filter(id => !L.some(l => l.target === id));
+  return {nodes: Object.values(N), links: L, npaths: sources.reduce((a, id) => a + count(id), 0),
+          nsink: Object.keys(N).filter(id => !out[id]).length};
+}
+function drawPaths(){
+  const g = paths(), stage = $("stage"); stage.innerHTML = "";
+  $("paths-hint").textContent = g.links.length
+    ? `${g.npaths} possible carbon paths to ${g.nsink} products and sinks.` + (SIMPLE ? "" : " Line count shows routes, not flows; the optimiser chooses among them.")
+    : "";
+  if (!g.links.length) { stage.innerHTML = '<div class="empty">No carbon paths: switch on an agent with a carbon source.</div>'; report(); return; }
+  if (!window.d3 || !d3.sankey) { stage.innerHTML = '<div class="empty">The diagram library could not be loaded.</div>'; return; }
+  const R = ratios(), off = id => !SIMPLE && R[id] !== undefined && Math.abs(R[id] - 1) > 0.002;
+  // d3-sankey gives the columns and a first ordering; boxes are then packed compactly
+  const lay = d3.sankey().nodeId(d => d.id).nodeWidth(10).nodePadding(10).iterations(64)
+    .nodeAlign(d3.sankeyJustify).extent([[0, 0], [1000, 40 * g.nodes.length]])
+    ({nodes: g.nodes.map(d => Object.assign({}, d)), links: g.links.map(d => Object.assign({}, d))});
+  const nodes = lay.nodes, links = lay.links;
+  const wrap = (t, n) => t.split(" ").reduce((ls, w) => {
+    const l = ls[ls.length - 1]; if (l && (l + " " + w).length <= n) ls[ls.length - 1] = l + " " + w; else ls.push(w); return ls; }, []);
+  // wide screens run left to right; narrow ones (such as the docs column) run top to bottom
+  const VERT = stage.clientWidth > 0 && stage.clientWidth < 1000, LH = VERT ? 20 : 16;
+  nodes.forEach(d => {
+    d.rows = wrap(d.name, VERT ? 14 : 18).map(t => ["box-name", t]);
+    if (TAGS[d.id]) d.rows.push(["box-tag", TAGS[d.id].length > (VERT ? 17 : 20) ? TAGS[d.id].slice(0, VERT ? 16 : 19) + "…" : TAGS[d.id]]);
+    if (off(d.id)) d.rows.push(["box-gap", `C out/in ${(100 * R[d.id]).toFixed(1)} %`]);
+    d.h = (VERT ? 16 : 14) + LH * d.rows.length;
+  });
+  const ncol = d3.max(nodes, d => d.layer) + 1, BW = VERT ? 150 : 168, GAP = VERT ? 14 : 12, PADC = 8;
+  const cs = d => d.dummy ? 4 : (VERT ? BW : d.h);                 // size across the flow direction
+  // a link that skips layers gets a thin waypoint in each layer it crosses, so it runs between boxes
+  const items = nodes.slice(), segs = [];
+  links.forEach(l => {
+    let prev = l.source; l.way = [];
+    for (let k = l.source.layer + 1; k < l.target.layer; k++) {
+      const w = {dummy: true, layer: k, h: 4, y0: (l.source.y0 + l.target.y0) / 2}; items.push(w); l.way.push(w);
+      segs.push([prev, w]); prev = w;
+    }
+    segs.push([prev, l.target]);
+  });
+  const nbr = new Map(items.map(d => [d, []]));
+  segs.forEach(([u, v]) => { nbr.get(u).push(v); nbr.get(v).push(u); });
+  const cols = d3.range(ncol).map(i => items.filter(d => d.layer === i).sort((a, b) => a.y0 - b.y0));
+  const mid = d => d.top + cs(d) / 2;
+  const pack = col => {                                  // keep order, remove overlaps, stay near the wanted centre
+    let y = -1e9; col.forEach(d => { d.top = Math.max(y, d.want - cs(d) / 2); y = d.top + cs(d) + (d.dummy ? 6 : GAP); });
+  };
+  cols.forEach(col => { let y = 0; col.forEach(d => { d.want = y + cs(d) / 2; y += cs(d) + GAP; }); pack(col); });
+  for (let it = 0; it < 12; it++) (it % 2 ? cols.slice().reverse() : cols).forEach(col => {
+    col.forEach(d => { const m = nbr.get(d); d.want = m.length ? d3.mean(m, mid) : mid(d); });
+    col.sort((a, b) => a.want - b.want); pack(col);
+  });
+  const cmin = d3.min(items, d => d.top); items.forEach(d => d.top += PADC - cmin);
+  const CROSS = d3.max(items, d => d.top + cs(d)) + PADC;
+  // position along the flow: fixed columns, or rows as tall as their tallest box
+  const thick = d3.range(ncol).map(i => VERT ? d3.max(nodes.filter(d => d.layer === i), d => d.h) || 4 : BW);
+  const LEN = VERT ? d3.sum(thick) + (ncol - 1) * 46 + 2 * PADC : Math.max(1100, ncol * BW + (ncol - 1) * 58);
+  const lstart = d3.range(ncol).map(i => VERT ? PADC + d3.sum(thick.slice(0, i)) + i * 46
+                                              : (ncol === 1 ? 0 : i * (LEN - BW) / (ncol - 1)));
+  const W = VERT ? CROSS : LEN, H = VERT ? LEN : CROSS;
+  const xy = (L, C) => VERT ? [C, L] : [L, C];
+  nodes.forEach(d => { [d.bx, d.by] = xy(lstart[d.layer], d.top); d.bw = VERT ? BW : BW; d.bh = d.h; });
+  const outL = d => lstart[d.layer] + (VERT ? d.h : BW);           // where links leave a node
+  // spread each node's link ends along its side, ordered by the next hop
+  const first = l => l.way.length ? l.way[0] : l.target, last = l => l.way.length ? l.way[l.way.length - 1] : l.source;
+  nodes.forEach(d => {
+    const so = d.sourceLinks.slice().sort((a, b) => mid(first(a)) - mid(first(b)));
+    const ti = d.targetLinks.slice().sort((a, b) => mid(last(a)) - mid(last(b)));
+    const at = (k, n) => d.top + cs(d) * (k + 1) / (n + 1);
+    so.forEach((l, k) => l.cs0 = at(k, so.length)); ti.forEach((l, k) => l.cs1 = at(k, ti.length));
+  });
+  const legend = [["--bio", "Biomass sources"], ["--soil", "Digestate and solid biomass"], ["--gas", "Methane"],
+                  ["--co2", "CO₂"], ["--meoh", "Methanol"], ["--char", "Biochar"], ["--air", "Air"], ["--fossil", "Fossil"]]
+    .filter(([c]) => nodes.some(n => n.col === c));
+  stage.insertAdjacentHTML("beforeend", '<div class="legend">' + legend.map(([c, t]) =>
+    `<span><i style="background:var(${c})"></i>${t}</span>`).join("") + (SIMPLE ? "" :
+    '<span><i style="background:none;border:2px solid var(--gap)"></i>Carbon not conserved by coefficients</span>') + '</div>');
+  const svg = d3.select(stage).append("svg").attr("class", VERT ? "sankey vert" : "sankey").attr("viewBox", `-4 0 ${W + 8} ${H}`)
+    .style("min-width", VERT ? "0" : "980px").style("max-width", VERT ? `${W + 8}px` : null)
+    .style("margin", VERT ? "0 auto" : null);
+  const nd = svg.append("g").selectAll("g").data(nodes).join("g");
+  nd.append("rect").attr("x", d => d.bx).attr("y", d => d.by).attr("width", d => d.bw).attr("height", d => d.bh)
+    .attr("rx", 6).attr("fill", css("--surface")).attr("stroke", d => off(d.id) ? css("--gap") : css(d.col))
+    .attr("stroke-width", d => off(d.id) ? 2.2 : 1.2);
+  nd.append("rect").attr("x", d => d.bx).attr("y", d => d.by).attr("width", 5).attr("height", d => d.bh)
+    .attr("rx", 2.5).attr("fill", d => css(d.col));
+  nd.append("title").text(d => d.name + (TAGS[d.id] ? `\nmodel: ${TAGS[d.id]}` : ""));
+  // links above the boxes so none is hidden; the text goes on top with a halo
+  const route = l => {
+    const pts = [[outL(l.source), l.cs0]];
+    l.way.forEach(w => { const c = mid(w); pts.push([lstart[w.layer], c], [lstart[w.layer] + thick[w.layer], c]); });
+    pts.push([lstart[l.target.layer], l.cs1]);
+    return pts;
+  };
+  svg.append("g").attr("fill", "none").selectAll("path").data(links).join("path")
+    .attr("d", l => {
+      const pts = route(l), P = (L, C) => xy(L, C).join(",");
+      let p = `M${P(...pts[0])}`;
+      for (let i = 1; i < pts.length; i++) {
+        const [la, ca] = pts[i - 1], [lb, cb] = pts[i], m = (la + lb) / 2;
+        p += i % 2 ? `C${P(m, ca)} ${P(m, cb)} ${P(lb, cb)}` : `L${P(lb, cb)}`;
+      }
+      return p; })
+    .attr("stroke", l => css(l.source.col)).attr("stroke-width", 2.2).attr("stroke-opacity", .8)
+    .append("title").text(l => `${l.source.name} → ${l.target.name}`);
+  svg.append("g").selectAll("circle").data(links.flatMap(l => {
+      const pts = route(l);
+      return [[...xy(...pts[0]), l.source.col], [...xy(...pts[pts.length - 1]), l.source.col]]; }))
+    .join("circle").attr("cx", d => d[0]).attr("cy", d => d[1]).attr("r", 2.6).attr("fill", d => css(d[2]));
+  const tx = svg.append("g").attr("pointer-events", "none");
+  nodes.forEach(d => {
+    const t = tx.append("text");
+    d.rows.forEach(([c, txt], i) => t.append("tspan").attr("class", c + " halo").attr("x", d.bx + 13)
+      .attr("y", d.by + (VERT ? 22 : 18) + LH * i).text(txt));
+  });
+  report();
+}
+function setMode(m){
+  if (SIMPLE) m = "paths";
+  const embedded = window.parent && window.parent !== window;
+  MODE = m; document.body.className = "mode-" + m + (SIMPLE ? " simple" : "") + (embedded ? " embedded" : "");
+  document.querySelectorAll("#mode .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m ? "true" : "false"));
+  draw();
+}
+document.querySelectorAll("#mode .chip").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+function update(){ renderControls(); draw(); }
+function report(){
+  try {
+    const h = Math.ceil(document.documentElement.getBoundingClientRect().height) + 8;
+    if (window.parent && window.parent !== window) window.parent.postMessage({gbCarbonHeight: h}, "*");
+  } catch (e) {}
+}
+
+const sel = $("preset");
+Object.keys(PRESETS).forEach(n => { const o = document.createElement("option"); o.value = o.textContent = n; sel.appendChild(o); });
+const asked = new URLSearchParams(location.search).get("preset");
+const first = asked in PRESETS ? asked : DEFAULT;
+sel.value = first;
+const hint = () => { $("preset-hint").textContent = D.presets[sel.value]
+  ? (SIMPLE ? "Agents and technologies of the tutorial run." : "Agents, technologies and annual flows of the solved network.")
+  : (SIMPLE ? "config.default.yaml and n_config.default.yaml." : "config.default.yaml and n_config.default.yaml; flows use illustrative shares."); };
+sel.addEventListener("change", () => { load(sel.value); hint(); update(); });
+$("reset").addEventListener("click", () => { load(sel.value); update(); });
+const askedMode = new URLSearchParams(location.search).get("view");
+load(first); hint(); coefTable(); renderControls(); setMode(askedMode === "flows" ? "flows" : "paths");
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(draw, 150); });
+if (SIMPLE) {                                            // the diagram first, then the switches
+  const first = document.querySelector('section[aria-labelledby="p-preset"]');
+  first.before($("paths-hint"), $("stage"));
+  $("stage").style.marginBottom = "18px";
+}
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+})();
+</script>
+</body>
+</html>
