@@ -35,9 +35,12 @@ one set of technologies or the other:
 
 .. code-block:: python
 
-   techs = ["methanol synthesis", "methanol distillation"] if meoh_split else ["methanolisation"]
+   techs = (["methanol synthesis", "methanol distillation"] if meoh_split
+            else ["methanolisation"]) + ["methanol from biogas"]
 
-so there is no need to disable ``methanolisation`` by hand.
+so there is no need to disable ``methanolisation`` by hand. ``methanol from biogas``
+is a separate route from biogas and hydrogen. It is offered in both modes and competes
+with ``methanolisation`` or with the split, if its ``n_config`` entry allows it.
 
 Network structure
 -----------------

@@ -3483,10 +3483,11 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         return n, meoh_buses
 
     # check what technologies to add
-    # 'meoh split' replaces the single methanolisation link with synthesis + distillation
+    # 'meoh split' replaces the single methanolisation link with synthesis + distillation.
+    # 'methanol from biogas' is a separate route and competes with either of them.
     meoh_split = bool(n_options.at['meoh split', 'enable']) if 'meoh split' in n_options.index else False
     techs = (["methanol synthesis", "methanol distillation"] if meoh_split
-             else ["methanolisation", "methanol from biogas"])
+             else ["methanolisation"]) + ["methanol from biogas"]
     cap_to_add, exp_to_add = tech_to_add(techs, n0_dict)
 
     if cap_to_add or exp_to_add:
@@ -3521,8 +3522,8 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             meoh_buses.at['CO2 storage bus', 'carrier'] = ''
             meoh_buses.at['CO2 storage bus', 'unit'] = ''
 
-        # intermediate crude-methanol bus, only when the split is active
-        if meoh_split:
+        # intermediate crude-methanol bus, only when the split is active and built
+        if meoh_split and {"methanol synthesis", "methanol distillation"} & set(cap_to_add + exp_to_add):
             meoh_buses.at['crude MeOH bus', 'meoh'] = 'crude MeOH'
             meoh_buses.at['crude MeOH bus', 'carrier'] = 'crude MeOH'
             meoh_buses.at['crude MeOH bus', 'unit'] = 'MW'
@@ -3554,76 +3555,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             cost = tech_costs.at["methanolisation", "fixed"] / tech_costs.at["methanolisation", "hydrogen-input"] * n_config.at["methanolisation", "cost factor"]
             n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
 
-        # ---- ALTERNATIVE ROUTE: biogas + H2 -> methanol (tri-reforming) ----
-        b = 'methanol from biogas'
-        if b in cap_to_add or b in exp_to_add:
-            n.add('Carrier', b)
-            for _row in ['H2 in bus', 'biogas in bus', 'local EL bus']:
-                meoh_buses.at[_row, b] = meoh_buses.at[_row, 'meoh']
-            # Heat MT is consumed (net steam for syngas preheat and the reboiler, DEA note E;
-            # the sheet reports zero district-heat output). DH and LT are produced -- they are
-            # the H2 storage compressor's aftercooling, not the process's.
-            n, _b_heat = add_local_heat_connections(n, {'Heat MT': -1, 'Heat DH': 1, 'Heat LT': 1},
-                                                    'methanol from biogas',
-                                                    n_flags, tech_costs, n_config)
-            meoh_buses.at['Heat MT', b] = _b_heat[0]
-            meoh_buses.at['Heat DH', b] = _b_heat[1]
-            meoh_buses.at['Heat LT', b] = _b_heat[2]
-            # same product bus as methanolisation: add_targets keys on the plant name
-            n, _b_product = add_targets(n, plant='methanolisation', inputs_dict=inputs_dict,
-                                        tech_costs=tech_costs, n_options=n_options,
-                                        targets_dict=targets_dict)
-            meoh_buses.at['product bus', b] = _b_product
-
-            if b in cap_to_add:
-                # technology-data stores this technology per MWh_H2 already, and bus0 is H2,
-                # so there is no division by hydrogen-input as there is for methanolisation.
-                _exi_cc = _exi_capital_cost("methanol from biogas", b, tech_costs)
-                n, meoh_buses = add_methanol_from_biogas_cap_exp(
-                    n, "EXI_", _exi_cc, n_config.at[b, "initial capacity"], False,
-                    carrier=b, meoh_buses=meoh_buses)
-            if b in exp_to_add:
-                cost = tech_costs.at["methanol from biogas", "fixed"] * n_config.at[b, "cost factor"]
-                n, meoh_buses = add_methanol_from_biogas_cap_exp(
-                    n, "", cost, 0, True, carrier=b, meoh_buses=meoh_buses)
-
-            # ---- H2 buffer, on the 30 bar side ----
-            # DEA's battery limits include the plant's own feed compressors but NOT storage,
-            # so a buffer here is additional rather than double-counted. IN and OUT are the
-            # same 30 bar bus: the store compresses 30 -> 150 to fill and throttles back on
-            # return, which add_compressor_and_storage handles from the bus states. Without
-            # this the route could not time-shift hydrogen at all, while 'methanolisation'
-            # can through its own store -- an asymmetry that penalised this route.
-            # The 1.35 multiplier stands in for the OXYGEN store and its compressor; see the
-            # note in add_compressor_and_storage.
-            if n_config.at['H2 HP storage', 'expansion']:
-                # The storage bus must EXIST before add_compressor_and_storage is called --
-                # it checks for it but does not create it. The name must end in
-                # "H2 HP storage" so p_config's bus_suffix rule gives it the 150 bar state.
-                meoh_buses.at['H2 storage bus', b] = 'mfb H2 HP storage'
-                _st = meoh_buses.loc[:, b]
-                _m = _st.notna() & _st.astype(str).str.strip().ne("")
-                n = add_requirements_buses(n, {
-                    "bus_list":     _st.loc[_m].tolist(),
-                    "carrier_list": meoh_buses.loc[:, "carrier"].loc[_m].tolist(),
-                    "unit_list":    meoh_buses.loc[:, "unit"].loc[_m].tolist(),
-                }, symbiosis_n)
-                n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
-                    'plant': 'methanol from biogas',
-                    'local EL bus': meoh_buses.at['local EL bus', b],
-                    'Heat DH bus': meoh_buses.at['Heat DH', b],
-                    'Heat LT bus': meoh_buses.at['Heat LT', b],
-                    'IN bus':  meoh_buses.at['H2 in bus', b],
-                    'OUT bus': meoh_buses.at['H2 in bus', b],
-                    'ST bus':  'mfb H2 HP storage',
-                    'compressor capacity': 0,
-                    'storage capacity': 0,
-                    'compressor expansion': True,
-                    'storage expansion': True,
-                    'cost multiplier': 1.35,
-                })
-
-    else:
+    elif {"methanol synthesis", "methanol distillation"} & set(cap_to_add + exp_to_add):
         # Heat buses, shared by both halves. Heat MT is bidirectional (0) here, unlike the
         # monolithic unit's -1: with the split the plant both supplies MT (reactor) and
         # draws it (reboiler), and the net may go either way hour to hour.
@@ -3676,6 +3608,75 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                 n, "", tech_costs.at['methanol storage', 'fixed'] if 'methanol storage' in tech_costs.index else 0.0,
                 n_config.at[st, 'initial capacity'], bool(n_config.at[st, 'expansion']),
                 carrier='crude MeOH', meoh_buses=meoh_buses)
+
+    # ---- ALTERNATIVE ROUTE: biogas + H2 -> methanol (tri-reforming), with or without the split ----
+    b = 'methanol from biogas'
+    if b in cap_to_add or b in exp_to_add:
+        n.add('Carrier', b)
+        for _row in ['H2 in bus', 'biogas in bus', 'local EL bus']:
+            meoh_buses.at[_row, b] = meoh_buses.at[_row, 'meoh']
+        # Heat MT is consumed (net steam for syngas preheat and the reboiler, DEA note E;
+        # the sheet reports zero district-heat output). DH and LT are produced -- they are
+        # the H2 storage compressor's aftercooling, not the process's.
+        n, _b_heat = add_local_heat_connections(n, {'Heat MT': -1, 'Heat DH': 1, 'Heat LT': 1},
+                                                'methanol from biogas',
+                                                n_flags, tech_costs, n_config)
+        meoh_buses.at['Heat MT', b] = _b_heat[0]
+        meoh_buses.at['Heat DH', b] = _b_heat[1]
+        meoh_buses.at['Heat LT', b] = _b_heat[2]
+        # same product bus as methanolisation: add_targets keys on the plant name
+        n, _b_product = add_targets(n, plant='methanolisation', inputs_dict=inputs_dict,
+                                    tech_costs=tech_costs, n_options=n_options,
+                                    targets_dict=targets_dict)
+        meoh_buses.at['product bus', b] = _b_product
+
+        if b in cap_to_add:
+            # technology-data stores this technology per MWh_H2 already, and bus0 is H2,
+            # so there is no division by hydrogen-input as there is for methanolisation.
+            _exi_cc = _exi_capital_cost("methanol from biogas", b, tech_costs)
+            n, meoh_buses = add_methanol_from_biogas_cap_exp(
+                n, "EXI_", _exi_cc, n_config.at[b, "initial capacity"], False,
+                carrier=b, meoh_buses=meoh_buses)
+        if b in exp_to_add:
+            cost = tech_costs.at["methanol from biogas", "fixed"] * n_config.at[b, "cost factor"]
+            n, meoh_buses = add_methanol_from_biogas_cap_exp(
+                n, "", cost, 0, True, carrier=b, meoh_buses=meoh_buses)
+
+        # ---- H2 buffer, on the 30 bar side ----
+        # DEA's battery limits include the plant's own feed compressors but NOT storage,
+        # so a buffer here is additional rather than double-counted. IN and OUT are the
+        # same 30 bar bus: the store compresses 30 -> 150 to fill and throttles back on
+        # return, which add_compressor_and_storage handles from the bus states. Without
+        # this the route could not time-shift hydrogen at all, while 'methanolisation'
+        # can through its own store -- an asymmetry that penalised this route.
+        # The 1.35 multiplier stands in for the OXYGEN store and its compressor; see the
+        # note in add_compressor_and_storage.
+        if n_config.at['H2 HP storage', 'expansion']:
+            # The storage bus must EXIST before add_compressor_and_storage is called --
+            # it checks for it but does not create it. The name must end in
+            # "H2 HP storage" so p_config's bus_suffix rule gives it the 150 bar state.
+            meoh_buses.at['H2 storage bus', b] = 'mfb H2 HP storage'
+            _st = meoh_buses.loc[:, b]
+            _m = _st.notna() & _st.astype(str).str.strip().ne("")
+            n = add_requirements_buses(n, {
+                "bus_list":     _st.loc[_m].tolist(),
+                "carrier_list": meoh_buses.loc[:, "carrier"].loc[_m].tolist(),
+                "unit_list":    meoh_buses.loc[:, "unit"].loc[_m].tolist(),
+            }, symbiosis_n)
+            n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
+                'plant': 'methanol from biogas',
+                'local EL bus': meoh_buses.at['local EL bus', b],
+                'Heat DH bus': meoh_buses.at['Heat DH', b],
+                'Heat LT bus': meoh_buses.at['Heat LT', b],
+                'IN bus':  meoh_buses.at['H2 in bus', b],
+                'OUT bus': meoh_buses.at['H2 in bus', b],
+                'ST bus':  'mfb H2 HP storage',
+                'compressor capacity': 0,
+                'storage capacity': 0,
+                'compressor expansion': True,
+                'storage expansion': True,
+                'cost multiplier': 1.35,
+            })
 
     new_components = log_new_components(n, n0_dict)
 
