@@ -55,9 +55,9 @@
 <rect x="16" y="342.0" width="290" height="77" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="16" y="342.0" width="5" height="77" rx="2" fill="#d4552c"/>
 <text x="30.0" y="362.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat DH</text>
-<text x="30.0" y="377.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat amb</text>
-<text x="30.0" y="392.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
-<text x="30.0" y="407.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ DH grid</text>
+<text x="30.0" y="377.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<text x="30.0" y="392.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ DH grid</text>
+<text x="30.0" y="407.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat amb</text>
 <rect x="16" y="431.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="16" y="431.0" width="5" height="62" rx="2" fill="#d4552c"/>
 <text x="30.0" y="451.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT</text>
@@ -72,9 +72,9 @@
 <rect x="880" y="201.5" width="284" height="77" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="1159" y="201.5" width="5" height="77" rx="2" fill="#d4552c"/>
 <text x="894.0" y="221.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat DH</text>
-<text x="894.0" y="236.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat amb</text>
-<text x="894.0" y="251.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
-<text x="894.0" y="266.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ DH grid</text>
+<text x="894.0" y="236.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← Heat MT</text>
+<text x="894.0" y="251.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ DH grid</text>
+<text x="894.0" y="266.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat amb</text>
 <rect x="880" y="328.5" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="1159" y="328.5" width="5" height="47" rx="2" fill="#d4552c"/>
 <text x="894.0" y="348.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat LT</text>

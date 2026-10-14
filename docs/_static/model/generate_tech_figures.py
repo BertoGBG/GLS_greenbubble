@@ -145,7 +145,8 @@ def agent_graph(n, alloc, agent, extra=None):
     for b, v in made.items():
         if len(v) > 1 and not b.lower().startswith(("heat", "el")):
             notes.setdefault(b, []).insert(0, f"competing: {len(v)} technologies")
-    notes = {b: list(dict.fromkeys(v)) for b, v in notes.items()}
+    notes = {b: sorted(dict.fromkeys(v), key=lambda x: (not x.startswith("competing"), x))  # stable order
+             for b, v in notes.items()}
     return items, notes
 
 

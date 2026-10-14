@@ -15,6 +15,9 @@ electricity while the column runs on its own schedule.
 That flexibility is worth something, and the point of the split is to find out how
 much — as a **difference between two solves**, not as an assumption.
 
+``methanol from biogas`` is offered in both solves when its ``n_config`` entry
+allows it, so the difference measures the split alone and not the loss of a route.
+
 Enabling it
 -----------
 

@@ -46,8 +46,8 @@
 <rect x="16" y="70.0" width="290" height="62" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
 <rect x="16" y="70.0" width="5" height="62" rx="2" fill="#7048e8"/>
 <text x="30.0" y="90.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 Liq storage</text>
-<text x="30.0" y="105.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 distribution</text>
-<text x="30.0" y="120.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: CO2 Liq storage</text>
+<text x="30.0" y="105.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: CO2 Liq storage</text>
+<text x="30.0" y="120.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 distribution</text>
 <rect x="16" y="147.5" width="290" height="47" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
 <rect x="16" y="147.5" width="5" height="47" rx="2" fill="#7048e8"/>
 <text x="30.0" y="167.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 distribution</text>
@@ -55,8 +55,8 @@
 <rect x="16" y="206.5" width="290" height="62" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
 <rect x="16" y="206.5" width="5" height="62" rx="2" fill="#c9820f"/>
 <text x="30.0" y="226.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El_CO2_liq</text>
-<text x="30.0" y="241.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← ElDK1 buy bus</text>
-<text x="30.0" y="256.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← El3</text>
+<text x="30.0" y="241.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← El3</text>
+<text x="30.0" y="256.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← ElDK1 buy bus</text>
 <rect x="16" y="280.5" width="290" height="62" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
 <rect x="16" y="280.5" width="5" height="62" rx="2" fill="#c9820f"/>
 <text x="30.0" y="300.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El_TES_concrete_El</text>
@@ -79,8 +79,8 @@
 <rect x="880" y="140.0" width="284" height="62" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
 <rect x="1159" y="140.0" width="5" height="62" rx="2" fill="#7048e8"/>
 <text x="894.0" y="160.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 Liq storage</text>
-<text x="894.0" y="175.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 distribution</text>
-<text x="894.0" y="190.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: CO2 Liq storage</text>
+<text x="894.0" y="175.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">store: CO2 Liq storage</text>
+<text x="894.0" y="190.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 distribution</text>
 <rect x="880" y="225.0" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="1159" y="225.0" width="5" height="47" rx="2" fill="#d4552c"/>
 <text x="894.0" y="245.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">TES concrete El bus</text>
@@ -99,9 +99,9 @@
 <rect x="880" y="491.0" width="284" height="77" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
 <rect x="1159" y="491.0" width="5" height="77" rx="2" fill="#c9820f"/>
 <text x="894.0" y="511.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El3</text>
-<text x="894.0" y="526.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ El_TES_concrete_El</text>
+<text x="894.0" y="526.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">storage unit: battery</text>
 <text x="894.0" y="541.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ El_CO2_liq</text>
-<text x="894.0" y="556.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">storage unit: battery</text>
+<text x="894.0" y="556.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ El_TES_concrete_El</text>
 <text x="460.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7048e8" text-anchor="start">bus0</text>
 <text x="720.0" y="112.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7048e8" text-anchor="end">0.95  bus1</text>
 <text x="460.0" y="181.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#7048e8" text-anchor="start">bus0</text>

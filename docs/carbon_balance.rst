@@ -15,6 +15,11 @@ The optimiser chooses among them. Switch agents and technologies as in ``n_flags
 ``n_config`` to see how the routes change. The starting point is
 ``config.default.yaml`` with ``n_config.default.yaml``.
 
+Methanol has two carbon routes: CO₂ from the CO₂ distribution bus, and biogas.
+The ``meoh split`` switch replaces ``methanolisation`` with methanol synthesis, a
+crude methanol bus and distillation. The biogas route stays available in both
+cases.
+
 .. raw:: html
 
    <div style="border:1px solid var(--pst-color-border,#d3dbe4);border-radius:10px;

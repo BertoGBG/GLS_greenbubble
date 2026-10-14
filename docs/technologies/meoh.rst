@@ -12,7 +12,8 @@ Agent: ``n_flags.meoh``. Consumes hydrogen, CO₂ and biogas from the shared bus
    :width: 100%
    :alt: meoh links and bus connections
 
-   Methanol routes and their bus connections. The dashed links replace ``methanolisation`` when the split is enabled. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
+   Methanol routes and their bus connections. The dashed links replace ``methanolisation`` when the split is
+   enabled; ``methanol from biogas`` is offered in both cases. Each port shows the bus number and the efficiency per unit of ``bus0``; negative
    values are inputs. Notes on a bus list its connectors, compressors, stores and generators.
    Drawn from the network with every technology enabled.
 
@@ -32,9 +33,33 @@ distillation`` with a crude-methanol tank between them, so the reactor and the
 column can run at different times.  Enable with ``options['meoh split']`` in
 ``n_config``; see :doc:`/meoh_split`.
 
-**Methanol from biogas** (``methanol from biogas``) is an *alternative* to
-``methanolisation``, not an addition to it: both produce into the same methanol
-collection bus, and the optimiser picks. Instead of feeding separated CO₂ and
+**Methanol from biogas** (``methanol from biogas``) is an *alternative* to the
+CO₂ route, not an addition to it: both produce into the same methanol collection
+bus, and the optimiser picks. It competes with ``methanolisation`` or, when the
+split is enabled, with ``methanol synthesis`` and ``methanol distillation``.
+The split changes only the CO₂ route; this route is always a single link.
+
+.. list-table:: Methanol routes offered to the optimiser
+   :header-rows: 1
+   :widths: 22 22 56
+
+   * - ``meoh split``
+     - ``methanol from biogas``
+     - Routes in the network
+   * - off
+     - off
+     - ``methanolisation``
+   * - off
+     - on
+     - ``methanolisation`` and ``methanol from biogas``, competing
+   * - on
+     - off
+     - ``methanol synthesis`` → ``crude MeOH`` → ``methanol distillation``
+   * - on
+     - on
+     - the split chain and ``methanol from biogas``, competing
+
+The biogas route works differently. Instead of feeding separated CO₂ and
 hydrogen to a synthesis reactor, raw biogas is reformed with oxygen in an
 autothermal reformer and the resulting syngas is hydrogenated.
 

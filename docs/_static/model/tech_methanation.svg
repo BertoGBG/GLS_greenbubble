@@ -69,8 +69,8 @@
 <rect x="16" y="182.5" width="290" height="62" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
 <rect x="16" y="182.5" width="5" height="62" rx="2" fill="#7048e8"/>
 <text x="30.0" y="202.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 distribution</text>
-<text x="30.0" y="217.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ methanation CO2 HP storage</text>
-<text x="30.0" y="232.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 to methanation (compressor)</text>
+<text x="30.0" y="217.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ CO2 to methanation (compressor)</text>
+<text x="30.0" y="232.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ methanation CO2 HP storage</text>
 <rect x="16" y="389.5" width="290" height="47" rx="5" fill="#ffffff" stroke="#1c7ed6" stroke-width="1.3"/>
 <rect x="16" y="389.5" width="5" height="47" rx="2" fill="#1c7ed6"/>
 <text x="30.0" y="409.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">biogas to methanation</text>
@@ -78,8 +78,8 @@
 <rect x="16" y="448.5" width="290" height="62" rx="5" fill="#ffffff" stroke="#7048e8" stroke-width="1.3"/>
 <rect x="16" y="448.5" width="5" height="62" rx="2" fill="#7048e8"/>
 <text x="30.0" y="468.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">CO2 to methanation</text>
-<text x="30.0" y="483.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ methanation CO2 HP storage</text>
-<text x="30.0" y="498.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← CO2 distribution (compressor)</text>
+<text x="30.0" y="483.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">← CO2 distribution (compressor)</text>
+<text x="30.0" y="498.5" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">↔ methanation CO2 HP storage</text>
 <rect x="880" y="249.0" width="284" height="62" rx="5" fill="#ffffff" stroke="#1c7ed6" stroke-width="1.3"/>
 <rect x="1159" y="249.0" width="5" height="62" rx="2" fill="#1c7ed6"/>
 <text x="894.0" y="269.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">eCH4 collection</text>
