@@ -3123,7 +3123,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
             'IN bus':  soec_lp_bus,
             'OUT bus': header_bus,
             'ST bus':  '',
-            'compressor capacity': capacity,
+            'compressor capacity': capacity * tech_costs.at[tech_name, 'efficiency'],  # SOEC p_nom is electricity
             'storage capacity': 0,
             'compressor expansion': expansion,
             'storage expansion': False,
@@ -3206,8 +3206,6 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         empty = {k: [] for k in ["links", "generators", "loads", "stores", "buses", "storage_units"]}
         return n, empty
 
-    GL_eff = inputs_dict['GL_eff']
-
     n0_dict = get_network_status(n)
 
     # ----------------------------------------------------------------------
@@ -3258,7 +3256,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             "Link",
             name=name,
             carrier = carrier,
-            bus0=meoh_buses.at['H2 in bus', 'methanolisation'],#meoh_comp_dict['CO2 HP bus'],
+            bus0=meoh_buses.at['H2 in bus', 'methanolisation'],
             bus1=meoh_buses.at['product bus', 'methanolisation'],
             bus2=meoh_buses.at['CO2 in bus', 'methanolisation'],
             bus3=meoh_buses.at['local EL bus', 'methanolisation'],
@@ -3293,7 +3291,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                    'IN bus' : meoh_buses.at['CO2 in bus', 'meoh'],
                    'OUT bus' : meoh_buses.at['CO2 in bus', 'methanolisation'],
                    'ST bus' : meoh_buses.at['CO2 storage bus', 'methanolisation'],
-                   'compressor capacity' :   capacity,
+                   'compressor capacity' :   capacity * tech_costs.at["methanolisation", "carbondioxide-input"] / tech_costs.at["methanolisation", "hydrogen-input"],
                    'storage capacity' : 0,
                    'compressor expansion' :   expansion,
                    'storage expansion' : expansion,
@@ -3308,7 +3306,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
                    'IN bus' : meoh_buses.at['H2 in bus', 'meoh'],
                    'OUT bus' : meoh_buses.at['H2 in bus', 'methanolisation'],
                    'ST bus' : meoh_buses.at['H2 storage bus', 'methanolisation'],
-                   'compressor capacity' :  capacity * GL_eff.loc["H2", "Methanol plant"],
+                   'compressor capacity' :  capacity,
                    'storage capacity' : 0,
                    'compressor expansion' :  expansion,
                    'storage expansion' : expansion,
@@ -3992,7 +3990,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
 
         # adjust volume flows from biogas to pure CO2
         fl1 = 'CH4 normal'
-        fl2 = 'CO2 normal'
         fl3 = 'H2 normal'
 
         lhv_biomethane = symbiosis_n.at[fl1, 'LHV']
@@ -4000,8 +3997,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
 
         density_biomethane = CP.PropsSI("D", "T", symbiosis_n.at[fl1, 'T'] + 273, "P", symbiosis_n.at[fl1, 'P'] * 1e5,
                                         symbiosis_n.at[fl1, 'fluid'])
-        density_co2 = CP.PropsSI("D", "T", symbiosis_n.at[fl2, 'T'] + 273, "P", symbiosis_n.at[fl2, 'P'] * 1e5,
-                                 symbiosis_n.at[fl2, 'fluid'])
         density_h2 = CP.PropsSI("D", "T", symbiosis_n.at[fl3, 'T'] + 273, "P", symbiosis_n.at[fl3, 'P'] * 1e5,
                                 symbiosis_n.at[fl3, 'fluid'])
 
@@ -4010,7 +4005,6 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
         v_ch4 = (tech_costs.at["methanation biogas","biogas-input"] / lhv_biomethane * 1e3 / density_biomethane) # Nm3_CH4/MWh_H2
         v_co2 = v_ch4  / v_ch4_v_co2 # (m3_ch4_in/MWh_H2_in)  / (m3_ch4_in/m3_co2_in) = # Nm3_CO2/Mwh_H2
         vol_ratio = (v_h2 + v_co2) / (v_h2 + v_co2 + v_ch4) # between CO2-only input volume flow and reference input volume flow (technology-data)
-        CO2_input = v_co2 * density_co2 * 1e-3 # tCO2/MWh_H2
 
         # add plant
         name = f"{prefix}methanation CO2"
@@ -4047,7 +4041,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
                    'IN bus' : methanation_buses.at['CO2 in bus', 'methanation'],
                    'OUT bus' : methanation_buses.at['CO2 in bus', 'methanation CO2'],
                    'ST bus' : methanation_buses.at['CO2 storage bus', 'methanation'],
-                   'compressor capacity' :   capacity * CO2_input,
+                   'compressor capacity' :   capacity * tech_costs.at["methanation", "carbondioxide-input"] / tech_costs.at["methanation", "hydrogen-input"],
                    'storage capacity' : 0,
                    'compressor expansion' :   expansion,
                    'storage expansion' : expansion,
