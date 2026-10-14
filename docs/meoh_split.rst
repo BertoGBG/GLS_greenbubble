@@ -66,6 +66,13 @@ Network structure
      - Link
      - H₂ + CO₂ + el → crude MeOH, rejecting reactor heat to **Heat MT**.
        ``bus0`` is H₂, so capacity is in MW\_H2, as for ``methanolisation``.
+   * - ``methanol synthesis H2 compressor``,
+       ``methanol synthesis CO2 compressor``
+     - Link
+     - Lift the feeds from the 30 bar H₂ header and the 1 bar CO₂ header to the
+       80 bar ``H2 to methanolisation`` and ``CO2 to methanolisation`` buses, with
+       optional HP stores. The same components as for ``methanolisation``, because
+       the DEA basis excludes feed compression in both cases.
    * - ``crude MeOH``
      - Bus
      - Intermediate methanol/water mixture, 64.0 wt% MeOH

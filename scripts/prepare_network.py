@@ -3347,7 +3347,24 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         coefficients are divided by hydrogen-input. Unlike the aggregate unit this link
         is a heat SOURCE: the reactor duty that DEA nets out internally is made explicit
         on the Heat MT bus, where the distillation reboiler can bid for it.
+
+        The feeds enter at the synthesis loop pressure through the same H2 and CO2
+        compressors (and HP stores) as 'methanolisation', since the DEA basis excludes
+        feed compression for both.
         """
+        meoh_buses.at['H2 in bus', 'methanol synthesis'] = 'H2 to methanolisation'
+        meoh_buses.at['CO2 in bus', 'methanol synthesis'] = 'CO2 to methanolisation'
+        meoh_buses.at['CO2 storage bus', 'methanol synthesis'] = meoh_buses.at['CO2 storage bus', 'meoh']
+        meoh_buses.at['H2 storage bus', 'methanol synthesis'] = meoh_buses.at['H2 storage bus', 'meoh']
+        _rows = ['H2 in bus', 'CO2 in bus', 'CO2 storage bus', 'H2 storage bus']
+        _sb = meoh_buses.loc[_rows, 'methanol synthesis']
+        _m = _sb.notna() & _sb.astype(str).str.strip().ne("")
+        n = add_requirements_buses(n, {
+            "bus_list":     _sb.loc[_m].tolist(),
+            "carrier_list": meoh_buses.loc[_rows, "carrier"].loc[_m].tolist(),
+            "unit_list":    meoh_buses.loc[_rows, "unit"].loc[_m].tolist(),
+        }, symbiosis_n)
+
         name = f"{prefix}methanol synthesis"
         n.add(
             "Link",
@@ -3372,6 +3389,24 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             ramp_limit_up=n_config.at['methanol synthesis', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanol synthesis', 'ramp limit down'],
             )
+
+        # feed compressors and HP stores, as for 'methanolisation'
+        for fluid, ratio in (("CO2", tech_costs.at["methanol synthesis", "carbondioxide-input"]
+                                     / tech_costs.at["methanol synthesis", "hydrogen-input"]),
+                             ("H2", 1.0)):
+            n = add_compressor_and_storage(n, n_flags, tech_costs, n_config, {
+                'plant': 'methanol synthesis',
+                'local EL bus': meoh_buses.at['local EL bus', 'methanol synthesis'],
+                'Heat DH bus': meoh_buses.at['Heat DH', 'methanol synthesis'],
+                'Heat LT bus': meoh_buses.at['Heat LT', 'methanol synthesis'],
+                'IN bus': meoh_buses.at[f'{fluid} in bus', 'meoh'],
+                'OUT bus': meoh_buses.at[f'{fluid} in bus', 'methanol synthesis'],
+                'ST bus': meoh_buses.at[f'{fluid} storage bus', 'methanol synthesis'],
+                'compressor capacity': capacity * ratio,
+                'storage capacity': 0,
+                'compressor expansion': expansion,
+                'storage expansion': expansion,
+            })
         return n, meoh_buses
 
     def add_methanol_distillation_cap_exp(n, prefix, capital_cost, capacity, expansion, carrier, meoh_buses):
@@ -3572,7 +3607,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         # ---- synthesis: H2 + CO2 -> crude MeOH (+ reactor heat to MT) ----
         t = 'methanol synthesis'
         n.add('Carrier', t)
-        for _row in ['H2 in bus', 'CO2 in bus', 'local EL bus', 'crude MeOH bus']:
+        for _row in ['local EL bus', 'crude MeOH bus']:          # H2 and CO2 feeds: see add_methanol_synthesis_cap_exp
             meoh_buses.at[_row, t] = meoh_buses.at[_row, 'meoh']
 
         # ---- distillation: crude MeOH -> product (the sellable methanol) ----
