@@ -231,7 +231,7 @@ TES concrete: # Store + bidirectional HX Link (Heat MT).
   <<: *base
   min_max_hours: 8       # p_nom_HX × min_max_hours ≤ e_nom_store
   standing loss: 0.02
-  # efficiency charge: null  # override bidirectional HX efficiency (default: 1.0)
+  # efficiency charge: must stay 1.0 -- the HX link is bidirectional (losses: standing loss)
   expansion: false
 
 TES concrete El: # Store + electric charger (El3→heat) + heat discharger (heat→Heat MT).
@@ -259,7 +259,7 @@ TES DH: # Store + bidirectional HX Link (Heat DH).
   <<: *base
   min_max_hours: 10      # p_nom_HX × min_max_hours ≤ e_nom_store
   standing loss: 0.002
-  # efficiency charge: null  # override central water tank charger eff (default: 1.0)
+  # efficiency charge: must stay 1.0 -- the HX link is bidirectional (losses: standing loss)
   expansion: true
 
 # -------------------  options config (alphabetical) -------------------

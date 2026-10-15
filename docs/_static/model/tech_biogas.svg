@@ -73,7 +73,7 @@
 <rect x="16" y="287.8" width="290" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="16" y="287.8" width="5" height="47" rx="2" fill="#d4552c"/>
 <text x="30.0" y="307.8" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_biogas</text>
-<text x="30.0" y="322.8" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat MT ×0.95</text>
+<text x="30.0" y="322.8" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat MT</text>
 <rect x="16" y="420.8" width="290" height="32" rx="5" fill="#ffffff" stroke="#1c7ed6" stroke-width="1.3"/>
 <rect x="16" y="420.8" width="5" height="32" rx="2" fill="#1c7ed6"/>
 <text x="30.0" y="440.8" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">NG</text>
@@ -99,7 +99,7 @@
 <rect x="880" y="323.0" width="284" height="47" rx="5" fill="#ffffff" stroke="#d4552c" stroke-width="1.3"/>
 <rect x="1159" y="323.0" width="5" height="47" rx="2" fill="#d4552c"/>
 <text x="894.0" y="343.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">Heat MT_biogas</text>
-<text x="894.0" y="358.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat MT ×0.95</text>
+<text x="894.0" y="358.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="400" fill="#44586b" text-anchor="start">→ Heat MT</text>
 <rect x="880" y="264.0" width="284" height="47" rx="5" fill="#ffffff" stroke="#c9820f" stroke-width="1.3"/>
 <rect x="1159" y="264.0" width="5" height="47" rx="2" fill="#c9820f"/>
 <text x="894.0" y="284.0" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#14202c" text-anchor="start">El3</text>

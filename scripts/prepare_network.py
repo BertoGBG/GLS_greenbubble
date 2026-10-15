@@ -721,7 +721,7 @@ def add_grid_connection_cap_exp(n, name, capital_cost, capacity, expansion, carr
 def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs, n_config=None):
     """
     Create plant-local heat buses, a rejection link to 'Heat amb',
-    and (optionally) a bidirectional connection to the symbiosis heat grid.
+    and (optionally) connections to the symbiosis heat grid.
 
     heat_bus_dict = {'Heat MT' : -1,
                     'Heat DH' : -1,
@@ -730,7 +730,13 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
     # heat_bus_list can be only ['Heat MT', 'Heat DH', 'Heat LT']
     # symbiosis_dir =  -1  the plant is receiving from the symbiosis network
     # symbiosis_dir =  1  the plant is supplying heat to the symbiosis network
-    # symbiosis_dir =  0  the plant can supplying and receive heat to the symbiosis network (bidirectional)
+    # symbiosis_dir =  0  the plant can supply and receive heat (bidirectional)
+    #
+    # The one-way links (+1, -1) carry the heat-exchanger efficiency. The bidirectional
+    # link (0) is LOSSLESS (efficiency 1), an approximation: a link with p_min_pu=-1 and
+    # efficiency < 1 turns the loss into a gain on reverse flow, because PyPSA applies
+    # p1 = -efficiency * p0 in both directions. Two one-way links would avoid that but
+    # need an extra constraint to share one capacity.
 
 
     """
@@ -767,59 +773,33 @@ def add_local_heat_connections(n, heat_bus_dict, plant_name, n_flags, tech_costs
             if b not in n.buses.index:
                 ensure_bus(n, b, carrier="Heat", unit="MW")
 
-            if int(symbiosis_dir>0):
-                # 2) Heat rejection to symbiosis net (on heat bus)
-                sym_link = f"{b}_{plant_name}_to_symb"
-                if sym_link not in n.links.index:
-                    n.add(
-                        "Link",
-                        sym_link,
-                        carrier = 'symbiosys net',
-                        bus0=local_bus,  # plant-local side
-                        bus1=b,  # symbiosis side
-                        efficiency=tech_costs.at["DH heat exchanger", "efficiency"],
-                        p_min_pu=0,
-                        p_nom_extendable=True,
-                        marginal_cost=loop_tol,
-                        capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
-                                     * n_config.at["DH heat exchanger", "cost factor"],
-                    )
+            # (link name, bus0, bus1, efficiency, p_min_pu)
+            hx_eff = tech_costs.at["DH heat exchanger", "efficiency"]
+            if symbiosis_dir > 0:
+                # heat rejection to the symbiosis net
+                sym = (f"{b}_{plant_name}_to_symb", local_bus, b, hx_eff, 0)
+            elif symbiosis_dir < 0:
+                # heat supplied by the symbiosis net
+                sym = (f"{b}_{plant_name}_from_symb", b, local_bus, hx_eff, 0)
+            else:
+                # both directions on one link, lossless (see docstring)
+                sym = (f"{b}_{plant_name}_to_symb", local_bus, b, 1.0, -1)
 
-            elif int(symbiosis_dir<0):
-                # 1) Heat supplied by the symbiosis network (from heat bus)
-                sym_link = f"{b}_{plant_name}_from_symb"
-                if sym_link not in n.links.index:
-                    n.add(
-                        "Link",
-                        sym_link,
-                        carrier = 'symbiosys net',
-                        bus0=b,                 # symbiosis side
-                        bus1=local_bus,         # plant-local side
-                        efficiency=tech_costs.at["DH heat exchanger", "efficiency"],
-                        p_min_pu=0,
-                        p_nom_extendable=True,
-                        marginal_cost=loop_tol,
-                        capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
-                                     * n_config.at["DH heat exchanger", "cost factor"],
-                    )
-
-            if int(symbiosis_dir==0):
-                # 2) Heat rejection to symbiosis net (on heat bus)
-                sym_link = f"{b}_{plant_name}_to_symb"
-                if sym_link not in n.links.index:
-                    n.add(
-                        "Link",
-                        sym_link,
-                        carrier = 'symbiosys net',
-                        bus0=local_bus,  # plant-local side
-                        bus1=b,  # symbiosis side
-                        efficiency=tech_costs.at["DH heat exchanger", "efficiency"],
-                        p_min_pu=-1,
-                        p_nom_extendable=True,
-                        marginal_cost=loop_tol,
-                        capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
-                                     * n_config.at["DH heat exchanger", "cost factor"],
-                    )
+            sym_link, bus0, bus1, eff, p_min_pu = sym
+            if sym_link not in n.links.index:
+                n.add(
+                    "Link",
+                    sym_link,
+                    carrier = 'symbiosys net',
+                    bus0=bus0,
+                    bus1=bus1,
+                    efficiency=eff,
+                    p_min_pu=p_min_pu,
+                    p_nom_extendable=True,
+                    marginal_cost=loop_tol,
+                    capital_cost=tech_costs.at["DH heat exchanger", "fixed"]
+                                 * n_config.at["DH heat exchanger", "cost factor"],
+                )
 
         else:
             # --- Ensure the ambient heat sink bus exists ---
@@ -1984,6 +1964,15 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
                 return float(v)
         return float(fallback)
 
+    def _hx_eff(tech_key, col, fallback):
+        """Efficiency of a bidirectional HX link. Must be 1: with p_min_pu=-1, a value
+        below 1 becomes a gain on reverse flow. Model losses on the Store instead."""
+        eff = _eff(tech_key, col, fallback)
+        if not np.isclose(eff, 1.0):
+            raise ValueError(f"{tech_key}: '{col}' = {eff}, but its HX link is bidirectional "
+                             "and needs efficiency 1. Use 'standing loss' for storage losses.")
+        return eff
+
     def _exi_link_cap(energy_mwh, mmh):
         """EXI link p_nom [MW] = initial store energy / min_max_hours."""
         return float(energy_mwh) / float(mmh) if mmh and mmh > 0 else 0.0
@@ -2007,8 +1996,8 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
               bus0=heat_bus,
               bus1=tes_bus,
               p_min_pu=-1,   # bidirectional; efficiency=1 avoids energy creation on reverse flow
-              efficiency=_eff("TES DH", "efficiency charge",
-                              tech_costs.at["central water tank charger", "efficiency"]),
+              efficiency=_hx_eff("TES DH", "efficiency charge",
+                                 tech_costs.at["central water tank charger", "efficiency"]),
               p_nom_extendable=expansion,
               p_nom=cap_link,
               p_nom_max=n_config.at["TES DH", "max capacity"],
@@ -2046,7 +2035,7 @@ def add_thermal_storage(n, n_flags, inputs_dict, tech_costs, n_config):
               bus0=heat_bus,
               bus1=tes_bus,
               p_min_pu=-1,   # bidirectional; efficiency=1 avoids energy creation on reverse flow
-              efficiency=_eff("TES concrete", "efficiency charge", 1.0),
+              efficiency=_hx_eff("TES concrete", "efficiency charge", 1.0),
               p_nom_extendable=expansion,
               p_nom=cap_link,
               p_nom_max=n_config.at["TES concrete", "max capacity"],
@@ -2648,12 +2637,6 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
             p_nom_max_boiler = n_config.at['biogas upgrading', 'max capacity'] * np.abs(n.links.at[prefix + 'biogas upgrading', 'efficiency3']) / \
                         tech_costs.at['gas boiler steam', 'efficiency'] * 1.01  # lock the max capacity to the biogas upgrading
 
-            # enables  NG boiler to supply heat to the symbiosis network
-            if n_flags['symbiosis'] and capacity:
-                p_min_pu_val = -1
-            else:
-                p_min_pu_val = 0
-
             name_lk = prefix + 'biogas upgrading' + '_' + "NG boiler"
             n.add("Link",
                   name = name_lk,
@@ -2664,7 +2647,9 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                   p_nom_extendable=expansion,
                   p_nom = capacity_boiler,
                   p_nom_max = p_nom_max_boiler,
-                  p_min_pu = p_min_pu_val,
+                  # Not reversible. Boiler heat reaches the symbiosis net through the
+                  # plant's Heat MT connection. A reverse flow would turn heat into NG.
+                  p_min_pu = 0,
                   lifetime = tech_costs.at['gas boiler steam','lifetime'],
                   capital_cost= tech_costs.at['gas boiler steam', 'fixed'] * n_config.at['NG boiler','cost factor'] * int(capital_cost > 0),
                   )
@@ -3234,9 +3219,11 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
         n = add_requirements_buses(n, bus_dict, symbiosis_n)
 
         # add Heat buses
-        meth_heat_directions = {'Heat MT': -1,
+        # Heat MT is bidirectional (0), as for the split, so both draw the reboiler steam
+        # through the same lossless link and the split collapses to this unit exactly.
+        meth_heat_directions = {'Heat MT': 0,
                                 'Heat DH': 1,  # for compressor
-                                'Heat LT': 1}  # for compressor
+                                'Heat LT': 1}  # condenser and compressor
 
         n, new_heat_buses = add_local_heat_connections(n, meth_heat_directions, 'methanolisation', n_flags,
                                                        tech_costs, n_config)
@@ -3591,8 +3578,8 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             n, meoh_buses = add_methanolisation_cap_exp(n, "", cost, 0, True, carrier= t, meoh_buses = meoh_buses)
 
     elif {"methanol synthesis", "methanol distillation"} & set(cap_to_add + exp_to_add):
-        # Heat buses, shared by both halves. Heat MT is bidirectional (0) here, unlike the
-        # monolithic unit's -1: with the split the plant both supplies MT (reactor) and
+        # Heat buses, shared by both halves. Heat MT is bidirectional (0), as for the
+        # monolithic unit: with the split the plant both supplies MT (reactor) and
         # draws it (reboiler), and the net may go either way hour to hour.
         _meoh_heat_directions = {'Heat MT': 0,
                                  'Heat DH': 1,

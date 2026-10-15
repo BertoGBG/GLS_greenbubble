@@ -86,7 +86,7 @@ independently.
      - one bidirectional heat exchanger + store
      - separate electric charger + heat discharger + store
    * - Charge efficiency
-     - 1.0
+     - 1.0, fixed: the link is bidirectional, so a lower value would create heat on discharge
      - 0.99 (``Concrete-charger``)
    * - Discharge efficiency
      - 1.0 (same link)

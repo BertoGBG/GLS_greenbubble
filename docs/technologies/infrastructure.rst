@@ -218,6 +218,35 @@ the shared circuit; its cost and efficiency come from ``technology-data`` like
 any other technology, and it is attached by ``add_local_heat_connections``
 (``scripts/prepare_network.py``).
 
+Each plant declares a direction for each heat tier:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 30 18 38
+
+   * - Direction
+     - Link
+     - Efficiency
+     - Use
+   * - ``+1``
+     - ``{tier}_{plant}_to_symb``
+     - 0.95
+     - plant rejects heat to the circuit
+   * - ``-1``
+     - ``{tier}_{plant}_from_symb``
+     - 0.95
+     - plant draws heat from the circuit
+   * - ``0``
+     - ``{tier}_{plant}_to_symb``, ``p_min_pu = -1``
+     - 1.0
+     - both directions on one link
+
+The bidirectional link is lossless by design. PyPSA applies
+``p1 = -efficiency × p0`` in both directions, so with an efficiency below 1 the
+loss becomes a gain on reverse flow and the link creates heat. Two one-way
+links would keep the loss but need an extra constraint to share one capacity.
+The ``Heat MT`` connections of ``biogas`` and the methanol plant use ``0``.
+
 .. note::
 
    The split is a single cut at one temperature, so a stream leaving a
