@@ -1170,14 +1170,42 @@ assert 1.00 <= _co2_feed_check / meoh_water_t_per_t <= 1.10, (
 # scale nearer linearly than n=0.44 implies, so the exponent overstates the shift.
 # ----------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------
+# 'methanolisation' on the [DEA] sheet 98 basis only.
+#
+# technology-data mixes two sources for this technology: hydrogen-input (1.138),
+# carbondioxide-input (0.248), electricity-input (0.271) and heat-output (0.1) come
+# from DECHEMA 2017, while heat-input, investment, FOM and lifetime come from [DEA].
+# The fork also carries the [DEA] values as hydrogen-input-DEA, carbondioxide-input-DEA
+# and district-heat-output. The overrides below put the mass and heat balance on [DEA]
+# as well, so the monolithic link and the split share one source. electricity-input
+# is not overridden: prepare_network.py reads electricity-input-no-compression, which
+# is already [DEA].
+# ----------------------------------------------------------------------------------
+tech_inputs['methanolisation', 'hydrogen-input'] = {
+    'value': 1.1578, 'unit': 'MWh_H2/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", via technology-data methanolisation hydrogen-input-DEA',
+    'further description': 'Sheet row Hydrogen 6.4 MWh/t over the sheet methanol LHV of 5.5278 MWh/t. Replaces DECHEMA 1.138. [ALA] Table 4 gives 1.155.',
+}
+tech_inputs['methanolisation', 'carbondioxide-input'] = {
+    'value': 0.2533, 'unit': 't_CO2/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", via technology-data methanolisation carbondioxide-input-DEA',
+    'further description': 'Sheet row CO2 1.4 t/t over 5.5278 MWh/t. Replaces DECHEMA 0.248. [ALA] Table 4 gives 0.253.',
+}
+tech_inputs['methanolisation', 'heat-output'] = {
+    'value': 0.2562, 'unit': 'MWh_th/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", via technology-data methanolisation district-heat-output',
+    'further description': 'Sheet row District heating 0.2 per MWh of total input, x 7.08/5.5278. Replaces DECHEMA 0.1. Wired to Heat LT, as the split condenser: [OLI] measure it at 53 C.',
+}
+
 tech_inputs['methanol synthesis', 'hydrogen-input'] = {
-    'value': 1.138, 'unit': 'MWh_H2/MWh_MeOH',
-    'source': '[DEA] sheet "98 Methanol from hydrogen", via technology-data tech methanolisation',
+    'value': 1.1578, 'unit': 'MWh_H2/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", same as methanolisation hydrogen-input',
     'further description': 'all H2 enters the synthesis step; unchanged from the aggregate unit. [ALA] Table 4 gives 1.155',
 }
 tech_inputs['methanol synthesis', 'carbondioxide-input'] = {
-    'value': 0.248, 'unit': 't_CO2/MWh_MeOH',
-    'source': '[DEA] sheet "98 Methanol from hydrogen", via technology-data tech methanolisation',
+    'value': 0.2533, 'unit': 't_CO2/MWh_MeOH',
+    'source': '[DEA] sheet "98 Methanol from hydrogen", same as methanolisation carbondioxide-input',
     'further description': 'all CO2 enters the synthesis step; unchanged from the aggregate unit. [ALA] Table 4 gives 0.253',
 }
 tech_inputs['methanol synthesis', 'electricity-input'] = {
@@ -1212,7 +1240,7 @@ tech_inputs['methanol distillation', 'electricity-input'] = {
 tech_inputs['methanol distillation', 'heat-output'] = {
     'value': 0.2562, 'unit': 'MWh_th/MWh_MeOH',
     'source': '[DEA] sheet "98 Methanol from hydrogen", district heating output row, rebased per MWh_MeOH (the sheet reports 0.2 per MWh of TOTAL INPUT; x 7.08/5.5278)',
-    'further description': 'Matches [ALA] Table 4 (0.256). Was 0.1, which was neither DEA nor ALA. [OLI] Table S14 measure the column condenser at 143.6/801.8 = 0.1791 rejected at 53 C, i.e. Heat LT rather than the Heat DH this is wired to -- see PENDING in the HEAT BALANCE block. DEA is used for the level because DEA sets the plant-level heat out that the split must reproduce.',
+    'further description': 'Matches [ALA] Table 4 (0.256). Was 0.1, which was neither DEA nor ALA. [OLI] Table S14 measure the column condenser at 143.6/801.8 = 0.1791 rejected at 53 C, i.e. Heat LT, which is where this is wired. The same value and bus are used for methanolisation heat-output. DEA is used for the level because DEA sets the plant-level heat out that the split must reproduce.',
 }
 tech_inputs['methanol distillation', 'investment'] = {
     'value': 136.4745, 'unit': 'EUR/kW-methanol',

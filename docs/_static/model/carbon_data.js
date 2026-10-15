@@ -57,12 +57,12 @@ window.GB_CARBON = {
    "technology-data: biomethanation CO2"
   ],
   "meoh_co2": [
-   4.032258064516129,
+   3.947887879984208,
    "MWh MeOH/tCO2",
    "technology-data: methanolisation, carbondioxide-input"
   ],
   "meohsyn_co2": [
-   4.032258064516129,
+   3.947887879984208,
    "MWh MeOH/tCO2",
    "technology_inputs.py: methanol synthesis, carbondioxide-input"
   ],

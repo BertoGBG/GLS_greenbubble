@@ -138,9 +138,13 @@ Where the numbers come from
      - 0.1288
      - [OLI] Table S14, HE5, the duty that measurably crosses the
        synthesis/distillation boundary
+   * - H₂ and CO₂ in
+     - 1.1578, 0.2533
+     - [DEA] sheet 98, the same values as ``methanolisation``
    * - Condenser heat-out
      - 0.2562
-     - [DEA] sheet 98 district-heat row, rebased per MWh\_MeOH
+     - [DEA] sheet 98 district-heat row, rebased per MWh\_MeOH. The same value as
+       ``methanolisation`` heat-output
    * - FOM
      - 2.8 %/year
      - [DEA] sheet 98. A percentage of investment, so it is scale-free and the
@@ -167,7 +171,8 @@ Heat bus wiring
   ``T_min`` of 90 °C is the DH **supply** temperature, not the saturation
   temperature of its 6 bar — DH delivers at 90 °C and cannot drive a 110 °C
   reboiler. Heat MT (140–180 °C) can.
-* **Condenser → Heat LT.** [OLI] measure it at 53 °C, which is LT-grade. Surplus
+* **Condenser → Heat LT.** [OLI] measure it at 53 °C, which is LT-grade. The
+  monolithic ``methanolisation`` link sends the same 0.2562 to Heat LT. Surplus
   leaves through the tier's ambient dump, so this cannot make the network
   infeasible. It matters only when DH off-take is switched on: with
   ``options['DH']['enable']`` false (the default) the sole sink on Heat DH is the

@@ -20,7 +20,13 @@ Agent: ``n_flags.meoh``. Consumes hydrogen, CO₂ and biogas from the shared bus
 
 CO₂ hydrogenation to methanol (``methanolisation``): CO₂ + H₂ → MeOH + H₂O.
 Modelled as a multi-input ``Link`` with ramp limits (8 %/h) and minimum
-load (15 %).  Waste heat is recovered to the medium-temperature heat bus.
+load (15 %). The link draws net steam from Heat MT and rejects condenser heat to Heat LT.
+
+All coefficients come from DEA sheet 98, "Methanol from hydrogen", per MWh of methanol:
+hydrogen 1.1578 MWh, CO₂ 0.2533 t, electricity 0.0181 MWh without feed compression,
+heat in 0.1047 MWh and heat out 0.2562 MWh. technology-data takes the hydrogen, CO₂ and
+heat-out values from DECHEMA; ``scripts/technology_inputs.py`` overrides them, so the
+link and the split use the same source.
 
 The water is not a side reaction that better catalysis could avoid: CO₂ carries
 two oxygens and methanol contains one, so the spare oxygen must leave with
@@ -64,7 +70,7 @@ hydrogen to a synthesis reactor, raw biogas is reformed with oxygen in an
 autothermal reformer and the resulting syngas is hydrogenated.
 
 The carbon comes from the biogas itself, so the route needs **2.5x less
-hydrogen** per MWh of methanol (0.449 MWh_H2/MWh_MeOH against 1.138) — but it
+hydrogen** per MWh of methanol (0.449 MWh_H2/MWh_MeOH against 1.158) — but it
 burns biomethane that could have been sold instead. Which one wins is exactly
 the trade-off the model is set up to answer.
 

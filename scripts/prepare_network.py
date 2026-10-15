@@ -3261,7 +3261,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             bus2=meoh_buses.at['CO2 in bus', 'methanolisation'],
             bus3=meoh_buses.at['local EL bus', 'methanolisation'],
             bus4=meoh_buses.at['Heat MT', 'methanolisation'],
-            bus5=meoh_buses.at['Heat DH', 'methanolisation'],
+            bus5=meoh_buses.at['Heat LT', 'methanolisation'],  # condenser at 53 C, as the split
             efficiency=  1 / tech_costs.at["methanolisation", "hydrogen-input"],
             efficiency2= - tech_costs.at["methanolisation", "carbondioxide-input"] / tech_costs.at["methanolisation", "hydrogen-input"],
             # DEA sheet 98 reports this EXCLUDING compression of the H2 and CO2 feeds,
