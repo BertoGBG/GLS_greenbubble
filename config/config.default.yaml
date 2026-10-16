@@ -130,3 +130,5 @@ rolling_horizon:
   overlap:       72   # snapshots
   network_path: ''    # REQUIRED when enabled
   rh_year:      2024
+  delivery_target: pro_rata   # e_min | pro_rata | none: stock target at the end of each window
+  unmet_cost:   10000         # EUR/MWh, backstop for deliveries the rolling horizon cannot make

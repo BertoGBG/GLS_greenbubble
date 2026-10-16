@@ -50,6 +50,10 @@ Three adjustments are made to the loaded network before the windows are solved:
   of the original year, so they are left uncapped.
 - Cyclic storage constraints are switched off, because no single window spans
   the whole year.
+- Product delivery stores get a stock target at the end of every window and may
+  never hold more than the deliveries still to come; see :ref:`rh-deliveries`.
+  For the continuous hydrogen demand of this tutorial the target is zero almost
+  everywhere.
 
 If any window is infeasible, the rule stops with an error rather than exporting
 an incomplete dispatch.
@@ -112,8 +116,8 @@ The RH plot suite adds two **PF-vs-RH comparison** figures.
 .. admonition:: PF vs RH: how much does limited foresight cost?
    :class: important
 
-   - **PF ≈ €69.1 M/y**, **RH ≈ €71.5 M/y**. Rolling horizon costs
-     **€2.37 M/y (3.4 %) more** than perfect foresight.
+   - **PF ≈ €69.0 M/y**, **RH ≈ €71.5 M/y**. Rolling horizon costs
+     **€2.41 M/y (3.5 %) more** than perfect foresight.
    - Both runs deliver exactly the same 580,000 MWh of hydrogen and 262,000 MWh
      of methane. Only the timing of production changes.
    - Perfect foresight is the lower bound on cost, because it sees the whole
@@ -124,9 +128,9 @@ The RH plot suite adds two **PF-vs-RH comparison** figures.
 
    OPEX difference per carrier (RH minus PF). Red bars cost more under RH.
 
-The extra cost is almost all electricity. RFNBO grid imports rise by €2.72 M/y
-and other grid electricity by €0.33 M/y. Biogas upgrading OPEX falls by
-€0.60 M/y, which offsets a small part.
+The extra cost is almost all electricity. RFNBO grid imports rise by €2.76 M/y
+and other grid electricity by €0.28 M/y. Biogas upgrading OPEX falls by
+€0.57 M/y, which offsets a small part.
 
 .. figure:: /_static/tutorials/tut3_CF_operation_by_scenario.png
    :width: 95%
@@ -142,7 +146,7 @@ and other grid electricity by €0.33 M/y. Biogas upgrading OPEX falls by
 Tutorial 2b delivers hydrogen through a free ``H2 delivery store``. The annual
 demand is fixed, but the store lets production run ahead of delivery. With
 perfect foresight the optimiser uses it as a **seasonal buffer**. It produces
-hydrogen when power is cheap and holds 38-76 GWh from February to November.
+hydrogen when power is cheap and holds 37-76 GWh from February to November.
 
 .. figure:: /_static/tutorials/tut3_H2_buffer_PF_vs_RH.png
    :width: 100%
@@ -153,7 +157,7 @@ hydrogen when power is cheap and holds 38-76 GWh from February to November.
 A three-week window cannot see a cheap season months ahead. Hydrogen left in the
 store at the end of a window has no value inside that window, so rolling horizon
 produces almost just in time. It must then buy electricity in expensive weeks
-that perfect foresight avoided. This is the 3.4 % gap.
+that perfect foresight avoided. This is the 3.5 % gap.
 
 Short storage behaves differently. The battery and the DH heat store cycle within
 hours or days, well inside one window, so foresight beyond three weeks adds
@@ -172,8 +176,9 @@ What you learned
 - ``horizon`` / ``overlap`` window mechanics and the ``network_path`` input.
 - Why a seasonal buffer makes the PF–RH gap large, while short storage barely affects it.
 
-Next: :ref:`tutorial-4-stochastic` optimises the *investment* against several
-scenarios at once.
+Next: :ref:`tutorial-3b-rolling-horizon-bins` delivers the hydrogen in bins
+instead, and :ref:`tutorial-4-stochastic` optimises the *investment* against
+several scenarios at once.
 
 .. seealso::
 

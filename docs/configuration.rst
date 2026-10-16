@@ -334,10 +334,14 @@ When enabled, the capacity-expansion ``solve_network`` rule is bypassed entirely
      overlap:       72    # overlap in hours between consecutive windows
      network_path: ''     # REQUIRED — path to a solved .nc network
      rh_year:      null   # null = same as En_price_year; or an integer year
+     delivery_target: pro_rata   # e_min | pro_rata | none
+     unmet_cost:   10000  # EUR/MWh, backstop for deliveries the RH cannot make
 
 ``network_path`` is required when ``enabled: true``.
 Setting ``rh_year`` to a different year than ``En_price_year`` replaces all
 time-varying inputs (prices, capacity factors) with data from that year.
+``delivery_target`` sets the stock target that lets windows meet binned
+deliveries they cannot see; see :ref:`rh-deliveries`.
 
 See :ref:`guide-rolling-horizon` for the full workflow, cross-year analysis,
 committable dispatch, and cost comparison outputs.

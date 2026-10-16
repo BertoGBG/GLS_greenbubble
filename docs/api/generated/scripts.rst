@@ -12,6 +12,7 @@
 
    config
    create_stoch_scenarios
+   delivery_targets
    heat_bands
    helpers
    parameters

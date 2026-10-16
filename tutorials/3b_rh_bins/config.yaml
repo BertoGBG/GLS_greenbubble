@@ -1,0 +1,49 @@
+# =====================================================================
+# Tutorial 3b, step 2 — rolling horizon on the step-1 network
+# =====================================================================
+# Prerequisite: run tutorials/3b_rh_bins_pf first.
+#   cp tutorials/3b_rh_bins/config.yaml   config/config.yaml
+#   cp tutorials/3b_rh_bins/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Monthly windows with one week of overlap at 8 h resolution. Each window sees
+# at most two hydrogen deliveries; the stock targets tell it what the bins
+# beyond its horizon need. Change delivery_target to none or e_min to compare.
+# Targets, flags and resolution match step 1, so the RH file name describes
+# the same plant.
+# ---------------------------------------------------------------------
+
+run_name: tut3b_rh
+
+targets:
+  driver: demand
+  demand_H2:   200000
+  demand_CH4:  350000
+  demand_meoh:   0
+  H2_demand_mode:   bins_profile
+  H2_bins:          26
+  CH4_demand_mode:  flat
+  demand_store_buffer: 0.5
+
+n_flags:
+  biogas:       true
+  central_heat: false
+  renewables:   true
+  electrolysis: true
+  meoh:         false
+  methanation:  false
+  symbiosis:    true
+  storage:      true
+
+clustering:
+  temporal:
+    resolution: 8h
+
+rolling_horizon:
+  enabled:      true
+  horizon:       90            # window length (snapshots; 30 days at 8 h)
+  overlap:       21            # overlap (snapshots; 7 days)
+  rh_year:      2024
+  delivery_target: pro_rata    # e_min | pro_rata | none
+  # the *_OPT.nc produced by step 1:
+  network_path: 'outputs/single_analysis/tut3b_pf/networks/B_RE_H2_SN_ST_CO2_100_tD_H2_200_MeOH_0_CH4_350_2024_El_0.3_DET_8h_tut3b_pf_OPT.nc'

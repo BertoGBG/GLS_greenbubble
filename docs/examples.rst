@@ -23,6 +23,9 @@ config to copy, the command to launch it, and the plots it produces.
        heat circuits connect.
    * - :doc:`tutorial_3_rolling_horizon`
      - Dispatch only, on fixed capacities, compared against perfect foresight.
+   * - :doc:`tutorial_3b_rolling_horizon_bins`
+     - Rolling horizon with two-weekly delivery bins: stock targets, the risk
+       they carry, and how a longer window removes it.
    * - :doc:`tutorial_4_stochastic`
      - One investment decision across several price years, and the value of
        perfect information (EVPI).

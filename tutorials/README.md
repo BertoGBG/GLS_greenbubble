@@ -23,6 +23,8 @@ overwrites your own current overrides, so back them up first if needed).
 | `2_brownfield`        | 2   | price  | existing biogas/wind/solar + residual cost, district heating |
 | `2_brownfield_heat`   | 2b  | demand | brownfield with heat pump, TES DH and DH sales; electrolysis fixed |
 | `3_rolling_horizon`   | 3   | demand | dispatch-only on the Tutorial 2b network (run `2_brownfield_heat` first) |
+| `3b_rh_bins_pf`       | 3b  | demand | step 1: greenfield, hydrogen in 26 two-weekly bins, perfect foresight |
+| `3b_rh_bins`          | 3b  | demand | step 2: rolling horizon on the step-1 network, stock targets (run `3b_rh_bins_pf` first) |
 | `4_stochastic`        | 4   | price  | brownfield across 3 scenarios (pure LP: no committable, ramp limits null) |
 
 All tutorials use the default HiGHS solver (no licence needed) and a coarse
@@ -30,3 +32,4 @@ temporal resolution so each solves in about five minutes on a laptop:
 `8h` for Tutorials 1-3 and `24h` for the stochastic Tutorial 4, which holds
 three years in one LP. Tutorial 3 requires the solved Tutorial 2b network;
 its `rolling_horizon.network_path` points at the default Tutorial 2b output path.
+Tutorial 3b step 2 (`3b_rh_bins`) likewise points at the output of step 1 (`3b_rh_bins_pf`).

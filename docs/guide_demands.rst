@@ -236,18 +236,97 @@ the first column, values in the second column).
 
 ----
 
-The delivery buffer store
--------------------------
+.. _demand-formulation:
 
-For ``bins_flat`` and ``bins_profile`` modes the store is always added. For
-``flat`` and ``profile`` modes it is added only if ``flexibility > 0``.
+Formulation
+-----------
 
-The store represents a product tank or pipeline buffer:
+The rolling-horizon guide uses the same symbols; see :ref:`rh-deliveries`.
 
-- ``e_cyclic = True`` — start-of-year SOC equals end-of-year SOC (annual
-  balance enforced).
-- ``e_nom_extendable = True``, the optimiser sizes the tank up to ``e_nom_max``.
-- Marginal cost is zero (no cost to hold product in the buffer).
+.. list-table::
+   :header-rows: 1
+   :widths: 18 62 20
+
+   * - Symbol
+     - Meaning
+     - Unit
+   * - :math:`t = 0 \dots T-1`
+     - Snapshot, of length :math:`\Delta t`
+     - h
+   * - :math:`A`
+     - Annual demand (``demand_*``)
+     - MWh
+   * - :math:`d(t)`
+     - Energy due at snapshot :math:`t`
+     - MWh
+   * - :math:`D(t) = \sum_{t' \le t} d(t')`
+     - Cumulative deliveries up to :math:`t`
+     - MWh
+   * - :math:`k = 1 \dots n`
+     - Bin, :math:`n` = ``*_bins``
+     - –
+   * - :math:`t_k`, :math:`d_k`
+     - Last snapshot of bin :math:`k` and the energy due there
+     - –, MWh
+   * - :math:`w(t)`
+     - Seasonal profile weight
+     - –
+   * - :math:`p(t)`
+     - Production reaching the delivery bus
+     - MW
+   * - :math:`e(t)`
+     - Stock in the delivery store after snapshot :math:`t`
+     - MWh
+   * - :math:`E`
+     - Store limit, ``e_nom_max``
+     - MWh
+
+**Deliveries.** Continuous modes spread :math:`A` over every snapshot. Bin
+modes split the year into :math:`n` intervals of equal length and put each
+bin's whole demand on its last snapshot:
+
+.. math::
+
+   \text{flat:}\quad d(t) = \frac{A}{T} \qquad
+   \text{profile:}\quad d(t) = A\,\frac{w(t)}{\sum_{t'} w(t')}
+
+.. math::
+
+   d(t) = \begin{cases} d_k & t = t_k \\ 0 & \text{otherwise} \end{cases}
+   \qquad
+   d_k = \begin{cases} A / n & \texttt{bins\_flat} \\
+   A\,\dfrac{\sum_{t \in \text{bin } k} w(t)}{\sum_{t'} w(t')} & \texttt{bins\_profile}
+   \end{cases}
+
+**Store.** The Load takes :math:`d(t)` from the delivery bus, and the store on
+the same bus absorbs the difference between production and deliveries:
+
+.. math::
+
+   e(t) = e(t-1) + p(t)\,\Delta t - d(t), \qquad 0 \le e(t) \le E, \qquad e(T-1) = e(-1)
+
+The last condition makes the store cyclic: the year closes with the stock it
+opened with. The stock left after a delivery, :math:`e(t_k)`, is where the next
+bin starts. It is zero unless the optimiser carries production over.
+
+.. list-table:: Store limit :math:`E`
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Mode
+     - :math:`E`
+   * - ``flat``, ``profile``
+     - :math:`\text{flexibility} \cdot A`; no store when ``flexibility = 0``,
+       then :math:`p(t)\,\Delta t = d(t)`
+   * - ``bins_flat``
+     - :math:`A / n`: the store must hold the whole delivery just before
+       :math:`t_k`, so it is empty afterwards and carries nothing over
+   * - ``bins_profile``
+     - :math:`\max_k d_k \cdot (1 + \text{buffer})`: smaller bins and the buffer
+       leave room to carry stock into the next bin
+
+The store has no capital or marginal cost. The optimiser sizes it freely up to
+:math:`E`.
 
 ----
 
@@ -291,45 +370,7 @@ Adding demand for a new product
 Rolling horizon — demand and store handling
 -------------------------------------------
 
-See also: :ref:`guide-rolling-horizon`.
-
-Flat and profile modes
-^^^^^^^^^^^^^^^^^^^^^^
-
-The delivery store carries a cyclic SOC across the full year in the capacity
-expansion run. In rolling horizon (RH) the store is kept **non-cyclic**
-(``e_cyclic = False``) so each window starts from the SOC carried over from
-the previous window rather than an arbitrary optimised value.
-
-The store capacity is left at the optimised value, the RH solver can use the
-same buffer to absorb hourly variability within each window.
-
-Bins modes (annual, n_bins = 1)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When a product has a single annual delivery the delivery store accumulates the
-entire year's production before releasing it at year-end. This is incompatible
-with rolling horizon because:
-
-- With ``e_cyclic = False`` the optimizer front-loads all production in the
-  first window and ends with a massive surplus.
-- With ``e_cyclic = True`` PyPSA treats the initial SOC as a free optimisation
-  variable, allowing phantom energy at window start.
-
-The RH solver automatically detects annual point-load products (stores with
->95% of throughput concentrated in a single timestep) and:
-
-1. **Redistributes** the demand to a flat hourly rate for the RH run.
-2. **Caps** the delivery store to ``2 × (annual / n_windows)`` MWh, preventing
-   multi-window carry-over while keeping a one-window buffer.
-
-The annual production target is preserved — only the delivery shape within the
-RH run changes.
-
-Bins modes (n_bins > 1)
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-For weekly or monthly bins (``n_bins ≥ 12``) no redistribution is applied.
-Each bin's delivery is small enough that the store fills and empties within a
-single rolling window, so cyclic constraints within each window are naturally
-satisfied.
+A rolling-horizon window sees only the deliveries inside it, so a binned demand
+gives most windows no demand at all. The rolling horizon turns each bin into a
+stock target :math:`e(\tau_j) \ge f(\tau_j)` at the end of every window,
+computed from the full delivery schedule. See :ref:`rh-deliveries`.

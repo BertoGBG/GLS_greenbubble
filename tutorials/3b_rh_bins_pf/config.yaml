@@ -1,0 +1,39 @@
+# =====================================================================
+# Tutorial 3b, step 1 — perfect foresight with two-weekly hydrogen bins
+# =====================================================================
+#   cp tutorials/3b_rh_bins_pf/config.yaml   config/config.yaml
+#   cp tutorials/3b_rh_bins_pf/n_config.yaml config/n_config.yaml
+#   snakemake --cores 4
+#
+# Greenfield plant with renewables, biogas, electrolysis, storage and symbiosis.
+# Hydrogen is delivered in 26 two-weekly bins shaped by the NG demand profile,
+# so winter bins are about three times the summer ones. The delivery store is
+# cyclic and capped at the largest bin x 1.5 (demand_store_buffer: 0.5).
+# Step 2 (tutorials/3b_rh_bins) re-dispatches this network in rolling horizon.
+# ---------------------------------------------------------------------
+
+run_name: tut3b_pf
+
+targets:
+  driver: demand
+  demand_H2:   200000
+  demand_CH4:  350000
+  demand_meoh:   0
+  H2_demand_mode:   bins_profile
+  H2_bins:          26
+  CH4_demand_mode:  flat
+  demand_store_buffer: 0.5
+
+n_flags:
+  biogas:       true
+  central_heat: false
+  renewables:   true
+  electrolysis: true
+  meoh:         false
+  methanation:  false
+  symbiosis:    true
+  storage:      true
+
+clustering:
+  temporal:
+    resolution: 8h

@@ -353,6 +353,8 @@ rolling_horizon = {
     "overlap":      int(_rh.get("overlap", 24)),
     "network_path": _rh.get("network_path", None),
     "rh_year":      int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else None,
+    "delivery_target": _rh.get("delivery_target", "pro_rata"),
+    "unmet_cost":   float(_rh.get("unmet_cost", 1e4)),
 }
 
 if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:

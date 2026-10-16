@@ -92,6 +92,7 @@ Where to start
    tutorial_2_brownfield
    tutorial_2b_brownfield_heat
    tutorial_3_rolling_horizon
+   tutorial_3b_rolling_horizon_bins
    tutorial_4_stochastic
 
 .. toctree::
