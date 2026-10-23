@@ -2086,6 +2086,16 @@ def resample_network(n, resolution):
 
     n.set_snapshots(new_w.index)
     n.snapshot_weightings = new_w
+
+    # PyPSA applies ramp limits per snapshot as a share of p_nom; n_config gives
+    # them per hour. Scale them to the new snapshot length. A limit of 1 or more
+    # cannot bind and is dropped (NaN = no ramp constraint).
+    for comp in ("generators", "links"):
+        df = getattr(n, comp)
+        for attr in ("ramp_limit_up", "ramp_limit_down"):
+            if attr in df.columns:
+                scaled = df[attr] * freq_hours
+                df[attr] = scaled.where(scaled < 1)
     return n
 
 
