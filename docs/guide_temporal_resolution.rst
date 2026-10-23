@@ -26,6 +26,10 @@ to disk.  All time-varying data are resampled in one step:
   interval (conservative: the tightest constraint within the period is kept).
 - **Snapshot weightings** → sum over the interval, so multiplying by weights
   still gives correct annual energy totals.
+- **Ramp limits** (``ramp_limit_up``, ``ramp_limit_down``) → multiplied by the
+  snapshot length in hours. ``n_config`` gives them per hour, PyPSA applies
+  them per snapshot: 0.08 /h becomes 0.64 per 8 h snapshot. A scaled limit of
+  1 or more cannot bind and is removed.
 
 PyPSA automatically scales investment and operational costs by snapshot
 weightings, so the LP objective remains consistent regardless of resolution.
