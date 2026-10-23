@@ -21,12 +21,10 @@ from scripts.helpers import (
     save_network_comp_allocation,
     create_folder_if_not_exists,
     compare_objective,
-    prepare_costs,
 )
 from scripts.plots import print_network
 from scripts.delivery_targets import unmet_deliveries, drop_unused_unmet
 from scripts import config as c, parameters as p
-from scripts.technology_inputs import tech_inputs
 
 # ---- Folder layout derived from the declared output path
 networks_folder = str(Path(snakemake.output.network).parent)
@@ -40,16 +38,6 @@ network_name = snakemake.wildcards.network
 # ---- Load pre-built network and supporting data
 n = pypsa.Network(snakemake.input.network)
 
-tech_costs = prepare_costs(
-    latitude        = c.latitude,
-    longitude       = c.longitude,
-    tech_inputs     = tech_inputs,
-    USD_to_EUR      = c.USD_to_EUR,
-    discount_rate   = c.discount_rate,
-    cost_path_EU    = snakemake.input.costs_eu,
-    cost_path_US    = p.cost_path_US,
-    dict_tech_US_EU = p.dict_tech_US_EU,
-)
 with open(snakemake.input.comp_alloc, "rb") as fh:
     _alloc_payload = pickle.load(fh)
 if isinstance(_alloc_payload, dict) and "allocation" in _alloc_payload:
@@ -73,28 +61,17 @@ networks_dict = {}
 n_names_dict  = {}
 
 if c.stochastic["stochastic"]:
-    from scripts.create_stoch_scenarios import (
-        create_scenarios, set_input_paths, scenarios, CO2_cost_s, CO2_cost_ref_year_s,
-    )
-    from scripts.preprocessing import prepare_all_inputs
-    from scripts.prepare_network import network_dependencies, build_network
+    from scripts.create_stoch_scenarios import scenarios
 
     networks_dict["stoch"] = n
     n_names_dict["stoch"]  = network_name
 
     if c.stochastic["EVPI"]:
-        n_flags_OK = network_dependencies(c.n_flags)
-        for year, prob in scenarios.items():
-            CO2_cost = CO2_cost_s[year]
-            set_input_paths(p, year)
-            inputs_det = prepare_all_inputs(
-                targets_dict      = c.targets_dict,
-                CO2_cost          = CO2_cost,
-                CO2_cost_ref_year = c.CO2_cost_ref_year,
-                max_RE_to_grid    = c.max_RE_to_grid,
-            )
-            n_det = build_network(tech_costs, inputs_det, n_flags_OK, c.n_options, p)
-            networks_dict[str(year)] = n_det
+        # Wait-and-see networks are taken from the unsolved stochastic network,
+        # so they share its scenario data (prices, capacity factors, CO2 costs)
+        # exactly; rebuilding them per year priced the grid differently.
+        for year in n.scenarios:
+            networks_dict[str(year)] = n.get_scenario(year)
             n_names_dict[str(year)]  = f"{network_name}_WS_{year}"
 
     c.n_flags["print"]     = False
