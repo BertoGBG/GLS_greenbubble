@@ -63,7 +63,7 @@ cd GLS_greenbubble
 # Create environment — shown for macOS Apple Silicon; use the envs/ file for your platform
 conda config --add channels conda-forge && conda config --set channel_priority strict
 conda env create -f envs/environment-osx-arm64.yaml
-conda activate greenbubble-pypsa107
+conda activate greenbubble-pypsa14
 
 # Copy and fill in API tokens (required for data retrieval)
 cp .env.example .env

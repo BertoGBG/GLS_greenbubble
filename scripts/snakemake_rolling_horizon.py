@@ -255,6 +255,7 @@ n.optimize.optimize_with_rolling_horizon(
     horizon=horizon,
     overlap=overlap,
     solver_options=solver_opts,
+    include_objective_constant=True,   # explicit; the default flips in PyPSA 2.0
 )
 
 if _failed.count:

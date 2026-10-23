@@ -884,7 +884,9 @@ def add_custom_constraints_stores(n, m, n_config=None, case_insensitive=True):
         coord_vals = set(var.coords[dim].values)
         if key not in coord_vals:
             return None
-        return var.sel({dim: key})
+        # drop the scalar coordinate: two selections with different names would
+        # otherwise carry conflicting coordinates, which linopy v1 rejects
+        return var.sel({dim: key}, drop=True)
 
     # -----------------------
     # expressions for p_nom/e_nom
@@ -1459,7 +1461,7 @@ def add_grid_connection_shared_capacity_constraint(
             if link_key not in names:
                 return None
             key = link_key
-        return v.sel(name=key)
+        return v.sel(name=key, drop=True)   # see _safe_sel in add_custom_constraints_stores
 
     import_expr = _link_p_nom_expr(import_link)
     export_expr = _link_p_nom_expr(export_link)
@@ -1640,7 +1642,9 @@ def build_model_solve_network(
         )
 
     try:
-        m = n.optimize.create_model()
+        # explicit, as the default flips to False in PyPSA 2.0; True keeps
+        # n.objective comparable with runs from PyPSA 1.0.7
+        m = n.optimize.create_model(include_objective_constant=True)
         print("Model variables:", list(m.variables))
 
         if getattr(n, "model", None) is not m:
@@ -2092,7 +2096,7 @@ def reallocate_grid_connection_capex(n, tolerance: float = 0.01):
         # p_nom (capacity) is scenario-invariant, but dispatch isn't; average
         # across scenarios as a pragmatic approximation for this
         # reporting-only reallocation (never used in the optimisation).
-        p0 = p0.groupby(level=-1, axis=1).mean()
+        p0 = p0.T.groupby(level=-1).mean().T     # groupby(axis=1) was removed in pandas 3
 
     flow = pd.DataFrame(
         {name: (p0[name] if name in p0.columns else 0.0) for name in flow_links},

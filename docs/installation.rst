@@ -68,7 +68,7 @@ solver interfaces and sets minimum versions for the rest.
 
 **3. Activate**::
 
-   conda activate greenbubble-pypsa107
+   conda activate greenbubble-pypsa14
 
 
 Solver setup

@@ -43,7 +43,6 @@ import warnings as _warnings
 from scripts.technology_inputs import symbiosis_n, mixture_database
 from scripts.delivery_targets import add_unmet_generators
 import CoolProp.CoolProp as CP
-from pypsa.optimization.constraints import define_total_supply_constraints
 
 # ---- EXI_ capital-cost context (set by build_network before plant functions run) ----
 _COSTS_DIR: str | None = None
@@ -4793,12 +4792,7 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
     network, comp_storage = add_storage(network, n_flags, inputs_dict, tech_costs)
 
     # ---------------------------------------------------------
-    # 4. Apply system-wide constraints
-    # ---------------------------------------------------------
-    define_total_supply_constraints(network, network.snapshots, component='Generator')
-
-    # ---------------------------------------------------------
-    # 4b. Consolidate shared grid-connection capital cost
+    # 4. Consolidate shared grid-connection capital cost
     # ---------------------------------------------------------
     # DK1_to_ElDK1_buy (import, added in add_local_el_connections) and El3_to_DK1
     # (export, added in add_biogas/add_renewables) both represent capacity on what

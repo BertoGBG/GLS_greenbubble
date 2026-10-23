@@ -381,13 +381,11 @@ pass-through) — confirmed empirically to floating-point precision on a
 real solved network. The same reasoning covers any future carrier
 producible by more than one agent, with no code changes needed.
 
-**Stochastic networks.** ``n.statistics.*(groupby=False)`` raises
-``TypeError`` unconditionally on any scenario-enabled network in the
-pinned PyPSA 1.0.7 release (an internal ``rename_axis`` call in
-``pypsa/statistics/abstract.py`` assumes a flat, non-MultiIndex result).
-The workaround is ``n.get_scenario(name)``, PyPSA's own accessor for a
-genuine flat per-scenario ``Network`` (not a view or mutation of the
-original), the same call works normally on each one. Cash flow is then
+**Stochastic networks.** ``n.statistics.*(groupby=False)`` raised
+``TypeError`` on scenario-enabled networks up to PyPSA 1.0.7; it works on
+1.4. The cash-flow code still splits the network with
+``n.get_scenario(name)``, PyPSA's accessor for a flat per-scenario
+``Network``, and runs the statistics on each one. Cash flow is then
 the probability-weighted **expected** value across scenarios, mirroring
 how ``TSC_by_agent`` reports an expected total:
 

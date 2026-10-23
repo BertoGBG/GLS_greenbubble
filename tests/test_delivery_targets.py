@@ -124,7 +124,7 @@ def test_load_shedding_covers_a_demand_the_plant_cannot_make(network):
     names = add_unmet_generators(n, cost=1e4)
     assert names == ["MeOH delivery unmet"]
     assert n.generators.at["MeOH delivery unmet", "p_nom"] == 30.0     # peak load
-    n.optimize(solver_name="highs")
+    n.optimize(solver_name="highs", include_objective_constant=False)
     assert unmet_deliveries(n)["MeOH delivery"] == pytest.approx(6.0)
 
 

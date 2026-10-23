@@ -52,20 +52,13 @@ on its own prices and renewable profiles). Scenarios carry a probability
      EVPI: false
      # scenarios 2022/2023/2024 and their weights are set in config.default.yaml
 
-.. admonition:: Stochastic needs a pure LP — two required changes
+.. admonition:: Stochastic needs a pure LP
    :class: caution
 
-   The ``tutorials/4_stochastic/n_config.yaml`` already applies these; they are
-   the reason it differs from the Tutorial 2 brownfield n_config:
-
-   #. **No unit commitment** — ``committable: false`` everywhere (stochastic
-      cannot use binary variables).
-   #. **No ramp limits** — set ``ramp limit up`` / ``ramp limit down`` to
-      ``null`` for electrolysis, methanolisation, biomethanation and
-      biomethanation CO2. PyPSA cannot build ramp-limit constraints on a
-      scenario network — confirmed on both 1.0.7 (pinned) and the latest
-      release (1.2.4), and a value such as ``1`` still builds them — only
-      ``null`` disables them. See :ref:`guide-stochastic` → *Limitations*.
+   Stochastic mode cannot use binary variables, so ``committable`` must be
+   ``false`` for every technology. That is already the default here. Ramp
+   limits stay on: they work on scenario networks from PyPSA 1.3 on. See
+   :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
 Temporal resolution is set to ``24h``. The stochastic LP holds all three years
@@ -164,8 +157,8 @@ What you learned
 ----------------
 
 - The **here-and-now vs wait-and-see** two-stage structure and expected-cost objective.
-- How to enable stochastic mode and the **pure-LP requirements** (no committable,
-  null ramp limits).
+- How to enable stochastic mode and the **pure-LP requirement** (no committable
+  units).
 - Reading a stochastic design as a **robust hedge** across scenarios, and
   interpreting scenario-level profitability spreads.
 
