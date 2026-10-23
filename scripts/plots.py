@@ -707,7 +707,9 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
 
     Filters components whose optimal capacity < num_tol (solver numerical noise only).
     For stochastic networks the first scenario slice is used for static tables;
-    variable costs are summed across all snapshots weighted by snapshot_weightings.
+    dispatch and variable costs are expected values over scenarios. Variable
+    cost is marginal cost (time-varying where set) times the signed flow, as in
+    the objective, so sales count as negative cost.
     """
 
     # ---- helpers ----
@@ -752,13 +754,42 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             return 0.0
         return float(ts.reindex(weights.index).fillna(0.0).mul(weights).sum())
 
-    def _get_ts(ts_df, name):
+    scen_prob = n.scenario_weightings["weight"] if isinstance(n.generators.index, pd.MultiIndex) else None
+    obj_w = sw["objective"]
+
+    def _prob(scen):
+        return 1.0 if scen is None or scen_prob is None else float(scen_prob.get(scen, 0.0))
+
+    def _scen_series(ts_df, name):
+        """{scenario: series} for ``name``; {None: series} for a deterministic network."""
         if ts_df is None or ts_df.empty:
-            return None
+            return {}
         if isinstance(ts_df.columns, pd.MultiIndex):
-            matches = [col for col in ts_df.columns if col[-1] == name]
-            return ts_df[matches].sum(axis=1) / max(len(matches), 1) if matches else None
-        return ts_df[name] if name in ts_df.columns else None
+            return {col[0]: ts_df[col] for col in ts_df.columns if col[-1] == name}
+        return {None: ts_df[name]} if name in ts_df.columns else {}
+
+    def _get_ts(ts_df, name):
+        """Expected time series over scenarios (the series itself when deterministic)."""
+        series = _scen_series(ts_df, name)
+        if not series:
+            return None
+        return sum(_prob(scen) * ts for scen, ts in series.items())
+
+    def _var_cost(dyn, p_attr, static_full, name):
+        """Expected variable cost, sum over t of w(t) * marginal_cost(t) * p(t)."""
+        flows = _scen_series(dyn.get(p_attr), name)
+        mcs = _scen_series(dyn.get("marginal_cost"), name)
+        total = 0.0
+        for scen, p in flows.items():
+            mc = mcs.get(scen)
+            if mc is None:
+                mc = float(static_full.at[name if scen is None else (scen, name), "marginal_cost"])
+            total += _prob(scen) * float((p * mc).mul(obj_w.reindex(p.index), axis=0).sum())
+        return total
+
+    def _specific_mc(var, disp, mc_static):
+        """Dispatch-weighted mean marginal cost; the static value when idle."""
+        return var / disp if abs(disp) > 1e-9 else mc_static
 
     def _capacity_factor(dispatch_wsum, cap):
         if cap <= 0 or total_hours <= 0:
@@ -825,7 +856,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
         carrier = row.get("carrier", "")
         ts      = _get_ts(n.generators_t.get("p"), name)
         disp    = _weighted_sum(ts)
-        var     = mc * disp
+        var     = _var_cost(n.generators_t, "p", n.generators, name)
         rows.append({
             "Plant":                          comp_to_plant.get(name, "Unallocated"),
             "Component":                      "Generator",
@@ -841,7 +872,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Capacity factor":                _capacity_factor(disp, cap),
             "Curtailment":                    _vre_curtailment(name, cap) if _is_vre(carrier) else np.nan,
             "Specific fixed cost (€/(unit y))":   round(cc, 2),
-            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Specific variable cost (€/(unit h))": round(_specific_mc(var, disp, mc), 4),
             "Fixed cost (€/y)":               round(cap * cc, 0),
             "Variable cost (€/y)":            round(var, 0),
             "Total cost (€/y)":               round(cap * cc + var, 0),
@@ -859,7 +890,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
         ts   = _get_ts(n.links_t.get("p0"), name)
         ts_pos = ts.clip(lower=0) if ts is not None else None
         disp = _weighted_sum(ts_pos)
-        var  = mc * disp
+        var  = _var_cost(n.links_t, "p0", n.links, name)
         rows.append({
             "Plant":                          comp_to_plant.get(name, "Unallocated"),
             "Component":                      "Link",
@@ -875,7 +906,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Capacity factor":                _capacity_factor(disp, cap),
             "Curtailment":                    np.nan,
             "Specific fixed cost (€/(unit y))":   round(cc, 2),
-            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Specific variable cost (€/(unit h))": round(_specific_mc(var, disp, mc), 4),
             "Fixed cost (€/y)":               round(cap * cc, 0),
             "Variable cost (€/y)":            round(var, 0),
             "Total cost (€/y)":              round(cap * cc + var, 0),
@@ -893,7 +924,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
         ts  = _get_ts(n.stores_t.get("p"), name)
         ts_pos = ts.clip(lower=0) if ts is not None else None
         disp = _weighted_sum(ts_pos)
-        var  = mc * disp
+        var  = _var_cost(n.stores_t, "p", n.stores, name)
         rows.append({
             "Plant":                          comp_to_plant.get(name, "Unallocated"),
             "Component":                      "Store",
@@ -909,7 +940,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             "Capacity factor":                _capacity_factor(disp, cap),
             "Curtailment":                    np.nan,
             "Specific fixed cost (€/(unit y))":   round(cc, 2),
-            "Specific variable cost (€/(unit h))": round(mc, 4),
+            "Specific variable cost (€/(unit h))": round(_specific_mc(var, disp, mc), 4),
             "Fixed cost (€/y)":               round(cap * cc, 0),
             "Variable cost (€/y)":            round(var, 0),
             "Total cost (€/y)":               round(cap * cc + var, 0),
@@ -930,7 +961,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
             ts   = _get_ts(n.storage_units_t.get("p"), name)
             ts_pos = ts.clip(lower=0) if ts is not None else None
             disp = _weighted_sum(ts_pos)
-            var  = mc * disp
+            var  = _var_cost(n.storage_units_t, "p_dispatch", n.storage_units, name)
             rows.append({
                 "Plant":                          comp_to_plant.get(name, "Unallocated"),
                 "Component":                      "StorageUnit",
@@ -946,7 +977,7 @@ def save_full_component_csv(n, network_comp_allocation, file_path, num_tol=1e-3,
                 "Capacity factor":                _capacity_factor(disp, cap),
                 "Curtailment":                    np.nan,
                 "Specific fixed cost (€/(unit y))":   round(cc, 2),
-                "Specific variable cost (€/(unit h))": round(mc, 4),
+                "Specific variable cost (€/(unit h))": round(_specific_mc(var, disp, mc), 4),
                 "Fixed cost (€/y)":               round(cap * cc, 0),
                 "Variable cost (€/y)":            round(var, 0),
                 "Total cost (€/y)":               round(cap * cc + var, 0),
@@ -3089,8 +3120,10 @@ def _pick_first_match(candidates, selector):
 
 def _clip_series(s: pd.Series, handle_spikes="clip", quantile_hi=0.98, quantile_lo=None,
                  whisker=1.5, floor_zero=False):
-    s = pd.to_numeric(s, errors="coerce").dropna()
-    if s.empty:
+    # NaN stays in place (quantiles and clip skip it), so the result stays
+    # aligned with the caller's weights; callers mask non-finite values
+    s = pd.to_numeric(s, errors="coerce")
+    if s.isna().all():
         return s
 
     if handle_spikes == "clip":

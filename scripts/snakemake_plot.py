@@ -60,6 +60,25 @@ else:
     comp_tech_map   = {}
     tech_costs_used = None
 
+# Wait-and-see networks, exported next to the stochastic one by the solve rule,
+# for the SP vs WS capacity comparison. Cleaned the same way as the main network.
+scenarios, networks_dict = None, None
+if c.stochastic["stochastic"] and c.stochastic["EVPI"]:
+    scenarios = c.stochastic["scenarios"]
+    stem = Path(snakemake.input.network).name.removesuffix("_OPT.nc")
+    networks_dict = {}
+    for year in scenarios:
+        ws_path = Path(snakemake.input.network).with_name(f"{stem}_WS_{year}_OPT.nc")
+        if not ws_path.exists():
+            print(f"[plot] wait-and-see network missing, SP vs WS comparison skipped: {ws_path}")
+            scenarios, networks_dict = None, None
+            break
+        n_ws = pypsa.Network(ws_path)
+        zero_small_capacities(n_ws, _zero_th)
+        tighten_negligible_capacities(n_ws)
+        reallocate_grid_connection_capex(n_ws)
+        networks_dict[year] = n_ws
+
 plot_folder    = create_folder_if_not_exists(results_folder, "plots")
 csv_folder     = create_folder_if_not_exists(results_folder, "csv")
 
@@ -73,8 +92,8 @@ run_plot_and_export(
     network_comp_allocation = network_comp_allocation,
     comp_tech_map           = comp_tech_map,
     tech_costs_used         = tech_costs_used,
-    scenarios               = None,
-    networks_dict           = None,
+    scenarios               = scenarios,
+    networks_dict           = networks_dict,
 )
 
 Path(snakemake.output.done).touch()
