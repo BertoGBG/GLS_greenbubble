@@ -1442,7 +1442,9 @@ def add_grid_connection_shared_capacity_constraint(
     if not meta.get("consolidated_grid_connection", False):
         return _skip("network.meta['consolidated_grid_connection'] is not set")
 
-    if import_link not in n.links.index or export_link not in n.links.index:
+    # a stochastic network indexes links by (scenario, name)
+    link_names = set(n.links.index.get_level_values(-1))
+    if import_link not in link_names or export_link not in link_names:
         return _skip(f"'{import_link}' and/or '{export_link}' not present in this network")
 
     def _link_p_nom_expr(link_key):
