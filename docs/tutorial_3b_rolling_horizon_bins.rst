@@ -128,7 +128,7 @@ to produce more than its own target.
    rating whenever needed. When its supply depends on the weather, for instance
    an electrolyser larger than its grid connection, a calm spell before a large
    bin can leave a shortfall. The rolling horizon reports it and charges
-   ``unmet_cost`` for it. Read the log for ``deliveries unmet``.
+   ``load_shedding_cost`` for it. Read the log for ``deliveries unmet``.
 
 ---
 

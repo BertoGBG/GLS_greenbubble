@@ -50,7 +50,6 @@ All settings live under the ``rolling_horizon`` key in ``config/config.yaml``:
      network_path: null      # REQUIRED: path to the .nc OPT network to load
      rh_year: null           # optional: dispatch year (defaults to En_price_year)
      delivery_target: pro_rata   # e_min | pro_rata | none
-     unmet_cost: 10000       # EUR/MWh, backstop for deliveries the RH cannot make
 
 .. list-table:: Parameters
    :header-rows: 1
@@ -84,10 +83,12 @@ All settings live under the ``rolling_horizon`` key in ``config/config.yaml``:
      - string
      - Stock target at the end of each window for product delivery stores:
        ``pro_rata`` (default), ``e_min`` or ``none``. See :ref:`rh-deliveries`.
-   * - ``unmet_cost``
-     - float
-     - EUR/MWh charged for delivery energy the rolling horizon cannot make.
-       Keeps every window feasible; the shortfall is reported after the solve.
+
+The cost of delivery energy a window cannot make is
+``targets.load_shedding_cost`` (see :ref:`demand-load-shedding`). The rolling
+horizon always adds the ``unmet delivery`` generator to keep every window
+feasible, at 10 000 €/MWh when that key is ``null``. The former
+``rolling_horizon.unmet_cost`` is still read and takes precedence.
 
 ---
 
@@ -363,7 +364,7 @@ assume the plant can run at :math:`C` in every hour.
    makes less than :math:`e_{\min}` assumed.
 
    The shortfall goes to an ``unmet delivery`` generator at
-   ``rolling_horizon.unmet_cost``. It keeps every window feasible and is
+   ``targets.load_shedding_cost``. It keeps every window feasible and is
    reported at the end of the solve as ``deliveries unmet``. Check the log
    after every rolling-horizon run. This is an intrinsic risk of limited
    foresight, not an error. A longer window usually removes it.

@@ -155,6 +155,40 @@ def is_binned(delivery, max_share=0.5):
     return (np.asarray(delivery) > 0).mean() < max_share
 
 
+def add_unmet_generator(n, bus, cost, p_nom):
+    """Add, or update, the ``unmet delivery`` generator on ``bus``.
+
+    It supplies the bus at ``cost`` [EUR/MWh], the load-shedding price of an
+    undelivered MWh, and keeps the problem feasible when a demand cannot be met.
+    """
+    if UNMET_CARRIER not in n.carriers.index:
+        n.add("Carrier", UNMET_CARRIER)
+    name = f"{bus} unmet"
+    if name in n.generators.index:
+        n.generators.loc[name, ["p_nom", "marginal_cost"]] = (p_nom, cost)
+    else:
+        n.add("Generator", name, bus=bus, carrier=UNMET_CARRIER,
+              p_nom=p_nom, marginal_cost=cost)
+    return name
+
+
+def add_unmet_generators(n, cost):
+    """Add an ``unmet delivery`` generator to every bus with a positive Load.
+
+    Each is sized to the bus's peak load, so it can cover the whole demand in
+    any snapshot. Returns the generator names.
+    """
+    if n.loads.empty:
+        return []
+    loads = n.get_switchable_as_dense("Load", "p_set")
+    names = []
+    for bus in n.loads.bus.unique():
+        peak = loads.loc[:, n.loads.index[n.loads.bus == bus]].sum(axis=1).max()
+        if peak > 0:
+            names.append(add_unmet_generator(n, bus, cost, peak))
+    return names
+
+
 def set_delivery_targets(n, horizon, overlap, rule="pro_rata", unmet_cost=1e4):
     """Replace each delivery store's cap with window stock targets.
 
@@ -167,7 +201,8 @@ def set_delivery_targets(n, horizon, overlap, rule="pro_rata", unmet_cost=1e4):
     the first deliveries need (normally zero), and may never hold more than the
     deliveries still to come plus ``e_carry``. Binned deliveries lose the store size of the capacity-expansion run;
     continuous demands keep it. An ``unmet delivery`` generator on the bus, at ``unmet_cost``, keeps
-    every window feasible and records any shortfall.
+    every window feasible and records any shortfall. One already carried over
+    from the capacity-expansion network is resized and repriced.
 
     Call after capacities are fixed and after any cross-year patch of the loads.
     """
@@ -179,8 +214,6 @@ def set_delivery_targets(n, horizon, overlap, rule="pro_rata", unmet_cost=1e4):
     w = n.snapshot_weightings.stores
     loads = n.get_switchable_as_dense("Load", "p_set")
     ends = window_ends(len(n.snapshots), horizon, overlap)
-    if UNMET_CARRIER not in n.carriers.index:
-        n.add("Carrier", UNMET_CARRIER)
 
     report = {}
     for store, bus in stores.items():
@@ -211,8 +244,7 @@ def set_delivery_targets(n, horizon, overlap, rule="pro_rata", unmet_cost=1e4):
         n.stores_t.e_min_pu[store] = pd.Series(target / e_nom, index=n.snapshots)
         n.stores_t.e_max_pu[store] = pd.Series(cap_e / e_nom, index=n.snapshots)
 
-        n.add("Generator", f"{bus} unmet", bus=bus, carrier=UNMET_CARRIER,
-              p_nom=total / w.min(), marginal_cost=unmet_cost)
+        add_unmet_generator(n, bus, unmet_cost, total / w.min())
 
         n_bins = int((d > 0).sum())
         report[store] = dict(bus=bus, total=total, n_bins=n_bins, binned=binned, e_nom=e_nom,
@@ -232,7 +264,11 @@ def unmet_deliveries(n):
     if not len(gens) or n.generators_t.p.empty:
         return pd.Series(dtype=float)
     w = n.snapshot_weightings.generators
-    return n.generators_t.p[gens].mul(w, axis=0).sum().rename(lambda g: n.generators.bus[g])
+    used = n.generators_t.p[gens].mul(w, axis=0).sum()
+    # a stochastic network indexes generators by (scenario, name): keep the scenario
+    used.index = [(g[0], n.generators.bus[g]) if isinstance(g, tuple) else n.generators.bus[g]
+                  for g in used.index]
+    return used
 
 
 def drop_unused_unmet(n, tol=0.01):

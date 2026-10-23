@@ -284,6 +284,8 @@ CO2_cost                 = _cfg["CO2_cost"]
 
 # Targets
 targets_dict              = dict(_cfg["targets"])
+_shed = targets_dict.get("load_shedding_cost", 1e4)
+targets_dict["load_shedding_cost"] = None if _shed in (None, "", "null") else float(_shed)
 
 max_RE_to_grid           = _cfg["max_RE_to_grid"]
 En_price_year            = _cfg["En_price_year"]
@@ -354,7 +356,9 @@ rolling_horizon = {
     "network_path": _rh.get("network_path", None),
     "rh_year":      int(_rh_year_raw) if _rh_year_raw not in (None, "", "null") else None,
     "delivery_target": _rh.get("delivery_target", "pro_rata"),
-    "unmet_cost":   float(_rh.get("unmet_cost", 1e4)),
+    # rolling_horizon.unmet_cost is the former name of targets.load_shedding_cost;
+    # windows always get the backstop, so an unset cost falls back to 1e4
+    "unmet_cost":   float(_rh.get("unmet_cost") or targets_dict["load_shedding_cost"] or 1e4),
 }
 
 if rolling_horizon["enabled"] and not rolling_horizon["network_path"]:

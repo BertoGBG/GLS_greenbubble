@@ -24,6 +24,7 @@ from scripts.helpers import (
     prepare_costs,
 )
 from scripts.plots import print_network
+from scripts.delivery_targets import unmet_deliveries, drop_unused_unmet
 from scripts import config as c, parameters as p
 from scripts.technology_inputs import tech_inputs
 
@@ -119,6 +120,15 @@ for key, net in networks_dict.items():
         n_name            = name,
     )
     networks_dict[key] = net
+
+    # Load shedding: report undelivered demand, then drop generators never used.
+    # The stochastic network keeps them: its components are indexed per scenario.
+    unmet = unmet_deliveries(net)
+    for gen, mwh in unmet[unmet > 0.01].items():
+        print(f"WARNING: {mwh:,.1f} MWh of '{gen}' demand unmet in {name} "
+              f"(load shedding at {c.targets_dict['load_shedding_cost']:g} EUR/MWh)")
+    if key != "stoch":
+        drop_unused_unmet(net)
 
 def zero_small_capacities(n, threshold_mw):
     """Zero solver-noise artifacts before export.

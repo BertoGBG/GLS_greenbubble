@@ -38,6 +38,7 @@ targets:
   MeOH_flexibility: 0.5
   MeOH_profile:     data/common/NG_demand_DK_profile.csv
   demand_store_buffer: 0.5
+  load_shedding_cost: 10000       # €/MWh of undelivered demand (unmet delivery generator, demand mode); null = off
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-nflags
 n_flags:
@@ -131,4 +132,3 @@ rolling_horizon:
   network_path: ''    # REQUIRED when enabled
   rh_year:      2024
   delivery_target: pro_rata   # e_min | pro_rata | none: stock target at the end of each window
-  unmet_cost:   10000         # EUR/MWh, backstop for deliveries the rolling horizon cannot make

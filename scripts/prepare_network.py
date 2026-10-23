@@ -41,6 +41,7 @@ from scripts.config import (n_options,
                             rolling_horizon)
 import warnings as _warnings
 from scripts.technology_inputs import symbiosis_n, mixture_database
+from scripts.delivery_targets import add_unmet_generators
 import CoolProp.CoolProp as CP
 from pypsa.optimization.constraints import define_total_supply_constraints
 
@@ -4897,5 +4898,11 @@ def build_network(tech_costs, inputs_dict, n_flags, n_options, p,
             )
         else:
             network = resample_network(network, resolution)
+
+    # Load shedding: undelivered demand at a penalty instead of an infeasible
+    # problem. Added after resampling so it is sized to the resampled peak load.
+    shed_cost = targets_dict.get("load_shedding_cost")
+    if targets_dict["driver"] == "demand" and shed_cost is not None:
+        add_unmet_generators(network, shed_cost)
 
     return network

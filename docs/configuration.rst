@@ -174,9 +174,15 @@ Each product also has a demand **shape** and optional **flexibility store**:
      MeOH_flexibility: 0.0
      MeOH_profile:     data/common/NG_demand_DK_profile.csv
      demand_store_buffer: 0.5       # extra headroom for bins_profile stores
+     load_shedding_cost: 10000      # €/MWh of undelivered demand; null = off
 
 See :ref:`guide-demands` for a full explanation of demand modes, flexibility stores,
 and seasonal profiles.
+
+``load_shedding_cost`` adds an ``unmet delivery`` generator to each demand bus
+in demand mode. It supplies any demand the plant cannot make at this cost,
+so an unreachable demand gives a reported shortfall instead of an infeasible
+solve. See :ref:`demand-load-shedding`.
 
 .. _config-nflags:
 
@@ -335,13 +341,14 @@ When enabled, the capacity-expansion ``solve_network`` rule is bypassed entirely
      network_path: ''     # REQUIRED — path to a solved .nc network
      rh_year:      null   # null = same as En_price_year; or an integer year
      delivery_target: pro_rata   # e_min | pro_rata | none
-     unmet_cost:   10000  # EUR/MWh, backstop for deliveries the RH cannot make
 
 ``network_path`` is required when ``enabled: true``.
 Setting ``rh_year`` to a different year than ``En_price_year`` replaces all
 time-varying inputs (prices, capacity factors) with data from that year.
 ``delivery_target`` sets the stock target that lets windows meet binned
-deliveries they cannot see; see :ref:`rh-deliveries`.
+deliveries they cannot see; see :ref:`rh-deliveries`. Deliveries a window
+cannot make go to the ``unmet delivery`` generator at
+``targets.load_shedding_cost`` (10 000 €/MWh when that is ``null``).
 
 See :ref:`guide-rolling-horizon` for the full workflow, cross-year analysis,
 committable dispatch, and cost comparison outputs.

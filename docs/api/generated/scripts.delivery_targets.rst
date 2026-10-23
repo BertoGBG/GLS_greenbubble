@@ -8,6 +8,8 @@ scripts.delivery\_targets
 
    .. autosummary::
    
+      add_unmet_generator
+      add_unmet_generators
       delivery_stores
       drop_unused_unmet
       inflow_capacity

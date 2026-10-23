@@ -4,8 +4,9 @@ import pandas as pd
 import pypsa
 import pytest
 
-from scripts.delivery_targets import (UNMET_CARRIER, inflow_capacity, minimum_stock,
-                                      pro_rata_stock, set_delivery_targets, window_ends)
+from scripts.delivery_targets import (UNMET_CARRIER, add_unmet_generators, inflow_capacity,
+                                      minimum_stock, pro_rata_stock, set_delivery_targets,
+                                      unmet_deliveries, window_ends)
 
 
 def test_window_ends_follow_pypsa_starts():
@@ -111,3 +112,26 @@ def test_inflow_capacity_is_limited_by_the_plants_behind_a_collection_bus(networ
     n.add("Bus", "H2")
     n.add("Link", "plant", bus0="H2", bus1="collection", p_nom=1.0, efficiency=0.8)
     assert inflow_capacity(n, "MeOH delivery").iloc[0] == pytest.approx(0.8)
+
+
+def test_load_shedding_covers_a_demand_the_plant_cannot_make(network):
+    """30 MWh due, the cyclic store starts empty and the plant makes 1 MWh/h for 48 h,
+    but the collection link is capped at 0.5 MW: 6 MWh must be shed."""
+    n = network
+    n.links.loc["collection_to_demand", "p_nom"] = 0.5
+    n.stores.loc["MeOH delivery store", "e_nom"] = 30.0
+    n.add("Generator", "plant", bus="collection", p_nom=1.0)
+    names = add_unmet_generators(n, cost=1e4)
+    assert names == ["MeOH delivery unmet"]
+    assert n.generators.at["MeOH delivery unmet", "p_nom"] == 30.0     # peak load
+    n.optimize(solver_name="highs")
+    assert unmet_deliveries(n)["MeOH delivery"] == pytest.approx(6.0)
+
+
+def test_rolling_horizon_reprices_a_carried_unmet_generator(network):
+    n = network
+    add_unmet_generators(n, cost=500.0)
+    set_delivery_targets(n, horizon=12, overlap=4, unmet_cost=1e4)
+    gens = n.generators.index[n.generators.carrier == UNMET_CARRIER]
+    assert list(gens) == ["MeOH delivery unmet"]
+    assert n.generators.at["MeOH delivery unmet", "marginal_cost"] == 1e4

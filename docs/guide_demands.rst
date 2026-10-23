@@ -83,6 +83,7 @@ the ``targets`` block of ``config/config.yaml``:
 
      # ── shared ──────────────────────────────────────────────────────────
      demand_store_buffer: 0.0    # extra headroom for bins_profile stores
+     load_shedding_cost: 10000   # €/MWh of undelivered demand; null = off
 
      # ── seasonal profiles (only relevant for profile / bins_profile modes) ──
      # null  → use data/common/NG_demand_DK_profile.csv (seeded automatically)
@@ -327,6 +328,37 @@ bin starts. It is zero unless the optimiser carries production over.
 
 The store has no capital or marginal cost. The optimiser sizes it freely up to
 :math:`E`.
+
+.. _demand-load-shedding:
+
+Load shedding
+^^^^^^^^^^^^^
+
+In demand mode each delivery bus also has an ``unmet delivery`` generator. It
+supplies :math:`u(t)` at the price :math:`c_u` = ``load_shedding_cost``:
+
+.. math::
+
+   e(t) = e(t-1) + \big(p(t) + u(t)\big)\,\Delta t - d(t), \qquad
+   0 \le u(t) \le \max_{t'} d(t')/\Delta t, \qquad
+   \text{cost} \mathrel{+}= c_u \sum_t u(t)\,\Delta t
+
+The generator makes the problem feasible for any demand. A demand the plant
+cannot reach, for instance a large bin early in the year, then shows up as
+undelivered energy instead of an infeasible solve. The solve log reports it
+as ``MWh of '<bus>' demand unmet``. Generators that deliver nothing are
+removed before export, so a normal run looks as before.
+
+The default :math:`c_u` = 10 000 €/MWh is far above any production cost, so
+the generator only runs when there is no other way to meet the demand. Do not
+lower it towards the product price: the optimiser would then build less
+capacity and shed demand on purpose, and the result would depend on
+:math:`c_u`. For a demand that may be partly unmet at a price, use price
+mode instead. ``null`` removes the generator, so an unreachable demand makes
+the solve infeasible.
+
+Stochastic runs keep the generators in every scenario, also when unused.
+Rolling horizon always uses them; see :ref:`rh-deliveries`.
 
 ----
 
