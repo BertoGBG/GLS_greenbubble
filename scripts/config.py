@@ -310,8 +310,10 @@ EUR_to_DKK                 = _cfg["EUR_to_DKK"]
 discount_rate            = _cfg["discount_rate"]
 
 stochastic               = dict(_cfg["stochastic"])
+stochastic.setdefault("VSS", False)
 if not stochastic['stochastic']:
     stochastic['EVPI'] = False
+    stochastic['VSS'] = False
 
 tariffs_dict             = dict(_cfg["tariffs_dict"])
 

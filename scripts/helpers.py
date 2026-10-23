@@ -1830,51 +1830,6 @@ def _get_objective_value(n):
     raise AttributeError("Could not find objective value on network.")
 
 
-def compare_objective(n_stoch, ws_networks, probs):
-    """
-    Returns a DataFrame ready to be written to CSV.
-
-    Index:
-      scenario labels + RP + E_WS + EVPI
-
-    Columns:
-      WS_objective, probability, prob_weighted
-    """
-    probs_s = pd.Series({str(k): float(v) for k, v in probs.items()})
-    ws_s = {str(k): v for k, v in ws_networks.items()}
-
-    z_rp = _get_objective_value(n_stoch)
-
-    ws_obj = {}
-    for s, n_ws in ws_s.items():
-        if s not in probs_s.index:
-            raise KeyError(f"Scenario {s} missing from probs.")
-        ws_obj[s] = _get_objective_value(n_ws)
-
-    ws_by_scenario = pd.Series(ws_obj).sort_index()
-
-    df = pd.DataFrame({
-        "WS_objective": ws_by_scenario,
-        "probability": probs_s.reindex(ws_by_scenario.index),
-    })
-
-    df["prob_weighted"] = df["WS_objective"] * df["probability"]
-
-    E_WS = df["prob_weighted"].sum()
-    EVPI = z_rp - E_WS
-
-    summary = pd.DataFrame(
-        {
-            "WS_objective": [z_rp, E_WS, EVPI],
-        },
-        index=["RP", "E_WS", "EVPI"],
-    )
-
-    summary[["probability", "prob_weighted"]] = np.nan
-
-    return pd.concat([df, summary])
-
-
 # ---- SAVE & EXPORT RESULTS
 def file_name_network(n, n_flags, run_name, inputs_dict, targets_dict, En_price_year, stochastic, resolution=False):
     """Return the output network name: {run_name}_{year}_{det|stc}_{res}.

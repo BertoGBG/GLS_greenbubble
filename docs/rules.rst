@@ -102,7 +102,7 @@ rules/solve.smk
 Runs the capacity expansion + dispatch linear programme via
 `Linopy <https://linopy.readthedocs.io>`_.
 Solver and profile are configured in ``config.yaml`` under ``optimization``.
-Also exports the EVPI CSV when stochastic EVPI is enabled.
+Also exports ``value_of_information.csv`` when stochastic EVPI or VSS is enabled.
 
 - Input: ``resources/{run_name}/{network}_PRE.nc``, ``costs_{year_investment}.csv``, ``{network}_comp_alloc.pkl``
 - Output: ``outputs/single_analysis/{run_name}/networks/{network}_OPT.nc``

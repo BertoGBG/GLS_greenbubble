@@ -42,6 +42,7 @@ Enable stochastic mode in ``config/config.yaml``:
        '2024': 0
        '2025': 0
      EVPI: true        # also compute Expected Value of Perfect Information
+     VSS: false        # also compute the Value of the Stochastic Solution
 
 Each scenario year must have preprocessed input data.  Snakemake downloads
 and preprocesses all scenario years automatically before building the coupled
@@ -64,19 +65,53 @@ of ``DET``, so stochastic and deterministic results never overwrite each other.
 
 ---
 
-EVPI
-----
+EVPI and VSS
+------------
 
-When ``EVPI: true``, GreenBubble runs one additional deterministic solve per
-scenario (with perfect foresight for that year) and computes the
-**Expected Value of Perfect Information**:
+Both compare the stochastic solution with deterministic ones. All networks
+are taken from the stochastic network before it is solved, with
+``n.get_scenario()``, so they use exactly its scenario data.
 
-.. code-block:: text
+.. list-table::
+   :header-rows: 1
+   :widths: 12 58 30
 
-   EVPI = E[cost under perfect information] − cost of stochastic solution
+   * - Value
+     - Problem solved
+     - Extra solves
+   * - RP
+     - The stochastic problem: one design for all scenarios
+     - –
+   * - E_WS
+     - Wait-and-see: each scenario on its own, with its own design;
+       probability-weighted mean of the costs
+     - one per scenario (``EVPI``)
+   * - EV
+     - Expected value: one deterministic problem whose time series are the
+       probability-weighted mean over scenarios
+     - one (``VSS``)
+   * - EEV
+     - The EV design, capacities fixed, dispatched in each scenario;
+       probability-weighted mean of the costs
+     - one per scenario (``VSS``)
 
-EVPI is written to ``networks/evpi.yaml`` in the output folder.
-It is automatically disabled when ``stochastic: false``.
+.. math::
+
+   \mathrm{EVPI} = \mathrm{RP} - \mathrm{E\_WS} \ge 0, \qquad
+   \mathrm{VSS} = \mathrm{EEV} - \mathrm{RP} \ge 0
+
+EVPI is what perfect foresight of the scenario would be worth. VSS is what
+the stochastic design saves against a design for average conditions. Both
+use total annual system cost. In EEV, load shedding at
+``targets.load_shedding_cost`` covers any demand the EV design cannot meet in
+a scenario.
+
+The results go to ``csv/value_of_information.csv``: WS and EEV objectives
+per scenario, then RP, E_WS, EVPI, EV, EEV and VSS. The WS, EV and EEV
+networks are exported next to the stochastic one (``*_WS_<year>_OPT.nc``,
+``*_EV_OPT.nc``, ``*_EEV_<year>_OPT.nc``). Both options are disabled when
+``stochastic: false``. With unit commitment the solves are MILPs; set a MIP
+gap well below the values you expect, or EVPI and VSS are lost in the gap.
 
 ---
 

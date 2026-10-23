@@ -39,16 +39,18 @@ The coupled network is built by ``scripts/create_stoch_scenarios.py``:
 scenario-specific time series are attached as extra ``snapshots`` in separate
 PyPSA sub-networks that share the same capacity variables.
 
-**EVPI**
+**EVPI and VSS**
 
-When ``stochastic.EVPI: true``, an additional deterministic solve is run
-for each scenario individually (perfect-information runs).  The
-**Expected Value of Perfect Information** is then:
+With ``stochastic.EVPI: true`` each scenario is also solved on its own, with
+perfect information (wait-and-see). With ``stochastic.VSS: true`` the
+expected-value problem is solved, and its design is then dispatched in each
+scenario:
 
-:math:`\text{EVPI} = \text{EV(perfect info)} - \text{EV(stochastic solution)}`
+:math:`\text{EVPI} = \text{RP} - \text{E\_WS}, \qquad \text{VSS} = \text{EEV} - \text{RP}`
 
-A large EVPI indicates that the uncertainty in scenario realisations
-strongly influences the optimal design.
+A large EVPI means knowing the scenario in advance would pay. A large VSS
+means a design for average conditions is costly, so the stochastic model is
+worth running. See :ref:`guide-stochastic`.
 
 **Configuration**; see :ref:`config-stochastic` for all parameters.
 

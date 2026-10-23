@@ -248,11 +248,13 @@ Enables multi-scenario stochastic optimisation.
        '2022': 0
        ...
      EVPI: true           # compute Expected Value of Perfect Information
+     VSS: false           # compute the Value of the Stochastic Solution
 
 When ``stochastic: true``, input data is downloaded for **all scenario years**
 in parallel (one Snakemake job per year) before building the coupled network.
-``EVPI: true`` adds one deterministic solve per scenario to compute the EVPI;
-automatically disabled when ``stochastic: false``.
+``EVPI: true`` adds one deterministic solve per scenario; ``VSS: true`` adds
+one expected-value solve and one evaluation per scenario. Both are disabled
+when ``stochastic: false``; see :ref:`guide-stochastic`.
 
 .. important::
    ``scenarios``, ``CO2_cost_s`` and ``CO2_cost_ref_year_s`` are replaced

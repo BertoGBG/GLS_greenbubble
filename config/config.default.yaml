@@ -117,7 +117,8 @@ stochastic:
     '2022': 0
     '2023': 0
     '2024': 0
-  EVPI: true
+  EVPI: true    # expected value of perfect information: one wait-and-see solve per scenario
+  VSS: false    # value of the stochastic solution: one expected-value solve + one per scenario
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-clustering
 clustering:

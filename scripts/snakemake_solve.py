@@ -4,8 +4,10 @@
 Handles:
   - single deterministic solve
   - stochastic solve (single multi-scenario network)
-  - EVPI wait-and-see deterministic networks per scenario
-Exports OPT network, saves config, network_comp_allocation and EVPI CSV.
+  - wait-and-see networks per scenario (EVPI)
+  - expected-value network and its evaluation per scenario (VSS)
+Exports OPT network, saves config, network_comp_allocation and the
+value-of-information CSV.
 """
 from pathlib import Path
 import sys
@@ -20,13 +22,14 @@ from scripts.helpers import (
     save_config,
     save_network_comp_allocation,
     create_folder_if_not_exists,
-    compare_objective,
-    prepare_costs,
 )
 from scripts.plots import print_network
 from scripts.delivery_targets import unmet_deliveries, drop_unused_unmet
+from scripts.stochastic_values import (
+    wait_and_see_networks, expected_value_network, fix_capacities, objective,
+    value_of_information,
+)
 from scripts import config as c, parameters as p
-from scripts.technology_inputs import tech_inputs
 
 # ---- Folder layout derived from the declared output path
 networks_folder = str(Path(snakemake.output.network).parent)
@@ -40,16 +43,6 @@ network_name = snakemake.wildcards.network
 # ---- Load pre-built network and supporting data
 n = pypsa.Network(snakemake.input.network)
 
-tech_costs = prepare_costs(
-    latitude        = c.latitude,
-    longitude       = c.longitude,
-    tech_inputs     = tech_inputs,
-    USD_to_EUR      = c.USD_to_EUR,
-    discount_rate   = c.discount_rate,
-    cost_path_EU    = snakemake.input.costs_eu,
-    cost_path_US    = p.cost_path_US,
-    dict_tech_US_EU = p.dict_tech_US_EU,
-)
 with open(snakemake.input.comp_alloc, "rb") as fh:
     _alloc_payload = pickle.load(fh)
 if isinstance(_alloc_payload, dict) and "allocation" in _alloc_payload:
@@ -68,34 +61,29 @@ print_network(
     is_stochastic = c.stochastic["stochastic"],
 )
 
-# ---- Assemble networks dict (main + WS for EVPI)
+# ---- Assemble networks dict (main + WS for EVPI + EV for VSS)
+# WS, EV and EEV networks are taken from the unsolved stochastic network, so
+# they share its scenario data (prices, capacity factors, CO2 costs) exactly.
 networks_dict = {}
 n_names_dict  = {}
+eev_networks  = {}
 
 if c.stochastic["stochastic"]:
-    from scripts.create_stoch_scenarios import (
-        create_scenarios, set_input_paths, scenarios, CO2_cost_s, CO2_cost_ref_year_s,
-    )
-    from scripts.preprocessing import prepare_all_inputs
-    from scripts.prepare_network import network_dependencies, build_network
+    from scripts.create_stoch_scenarios import scenarios
 
     networks_dict["stoch"] = n
     n_names_dict["stoch"]  = network_name
 
     if c.stochastic["EVPI"]:
-        n_flags_OK = network_dependencies(c.n_flags)
-        for year, prob in scenarios.items():
-            CO2_cost = CO2_cost_s[year]
-            set_input_paths(p, year)
-            inputs_det = prepare_all_inputs(
-                targets_dict      = c.targets_dict,
-                CO2_cost          = CO2_cost,
-                CO2_cost_ref_year = c.CO2_cost_ref_year,
-                max_RE_to_grid    = c.max_RE_to_grid,
-            )
-            n_det = build_network(tech_costs, inputs_det, n_flags_OK, c.n_options, p)
-            networks_dict[str(year)] = n_det
-            n_names_dict[str(year)]  = f"{network_name}_WS_{year}"
+        for year, n_ws in wait_and_see_networks(n).items():
+            networks_dict[year] = n_ws
+            n_names_dict[year]  = f"{network_name}_WS_{year}"
+
+    if c.stochastic["VSS"]:
+        networks_dict["EV"] = expected_value_network(n)
+        n_names_dict["EV"]  = f"{network_name}_EV"
+        # solved after the EV network, with its capacities fixed
+        eev_networks = wait_and_see_networks(n)
 
     c.n_flags["print"]     = False
     c.n_flags_opt["print"] = False
@@ -105,10 +93,9 @@ else:
     n_names_dict["network"]  = network_name
 
 # ---- Solve all networks
-for key, net in networks_dict.items():
-    name = n_names_dict[key]
+def solve(key, net, name):
     print(f"Solving: {name}")
-    status, condition, used_solver, used_opts, model = build_model_solve_network(
+    build_model_solve_network(
         net,
         results_folder    = results_folder,
         solver            = c.optimization["solver"],
@@ -120,6 +107,7 @@ for key, net in networks_dict.items():
         n_name            = name,
     )
     networks_dict[key] = net
+    n_names_dict[key]  = name
 
     # Load shedding: report undelivered demand, then drop generators never used.
     # The stochastic network keeps them: its components are indexed per scenario.
@@ -129,6 +117,15 @@ for key, net in networks_dict.items():
               f"(load shedding at {c.targets_dict['load_shedding_cost']:g} EUR/MWh)")
     if key != "stoch":
         drop_unused_unmet(net)
+
+
+for key, net in list(networks_dict.items()):
+    solve(key, net, n_names_dict[key])
+
+# EEV: the EV design dispatched in each scenario
+for year, n_eev in eev_networks.items():
+    fix_capacities(n_eev, networks_dict["EV"])
+    solve(f"EEV_{year}", n_eev, f"{network_name}_EEV_{year}")
 
 def zero_small_capacities(n, threshold_mw):
     """Zero solver-noise artifacts before export.
@@ -214,12 +211,14 @@ print_network(
 save_config(results_folder, c)
 save_network_comp_allocation(results_folder, network_comp_allocation)
 
-# ---- EVPI
-if c.stochastic["EVPI"]:
-    df_evpi = compare_objective(
-        networks_dict["stoch"],
-        {k: v for k, v in networks_dict.items() if k != "stoch"},
+# ---- Value of information: EVPI and VSS
+if c.stochastic["EVPI"] or c.stochastic["VSS"]:
+    df_voi = value_of_information(
+        objective(networks_dict["stoch"]),
         scenarios,
+        ws  = {y: networks_dict[y] for y in map(str, scenarios) if y in networks_dict},
+        ev  = networks_dict.get("EV"),
+        eev = {k.removeprefix("EEV_"): v for k, v in networks_dict.items() if k.startswith("EEV_")},
     )
-    df_evpi.to_csv(Path(csv_folder) / "EVPI.csv")
-    print(df_evpi)
+    df_voi.to_csv(Path(csv_folder) / "value_of_information.csv")
+    print(df_voi)

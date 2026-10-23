@@ -150,6 +150,8 @@ The same fixed-capacity plant dispatches differently in each scenario:
    - Here ``EVPI: false``. Set ``EVPI: true`` to also solve each year with
      perfect foresight and quantify the **Expected Value of Perfect
      Information**, the annual value of knowing next year's market in advance.
+     ``VSS: true`` adds the **Value of the Stochastic Solution**, the saving
+     against a design for average conditions.
 
 ---
 
