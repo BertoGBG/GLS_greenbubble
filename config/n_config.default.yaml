@@ -67,9 +67,9 @@ biomass boiler:
 
 biogas engine:
   <<: *base
-  min load: 0.4 # % of max power capacity that must run (otherwise shut-off)
+  min load: 0.4 # share of capacity while running; applies only when committable
   expansion : true
-  committable : false # -> only for expansion false or RH
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 biomethanation: # (bus0 unit: MW H2)
   <<: *base
@@ -85,15 +85,15 @@ methanation biogas: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.3 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 methanation CO2: # (bus0 unit: MW H2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.3 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.3 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 CH4 compressor: # applies to both meoh and methanation
   <<: *base
@@ -130,24 +130,24 @@ AEC: # (bus0 unit: MW el )
   cost factor: 1      # according to IEA (last pypsa-eur inputs)
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.15 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 PEMEC: # (bus0 unit: MW el )
   <<: *base
   cost factor: 1
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.15 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 SOEC: # (bus0 unit: MW el )
   <<: *base
   cost factor: 1
   ramp limit up: 0.9 # % of total power capacity per hour
   ramp limit down: 0.9 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.15 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 # --
 
 DH heat exchanger:
@@ -206,8 +206,8 @@ methanolisation: # (bus0 unit: t/h CO2)
   <<: *base
   ramp limit up: 0.08 # % of total power capacity per hour
   ramp limit down: 0.08 # % of total power capacity per hour
-  min load: 0.15 # % of max power capacity that must run (otherwise shut-off)
-  committable : false # -> only for initial capacity or RH
+  min load: 0.15 # share of capacity while running; applies only when committable
+  committable : false # unit commitment (MILP): on/off with min load, also when expandable
 
 NG boiler:
   <<: *base

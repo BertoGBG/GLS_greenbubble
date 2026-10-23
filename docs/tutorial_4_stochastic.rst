@@ -52,12 +52,12 @@ on its own prices and renewable profiles). Scenarios carry a probability
      EVPI: false
      # scenarios 2022/2023/2024 and their weights are set in config.default.yaml
 
-.. admonition:: Stochastic needs a pure LP
-   :class: caution
+.. admonition:: Unit commitment and ramp limits
+   :class: note
 
-   Stochastic mode cannot use binary variables, so ``committable`` must be
-   ``false`` for every technology. That is already the default here. Ramp
-   limits stay on: they work on scenario networks from PyPSA 1.3 on. See
+   This tutorial keeps ``committable: false``, so it solves as an LP. Unit
+   commitment also works on scenario networks from PyPSA 1.4, as a MILP. Ramp
+   limits stay on: they work on scenario networks from PyPSA 1.3. See
    :ref:`guide-stochastic` → *Limitations*.
 
 The output folder uses the ``STC`` token instead of ``DET``.
@@ -157,8 +157,7 @@ What you learned
 ----------------
 
 - The **here-and-now vs wait-and-see** two-stage structure and expected-cost objective.
-- How to enable stochastic mode and the **pure-LP requirement** (no committable
-  units).
+- How to enable stochastic mode.
 - Reading a stochastic design as a **robust hedge** across scenarios, and
   interpreting scenario-level profitability spreads.
 

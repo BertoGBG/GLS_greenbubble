@@ -595,21 +595,24 @@ binary dispatch) for a technology.
 .. code-block:: yaml
 
    biogas engine:
-     committable: true   # activate unit commitment (dispatch only)
-     min load: 0.4       # minimum load fraction when online (p_min_pu)
+     committable: true   # activate unit commitment
+     min load: 0.4       # minimum load fraction while on (p_min_pu)
 
-**Current GreenBubble behaviour**
+**Capacity expansion**
 
-In ``prepare_network.py``, ``committable`` is only activated when
-``expansion: false``, i.e. for fixed-capacity brownfield assets.  When a
-technology is extendable (``expansion: true``), the capacity expansion solve
-runs as a pure LP regardless of the ``committable`` flag.
+``committable: true`` applies to fixed and to extendable technologies. For an
+extendable one PyPSA sizes the plant and decides its on/off state together,
+with a big-M MILP formulation (see the
+`PyPSA committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_).
+The problem becomes a MILP: solves take longer, and Gurobi is the better
+choice.
 
-This is a deliberate choice to keep the investment problem fast and compatible
-with stochastic mode.  PyPSA itself *does* support committable + extendable
-simultaneously in deterministic capacity expansion via a big-M MILP
-formulation — see the
-`PyPSA committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_.
+**Minimum load**
+
+``min load`` applies only to committable technologies: while on, the plant
+runs at or above it, and it may switch off. For a technology with
+``committable: false``, ``p_min_pu`` stays 0. Otherwise the LP would force it
+to run at ``min load`` in every snapshot.
 
 **Committable in rolling horizon**
 
@@ -619,8 +622,11 @@ re-activates ``committable=True`` for any technology that has it set in
 
 **Stochastic mode**
 
-``committable: true`` is incompatible with stochastic mode, the multi-scenario
-LP requires a pure LP (no binary variables).  See :ref:`guide-stochastic`.
+Unit commitment works in stochastic mode from PyPSA 1.4. Capacities are shared
+across scenarios; on/off decisions are made per scenario. The MILP grows with
+the number of scenarios. For EVPI, set a MIP gap well below the EVPI you
+expect, for example ``optimization.overrides: {MIPGap: 1e-4}``. See
+:ref:`guide-stochastic`.
 
 ----
 

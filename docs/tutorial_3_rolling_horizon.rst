@@ -89,12 +89,9 @@ block differ:
 .. admonition:: Committable units are supported in rolling horizon
    :class: tip
 
-   Unlike stochastic mode, rolling horizon **can** use unit commitment. Each
-   window is solved as its own small MILP, so ``committable: true`` on a
-   fixed-capacity asset is valid here. The ``min load`` / ``committable`` note in
-   ``n_config.default.yaml`` reads *"only for initial capacity or RH"*. This
-   tutorial leaves committable at its default ``false``. Switch it on for a fixed
-   (``expansion: false``) asset to see on/off cycling in the dispatch.
+   Rolling horizon can use unit commitment. Each window is solved as its own
+   small MILP. This tutorial leaves ``committable`` at its default ``false``.
+   Switch it on in ``n_config`` to see on/off cycling in the dispatch.
 
 The output network name gets an ``_RH`` suffix. Plots land in
 ``outputs/single_analysis/tut3_rh/plots_rh/`` and CSVs in ``csv_rh/``. The

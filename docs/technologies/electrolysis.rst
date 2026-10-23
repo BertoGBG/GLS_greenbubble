@@ -51,8 +51,8 @@ the site wants MT heat, which is exactly the kind of question the symbiosis netw
 exists to answer.  ``AEC`` and ``PEMEC`` instead *reject* waste heat to ``Heat LT``.
 
 All three share ramp limits of 0.9 /h, a 15 % minimum load, and
-``committable: false`` by default (commitment is intended for brownfield or
-rolling-horizon dispatch).  Efficiency is fixed — there is no part-load curve, and
+``committable: false`` by default. The minimum load applies only when
+``committable: true``.  Efficiency is fixed — there is no part-load curve, and
 an improved part-load model is still planned.
 
 Costs are **size-dependent**.  ``prepare_network.py`` appends a size suffix, chosen

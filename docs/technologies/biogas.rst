@@ -30,8 +30,8 @@ CO₂ from raw biogas to yield pipeline-quality biomethane.  Modelled as a
 modelled as a ``Link`` with electricity input.
 
 **Biogas engine** — combined heat-and-power unit; a multi-output ``Link``
-(biogas → electricity + heat) with minimum load and optional committable
-mode for dispatch-only runs.
+(biogas → electricity + heat). Its minimum load applies when unit commitment
+is on (``committable: true``).
 
 **Biomass belt dryer**, a hot-air belt dryer that takes wet biomass from about
 **50 % moisture down to 13 %**, so it can be used by a downstream thermal

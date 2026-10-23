@@ -1620,25 +1620,19 @@ def build_model_solve_network(
 
     _normalize_component_index_names(n)
 
-    # ---- MILP + stochastic guard ----
+    # ---- MILP + stochastic note ----
+    # Unit commitment works on scenario networks from PyPSA 1.4, but the MILP
+    # grows with the number of scenarios and EVPI is only meaningful when the
+    # MIP gap is well below EVPI itself.
     _committable_links = (
         n.links.index[n.links["committable"].astype(bool)].tolist()
         if "committable" in n.links.columns else []
     )
     if _committable_links and stochastic["stochastic"]:
-        warnings.warn(
-            f"\n⚠️  MILP + STOCHASTIC NOT SUPPORTED\n"
-            f"   Committable links detected: {_committable_links}\n"
-            f"   PyPSA stochastic optimization requires a pure LP (no binary variables).\n"
-            f"   Unit commitment (committable=True) will be IGNORED or cause solver errors.\n"
-            f"   → Disable committable in n_config.yaml OR disable stochastic in config.yaml.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
         print(
-            f"\n⚠️  WARNING: MILP + STOCHASTIC NOT SUPPORTED — "
-            f"committable links {_committable_links} detected with stochastic=True. "
-            f"Disable one or the other.\n"
+            f"[solve] stochastic MILP: committable links {_committable_links}. "
+            "Expect longer solves; for EVPI set a MIP gap well below it "
+            "(e.g. optimization.overrides: {MIPGap: 1e-4})."
         )
 
     try:

@@ -1,10 +1,8 @@
 # =====================================================================
 # Tutorial 4 — brownfield + stochastic-compatibility settings
 # =====================================================================
-# Same brownfield assets as Tutorial 2, BUT stochastic mode requires a pure LP:
-#   * committable: false everywhere (no binary unit-commitment) — already the
-#     default for every technology here.
-# Ramp limits keep their defaults: they work on scenario networks from PyPSA 1.3.
+# Same brownfield assets as Tutorial 2. committable stays false (pure LP);
+# unit commitment and ramp limits both work on scenario networks.
 # ---------------------------------------------------------------------
 
 # --- biomethanation only (catalytic methanation off) ---

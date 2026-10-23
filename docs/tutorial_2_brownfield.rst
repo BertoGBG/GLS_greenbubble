@@ -95,13 +95,14 @@ wind and solar 50 %.
 Three constraints make dispatch physically realistic. They are configured per
 technology in ``n_config``:
 
-* **Committable** (``committable: true``) — binary on/off unit commitment. Only
-  valid for **fixed-size** components (``expansion: false``) or rolling horizon,
-  because it turns the problem into a MILP. Leave ``false`` for expandable units.
+* **Committable** (``committable: true``) — binary on/off unit commitment, for
+  fixed and expandable components. It turns the problem into a MILP, so solves
+  take longer.
 * **Ramp limits** (``ramp limit up`` / ``ramp limit down``) — max fractional
   change in output per hour (e.g. ``0.9`` = 90 %/h for the electrolyser).
 * **Minimum load** (``min load``) — fraction of capacity that must run when the
   unit is on (e.g. ``0.15`` for the electrolyser); below it the unit shuts off.
+  It applies only to committable units.
 
 The common result figures (capacities, operation, shadow prices, system cost)
 are described once in :ref:`guide-outputs` and read as in

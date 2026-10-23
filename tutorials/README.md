@@ -25,7 +25,7 @@ overwrites your own current overrides, so back them up first if needed).
 | `3_rolling_horizon`   | 3   | demand | dispatch-only on the Tutorial 2b network (run `2_brownfield_heat` first) |
 | `3b_rh_bins_pf`       | 3b  | demand | step 1: greenfield, hydrogen in 26 two-weekly bins, perfect foresight |
 | `3b_rh_bins`          | 3b  | demand | step 2: rolling horizon on the step-1 network, stock targets (run `3b_rh_bins_pf` first) |
-| `4_stochastic`        | 4   | price  | brownfield across 3 scenarios (pure LP: no committable, ramp limits null) |
+| `4_stochastic`        | 4   | price  | brownfield across 3 scenarios (pure LP) |
 
 All tutorials use the default HiGHS solver (no licence needed) and a coarse
 temporal resolution so each solves in about five minutes on a laptop:

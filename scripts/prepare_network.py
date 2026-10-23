@@ -56,6 +56,20 @@ def _snapshot_step_hours(n):
     return (n.snapshots[1] - n.snapshots[0]) / pd.Timedelta(hours=1)
 
 
+def _unit_commitment(n_config, tech):
+    """``committable`` and ``p_min_pu`` of a link from its n_config row.
+
+    ``min load`` only applies with unit commitment: a committable link runs at
+    or above it while on and may switch off, also when it is extendable (PyPSA
+    >= 1.1, big-M). Without unit commitment p_min_pu would force the plant to
+    run at min load in every snapshot, so it stays 0.
+    """
+    committable = bool(n_config.at[tech, "committable"] == True)
+    min_load = n_config.at[tech, "min load"]
+    return dict(committable=committable,
+                p_min_pu=float(min_load) if committable and min_load == min_load else 0.0)
+
+
 def _n_config_val(key: str, param: str, default):
     """Safely read a value from the n_config DataFrame; return default if missing/NaN."""
     if key not in n_config.index:
@@ -2707,8 +2721,7 @@ def add_biogas(n, n_flags, inputs_dict, tech_costs):
                 efficiency2=tech_costs.at["biogas engine", "efficiency"],
                 marginal_cost=tech_costs.at["biogas engine", "VOM"],
                 lifetime=tech_costs.at["biogas engine", "lifetime"],
-                committable=(n_config.at["biogas engine", "committable"] == True) and not expansion,
-                p_min_pu=n_config.at["biogas engine", "min load"],
+                **_unit_commitment(n_config, "biogas engine"),
                 p_nom_extendable=expansion,
                 p_nom=capacity,
                 p_nom_max=n_config.at["biogas engine", "max capacity"],
@@ -3002,8 +3015,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=expansion,
               p_nom=capacity,
               p_nom_max=n_config.at['AEC', 'max capacity'],
-              committable=(n_config.at['AEC', 'committable'] == True) and not expansion,
-              p_min_pu=n_config.at['AEC', 'min load'],
+              **_unit_commitment(n_config, "AEC"),
               ramp_limit_up=n_config.at['AEC', 'ramp limit up'],
               ramp_limit_down=n_config.at['AEC', 'ramp limit down']
               )
@@ -3039,8 +3051,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=expansion,
               p_nom=capacity,
               p_nom_max=n_config.at['PEMEC', 'max capacity'],
-              committable=(n_config.at['PEMEC', 'committable'] == True) and not expansion,
-              p_min_pu=n_config.at['PEMEC', 'min load'],
+              **_unit_commitment(n_config, "PEMEC"),
               ramp_limit_up=n_config.at['PEMEC', 'ramp limit up'],
               ramp_limit_down=n_config.at['PEMEC', 'ramp limit down']
               )
@@ -3086,8 +3097,7 @@ def add_electrolysis(n, n_flags, inputs_dict, tech_costs):
               p_nom_extendable=expansion,
               p_nom=capacity,
               p_nom_max=n_config.at['SOEC', 'max capacity'],
-              committable=(n_config.at['SOEC', 'committable'] == True) and not expansion,
-              p_min_pu=n_config.at['SOEC', 'min load'],
+              **_unit_commitment(n_config, "SOEC"),
               ramp_limit_up=n_config.at['SOEC', 'ramp limit up'],
               ramp_limit_down=n_config.at['SOEC', 'ramp limit down']
               )
@@ -3263,8 +3273,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             lifetime = tech_costs.at["methanolisation", "lifetime"],
             p_nom_max=n_config.at["methanolisation", "max capacity"],
             capital_cost=capital_cost,
-            committable=(n_config.at["methanolisation", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanolisation", "min load"],
+            **_unit_commitment(n_config, "methanolisation"),
             ramp_limit_up=n_config.at['methanolisation', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanolisation', 'ramp limit down'],
             )
@@ -3371,8 +3380,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             lifetime=tech_costs.at["methanol synthesis", "lifetime"],
             p_nom_max=n_config.at["methanol synthesis", "max capacity"],
             capital_cost=capital_cost,
-            committable=(n_config.at["methanol synthesis", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanol synthesis", "min load"],
+            **_unit_commitment(n_config, "methanol synthesis"),
             ramp_limit_up=n_config.at['methanol synthesis', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanol synthesis', 'ramp limit down'],
             )
@@ -3425,8 +3433,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             lifetime=tech_costs.at["methanol distillation", "lifetime"],
             p_nom_max=n_config.at["methanol distillation", "max capacity"],
             capital_cost=capital_cost,
-            committable=(n_config.at["methanol distillation", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanol distillation", "min load"],
+            **_unit_commitment(n_config, "methanol distillation"),
             ramp_limit_up=n_config.at['methanol distillation', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanol distillation', 'ramp limit down'],
             )
@@ -3483,8 +3490,7 @@ def add_meoh(n, n_flags, inputs_dict, tech_costs):
             p_nom_max=n_config.at["methanol from biogas", "max capacity"],
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["methanol from biogas", "VOM"],
-            committable=(n_config.at["methanol from biogas", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanol from biogas", "min load"],
+            **_unit_commitment(n_config, "methanol from biogas"),
             ramp_limit_up=n_config.at['methanol from biogas', 'ramp limit up'],
             ramp_limit_down=n_config.at['methanol from biogas', 'ramp limit down'],
             )
@@ -3938,8 +3944,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             p_nom=capacity,
             p_nom_extendable=expansion,
             p_nom_max=n_config.at["methanation biogas", "max capacity"],
-            committable=(n_config.at["methanation biogas", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanation biogas", "min load"],
+            **_unit_commitment(n_config, "methanation biogas"),
             capital_cost=capital_cost,
             marginal_cost=tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up=n_config.at['methanation biogas', 'ramp limit up'],
@@ -4048,8 +4053,7 @@ def add_methanation(n, n_flags, inputs_dict, tech_costs):
             lifetime=tech_costs.at["methanation biogas", "lifetime"],
             p_nom_extendable= expansion,
             p_nom= capacity,
-            committable=(n_config.at["methanation CO2", "committable"] == True) and not expansion,
-            p_min_pu=n_config.at["methanation CO2", "min load"],
+            **_unit_commitment(n_config, "methanation CO2"),
             capital_cost= capital_cost * vol_ratio,
             marginal_cost= tech_costs.at["methanation biogas","VOM"],
             ramp_limit_up=n_config.at['methanation CO2', 'ramp limit up'],

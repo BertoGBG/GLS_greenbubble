@@ -174,9 +174,9 @@ PyPSA's, documented under
      - ``|p(t) − p(t−1)| ≤ ramp_limit · p_nom`` where set in ``n_config``. Used
        on electrolysis, methanation and methanol synthesis.
    * - **Minimum load**
-     - ``p(t) ≥ min_load · p_nom`` when a unit is online. With
-       ``committable: true`` this becomes a binary on/off decision, which makes
-       the problem a MILP. See :ref:`config-committable`.
+     - ``p(t) ≥ min_load · p_nom`` while a unit is on. Applies only with
+       ``committable: true``, a binary on/off decision that makes the problem
+       a MILP. See :ref:`config-committable`.
 
 GreenBubble adds a small number of constraints of its own on top of these. They
 are listed in :doc:`model_approach`.
@@ -237,5 +237,5 @@ Solver
 The LP is built and solved through Linopy, with HiGHS (open source) or Gurobi.
 Named option sets live in ``scripts/solver_profiles.py`` and are selected by
 ``optimization.solver_profile``; the default for local runs is ``highs-fast``.
-Committable components make the problem a MILP, which is incompatible with
-stochastic mode.
+Committable components make the problem a MILP; Gurobi solves these much
+faster than HiGHS.

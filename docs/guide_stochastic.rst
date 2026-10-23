@@ -83,12 +83,10 @@ It is automatically disabled when ``stochastic: false``.
 Limitations
 -----------
 
-- **MILP (committable links)** is incompatible with stochastic mode — PyPSA's
-  stochastic multi-scenario LP requires a pure LP (no binary variables).
-  Set ``committable: false`` for all technologies when using stochastic mode.
-  Note: committable + extendable *is* supported in deterministic capacity
-  expansion via PyPSA's big-M formulation; see
-  `committable-extendable example <https://docs.pypsa.org/latest/examples/committable-extendable/>`_.
+- **Unit commitment (committable links)** works in stochastic mode from
+  PyPSA 1.4, also for extendable technologies. The problem becomes a MILP that
+  grows with the number of scenarios. EVPI is only meaningful when the MIP gap
+  is well below it: set ``optimization.overrides: {MIPGap: 1e-4}`` or tighter.
 - **Ramp limits** work in stochastic mode from PyPSA 1.3 on. Earlier
   releases (1.0.7 to 1.2.4) failed to build ramp-limit constraints on a
   scenario network, so older configurations set ``ramp limit up`` /
