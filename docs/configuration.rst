@@ -363,7 +363,7 @@ optimization
    optimization:
      solver: 'gurobi'                  # 'gurobi' | 'highs'
      solver_profile: 'gurobi-barrier-fast'  # preset from scripts/solver_profiles.py
-     collect_all_duals: true           # save dual variables for shadow price analysis
+     collect_all_duals: true           # all duals to the network (mu_*) and to duals/ (see outputs)
      return_model: true                # return Linopy model object after solving
      overrides: null                   # optional raw solver parameters (dict)
      zero_threshold_MW: 0.01           # MW — components built below this are zeroed out
