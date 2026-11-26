@@ -103,7 +103,7 @@ tariffs_dict:
 optimization:
   solver :  'highs'  # 'gurobi' | 'highs'
   solver_profile : "highs-fast" # (DEFAULT FOR SPEED ON LOCAL MACHINE) select from scripts.solver_profiles.py
-  collect_all_duals: true  #  saves all dual variables also those form custom constraints -->
+  collect_all_duals: true  # all duals to the network (mu_*) and to duals/duals_<name>.nc, incl. custom constraints
   return_model: true  # returns linopy model
   overrides: null
     #overrides:     # examples are illustrative

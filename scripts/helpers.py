@@ -38,9 +38,6 @@ import calendar
 import os
 import time
 import reverse_geocoder as rg
-from contextlib import contextmanager
-import logging
-import re
 import warnings
 import pypsa
 
@@ -1484,89 +1481,193 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
         key = "TimeLimit" if solver == "gurobi" else "time_limit"
         opts[key] = float(time_limit)
 
-@contextmanager
-def capture_pypsa_unassigned_constraints():
-    logger = logging.getLogger("pypsa.optimization.optimize")
-    records = []
+DUALITY_RTOL = 1e-5
 
-    class _Handler(logging.Handler):
-        def emit(self, record):
-            records.append(record.getMessage())
 
-    h = _Handler()
-    logger.addHandler(h)
+def _constraint_dual_dataset(con):
+    """Dual and right-hand side of one linopy constraint, masked entries as NaN.
+
+    Returns None when the constraint carries no dual (e.g. a MILP solve).
+    """
+    if "dual" not in con.data:
+        return None
+    active = con.labels != -1
+    ds = xr.Dataset({"dual": con.dual.where(active), "rhs": con.rhs.where(active)})
+    signs = np.unique(con.sign.values.astype(str))
+    if len(signs) == 1:
+        ds.attrs["sign"] = str(signs[0])
+    else:
+        ds["sign"] = con.sign.astype(str)
+    # Drop scalar coordinates left over from selections; they collide across groups.
+    return ds.drop_vars([k for k in ds.coords if k not in ds.dims])
+
+
+def _objective_constant(m):
     try:
-        yield records
-    finally:
-        logger.removeHandler(h)
+        return float(m.objective.expression.const.sum())
+    except AttributeError:
+        return 0.0
 
 
-def parse_unassigned_constraint_blocks(log_messages):
-    blocks = []
-    for msg in log_messages:
-        if "shadow-prices of the constraints" in msg:
-            m = re.search(r"constraints (.*) were not assigned", msg)
-            if m:
-                blocks.extend([x.strip() for x in m.group(1).split(",")])
+def _bounded_variable_terms(m):
+    """Objective share of variables with linopy bounds: reduced cost × value.
 
-    # unique, preserve order
-    seen, out = set(), []
-    for b in blocks:
-        if b and b not in seen:
-            seen.add(b)
-            out.append(b)
-    return out
+    PyPSA writes almost every bound as an explicit constraint, whose dual is
+    exported. The exception is ``objective_constant``, the capex of existing
+    assets, which PyPSA adds as a variable fixed by ``lower = upper``. Its share
+    of the objective is carried by the reduced cost ``r = c - Aᵀy``, which
+    linopy does not return, so it is computed here from the model matrices.
+
+    Returns ``{variable name: sum of r_j * x_j}`` for every bounded variable.
+    """
+    bounded = []
+    for key, var in m.variables.items():
+        active = var.labels != -1
+        lower, upper = var.lower.where(active), var.upper.where(active)
+        if bool(((lower != 0) & np.isfinite(lower)).any()) or bool(np.isfinite(upper).any()):
+            bounded.append(key)
+    if not bounded:
+        return {}
+
+    M = m.matrices
+    vlabels = M.vlabels
+    y = np.nan_to_num(M.dual)
+    terms = {}
+    for key in bounded:
+        labels = m.variables[key].labels.values.ravel()
+        cols = np.flatnonzero(np.isin(vlabels, labels[labels != -1]))
+        reduced = M.c[cols] - M.A[:, cols].T @ y
+        terms[key] = float(np.nansum(reduced * M.sol[cols]))
+    return terms
 
 
-def export_constraint_duals(n, patterns, outpath, compress=True):
+def dual_objective(n):
+    """Objective rebuilt from the duals alone (strong duality).
+
+    For an LP solved to optimality
+    ``objective = sum(rhs * dual) + sum(reduced cost * value of bounded variables)
+    + objective constant``. In PyPSA the bounded-variable term is the capex of
+    existing assets (variable ``objective_constant``), and zero in greenfield runs.
+
+    Returns a dict with ``objective``, ``dual_objective``, ``residual`` (relative),
+    ``by_constraint`` (pd.Series of rhs·dual per constraint), ``bounded_variables``
+    ({name: reduced cost × value}) and ``objective_constant``; None without duals.
+    """
     m = n.model
-    keys = [k for k in m.constraints if any(k.startswith(p) for p in patterns)]
+    parts = {}
+    for key, con in m.constraints.items():
+        ds = _constraint_dual_dataset(con)
+        if ds is not None:
+            parts[key] = float((ds["rhs"] * ds["dual"]).sum())
+    if not parts:
+        return None
 
-    data_vars = {}
-    for k in keys:
-        c = m.constraints[k]
-        d = getattr(c, "dual", None)
-        if d is None:
-            continue
+    bounded = _bounded_variable_terms(m)
+    const = _objective_constant(m)
+    objective = float(m.objective.value)
+    dual_obj = sum(parts.values()) + sum(bounded.values()) + const
+    return {
+        "objective": objective,
+        "dual_objective": dual_obj,
+        "objective_constant": const,
+        "residual": abs(objective - dual_obj) / max(abs(objective), 1.0),
+        "by_constraint": pd.Series(parts).sort_values(key=abs, ascending=False),
+        "bounded_variables": bounded,
+    }
 
-        if "name" in d.dims:
-            if k.startswith("Generator-"):
-                d = d.rename({"name": "generator"})
-            elif k.startswith("Link-"):
-                d = d.rename({"name": "link"})
-            elif k.startswith("Store-"):
-                d = d.rename({"name": "store"})
-            elif k.startswith("Bus-"):
-                d = d.rename({"name": "bus"})
 
-        # Drop problematic coordinate called 'name'
-        if "name" in d.coords and "name" not in d.dims:
-            d = d.reset_coords("name", drop=True)
+def export_all_duals(n, outpath, compress=True):
+    """Write the dual and right-hand side of every linopy constraint to NetCDF.
 
-        data_vars[k] = d
+    Each constraint goes into its own NetCDF group, named after the constraint,
+    with variables ``dual`` and ``rhs`` and the constraint sign as attribute.
+    Separate groups keep each constraint on its own coordinates: merging them
+    into one dataset (``m.dual``) outer-joins the shared ``name`` dimension and
+    pads every constraint with NaN for all components in the model.
 
-    if not data_vars:
+    The root group stores the objective, its constant, the reduced-cost terms
+    of bounded variables (``bounded_term:<variable>``, the capex of existing
+    assets in PyPSA) and the strong-duality residual, so the objective can be rebuilt from the file alone with
+    :func:`dual_objective_from_file`. Read the groups with :func:`load_duals`.
+
+    Returns the :func:`dual_objective` summary, or None if there are no duals.
+    """
+    summary = dual_objective(n)
+    if summary is None:
         warnings.warn(
-            "No constraint duals were available to export (solver returned no "
-            "shadow prices — e.g. a barrier solve with Crossover=0 has no basis). "
-            "Skipping dual export; the primal solution is unaffected.",
+            "No constraint duals were available to export (MILP solve, or the "
+            "solver returned no shadow prices). Skipping dual export; the primal "
+            "solution is unaffected.",
             RuntimeWarning,
             stacklevel=2,
         )
         return None
 
-    ds = xr.Dataset(data_vars)
-
     outpath = Path(outpath)
     outpath.parent.mkdir(parents=True, exist_ok=True)
 
-    if compress:
-        encoding = {v: {"zlib": True, "complevel": 4} for v in ds.data_vars}
-        ds.to_netcdf(outpath, encoding=encoding)
-    else:
-        ds.to_netcdf(outpath)
+    root = xr.Dataset(attrs={
+        "objective": summary["objective"],
+        "dual_objective": summary["dual_objective"],
+        "objective_constant": summary["objective_constant"],
+        "duality_residual": summary["residual"],
+        "constraints": ",".join(summary["by_constraint"].index),
+        "bounded_variables": ",".join(summary["bounded_variables"]),
+        **{f"bounded_term:{k}": v for k, v in summary["bounded_variables"].items()},
+    })
+    root.to_netcdf(outpath, mode="w")
 
-    return ds
+    for key, con in n.model.constraints.items():
+        ds = _constraint_dual_dataset(con)
+        if ds is None:
+            continue
+        encoding = {}
+        if compress:
+            encoding = {v: {"zlib": True, "complevel": 4}
+                        for v in ds.data_vars if ds[v].dtype.kind == "f"}
+        ds.to_netcdf(outpath, mode="a", group=key.replace("/", "_"), encoding=encoding)
+
+    return summary
+
+
+def load_duals(path):
+    """Read a file written by :func:`export_all_duals` into ``{constraint: Dataset}``."""
+    root = xr.open_dataset(path)
+    names = [k for k in root.attrs.get("constraints", "").split(",") if k]
+    root.close()
+    return {k: xr.load_dataset(path, group=k.replace("/", "_")) for k in names}
+
+
+def dual_objective_from_file(path):
+    """Rebuild the objective from a duals file alone.
+
+    ``sum(rhs * dual)`` over all constraint groups, plus the bounded-variable
+    terms (existing-asset capex) and the objective constant from the root attributes.
+    """
+    with xr.open_dataset(path) as root:
+        attrs = dict(root.attrs)
+    const = float(attrs.get("objective_constant", 0.0))
+    bounded = sum(float(v) for k, v in attrs.items() if k.startswith("bounded_term:"))
+    duals = sum(float((ds["rhs"] * ds["dual"]).sum()) for ds in load_duals(path).values())
+    return duals + bounded + const
+
+
+def _assign_all_duals_to_network(n):
+    """Write every dual PyPSA can place onto the network as ``mu_*`` attributes.
+
+    ``solve_model`` has already assigned the standard duals and divided the bus
+    prices by the snapshot weightings. A second ``assign_duals`` call overwrites
+    ``marginal_price`` with the raw duals, so the scaled prices are restored
+    afterwards, also when the call fails part-way (custom constraints with
+    scenarios raise ``NotImplementedError`` in PyPSA).
+    """
+    prices = n.buses_t.marginal_price.copy()
+    try:
+        n.optimize.assign_duals(assign_all_duals=True)
+    except Exception as e:
+        print(f"⚠️ PyPSA could not assign all duals to the network (continuing): {e}")
+    finally:
+        n.buses_t["marginal_price"] = prices
 
 
 def build_model_solve_network(
@@ -1705,63 +1806,40 @@ def build_model_solve_network(
     dual_dir = results_folder / "duals"
     dual_dir.mkdir(parents=True, exist_ok=True)
 
-    # ---- Solve + (optional) dual collection ----
-    with capture_pypsa_unassigned_constraints() as log_msgs:
-        status, condition = n.optimize.solve_model(
-            solver_name=solver,
-            io_api=io_api,
-            assign_all_duals=False,
-            **opts,
-        )
+    # ---- Solve (assigns primals, standard duals and scaled prices) ----
+    status, condition = n.optimize.solve_model(
+        solver_name=solver,
+        io_api=io_api,
+        assign_all_duals=False,
+        **opts,
+    )
 
-        # primals
-        try:
-            n.optimize.assign_solution()
-        except Exception:
-            pass
-
-        if collect_all_duals:
-            try:
-                n.optimize.assign_duals(assign_all_duals=True)
-            except Exception as e:
-                # keep going; we can still export from linopy
-                print(f"⚠️ PyPSA dual writeback raised (continuing): {e}")
-            else:
-                # assign_duals writes raw LP duals into buses_t.marginal_price.
-                # post_processing (called inside solve_model) already divided by
-                # snapshot_weightings to give €/MWh — re-apply that here because
-                # the second assign_duals call overwrote those normalized values.
-                _sns = n.snapshots
-                _w = n.snapshot_weightings.objective.reindex(_sns)
-                if not n.buses_t.marginal_price.empty:
-                    n.buses_t.marginal_price.loc[_sns] = (
-                        n.buses_t.marginal_price.loc[_sns].divide(_w, axis=0)
-                    )
-
-    # ---- Export only unassigned constraints ----
-    unassigned = []
+    # ---- All duals: onto the network where PyPSA can, and all to file ----
     dual_export_path = None
+    residual = None
+    if collect_all_duals and status == "ok":
+        _assign_all_duals_to_network(n)
 
-    if collect_all_duals:
-        unassigned = parse_unassigned_constraint_blocks(log_msgs)
-
-        custom = [k for k in n.model.constraints if "__" in k]
-
-        # export both: PyPSA-unassigned + all custom constraints
-        patterns = list(dict.fromkeys(unassigned + custom))  # unique, keep order
-
-        if patterns:
-            dual_export_path = dual_dir / f"duals_export_{n_name}.nc"
-            ds = export_constraint_duals(
-                n,
-                patterns=patterns,
-                outpath=dual_export_path,
-                compress=compress_duals,
+        dual_export_path = dual_dir / f"duals_{n_name}.nc"
+        summary = export_all_duals(n, dual_export_path, compress=compress_duals)
+        if summary is None:
+            dual_export_path = None
+        else:
+            residual = summary["residual"]
+            print(
+                f"Duals of {len(summary['by_constraint'])} constraints saved to {dual_export_path}\n"
+                f"   objective {summary['objective']:.6g}, from duals {summary['dual_objective']:.6g} "
+                f"(relative residual {residual:.1e})"
             )
-            if ds is None:
-                dual_export_path = None
-            else:
-                print("Exported dual blocks:", [k for k in ds.data_vars])
+            if residual > DUALITY_RTOL:
+                warnings.warn(
+                    f"The objective rebuilt from the duals differs by {residual:.1e} "
+                    f"(relative) from the solver objective. Duals are approximate "
+                    f"(barrier without crossover?) or a constraint is missing from "
+                    f"the export. Bounded variables: {summary['bounded_variables']}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
 
     # ---- meta breadcrumbs ----
     n.meta = getattr(n, "meta", {}) or {}
@@ -1770,8 +1848,8 @@ def build_model_solve_network(
         "opt_termination": str(condition),
         "opt_solver": solver,
         "collect_all_duals": bool(collect_all_duals),
-        "unassigned_dual_blocks": unassigned,
-        "unassigned_duals_path": None if dual_export_path is None else str(dual_export_path),
+        "duals_path": None if dual_export_path is None else str(dual_export_path),
+        "duality_residual": residual,
     })
 
     if return_model:

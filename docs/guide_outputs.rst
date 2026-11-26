@@ -151,6 +151,53 @@ fingerprints.
 - **Check solver**: the ``optimization`` block records which solver and profile
   were actually used.
 
+.. _outputs-duals:
+
+``duals/``, all constraint duals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``optimization: collect_all_duals: true``, the solve writes the dual and
+the right-hand side of every constraint in the linopy model to
+``duals/duals_<name>.nc``. This includes the custom constraints that PyPSA
+does not map onto the network. Each constraint is a NetCDF group named after
+the constraint, with the variables ``dual`` and ``rhs`` and the constraint
+sign as attribute.
+
+The same option also writes every dual that PyPSA can place onto the network as
+``mu_*`` attributes, e.g. ``n.links_t.mu_ramp_limit_up``. Bus prices stay in
+``n.buses_t.marginal_price``, scaled by the snapshot weightings as usual.
+
+The file holds enough to rebuild the objective from the duals alone. For a
+linear programme solved to optimality, strong duality gives
+
+.. math::
+
+   \text{objective} = \sum_{\text{constraints}} \text{rhs} \cdot \text{dual}
+   + \sum_{\text{bounded variables}} \text{reduced cost} \cdot \text{value}
+   + \text{constant}.
+
+In PyPSA, the only bounded variable is ``objective_constant``, the capital
+cost of existing assets. Its term is zero in greenfield runs. The root group
+stores this term as ``bounded_term:objective_constant``, together with the
+objective and the relative residual of the identity (``duality_residual``).
+The solve warns if the residual exceeds ``1e-5``. A large residual means
+approximate duals, e.g. a barrier solve without crossover. A MILP solve
+(committable links) has no duals and writes no file.
+
+.. code-block:: python
+
+   from scripts.helpers import load_duals, dual_objective_from_file
+
+   duals = load_duals("duals/duals_<name>.nc")     # {constraint: xr.Dataset}
+   duals["El3_export_fraction_of_total_RE"]["dual"]
+   dual_objective_from_file("duals/duals_<name>.nc")  # equals the objective
+
+The share of each constraint in the objective, ``(rhs * dual).sum()``, shows
+where the system cost is set. In a demand-driven greenfield run it sits on
+``Bus-nodal_balance``, i.e. demand times price. In brownfield and capped runs,
+part of it moves to the capacity limits and the custom constraints. Stochastic
+duals are weighted by the scenario probabilities, as for the bus prices.
+
 ---
 
 .. _outputs-capacities:
