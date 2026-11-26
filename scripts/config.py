@@ -325,6 +325,8 @@ optimization = {
     "solver": _opt.get("solver", None),
     "solver_profile": _opt.get("solver_profile", None),
     "overrides": _opt.get("overrides", None),
+    "mip_gap": _opt.get("mip_gap", 0.005),
+    "mip_time_limit": _opt.get("mip_time_limit", 3600),
     "collect_all_duals": bool(_opt.get("collect_all_duals", False)),
     "return_model": bool(_opt.get("return_model", False)),
     "zero_threshold_MW": float(_opt.get("zero_threshold_MW", 0.0)),

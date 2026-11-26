@@ -368,6 +368,8 @@ optimization
      collect_all_duals: true           # all duals to the network (mu_*) and to duals/ (see outputs)
      return_model: true                # return Linopy model object after solving
      overrides: null                   # optional raw solver parameters (dict)
+     mip_gap: 0.005                    # MILP only: stop at this relative gap
+     mip_time_limit: 3600              # s, MILP only: stop and keep the best solution
      zero_threshold_MW: 0.01           # MW — components built below this are zeroed out
 
 Solver profiles are defined in ``scripts/solver_profiles.py``.
@@ -376,6 +378,14 @@ Common Gurobi profiles: ``gurobi-barrier-fast``, ``gurobi-simplex``.
 whose ``p_nom_opt`` (or ``e_nom_opt``) is strictly below this value is treated
 as "not built" — its optimal capacity and result time series are zeroed before
 export.
+
+``mip_gap`` and ``mip_time_limit`` apply only when the model has integer
+variables, that is when a technology is ``committable``. An LP ignores both and
+solves to optimality. The defaults stop a MILP at a 0.5 % gap or after one hour,
+whichever comes first. At the time limit the network keeps the best solution
+found, and the run warns that it may not be optimal. Set either to ``null`` for
+the solver default. A value in ``overrides`` (``MIPGap``, ``TimeLimit``) takes
+precedence. In rolling horizon both apply to each window.
 
 .. _config-economics:
 
@@ -644,7 +654,7 @@ re-activates ``committable=True`` for any technology that has it set in
 Unit commitment works in stochastic mode from PyPSA 1.4. Capacities are shared
 across scenarios; on/off decisions are made per scenario. The MILP grows with
 the number of scenarios. For EVPI, set a MIP gap well below the EVPI you
-expect, for example ``optimization.overrides: {MIPGap: 1e-4}``. See
+expect, for example ``optimization.mip_gap: 1e-4``. See
 :ref:`guide-stochastic`.
 
 ----

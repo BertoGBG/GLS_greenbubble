@@ -1481,6 +1481,21 @@ def _apply_common_overrides(solver, opts, threads=None, time_limit=None):
         key = "TimeLimit" if solver == "gurobi" else "time_limit"
         opts[key] = float(time_limit)
 
+def mip_options(solver, mip_gap=None, mip_time_limit=None):
+    """Solver options that stop a MILP early: relative gap and time limit.
+
+    Applied only to models with integer variables, so an LP keeps solving
+    to optimality without a time limit. ``None`` leaves the solver default.
+    """
+    gurobi = solver == "gurobi"
+    opts = {}
+    if mip_gap is not None:
+        opts["MIPGap" if gurobi else "mip_rel_gap"] = float(mip_gap)
+    if mip_time_limit is not None:
+        opts["TimeLimit" if gurobi else "time_limit"] = float(mip_time_limit)
+    return opts
+
+
 DUALITY_RTOL = 1e-5
 
 
@@ -1680,6 +1695,8 @@ def build_model_solve_network(
     time_limit=None,
     threads=None,
     overrides=None,
+    mip_gap=0.005,
+    mip_time_limit=3600,
     collect_all_duals=False,
     compress_duals=True,
     return_model=True,
@@ -1734,8 +1751,8 @@ def build_model_solve_network(
     if _committable_links and stochastic["stochastic"]:
         print(
             f"[solve] stochastic MILP: committable links {_committable_links}. "
-            "Expect longer solves; for EVPI set a MIP gap well below it "
-            "(e.g. optimization.overrides: {MIPGap: 1e-4})."
+            "Expect longer solves; for EVPI set optimization.mip_gap well "
+            "below it (e.g. 1e-4)."
         )
 
     try:
@@ -1797,6 +1814,11 @@ def build_model_solve_network(
 
     opts = deepcopy(base)
     _apply_common_overrides(solver, opts, threads=threads, time_limit=time_limit)
+    is_milp = bool(len(n.model.binaries) or len(n.model.integers))
+    if is_milp:
+        mip_opts = mip_options(solver, mip_gap, mip_time_limit)
+        opts.update(mip_opts)
+        print(f"[solve] MILP: {mip_opts}")
     if overrides:
         opts.update(overrides)
 
@@ -1813,6 +1835,14 @@ def build_model_solve_network(
         assign_all_duals=False,
         **opts,
     )
+
+    if condition == "time_limit":
+        warnings.warn(
+            f"The solver stopped at its time limit ({opts.get('TimeLimit', opts.get('time_limit'))} s). "
+            "The network holds the best solution found, which may not be optimal.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     # ---- All duals: onto the network where PyPSA can, and all to file ----
     dual_export_path = None
@@ -1847,6 +1877,7 @@ def build_model_solve_network(
         "opt_status": str(status),
         "opt_termination": str(condition),
         "opt_solver": solver,
+        "opt_milp": is_milp,
         "collect_all_duals": bool(collect_all_duals),
         "duals_path": None if dual_export_path is None else str(dual_export_path),
         "duality_residual": residual,

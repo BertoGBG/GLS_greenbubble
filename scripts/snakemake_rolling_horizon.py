@@ -236,6 +236,15 @@ solver_opts = {}
 if c.optimization["solver_profile"]:
     from scripts.solver_profiles import get_solver_options
     solver_opts = get_solver_options(solver, c.optimization["solver_profile"])
+_committable = any(
+    df["committable"].astype(bool).any()
+    for df in (n.links, n.generators) if "committable" in df.columns
+)
+if _committable:
+    from scripts.helpers import mip_options
+    _mip = mip_options(solver, c.optimization["mip_gap"], c.optimization["mip_time_limit"])
+    solver_opts.update(_mip)
+    print(f"[rolling_horizon] MILP windows: {_mip} per window")
 
 print(f"[rolling_horizon] solving with {solver}, {len(n.snapshots)} snapshots ...")
 

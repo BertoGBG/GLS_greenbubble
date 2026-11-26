@@ -94,6 +94,8 @@ optimization:
   collect_all_duals:  true
   return_model:       true
   overrides:          null
+  mip_gap:            0.005        # MILP only (committable): stop at this relative gap
+  mip_time_limit:     3600         # s, MILP only: stop and keep the best solution found
   zero_threshold_MW:  0.01         # MW — components below this are treated as not built
 
 # docs: https://gls-greenbubble.readthedocs.io/en/latest/configuration.html#config-stochastic

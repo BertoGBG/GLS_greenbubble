@@ -102,6 +102,8 @@ def solve(key, net, name):
         profile           = c.optimization["solver_profile"],
         n_config          = c.n_config,
         overrides         = c.optimization["overrides"],
+        mip_gap           = c.optimization["mip_gap"],
+        mip_time_limit    = c.optimization["mip_time_limit"],
         collect_all_duals = c.optimization["collect_all_duals"],
         return_model      = c.optimization["return_model"],
         n_name            = name,
