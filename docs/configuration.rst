@@ -616,6 +616,23 @@ runs at or above it, and it may switch off. For a technology with
 ``committable: false``, ``p_min_pu`` stays 0. Otherwise the LP would force it
 to run at ``min load`` in every snapshot.
 
+**Why not linearized unit commitment**
+
+PyPSA also offers a linear relaxation, ``linearized_unit_commitment=True``.
+It keeps the problem an LP, but GreenBubble does not use it, because it does
+not enforce ``min load`` here:
+
+* The on/off status becomes a continuous share of the plant that is online.
+  The solver sets this share to the current output, so ``min load`` never
+  binds. Without start-up costs, which GreenBubble does not set, the result
+  equals a run without unit commitment.
+* For an extendable plant the big-M constraints lose their effect once the
+  status is continuous. The result equals a run without unit commitment even
+  with start-up costs.
+
+A small test with Gurobi confirmed both cases, deterministic and stochastic.
+To make ``min load`` bind, set ``committable: true`` and solve the MILP.
+
 **Committable in rolling horizon**
 
 After ``fix_capacities()`` fixes all ``p_nom``, ``enable_committable_for_rh``
